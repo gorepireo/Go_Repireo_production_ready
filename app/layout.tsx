@@ -24,7 +24,8 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light" />
         <meta name="theme-color" content="#FFFFFF" />
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           :root { color-scheme: light !important; }
           html, body { 
             background-color: #FFFFFF !important; 
