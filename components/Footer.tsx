@@ -1,30 +1,30 @@
 'use client';
 
 import Link from 'next/link';
-import { Globe, Share2, MapPin, Shield, Activity } from 'lucide-react';
+import { Globe, Share2, Activity } from 'lucide-react';
 
 const footerSections = [
   {
-    title: 'Core Identity',
+    title: 'Company',
     links: [
-      { name: 'Mission Spec', href: '#' },
-      { name: 'Elite Engineering', href: '#' },
-      { name: 'Unit Careers', href: '#' }
+      { name: 'Our Mission', href: '#' },
+      { name: 'Engineering', href: '#' },
+      { name: 'Careers', href: '#' }
     ]
   },
   {
-    title: 'Deployment',
+    title: 'Services',
     links: [
-      { name: 'Asset Market', href: '/shop' },
-      { name: 'Provision Hub', href: '/services' },
-      { name: 'Signal Track', href: '/track' }
+      { name: 'Shop', href: '/shop' },
+      { name: 'Services', href: '/services' },
+      { name: 'Track Order', href: '/track' }
     ]
   },
   {
     title: 'Connect',
     links: [
-      { name: 'Global Node', icon: Globe, href: '#' },
-      { name: 'Tactical Feed', icon: Share2, href: '#' }
+      { name: 'Website', icon: Globe, href: '#' },
+      { name: 'Social', icon: Share2, href: '#' }
     ]
   }
 ];
@@ -39,10 +39,9 @@ export default function Footer() {
       {/* Tonal Background Refraction */}
       <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-white to-transparent opacity-50" />
       
-      {/* Surgical Navigation Terminal */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 relative z-10">
         
-        {/* Signal Top Reset */}
+        {/* Scroll to Top */}
         <div className="flex justify-center mb-20 md:mb-32">
           <button 
             onClick={scrollToTop}
@@ -51,7 +50,7 @@ export default function Footer() {
             <div className="w-12 h-12 bg-white rounded-full shadow-xl flex items-center justify-center transition-all group-hover:shadow-[#007AFF]/20 group-hover:translate-y-[-4px]">
                <Activity className="w-5 h-5 text-black/20 group-hover:text-[#007AFF] transition-colors" />
             </div>
-            <span className="text-[9px] font-black uppercase tracking-[0.6em] text-black/20 group-hover:text-black transition-colors">Reset Node</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.6em] text-black/20 group-hover:text-black transition-colors">Back to Top</span>
           </button>
         </div>
 
@@ -64,15 +63,15 @@ export default function Footer() {
             </div>
                 <div className="space-y-1">
                    <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">Repireo</h2>
-                   <p className="text-[9px] font-black uppercase tracking-[0.4em] text-black/20">Tactile Observatory</p>
+                   <p className="text-[9px] font-black uppercase tracking-[0.4em] text-black/20">Precision Logistics</p>
                 </div>
              </Link>
              <p className="text-xs font-medium text-black/40 leading-relaxed max-w-[240px]">
-                Engineering high-fidelity logistical solutions with surgical precision and ethereal clarity.
+                Engineering high-fidelity logistical solutions with surgical precision and clarity.
              </p>
           </div>
 
-          {/* Links Pillars */}
+          {/* Link Columns */}
           {footerSections.map((section) => (
             <div key={section.title} className="space-y-10">
               <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#007AFF] bg-[#007AFF]/5 py-2 px-4 rounded-xl inline-block">{section.title}</h3>
@@ -93,13 +92,13 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Global Footer Meta */}
+        {/* Footer Meta */}
         <div className="pt-12 bg-black/[0.02] rounded-[3rem] px-8 md:px-12 py-10 flex flex-col md:flex-row items-center justify-between gap-10">
            <div className="flex flex-wrap justify-center md:justify-start gap-8 md:gap-12">
               {[
-                { name: 'Legal Protocol', href: '#' },
-                { name: 'Security Architecture', href: '#' },
-                { name: 'Access Node', href: '#' }
+                { name: 'Privacy Policy', href: '#' },
+                { name: 'Terms of Service', href: '#' },
+                { name: 'Contact Us', href: '#' }
               ].map(item => (
                 <Link key={item.name} href={item.href} className="text-[9px] font-black uppercase tracking-[0.4em] text-black/20 hover:text-[#007AFF] transition-colors">{item.name}</Link>
               ))}
@@ -107,11 +106,11 @@ export default function Footer() {
 
            <div className="flex flex-col items-center md:items-end gap-2">
               <p className="text-[9px] font-black uppercase tracking-[0.5em] text-black/10">
-                © 2024 REPIREO. ALL RIGHTS RESERVED.
+                © 2024 Repireo. All Rights Reserved.
               </p>
               <div className="flex items-center gap-4">
                  <div className="w-1.5 h-1.5 bg-[#34C759] rounded-full animate-pulse" />
-                 <span className="text-[8px] font-black uppercase tracking-widest text-[#34C759]">Global Sync Active</span>
+                 <span className="text-[8px] font-black uppercase tracking-widest text-[#34C759]">All Systems Online</span>
               </div>
            </div>
         </div>

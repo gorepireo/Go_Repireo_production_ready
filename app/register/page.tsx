@@ -128,7 +128,7 @@ export default function Register() {
         setStep(3);
       }
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -236,7 +236,7 @@ export default function Register() {
         router.push('/login?registered=true');
       }
     } catch (err: any) {
-      setError(err.message || 'Verification failed');
+      setError(err.message || 'Verification failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -250,9 +250,9 @@ export default function Register() {
         email: formData.email
       });
       if (resendError) throw resendError;
-      alert('Verification code resent to your email');
+      alert('Verification code resent to your email.');
     } catch (err: any) {
-      setError(err.message || 'Failed to resend code');
+      setError(err.message || 'Failed to resend code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -262,17 +262,17 @@ export default function Register() {
     <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4 md:p-10 pb-20 md:pb-32">
       <div className="max-w-4xl w-full space-y-10">
         
-        {/* Branding & Header */}
+        {/* Header */}
         <div className="text-center space-y-4">
-          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center p-2 shadow-2xl shadow-black/5 mx-auto group-hover:rotate-12 transition-transform border border-black/[0.03]">
+          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center p-2 shadow-2xl shadow-black/5 mx-auto transition-transform border border-black/[0.03]">
                <img src="/logo.png" alt="Repireo" className="w-full h-full object-contain" />
           </div>
           <div className="space-y-1">
             <h1 className="text-4xl md:text-7xl font-bold uppercase tracking-tighter skew-title">
-              PROVISION <br />
-              <span className="text-[#007AFF]">PORTAL.</span>
+              Create <br />
+              <span className="text-[#007AFF]">Account.</span>
             </h1>
-            <p className="tactile-label tracking-[0.4em] text-slate-400">INITIALIZE NEAFER OPERATIONAL UNIT</p>
+            <p className="tactile-label tracking-[0.4em] text-slate-400">Join Repireo Today</p>
           </div>
         </div>
 
@@ -281,7 +281,7 @@ export default function Register() {
           animate={{ opacity: 1, y: 0 }}
           className="king-card bg-white shadow-2xl !p-6 md:!p-12 space-y-10"
         >
-          {/* Step indicator */}
+          {/* Step Indicator */}
           <div className="flex items-center justify-center gap-4">
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center gap-2">
@@ -290,19 +290,19 @@ export default function Register() {
             ))}
           </div>
 
-          {/* Step 1: Role Selection */}
+          {/* Step 1: Account Type */}
           {step === 1 && (
             <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-10">
               <div className="text-center">
-                 <h2 className="tactile-label !text-slate-400 text-sm">Step 01</h2>
-                 <p className="text-xl font-bold uppercase tracking-tight text-slate-800">IDENTITY SELECTION</p>
+                 <h2 className="tactile-label !text-slate-400 text-sm">Step 1 of 3</h2>
+                 <p className="text-xl font-bold uppercase tracking-tight text-slate-800">Choose Account Type</p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                  { id: 'user', title: 'CUSTOMER', icon: User, desc: 'Operational Client' },
-                  { id: 'worker', title: 'SPECIALIST', icon: Briefcase, desc: 'Field Protocol Unit' },
-                  { id: 'shopkeeper', title: 'MERCHANT', icon: Store, desc: 'Strategic Hub' },
+                  { id: 'user', title: 'Customer', icon: User, desc: 'Book services & shop' },
+                  { id: 'worker', title: 'Specialist', icon: Briefcase, desc: 'Offer your skills' },
+                  { id: 'shopkeeper', title: 'Merchant', icon: Store, desc: 'Manage your store' },
                 ].map((r) => (
                   <button
                     key={r.id}
@@ -327,25 +327,25 @@ export default function Register() {
                 onClick={() => setStep(2)} 
                 className="btn-primary w-full h-14 !text-[10px]"
               >
-                CONTINUE INITIALIZATION
+                Continue
               </button>
             </motion.div>
           )}
 
-          {/* Step 2: Form */}
+          {/* Step 2: Details Form */}
           {step === 2 && (
             <motion.form initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} onSubmit={handleRegister} className="space-y-8">
               <div className="text-center">
-                 <h2 className="tactile-label !text-slate-400 text-sm">Step 02</h2>
-                 <p className="text-xl font-bold uppercase tracking-tight text-slate-800">PROTOCOL PARAMETERS</p>
+                 <h2 className="tactile-label !text-slate-400 text-sm">Step 2 of 3</h2>
+                 <p className="text-xl font-bold uppercase tracking-tight text-slate-800">Your Details</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
-                  { label: 'Full Identity', name: 'name', type: 'text', placeholder: 'Unit Designation' },
-                  { label: 'Uplink Email', name: 'email', type: 'email', placeholder: 'unit@network.com' },
-                  { label: 'Signal Link', name: 'phone', type: 'text', placeholder: '+91 00000 00000' },
-                  { label: 'Secure Key', name: 'password', type: 'password', placeholder: '••••••••' }
+                  { label: 'Full Name', name: 'name', type: 'text', placeholder: 'Your full name' },
+                  { label: 'Email Address', name: 'email', type: 'email', placeholder: 'you@example.com' },
+                  { label: 'Phone Number', name: 'phone', type: 'text', placeholder: '+91 00000 00000' },
+                  { label: 'Password', name: 'password', type: 'password', placeholder: '••••••••' }
                 ].map((field) => (
                   <div key={field.name} className="space-y-2">
                     <label className="tactile-label ml-2">{field.label}</label>
@@ -361,21 +361,21 @@ export default function Register() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6 shadow-[-20px_0_40px_rgba(0,0,0,0.02)]">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6">
                 <div className="space-y-2">
-                  <label className="tactile-label ml-2">Grid</label>
+                  <label className="tactile-label ml-2">Pin Code</label>
                   <input required name="pincode" value={formData.pincode} onChange={handleInputChange} className="w-full h-12 bg-black/[0.02] px-3 rounded-xl text-xs outline-none" placeholder="Pincode" maxLength={6} />
                 </div>
                 <div className="space-y-2">
-                  <label className="tactile-label ml-2">Sector</label>
+                  <label className="tactile-label ml-2">State</label>
                   <input required name="state" value={formData.state} onChange={handleInputChange} className="w-full h-12 bg-black/[0.02] px-3 rounded-xl text-xs outline-none" placeholder="State" />
                 </div>
                 <div className="space-y-2">
-                  <label className="tactile-label ml-2">Zone</label>
+                  <label className="tactile-label ml-2">District</label>
                   <input required name="district" value={formData.district} onChange={handleInputChange} className="w-full h-12 bg-black/[0.02] px-3 rounded-xl text-xs outline-none" placeholder="District" />
                 </div>
                 <div className="space-y-2">
-                  <label className="tactile-label ml-2">Precision</label>
+                  <label className="tactile-label ml-2">Area</label>
                   <div className="relative">
                     <input required name="area" value={formData.area} onChange={handleInputChange} className="w-full h-12 bg-black/[0.02] pl-3 pr-8 rounded-xl text-xs outline-none" placeholder="Area" />
                     <button type="button" onClick={detectLocation} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#007AFF] transition-colors">
@@ -389,24 +389,24 @@ export default function Register() {
 
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={() => setStep(1)} className="btn-secondary flex-1 h-14 !text-[10px] bg-slate-100 border-none text-slate-400">
-                  BACK
+                  Back
                 </button>
                 <button disabled={loading} type="submit" className="btn-primary flex-[2] h-14 !text-[10px]">
-                  {loading ? 'INITIALIZING...' : 'AUTHORIZE UNIT'}
+                  {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
               </div>
             </motion.form>
           )}
 
-          {/* Step 3: OTP */}
+          {/* Step 3: Email Verification */}
           {step === 3 && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-sm mx-auto space-y-10">
               <div className="w-20 h-20 bg-[#007AFF]/5 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm">
                 <ShieldCheck className="w-8 h-8 text-[#007AFF]" />
               </div>
               <div className="space-y-2">
-                 <h2 className="text-3xl font-bold tracking-tight uppercase leading-none">SIGNAL CHECK</h2>
-                 <p className="tactile-label !tracking-normal text-slate-400">Sent to {formData.email}</p>
+                 <h2 className="text-3xl font-bold tracking-tight uppercase leading-none">Verify Email</h2>
+                 <p className="tactile-label !tracking-normal text-slate-400">Code sent to {formData.email}</p>
               </div>
 
               <form onSubmit={handleVerifyOtp} className="space-y-8">
@@ -423,14 +423,14 @@ export default function Register() {
                 {error && <p className="text-[#FF3B30] text-[10px] font-bold tracking-widest p-4 bg-red-50 rounded-2xl">{error}</p>}
 
                 <button disabled={loading} type="submit" className="btn-primary w-full h-14 text-[10px]">
-                  {loading ? 'VALIDATING...' : 'FINALIZE UPLINK'}
+                  {loading ? 'Verifying...' : 'Verify & Continue'}
                 </button>
 
                 <div className="flex flex-col gap-4 text-center">
                   <button type="button" onClick={handleResendOtp} disabled={loading} className="tactile-label !text-[#007AFF] font-bold hover:underline">
-                    RESEND SIGNAL KEY
+                    Resend Code
                   </button>
-                  <Link href="/login" className="tactile-label !text-slate-300 hover:text-slate-600 transition-colors">Return to Identity Login</Link>
+                  <Link href="/login" className="tactile-label !text-slate-300 hover:text-slate-600 transition-colors">Back to Sign In</Link>
                 </div>
               </form>
             </motion.div>
