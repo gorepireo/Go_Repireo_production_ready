@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, ShieldCheck } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
@@ -21,7 +21,7 @@ function LoginForm() {
 
   useEffect(() => {
     if (searchParams.get('registered')) {
-      setSuccessMsg('Registration Successful. Please sign in below.');
+      setSuccessMsg('Registration successful. Please sign in to continue.');
     }
   }, [searchParams]);
 
@@ -44,7 +44,7 @@ function LoginForm() {
         const status = (profileData as any)?.status || 'active';
 
         if (status === 'pending_approval' && (role === 'worker' || role === 'shopkeeper')) {
-          setError('Account Setup in Progress. Dashboard access will be available once your profile is verified.');
+          setError('Account pending approval. You will be notified once your profile is verified.');
           setLoading(false);
           return;
         }
@@ -72,17 +72,17 @@ function LoginForm() {
     <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-6 pb-24">
       <div className="max-w-md w-full space-y-10">
         
-        {/* Branding & Header */}
+        {/* Header */}
         <div className="text-center space-y-6">
-          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center p-2 shadow-2xl shadow-black/5 mx-auto group-hover:rotate-6 transition-transform border border-black/[0.03]">
+          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center p-2 shadow-2xl shadow-black/5 mx-auto transition-transform border border-black/[0.03]">
               <img src="/logo.png" alt="Repireo" className="w-full h-full object-contain" />
           </div>
           <div className="space-y-2">
             <h1 className="text-5xl font-bold uppercase tracking-tighter skew-title leading-tight">
-              IDENTITY <br />
-              <span className="text-[#007AFF]">VERIFY.</span>
+              Welcome <br />
+              <span className="text-[#007AFF]">Back.</span>
             </h1>
-            <p className="tactile-label tracking-[0.4em] text-slate-400">NEAFER TACTICAL AUTH</p>
+            <p className="tactile-label tracking-[0.4em] text-slate-400">Sign In to Repireo</p>
           </div>
         </div>
 
@@ -100,7 +100,7 @@ function LoginForm() {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="tactile-label ml-2">Login Identifier</label>
+              <label className="tactile-label ml-2">Email Address</label>
               <input 
                 required 
                 type="email" 
@@ -111,7 +111,7 @@ function LoginForm() {
             </div>
             
             <div className="space-y-2">
-              <label className="tactile-label ml-2">Secure Protocol Key</label>
+              <label className="tactile-label ml-2">Password</label>
               <div className="relative">
                 <input 
                   required 
@@ -132,19 +132,19 @@ function LoginForm() {
               type="submit" 
               className="btn-primary w-full h-14 !text-[10px]"
             >
-              {loading ? 'AUTHENTICATING...' : 'ESTABLISH LINK'} 
+              {loading ? 'Signing In...' : 'Sign In'} 
             </button>
           </form>
 
-          <div className="pt-8 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] text-center space-y-4">
+          <div className="pt-8 text-center space-y-4">
              <p className="tactile-label !text-slate-400">
-                New Unit Deployment? {' '}
+                Don't have an account?{' '}
                 <Link href="/register" className="text-[#007AFF] font-bold ml-1 hover:underline">
-                  INITIALIZE ACCOUNT
+                  Create Account
                 </Link>
              </p>
              <Link href="/" className="inline-block tactile-label !text-slate-300 hover:text-black transition-colors pt-2">
-                Return to Strategic Home
+                Return to Home
              </Link>
           </div>
         </motion.div>
