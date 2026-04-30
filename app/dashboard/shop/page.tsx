@@ -38,6 +38,13 @@ function ShopkeeperDashboardContent() {
     }
   };
 
+  const handleDeleteProduct = async (id: string) => {
+    const { error } = await insforge.database.from('products').delete().eq('id', id);
+    if (!error) {
+      setProducts(products.filter(p => p.id !== id));
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
       <div className="w-12 h-12 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
@@ -55,15 +62,15 @@ function ShopkeeperDashboardContent() {
           <div className="space-y-6 relative z-10">
             <div className="flex items-center gap-3 text-[#007AFF]">
                <div className="w-8 h-[2px] bg-current" />
-               <span className="text-[10px] font-black uppercase tracking-[0.6em] italic">Operational Hub: Inventory</span>
+               <span className="text-[10px] font-black uppercase tracking-[0.6em] italic">Merchant Hub: Inventory</span>
             </div>
             <h1 className="text-6xl md:text-9xl skew-title text-black leading-[0.8] uppercase">
-              STRATEGIC <br />
-              <span className="text-[#007AFF]">SUPPLY.</span>
+              INVENTORY <br />
+              <span className="text-[#007AFF]">MANAGEMENT.</span>
             </h1>
             <div className="flex items-center gap-4">
                <div className="px-5 py-2 bg-black/5 text-black/60 text-[10px] font-black uppercase tracking-[0.4em] italic rounded-full shadow-inner">Verified Merchant</div>
-               <p className="text-[10px] font-black text-black/20 uppercase tracking-[0.3em]">Alpha Provision Hub</p>
+               <p className="text-[10px] font-black text-black/20 uppercase tracking-[0.3em]">Partner Merchant Portal</p>
             </div>
           </div>
           
@@ -114,7 +121,10 @@ function ShopkeeperDashboardContent() {
                         <button className="w-10 h-10 bg-black/[0.01] rounded-xl flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-xs">
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button className="w-10 h-10 bg-black/[0.01] rounded-xl flex items-center justify-center hover:bg-[#FF3B30] hover:text-white transition-all group/del shadow-xs">
+                        <button 
+                          onClick={() => handleDeleteProduct(p.id)}
+                          className="w-10 h-10 bg-black/[0.01] rounded-xl flex items-center justify-center hover:bg-[#FF3B30] hover:text-white transition-all group/del shadow-xs"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -130,13 +140,13 @@ function ShopkeeperDashboardContent() {
                <div className="w-24 h-24 bg-black/[0.01] rounded-full flex items-center justify-center mb-8 shadow-inner">
                  <Package className="w-12 h-12 text-black/5 group-hover:text-black/10 transition-all scale-110" />
                </div>
-               <h3 className="text-3xl font-black uppercase tracking-tighter text-black/20">System Inventory Null.</h3>
-               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/10 mt-4 max-w-xs mx-auto italic leading-relaxed">Execute provisioning protocol to populate merchant catalog.</p>
+               <h3 className="text-3xl font-black uppercase tracking-tighter text-black/20">No Products Found.</h3>
+               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/10 mt-4 max-w-xs mx-auto italic leading-relaxed">Add new products to populate your catalog.</p>
             </div>
           )}
         </div>
 
-        {/* Tactical Provisioning Modal */}
+        {/* New Product Modal */}
         <AnimatePresence>
           {isAdding && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
@@ -161,20 +171,20 @@ function ShopkeeperDashboardContent() {
                    <div className="space-y-4">
                      <div className="flex items-center gap-3 text-[#007AFF]">
                         <div className="w-6 h-[2px] bg-current" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.5em] italic">New Supply Protocol</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.5em] italic">New Product Entry</span>
                      </div>
                      <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-black leading-[0.9] skew-title">
-                       PROVISION <br />
-                       SUPPLY.
+                       ADD <br />
+                       PRODUCT.
                      </h2>
                    </div>
 
                    <form onSubmit={handleAddProduct} className="space-y-8">
                       <div className="space-y-3">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-black/40 italic ml-4">Item Identity</label>
+                         <label className="text-[10px] font-black uppercase tracking-widest text-black/40 italic ml-4">Product Name</label>
                          <input
                            type="text"
-                           placeholder="Service Resource Name"
+                           placeholder="Enter product name"
                            className="input-field w-full h-16"
                            value={newProduct.name}
                            onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
