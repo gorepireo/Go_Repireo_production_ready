@@ -206,47 +206,47 @@ function StandardMapContent() {
       </div>
 
       {/* HUD Overlays - Adapted for Standard Light Mode */}
-      <div className="absolute inset-0 z-50 pointer-events-none p-12 mt-32">
+      <div className="absolute inset-0 z-50 pointer-events-none p-6 md:p-12 mt-20 md:mt-32">
         
         {/* Top Left: Back Action */}
-        <div className="absolute top-0 left-10 pointer-events-auto">
+        <div className="absolute top-6 left-6 md:top-10 md:left-10 pointer-events-auto">
           <button 
             onClick={() => router.back()}
-            className="w-16 h-16 bg-white/80 backdrop-blur-3xl rounded-full flex items-center justify-center shadow-2xl hover:bg-white transition-all active:scale-90"
+            className="w-12 h-12 md:w-16 md:h-16 bg-white/80 backdrop-blur-3xl rounded-full flex items-center justify-center shadow-2xl hover:bg-white transition-all active:scale-90"
           >
-            <ArrowLeft className="w-6 h-6 text-[#1E293B]" />
+            <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-[#1E293B]" />
           </button>
         </div>
 
         {/* Top Right: Signal Status */}
-        <div className="absolute top-0 right-12 text-right">
-           <p className="text-[10px] font-black uppercase tracking-[0.6em] text-slate-300 mb-2">SIGNAL STATUS</p>
-           <div className="flex items-center justify-end gap-4">
-              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter italic transform -skew-x-12 leading-none text-[#1E293B]">
-                PHASE: {loading ? 'INIT' : (order?.status === 'shipping' ? 'TRANSIT' : 'PROVISIONING')}
+        <div className="absolute top-6 right-6 md:top-10 md:right-12 text-right">
+           <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-slate-500 mb-1 md:mb-2 drop-shadow-md">ORDER STATUS</p>
+           <div className="flex items-center justify-end gap-2 md:gap-4">
+              <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter italic transform -skew-x-12 leading-none text-[#1E293B] drop-shadow-lg">
+                PHASE: {loading ? 'INIT' : (order?.status === 'shipping' ? 'TRANSIT' : 'PREPPING')}
               </h2>
-              <div className={`w-4 h-4 rounded-full shadow-lg ${loading ? 'bg-yellow-500 shadow-yellow-500/20 animate-pulse' : 'bg-[#007AFF] shadow-[#007AFF]/20'}`} />
+              <div className={`w-3 h-3 md:w-4 md:h-4 rounded-full shadow-lg ${loading ? 'bg-yellow-500 shadow-yellow-500/20 animate-pulse' : 'bg-[#007AFF] shadow-[#007AFF]/20'}`} />
            </div>
         </div>
 
         {/* Center Right: Proximity */}
-        <div className="absolute top-1/2 right-12 -translate-y-1/2 text-right">
-           <p className="text-[10px] font-black uppercase tracking-[0.6em] text-slate-300 mb-2">PROXIMITY</p>
+        <div className="absolute top-1/2 right-6 md:right-12 -translate-y-1/2 text-right mt-10 md:mt-0">
+           <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-slate-500 mb-1 md:mb-2 drop-shadow-md">DISTANCE</p>
            <div className="flex items-baseline justify-end gap-1">
-              <span className="text-5xl md:text-7xl font-black italic transform -skew-x-12 leading-none text-[#1E293B]">
+              <span className="text-4xl md:text-7xl font-black italic transform -skew-x-12 leading-none text-[#1E293B] drop-shadow-lg">
                 {tracking && order ? (Math.sqrt(Math.pow(tracking.lat - order.lat, 2) + Math.pow(tracking.lng - order.lng, 2)) * 111).toFixed(1) : "4.2"}
               </span>
-              <span className="text-lg font-black italic text-slate-300 uppercase tracking-widest">KM</span>
+              <span className="text-sm md:text-lg font-black italic text-slate-500 uppercase tracking-widest drop-shadow-md">KM</span>
            </div>
         </div>
 
         {/* Center Info HUD */}
         {loading && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center bg-white/80 p-6 rounded-2xl shadow-2xl backdrop-blur-md">
              <div className="flex items-center justify-center gap-4 mb-4">
-                <Satellite size={32} className="text-[#007AFF] animate-bounce" />
+                <Satellite size={24} className="text-[#007AFF] animate-bounce md:w-8 md:h-8" />
              </div>
-             <p className="text-xs font-black uppercase tracking-[0.8em] text-[#007AFF] animate-pulse">Syncing Orbital Channel [v2]...</p>
+             <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] md:tracking-[0.8em] text-[#007AFF] animate-pulse">Syncing Tracking...</p>
           </div>
         )}
 

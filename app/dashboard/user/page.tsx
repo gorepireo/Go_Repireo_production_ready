@@ -11,6 +11,7 @@ function UserDashboardContent() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalSpent, setTotalSpent] = useState(0);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -22,7 +23,11 @@ function UserDashboardContent() {
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (data) setOrders(data);
+      if (data) {
+        setOrders(data);
+        const total = data.reduce((sum, order) => sum + (Number(order.total_price) || 0), 0);
+        setTotalSpent(total);
+      }
       if (error) console.error('Fetch error:', error);
       setLoading(false);
     };
@@ -45,10 +50,10 @@ function UserDashboardContent() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl md:text-7xl font-bold uppercase tracking-tighter leading-none skew-title">
-                OPERATIONAL <br />
+                CLIENT <br />
                 <span className="text-[#007AFF]">PORTAL.</span>
               </h1>
-              <p className="tactile-label tracking-[0.3em] mt-2">Active Strategic Interface</p>
+              <p className="tactile-label tracking-[0.3em] mt-2">Active Service Interface</p>
             </div>
             <div className="w-12 h-12 bg-[#007AFF]/5 rounded-xl border border-[#007AFF]/10 flex items-center justify-center">
               <Activity className="w-6 h-6 text-[#007AFF] animate-pulse" />
@@ -63,10 +68,10 @@ function UserDashboardContent() {
               <ShieldCheck size={120} />
             </div>
             <div className="relative z-10">
-              <p className="tactile-label !text-white/60 mb-1">Fleet Balance</p>
-              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter">$42,000.00</h2>
+              <p className="tactile-label !text-white/60 mb-1">Total Account Spend</p>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter">₹{totalSpent.toFixed(2)}</h2>
               <div className="flex items-center gap-2 mt-6">
-                <span className="px-3 py-1 bg-white/20 rounded-full tactile-label !text-white font-bold">Tier 1 Elite</span>
+                <span className="px-3 py-1 bg-white/20 rounded-full tactile-label !text-white font-bold">Premium Tier</span>
               </div>
             </div>
           </div>
@@ -94,7 +99,7 @@ function UserDashboardContent() {
         {/* Transmission Feed (Orders) */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-             <h3 className="tactile-label !text-slate-400">Tactical Feed</h3>
+             <h3 className="tactile-label !text-slate-400">Service Activity</h3>
              <div className="h-px flex-1 bg-black/[0.03] mx-4" />
           </div>
 
@@ -118,7 +123,7 @@ function UserDashboardContent() {
                         </span>
                         <span className="tactile-label font-mono !text-slate-300">#{order.id.slice(0, 6)}</span>
                       </div>
-                      <h4 className="text-sm font-bold uppercase tracking-tight truncate">Unit Deployment</h4>
+                      <h4 className="text-sm font-bold uppercase tracking-tight truncate">Service Request</h4>
                     </div>
                   </div>
                   
@@ -131,9 +136,9 @@ function UserDashboardContent() {
 
             {orders.length === 0 && (
               <div className="king-card py-20 text-center flex flex-col items-center gap-4 border-dashed border-slate-200">
-                <p className="tactile-label">No active deployments identified.</p>
+                <p className="tactile-label">No active services identified.</p>
                 <Link href="/services" className="btn-primary !bg-black !from-black !to-slate-800 !py-3 !px-6 !text-[10px]">
-                  INITIALIZE FLEET
+                  NEW REQUEST
                 </Link>
               </div>
             )}
