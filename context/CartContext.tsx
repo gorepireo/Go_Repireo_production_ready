@@ -30,15 +30,27 @@ const CartContext = createContext<CartContextType>({
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [mounted, setMounted] = useState(false);
 
+  // Handle Hydration: Only load from localStorage after mount
   useEffect(() => {
+    setMounted(true);
     const savedCart = localStorage.getItem('repireo_cart');
-    if (savedCart) setCart(JSON.parse(savedCart));
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (error) {
+        console.error("Failed to parse cart from localStorage", error);
+      }
+    }
   }, []);
 
+  // Persist to localStorage whenever cart changes (only after mount)
   useEffect(() => {
-    localStorage.setItem('repireo_cart', JSON.stringify(cart));
-  }, [cart]);
+    if (mounted) {
+      localStorage.setItem('repireo_cart', JSON.stringify(cart));
+    }
+  }, [cart, mounted]);
 
   const addItem = (product: any) => {
     setCart(curr => {
@@ -57,6 +69,16 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const clearCart = () => setCart([]);
 
   const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+  // If not mounted, return a hidden container or a simple fragment 
+  // to keep the layout consistent without triggering a mismatch.
+  if (!mounted) {
+    return (
+      <CartContext.Provider value={{ cart: [], addItem, removeItem, clearCart, total: 0 }}>
+        <div style={{ visibility: 'hidden' }}>{children}</div>
+      </CartContext.Provider>
+    );
+  }
 
   return (
     <CartContext.Provider value={{ cart, addItem, removeItem, clearCart, total }}>
