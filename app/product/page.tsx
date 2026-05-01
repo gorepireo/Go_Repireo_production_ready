@@ -21,15 +21,15 @@ export default function ProductPage() {
   const product = {
     name: 'Industrial PVC Pipe 4"',
     price: '1,250',
-    category: 'PLUMBING HARDWARE',
-    description: 'High-durability, lead-free PVC pipe designed for primary hydration networks and tactical irrigation setups.',
-    specs: ['PRO', 'ELITE', 'SURVIVAL'],
+    category: 'PLUMBING SUPPLY',
+    description: 'Lead-free PVC pipe built for durable water flow, reliable irrigation, and long-term repairs.',
+    specs: ['STANDARD', 'HEAVY DUTY', 'PREMIUM'],
     features: [
       { name: 'DIAMETER', value: '4.0 INCH' },
       { name: 'PRESSURE', value: '150 PSI' },
-      { name: 'MATERIAL', value: 'HI-DENSITY' },
+      { name: 'MATERIAL', value: 'HIGH-DENSITY' },
     ],
-    profiles: { display_name: 'Mandi Sector' }
+    profiles: { display_name: 'Mandi Supplier' }
   };
 
   return (
@@ -43,7 +43,7 @@ export default function ProductPage() {
           </Link>
           <div className="flex items-center gap-2">
              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-             <span className="text-[10px] font-black tracking-[0.4em] text-black/20 uppercase">In Stock</span>
+             <span className="text-[10px] font-black tracking-[0.4em] text-black/20 uppercase">Ready to Ship</span>
           </div>
         </div>
 
@@ -77,8 +77,8 @@ export default function ProductPage() {
 
             <div className="space-y-6">
                <div className="flex items-center justify-between">
-                  <span className="tactile-label">Select Package Variant</span>
-                  <span className="text-[10px] font-bold text-slate-300 uppercase">3 available</span>
+                  <span className="tactile-label">Choose a Variant</span>
+                  <span className="text-[10px] font-bold text-slate-300 uppercase">3 options</span>
                </div>
                <div className="flex gap-3">
                   {product.specs.map(spec => (
@@ -104,11 +104,11 @@ export default function ProductPage() {
 
             <div className="pt-10 flex items-center gap-6">
                <div className="flex-1">
-                  <p className="text-[10px] font-black text-black/20 uppercase tracking-widest leading-none mb-2">Protocol Cost</p>
+                  <p className="text-[10px] font-black text-black/20 uppercase tracking-widest leading-none mb-2">Product Price</p>
                   <p className="text-5xl font-black italic tracking-tighter leading-none">₹{product.price}</p>
                </div>
                <Link href="/cart" className="btn-primary flex-1 h-20 !rounded-[2.5rem]">
-                  PROVISION <ArrowRight size={20} />
+                  ADD TO CART <ArrowRight size={20} />
                </Link>
             </div>
           </div>
