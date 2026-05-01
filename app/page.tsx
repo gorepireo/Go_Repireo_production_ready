@@ -22,15 +22,15 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 const marketFavorites = [
-  { id: 1, name: 'Precision Cooling', category: 'HVAC', price: '₹7,500', rating: 4.9, icon: Zap, color: '#007AFF', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=400' },
-  { id: 2, name: 'Power Matrix', category: 'Electric', price: '₹5,200', rating: 4.8, icon: Zap, color: '#FF3B30', img: 'https://images.unsplash.com/photo-1621905252507-b3523c44dbf4?auto=format&fit=crop&q=80&w=400' },
-  { id: 3, name: 'Crystal Flow', category: 'Plumbing', price: '₹6,400', rating: 5.0, icon: Sparkles, color: '#34C759', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=400' },
+  { id: 1, name: 'Precision AC Care', category: 'HVAC', price: '₹7,500', rating: 4.9, icon: Zap, color: '#007AFF', img: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=400' },
+  { id: 2, name: 'Reliable Power Repair', category: 'Electrical', price: '₹5,200', rating: 4.8, icon: Zap, color: '#FF3B30', img: 'https://images.unsplash.com/photo-1621905252507-b3523c44dbf4?auto=format&fit=crop&q=80&w=400' },
+  { id: 3, name: 'Leak-Free Plumbing', category: 'Plumbing', price: '₹6,400', rating: 5.0, icon: Sparkles, color: '#34C759', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=400' },
 ];
 
 const bentoFeatures = [
-  { id: 1, title: 'Tactical Track', detail: '3 Units in Deployment', icon: Navigation, color: '#FFB800', link: '/track', metric: '98% Signal' },
-  { id: 2, title: 'Fleet Ops', detail: '2.4K Active Sector Units', icon: Activity, color: '#007AFF', link: '/services', metric: '+12.4%' },
-  { id: 3, title: 'Verified', detail: 'Authorized Elite Network', icon: Shield, color: '#34C759', link: '/register', metric: 'Secured' },
+  { id: 1, title: 'Live Tracking', detail: 'Real-time job updates', icon: Navigation, color: '#FFB800', link: '/track', metric: '98% On Time' },
+  { id: 2, title: 'Expert Teams', detail: '2.4K verified specialists', icon: Activity, color: '#007AFF', link: '/services', metric: '+12.4%' },
+  { id: 3, title: 'Secure Booking', detail: 'Trusted provider network', icon: Shield, color: '#34C759', link: '/register', metric: 'Protected' },
 ];
 
 export default function Home() {
@@ -41,27 +41,27 @@ export default function Home() {
         <div className="max-w-4xl mx-auto relative z-10 space-y-12">
           <header className="space-y-10">
             <div className="flex items-center gap-4">
-              <span className="tactile-label !text-[#007AFF]">SYSTEM PROTOCOL v3.42</span>
+              <span className="tactile-label !text-[#007AFF]">VERIFIED SERVICE NETWORK</span>
               <div className="h-[1px] flex-1 bg-black/[0.03]" />
             </div>
             
             <h1 className="text-6xl sm:text-9xl font-bold tracking-tighter leading-[0.8] uppercase skew-title">
-              STRATEGIC <br />
-              <span className="text-[#007AFF]">RESPONSE.</span>
+              EXPERT REPAIRS <br />
+              <span className="text-[#007AFF]">ON DEMAND.</span>
             </h1>
 
             <p className="tactile-label !text-slate-400 !tracking-[0.2em] max-w-lg leading-relaxed">
-              High-fidelity unit deployment matrix for multi-sector infrastructure maintenance and professional restoration.
+              Book trusted technicians for repairs, installations, and maintenance with transparent pricing and live updates.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
               <Link href="/services" className="btn-primary w-full sm:w-auto px-12 h-20 group">
-                DEPLOY AUTHORIZATION
+                EXPLORE SERVICES
                 <ChevronRight size={18} className="ml-2 transition-transform group-hover:translate-x-1" />
               </Link>
               <div className="flex items-center gap-4 px-8 h-20 bg-white shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] rounded-3xl w-full sm:w-auto">
                 <MapPin className="text-[#FF3B30] w-5 h-5" />
-                <span className="tactile-label !text-slate-400">GLOBAL GRID ACTIVE</span>
+                <span className="tactile-label !text-slate-400">AVAILABLE IN YOUR AREA</span>
               </div>
             </div>
           </header>
@@ -98,11 +98,11 @@ export default function Home() {
            <div className="space-y-8">
               <div className="flex justify-between items-end px-2">
                 <div className="space-y-2">
-                  <h2 className="text-3xl md:text-5xl font-bold uppercase tracking-tighter leading-none skew-title">UNIT <span className="text-[#007AFF]">REGISTRY.</span></h2>
-                  <p className="tactile-label !text-slate-300">AUTHORIZED SECTOR ASSETS / LIVE DATABASE</p>
+                  <h2 className="text-3xl md:text-5xl font-bold uppercase tracking-tighter leading-none skew-title">POPULAR <span className="text-[#007AFF]">SERVICES.</span></h2>
+                  <p className="tactile-label !text-slate-300">HIGH-RATED OPTIONS / READY TO BOOK</p>
                 </div>
                 <Link href="/services" className="tactile-label !text-[#007AFF] flex items-center gap-2 hover:underline">
-                  EXPLORE ALL <ArrowRight size={12} />
+                  VIEW ALL <ArrowRight size={12} />
                 </Link>
               </div>
 
@@ -130,7 +130,7 @@ export default function Home() {
                              </div>
                              <div className="flex items-center gap-2">
                                 <Star size={10} className="text-[#FFB800] fill-[#FFB800]" />
-                                <span className="tactile-label !text-slate-300">{item.rating} QUALITY</span>
+                                <span className="tactile-label !text-slate-300">{item.rating} RATED</span>
                              </div>
                           </div>
                        </div>
@@ -151,19 +151,19 @@ export default function Home() {
             <div className="absolute top-0 right-0 w-96 h-96 bg-[#007AFF]/20 blur-[120px] rounded-full" />
             
             <div className="space-y-4 relative z-10">
-              <span className="tactile-label !text-white/40 !tracking-[0.5em]">OPERATIONAL OVERRIDE V3.4</span>
+              <span className="tactile-label !text-white/40 !tracking-[0.5em]">FAST, VERIFIED SUPPORT</span>
               <h2 className="text-5xl md:text-8xl font-bold uppercase tracking-tighter text-white leading-[0.85] skew-title">
-                ELITE <br />
-                <span className="text-[#007AFF]">RESPONSE.</span>
+                GET HELP <br />
+                <span className="text-[#007AFF]">FASTER.</span>
               </h2>
             </div>
             
             <p className="tactile-label !text-white/30 !tracking-widest max-w-sm mx-auto">
-              Verified multi-sector dispatch hub for critical infrastructure maintenance.
+              Join a trusted service platform built for homes, teams, and growing businesses.
             </p>
             
             <Link href="/register" className="inline-flex items-center justify-center bg-white text-black h-20 px-16 rounded-3xl font-bold text-[10px] uppercase tracking-[0.3em] hover:bg-[#F8F9FA] active:scale-95 transition-all relative z-10">
-              AUTHORIZE ACCESS
+              CREATE ACCOUNT
             </Link>
          </div>
       </section>

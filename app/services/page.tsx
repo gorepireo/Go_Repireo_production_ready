@@ -14,21 +14,21 @@ import Link from 'next/link';
 const PATHS = [
   { 
     id: 'service', 
-    name: 'Service', 
-    desc: 'Repairs, diagnostics, and operational maintenance for existing systems.', 
+    name: 'Repair & Maintenance', 
+    desc: 'Get fast diagnostics, expert repairs, and ongoing care for systems you already use.', 
     link: '/services/service',
     icon: Wrench,
     color: '#007AFF',
-    tag: 'MAINTENANCE'
+    tag: 'FAST SUPPORT'
   },
   { 
     id: 'installation', 
-    name: 'Service & Installation', 
-    desc: 'Bespoke deployment of new hardware units with professional logistics.', 
+    name: 'New Installation', 
+    desc: 'Plan and install new equipment with trained specialists and end-to-end coordination.', 
     link: '/services/installation',
     icon: Zap,
     color: '#FFB800',
-    tag: 'DEPLOYMENT'
+    tag: 'SETUP'
   }
 ];
 
@@ -41,15 +41,15 @@ export default function ServicesPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-4xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] skew-title">
-              SERVICE <br />
-              <span className="text-[#007AFF]">PATHS.</span>
+              CHOOSE YOUR <br />
+              <span className="text-[#007AFF]">SERVICE.</span>
             </h1>
              <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-xl shadow-black/5 rotate-3">
                 <LayoutGrid className="w-8 h-8 text-[#007AFF]" />
              </div>
           </div>
           <p className="tactile-label !text-slate-400 max-w-sm tracking-[0.2em]">
-            Select your tactical operations protocol to initialize provisioning.
+            Tell us what you need and we will connect you with the right verified expert.
           </p>
         </div>
 
@@ -86,18 +86,18 @@ export default function ServicesPage() {
 
         {/* Global Support Callout */}
         <div className="king-card bg-[#007AFF] text-white p-12 text-center mt-12 space-y-6">
-           <h4 className="text-2xl font-black uppercase tracking-tighter">Need Bespoke Provisioning?</h4>
+           <h4 className="text-2xl font-black uppercase tracking-tighter">Need a custom service plan?</h4>
            <div className="flex justify-center gap-8 py-4">
               <div className="flex items-center gap-2">
                  <ShieldCheck size={14} className="opacity-50" />
-                 <span className="text-[9px] font-black uppercase tracking-widest text-white/50">Secure Protocol</span>
+                 <span className="text-[9px] font-black uppercase tracking-widest text-white/50">Secure Booking</span>
               </div>
               <div className="flex items-center gap-2">
                  <Activity size={14} className="opacity-50" />
                  <span className="text-[9px] font-black uppercase tracking-widest text-white/50">Live Support</span>
               </div>
            </div>
-           <button className="bg-white text-black px-10 py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] shadow-2xl transition-all active:scale-95 hover:bg-slate-100">Contact Terminal</button>
+           <button className="bg-white text-black px-10 py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] shadow-2xl transition-all active:scale-95 hover:bg-slate-100">Talk to an Expert</button>
         </div>
 
       </div>
