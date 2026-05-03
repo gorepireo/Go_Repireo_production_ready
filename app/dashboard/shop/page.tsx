@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit, Trash2, Package, DollarSign, ShoppingBag, X, Tag, Info, ArrowUpRight } from 'lucide-react';
 
 function ShopkeeperDashboardContent() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -15,16 +15,24 @@ function ShopkeeperDashboardContent() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (!user) return;
-      const { data } = await insforge.database
-        .from('products')
-        .select('*')
-        .eq('shop_id', user.id);
-      if (data) setProducts(data);
-      setLoading(false);
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const { data } = await insforge.database
+          .from('products')
+          .select('*')
+          .eq('shop_id', user.id);
+        if (data) setProducts(data);
+      } catch (err) {
+        console.error('Failed to load products', err);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchProducts();
-  }, [user]);
+    if (!authLoading) fetchProducts();
+  }, [user, authLoading]);
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();

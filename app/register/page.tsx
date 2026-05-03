@@ -150,7 +150,7 @@ export default function Register() {
       if (verifyData?.user) {
         const userId = verifyData.user.id;
 
-        const isAdmin = formData.email === 'Ansh123456789' || formData.email === 'Ansh123456789@neafer.pro';
+        const isAdmin = formData.email === 'gorepireo@gmail.com';
         const finalRole = isAdmin ? 'admin' : role;
         const finalStatus = isAdmin ? 'active' : (role === 'user' ? 'active' : 'pending_approval');
 
@@ -360,6 +360,57 @@ export default function Register() {
                   </div>
                 ))}
               </div>
+
+              {role === 'shopkeeper' && (
+                <div className="space-y-2">
+                  <label className="tactile-label ml-2">Shop Name</label>
+                  <input
+                    required
+                    type="text"
+                    name="shopName"
+                    value={formData.shopName}
+                    onChange={handleInputChange}
+                    className="w-full h-14 bg-black/[0.02] px-5 rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none"
+                    placeholder="Your shop name"
+                  />
+                </div>
+              )}
+
+              {role === 'worker' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="tactile-label ml-2">Service Category</label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full h-14 bg-black/[0.02] px-5 rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none"
+                    >
+                      <option value="">Select category</option>
+                      <option value="Plumbing">Plumbing</option>
+                      <option value="Electrical">Electrical</option>
+                      <option value="HVAC">HVAC / AC</option>
+                      <option value="Carpentry">Carpentry</option>
+                      <option value="Painting">Painting</option>
+                      <option value="General">General Repairs</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="tactile-label ml-2">Years of Experience</label>
+                    <input
+                      type="number"
+                      name="experience"
+                      value={formData.experience}
+                      onChange={handleInputChange}
+                      required
+                      min="0"
+                      className="w-full h-14 bg-black/[0.02] px-5 rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none"
+                      placeholder="e.g. 3"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6">
                 <div className="space-y-2">
