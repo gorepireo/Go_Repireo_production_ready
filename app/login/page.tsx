@@ -39,9 +39,31 @@ function LoginForm() {
       if (loginError) throw loginError;
 
       if (data?.user) {
-        const { data: profileData } = await insforge.auth.getProfile(data.user.id);
-        const role = (profileData as any)?.role || 'user';
-        const status = (profileData as any)?.status || 'active';
+        // First try to get role from the users table (primary source of truth)
+        let role = 'user';
+        let status = 'active';
+
+        const { data: usersRow } = await insforge.database
+          .from('users')
+          .select('role, status')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (usersRow) {
+          role = (usersRow as any).role || 'user';
+          status = (usersRow as any).status || 'active';
+        } else {
+          // Fallback to auth profile
+          const { data: profileData } = await insforge.auth.getProfile(data.user.id);
+          role = (profileData as any)?.role || 'user';
+          status = (profileData as any)?.status || 'active';
+        }
+
+        // Special override: company email is always admin
+        if (email === 'gorepireo@gmail.com') {
+          role = 'admin';
+          status = 'active';
+        }
 
         if (status === 'pending_approval' && (role === 'worker' || role === 'shopkeeper')) {
           setError('Account pending approval. You will be notified once your profile is verified.');
