@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { insforge } from '@/lib/insforge';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Briefcase, Store, CheckCircle2, MapPin, Navigation, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
+import { User, Briefcase, Store, CheckCircle2, MapPin, Navigation, Lock, ShieldCheck, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 type Role = 'user' | 'worker' | 'shopkeeper';
@@ -35,6 +35,7 @@ export default function Register() {
   });
 
   const [detecting, setDetecting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const lookupPincode = async () => {
@@ -110,6 +111,29 @@ export default function Register() {
     setError('');
 
     try {
+      if (role === 'shopkeeper') {
+        const { error: shopError } = await insforge.database.from('shop_applications').insert({
+          shop_name: formData.shopName,
+          owner_name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.area,
+          password: formData.password,
+          status: 'pending',
+          pincode: formData.pincode,
+          state: formData.state,
+          district: formData.district,
+          area: formData.area,
+          lat: formData.lat,
+          lng: formData.lng
+        });
+        if (shopError) throw shopError;
+        
+        alert('Shop application submitted successfully! We will contact you soon.');
+        router.push('/login');
+        return;
+      }
+
       const { data, error: signUpError } = await insforge.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -349,14 +373,25 @@ export default function Register() {
                 ].map((field) => (
                   <div key={field.name} className="space-y-2">
                     <label className="tactile-label ml-2">{field.label}</label>
-                    <input 
-                      required 
-                      type={field.type} 
-                      name={field.name} 
-                      onChange={handleInputChange} 
-                      className="w-full h-14 bg-black/[0.02] px-5 rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none" 
-                      placeholder={field.placeholder} 
-                    />
+                    <div className="relative">
+                      <input 
+                        required 
+                        type={field.name === 'password' && showPassword ? 'text' : field.type} 
+                        name={field.name} 
+                        onChange={handleInputChange} 
+                        className={`w-full h-14 bg-black/[0.02] pl-5 ${field.name === 'password' ? 'pr-12' : 'pr-5'} rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none`} 
+                        placeholder={field.placeholder} 
+                      />
+                      {field.name === 'password' && (
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

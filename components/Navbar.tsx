@@ -22,6 +22,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [currentSector, setCurrentSector] = useState(profile?.address?.district || 'Universal Sector');
+  const isSpecialUser = ['shopkeeper', 'worker', 'admin'].includes(profile?.role || '');
 
   // Handle scroll state for navbar styling
   useEffect(() => {
@@ -77,18 +78,20 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-12 ml-12">
-              {[
-                { name: 'Supply', path: '/shop' },
-                { name: 'Services', path: '/services' },
-                { name: 'Radar', path: '/track' }
-              ].map(item => (
-                <Link key={item.name} href={item.path} className="text-[10px] font-black uppercase tracking-[0.4em] text-black/30 hover:text-black transition-all relative group">
-                  {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-black rounded-full transition-all duration-500 group-hover:w-full opacity-0 group-hover:opacity-100" />
-                </Link>
-              ))}
-            </div>
+            {!isSpecialUser && (
+              <div className="hidden lg:flex items-center gap-12 ml-12">
+                {[
+                  { name: 'Supply', path: '/shop' },
+                  { name: 'Services', path: '/services' },
+                  { name: 'Radar', path: '/track' }
+                ].map(item => (
+                  <Link key={item.name} href={item.path} className="text-[10px] font-black uppercase tracking-[0.4em] text-black/30 hover:text-black transition-all relative group">
+                    {item.name}
+                    <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-black rounded-full transition-all duration-500 group-hover:w-full opacity-0 group-hover:opacity-100" />
+                  </Link>
+                ))}
+              </div>
+            )}
 
             {/* Right Controls */}
             <div className="flex items-center gap-3 md:gap-4 ml-auto lg:ml-0 shrink-0">
@@ -153,31 +156,33 @@ export default function Navbar() {
               </div>
 
               {/* Navigation Links */}
-              <div className="p-8 md:p-10 space-y-10">
-                <div className="space-y-4">
-                  <h3 className="text-[9px] font-black uppercase tracking-[0.5em] text-black/10 pb-2 ml-4 text-left">Deployments</h3>
-                  {[
-                    { name: 'Supply (Marketplace)', path: '/shop', icon: ShoppingCart },
-                    { name: 'Services (Ops Hub)', path: '/services', icon: LayoutGrid },
-                    { name: 'Radar (Tracking)', path: '/track', icon: Navigation },
-                  ].map(item => (
-                    <Link
-                      key={item.name}
-                      href={item.path}
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center justify-between group p-6 bg-white hover:bg-black transition-all rounded-[2.2rem] shadow-sm hover:shadow-xl"
-                    >
-                      <div className="flex items-center gap-5">
-                        <div className="w-10 h-10 bg-black/[0.03] group-hover:bg-white/10 rounded-xl flex items-center justify-center transition-colors">
-                          <item.icon className="w-4 h-4 text-black group-hover:text-white" />
+              {!isSpecialUser && (
+                <div className="p-8 md:p-10 space-y-10">
+                  <div className="space-y-4">
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.5em] text-black/10 pb-2 ml-4 text-left">Deployments</h3>
+                    {[
+                      { name: 'Supply (Marketplace)', path: '/shop', icon: ShoppingCart },
+                      { name: 'Services (Ops Hub)', path: '/services', icon: LayoutGrid },
+                      { name: 'Radar (Tracking)', path: '/track', icon: Navigation },
+                    ].map(item => (
+                      <Link
+                        key={item.name}
+                        href={item.path}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center justify-between group p-6 bg-white hover:bg-black transition-all rounded-[2.2rem] shadow-sm hover:shadow-xl"
+                      >
+                        <div className="flex items-center gap-5">
+                          <div className="w-10 h-10 bg-black/[0.03] group-hover:bg-white/10 rounded-xl flex items-center justify-center transition-colors">
+                            <item.icon className="w-4 h-4 text-black group-hover:text-white" />
+                          </div>
+                          <h4 className="text-[13px] font-black uppercase tracking-tight text-black group-hover:text-white">{item.name}</h4>
                         </div>
-                        <h4 className="text-[13px] font-black uppercase tracking-tight text-black group-hover:text-white">{item.name}</h4>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-black/10 group-hover:text-white/40" />
-                    </Link>
-                  ))}
+                        <ChevronRight className="w-5 h-5 text-black/10 group-hover:text-white/40" />
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Auth Protocol Footer */}
               <div className="mt-auto p-8 bg-white rounded-t-[3.5rem] border-t border-black/[0.02]">

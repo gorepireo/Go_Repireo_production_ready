@@ -48,8 +48,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data, error } = await insforge.auth.getCurrentUser();
       if (data?.user) {
         setUser(data.user);
-        const { data: profileData } = await insforge.auth.getProfile(data.user.id);
-        setProfile(profileData as any);
+        
+        let finalProfile: any = null;
+        
+        // Check users table first as primary source of truth
+        const { data: userData } = await insforge.database
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .maybeSingle();
+          
+        if (userData) {
+           finalProfile = {
+             ...userData,
+             display_name: userData.name || userData.display_name,
+           };
+           // Special override: company email is always admin
+           if (data.user.email === 'gorepireo@gmail.com') {
+             finalProfile.role = 'admin';
+           }
+        } else {
+          // Fallback to auth profile
+          const { data: profileData } = await insforge.auth.getProfile(data.user.id);
+          finalProfile = profileData;
+          if (data.user.email === 'gorepireo@gmail.com') {
+             if (finalProfile) finalProfile.role = 'admin';
+          }
+        }
+
+        setProfile(finalProfile);
       } else {
         setUser(null);
         setProfile(null);
