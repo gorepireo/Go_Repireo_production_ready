@@ -9,9 +9,15 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { profile } = useAuth();
+
+  const isSpecialUser = ['shopkeeper', 'worker', 'admin'].includes(profile?.role || '');
+
+  if (isSpecialUser) return null;
 
   const navItems = [
     { name: 'Hub', path: '/', icon: LayoutGrid },

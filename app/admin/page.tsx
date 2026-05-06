@@ -22,14 +22,27 @@ type Application = {
   created_at?: string;
 };
 
-type Tab = 'applications' | 'add';
+type WorkerApp = {
+  id: string;
+  app_id: string;
+  from_name: string;
+  email: string;
+  mobile: string;
+  service: string;
+  experience: number;
+  address: string;
+  user_status: string;
+};
+
+type Tab = 'shops' | 'workers' | 'add';
 
 export default function AdminPanel() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
 
-  const [tab, setTab] = useState<Tab>('applications');
+  const [tab, setTab] = useState<Tab>('shops');
   const [applications, setApplications] = useState<Application[]>([]);
+  const [workers, setWorkers] = useState<WorkerApp[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -54,21 +67,30 @@ export default function AdminPanel() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const fetchApplications = async () => {
+  const fetchData = async () => {
     setLoadingApps(true);
     try {
-      const { data, error } = await insforge.database
-        .from('shop_applications')
-        .select('*');
-      if (!error && data) setApplications(data as Application[]);
+      const { data: shopData } = await insforge.database.from('shop_applications').select('*');
+      if (shopData) setApplications(shopData as Application[]);
+
+      const { data: workerData } = await insforge.database.from('worker_applications').select('*');
+      const { data: userData } = await insforge.database.from('users').select('id, status').eq('role', 'worker');
+      
+      if (workerData && userData) {
+        const merged = (workerData as any[]).map(w => {
+          const user = userData.find(u => u.id === w.app_id);
+          return { ...w, user_status: user ? user.status : 'pending_approval' };
+        });
+        setWorkers(merged);
+      }
     } catch (err) {
-      console.error('Failed to fetch applications', err);
+      console.error('Failed to fetch data', err);
     } finally {
       setLoadingApps(false);
     }
   };
 
-  useEffect(() => { fetchApplications(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleApprove = async (app: Application) => {
     setActionLoading(app.id);
@@ -80,12 +102,62 @@ export default function AdminPanel() {
         .eq('id', app.id);
       if (appErr) throw appErr;
 
-      // 2. Update user's status to active in users table (matched by email)
-      const { error: userErr } = await insforge.database
+      // 2. Check if user exists
+      let { data: existingUser } = await insforge.database
         .from('users')
-        .update({ status: 'active' })
-        .eq('email', app.email);
-      if (userErr) throw userErr;
+        .select('id')
+        .eq('email', app.email)
+        .maybeSingle();
+
+      let userId = (existingUser as any)?.id;
+
+      // If user does not exist, create Auth user and Users table entry
+      if (!userId && app.password) {
+        const { data: signUpData, error: signUpError } = await insforge.auth.signUp({
+          email: app.email,
+          password: app.password,
+          name: app.owner_name,
+        });
+        
+        if (signUpError && !signUpError.message.includes('already registered')) throw signUpError;
+        
+        userId = signUpData?.user?.id;
+        
+        if (userId) {
+          await insforge.database.from('users').upsert({
+            id: userId,
+            email: app.email,
+            name: app.owner_name,
+            role: 'shopkeeper',
+            phone: app.phone,
+            status: 'active',
+            email_verified: true,
+          });
+        }
+      } else if (userId) {
+        // Update existing user status
+        await insforge.database
+          .from('users')
+          .update({ status: 'active', role: 'shopkeeper' })
+          .eq('id', userId);
+      }
+
+      if (!userId) throw new Error("Could not determine user ID for the shop owner.");
+
+      // 3. Transfer data to shops table
+      const { error: shopInsertErr } = await insforge.database.from('shops').insert({
+        owner_id: userId,
+        name: app.shop_name,
+        owner_name: app.owner_name,
+        email: app.email,
+        phone: app.phone,
+        address: app.address,
+        status: 'active'
+      });
+      
+      if (shopInsertErr && !shopInsertErr.message.includes('duplicate')) {
+         throw shopInsertErr;
+      }
 
       setApplications(prev =>
         prev.map(a => a.id === app.id ? { ...a, status: 'approved' } : a)
@@ -111,6 +183,55 @@ export default function AdminPanel() {
         prev.map(a => a.id === app.id ? { ...a, status: 'rejected' } : a)
       );
       showToast(`${app.owner_name}'s application rejected.`, 'error');
+    } catch (err: any) {
+      showToast(err.message || 'Rejection failed', 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleApproveWorker = async (worker: WorkerApp) => {
+    setActionLoading(worker.id);
+    try {
+      // 1. Update user status to active
+      const { error } = await insforge.database.from('users').update({ status: 'active' }).eq('id', worker.app_id);
+      if (error) throw error;
+      
+      // 2. Transfer data to workers table
+      const { error: workerInsertErr } = await insforge.database.from('workers').insert({
+        app_id: worker.app_id,
+        user_id: worker.app_id,
+        from_name: worker.from_name,
+        email: worker.email,
+        mobile: worker.mobile,
+        service: worker.service,
+        experience: worker.experience,
+        address: worker.address,
+        status: 'offline',
+        login_access: true,
+        role: 'worker'
+      });
+
+      if (workerInsertErr && !workerInsertErr.message.includes('duplicate')) {
+        throw workerInsertErr;
+      }
+
+      setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, user_status: 'active' } : w));
+      showToast(`${worker.from_name}'s application approved!`);
+    } catch (err: any) {
+      showToast(err.message || 'Approval failed', 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRejectWorker = async (worker: WorkerApp) => {
+    setActionLoading(worker.id + '_reject');
+    try {
+      const { error } = await insforge.database.from('users').update({ status: 'rejected' }).eq('id', worker.app_id);
+      if (error) throw error;
+      setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, user_status: 'rejected' } : w));
+      showToast(`${worker.from_name}'s application rejected.`, 'error');
     } catch (err: any) {
       showToast(err.message || 'Rejection failed', 'error');
     } finally {
@@ -168,9 +289,20 @@ export default function AdminPanel() {
         status: 'approved',
       });
 
+      // 4. Insert into shops
+      await insforge.database.from('shops').insert({
+        owner_id: userId,
+        name: addForm.shop_name,
+        owner_name: addForm.owner_name,
+        email: addForm.email,
+        phone: addForm.phone,
+        address: addForm.address,
+        status: 'active'
+      });
+
       showToast(`Shopkeeper ${addForm.owner_name} created and approved!`);
       setAddForm({ shop_name: '', owner_name: '', email: '', phone: '', address: '', password: '' });
-      fetchApplications();
+      fetchData();
     } catch (err: any) {
       showToast(err.message || 'Failed to add shopkeeper', 'error');
     } finally {
@@ -178,9 +310,9 @@ export default function AdminPanel() {
     }
   };
 
-  const pending = applications.filter(a => a.status === 'pending');
-  const approved = applications.filter(a => a.status === 'approved');
-  const rejected = applications.filter(a => a.status === 'rejected');
+  const currentPending = tab === 'shops' ? applications.filter(a => a.status === 'pending') : (tab === 'workers' ? workers.filter(w => w.user_status === 'pending_approval') : []);
+  const currentApproved = tab === 'shops' ? applications.filter(a => a.status === 'approved') : (tab === 'workers' ? workers.filter(w => w.user_status === 'active') : []);
+  const currentRejected = tab === 'shops' ? applications.filter(a => a.status === 'rejected') : (tab === 'workers' ? workers.filter(w => w.user_status === 'rejected') : []);
 
   if (authLoading) return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
@@ -221,7 +353,7 @@ export default function AdminPanel() {
             <p className="tactile-label !text-slate-400">Signed in as {user?.email}</p>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={fetchApplications} className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md hover:bg-black hover:text-white transition-all">
+            <button onClick={fetchData} className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md hover:bg-black hover:text-white transition-all">
               <RefreshCw size={18} />
             </button>
             <button onClick={signOut} className="flex items-center gap-3 px-6 h-12 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#FF3B30] transition-all">
@@ -233,9 +365,9 @@ export default function AdminPanel() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: 'Pending', count: pending.length, color: '#FFB800', Icon: Clock },
-            { label: 'Approved', count: approved.length, color: '#34C759', Icon: CheckCircle2 },
-            { label: 'Rejected', count: rejected.length, color: '#FF3B30', Icon: XCircle },
+            { label: 'Pending', count: currentPending.length, color: '#FFB800', Icon: Clock },
+            { label: 'Approved', count: currentApproved.length, color: '#34C759', Icon: CheckCircle2 },
+            { label: 'Rejected', count: currentRejected.length, color: '#FF3B30', Icon: XCircle },
           ].map(({ label, count, color, Icon }) => (
             <div key={label} className="king-card bg-white !p-6 md:!p-10 flex flex-col gap-4">
               <Icon size={24} style={{ color }} />
@@ -249,7 +381,7 @@ export default function AdminPanel() {
 
         {/* Tabs */}
         <div className="flex gap-3">
-          {([['applications', 'Applications'], ['add', 'Add Shopkeeper']] as [Tab, string][]).map(([t, label]) => (
+          {([['shops', 'Shop Applications'], ['workers', 'Worker Applications'], ['add', 'Add Shopkeeper']] as [Tab, string][]).map(([t, label]) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -260,8 +392,8 @@ export default function AdminPanel() {
           ))}
         </div>
 
-        {/* Applications Tab */}
-        {tab === 'applications' && (
+        {/* Shops Tab */}
+        {tab === 'shops' && (
           <div className="space-y-8">
             {loadingApps ? (
               <div className="flex justify-center py-20">
@@ -332,6 +464,92 @@ export default function AdminPanel() {
                             className="flex items-center gap-2 px-6 h-12 bg-black/[0.04] text-black/60 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#FF3B30] hover:text-white transition-all disabled:opacity-50"
                           >
                             {actionLoading === app.id + '_reject' ? (
+                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : <XCircle size={14} />}
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Workers Tab */}
+        {tab === 'workers' && (
+          <div className="space-y-8">
+            {loadingApps ? (
+              <div className="flex justify-center py-20">
+                <div className="w-10 h-10 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : workers.length === 0 ? (
+              <div className="king-card py-24 text-center flex flex-col items-center">
+                <Users className="w-12 h-12 text-black/10 mb-4" />
+                <h3 className="text-2xl font-black uppercase tracking-tighter text-black/20">No Applications</h3>
+                <p className="tactile-label mt-2">No worker applications have been submitted yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {workers.map((worker) => (
+                  <motion.div
+                    key={worker.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="king-card bg-white !p-6 md:!p-8"
+                  >
+                    <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between">
+                      <div className="space-y-3 flex-1">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <h3 className="text-xl font-black uppercase tracking-tight">{worker.from_name}</h3>
+                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                            worker.user_status === 'pending_approval' ? 'bg-yellow-50 text-yellow-600' :
+                            worker.user_status === 'active' ? 'bg-green-50 text-green-600' :
+                            'bg-red-50 text-red-500'
+                          }`}>
+                            {worker.user_status === 'pending_approval' ? 'pending' : worker.user_status}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div>
+                            <p className="tactile-label mb-1">Service</p>
+                            <p className="text-sm font-bold">{worker.service}</p>
+                          </div>
+                          <div>
+                            <p className="tactile-label mb-1">Experience</p>
+                            <p className="text-sm font-bold">{worker.experience} Years</p>
+                          </div>
+                          <div>
+                            <p className="tactile-label mb-1">Mobile</p>
+                            <p className="text-sm font-bold">{worker.mobile || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="tactile-label mb-1">Email</p>
+                            <p className="text-sm font-bold truncate">{worker.email || '—'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {worker.user_status === 'pending_approval' && (
+                        <div className="flex gap-3 shrink-0">
+                          <button
+                            onClick={() => handleApproveWorker(worker)}
+                            disabled={actionLoading === worker.id}
+                            className="flex items-center gap-2 px-6 h-12 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#34C759] transition-all disabled:opacity-50"
+                          >
+                            {actionLoading === worker.id ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : <CheckCircle2 size={14} />}
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectWorker(worker)}
+                            disabled={actionLoading === worker.id + '_reject'}
+                            className="flex items-center gap-2 px-6 h-12 bg-black/[0.04] text-black/60 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#FF3B30] hover:text-white transition-all disabled:opacity-50"
+                          >
+                            {actionLoading === worker.id + '_reject' ? (
                               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                             ) : <XCircle size={14} />}
                             Reject
