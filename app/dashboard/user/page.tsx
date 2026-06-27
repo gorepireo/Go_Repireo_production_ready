@@ -3,12 +3,12 @@
 import { useState, useEffect, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Navigation, ShieldCheck, Activity } from 'lucide-react';
+import { ShoppingBag, CheckCircle2, CalendarDays, User as UserIcon, Activity, ChevronRight, ArrowRight, Plus, ChevronUp, Settings } from 'lucide-react';
 import Link from 'next/link';
+import Avatar from '@/components/Avatar';
 
 function UserDashboardContent() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalSpent, setTotalSpent] = useState(0);
@@ -35,6 +35,13 @@ function UserDashboardContent() {
     fetchOrders();
   }, [user]);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const completedOrdersCount = orders.filter(o => o.status === 'delivered').length;
+  const completionPercentage = orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0;
+
   if (loading) return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
       <div className="w-10 h-10 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
@@ -42,110 +49,153 @@ function UserDashboardContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-[#0F172A] pb-32">
-      <div className="max-w-4xl mx-auto px-4 md:px-6 pt-12 space-y-10">
-        
-        {/* Operational Portal Header */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-24 pt-6">
+      
+      {/* Hero Section */}
+      <section className="px-4 mb-6 relative">
+        <div className="flex items-start justify-between pt-4">
+          <div className="flex items-center gap-4">
+            <Avatar src={profile?.avatar_url} name={profile?.display_name || profile?.email || 'User'} size={56} className="shadow-lg border-2 border-white" />
             <div>
-              <h1 className="text-4xl md:text-7xl font-bold uppercase tracking-tighter leading-none skew-title">
-                CLIENT <br />
+              <h1 className="text-3xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629] uppercase">
+                {profile?.display_name || 'CLIENT'}<br />
                 <span className="text-[#007AFF]">PORTAL.</span>
               </h1>
-              <p className="tactile-label tracking-[0.3em] mt-2">Active Service Interface</p>
-            </div>
-            <div className="w-12 h-12 bg-[#007AFF]/5 rounded-xl border border-[#007AFF]/10 flex items-center justify-center">
-              <Activity className="w-6 h-6 text-[#007AFF] animate-pulse" />
+              <p className="text-xs text-slate-500 mt-2">Manage your services and account.</p>
             </div>
           </div>
+          
+          <Link href="/dashboard/user/settings" className="w-12 h-12 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all text-slate-400 hover:text-slate-900">
+            <Settings className="w-5 h-5" />
+          </Link>
         </div>
+      </section>
 
-        {/* Hero Section - Tactical Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="king-card !bg-[#007AFF] !border-none text-white overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10">
-              <ShieldCheck size={120} />
+      {/* Wallet Balance Card */}
+      <section className="px-4 mb-6">
+         <div className="relative bg-[#007AFF] rounded-3xl p-6 overflow-hidden min-h-[180px] shadow-lg shadow-blue-500/30 flex flex-col justify-between">
+            {/* Coming Soon Overlay Tape */}
+            <div className="absolute inset-0 z-20 bg-white/40 backdrop-blur-[2px] flex items-center justify-center overflow-hidden rounded-3xl pointer-events-auto">
+               <div className="bg-[#FF9500] text-white px-16 py-2.5 -rotate-12 shadow-2xl border-y-[4px] border-dashed border-[#CC7700] transform scale-110 w-[150%] text-center flex items-center justify-center">
+                 <span className="text-xl sm:text-2xl font-black uppercase tracking-widest drop-shadow-md whitespace-nowrap opacity-95">Coming Soon</span>
+               </div>
             </div>
-            <div className="relative z-10">
-              <p className="tactile-label !text-white/60 mb-1">Total Account Spend</p>
-              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter">₹{totalSpent.toFixed(2)}</h2>
-              <div className="flex items-center gap-2 mt-6">
-                <span className="px-3 py-1 bg-white/20 rounded-full tactile-label !text-white font-bold">Premium Tier</span>
-              </div>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="king-card flex flex-col justify-between">
-              <p className="tactile-label">Active Units</p>
-              <h3 className="tactile-metric">{orders.length}</h3>
+            {/* Background Wave Effect (CSS) */}
+            <div className="absolute bottom-0 right-0 left-0 h-32 opacity-20 pointer-events-none overflow-hidden">
+               <svg viewBox="0 0 500 150" preserveAspectRatio="none" className="h-full w-full">
+                 <path d="M-6.49,60.69 C157.16,-52.79 341.68,141.60 500.00,49.98 L500.00,150.00 L0.00,150.00 Z" stroke="none" fill="#ffffff"></path>
+               </svg>
             </div>
-            <div className="king-card flex flex-col justify-between">
-              <p className="tactile-label">Signal State</p>
-              <h3 className="tactile-metric text-green-500">98%</h3>
+
+            <div className="relative z-10 opacity-60">
+               <div className="flex items-center gap-2 mb-2">
+                 <span className="text-[9px] font-bold text-white/90 uppercase tracking-widest">WALLET BALANCE</span>
+                 <span className="bg-blue-600/50 text-white text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full backdrop-blur-sm">AVAILABLE</span>
+               </div>
+               <h2 className="text-5xl font-black text-white tracking-tighter mb-4">₹{totalSpent.toFixed(2)}</h2>
+               
+               <button disabled className="bg-blue-600 text-white px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 w-max cursor-not-allowed">
+                  ADD MONEY <Plus size={12} />
+               </button>
             </div>
-            <div className="king-card flex flex-col justify-between">
-              <p className="tactile-label">Latency</p>
-              <h3 className="tactile-metric">12ms</h3>
+
+            <div className="absolute -right-4 -bottom-4 w-44 h-44 z-0 pointer-events-none drop-shadow-2xl flex items-center justify-center opacity-60">
+               <img src="/wallet_shield_3d.png" alt="Secure Wallet" className="w-full h-full object-contain" />
             </div>
-            <div className="king-card flex flex-col justify-between">
-              <p className="tactile-label">Sector</p>
-              <h3 className="tactile-metric">7A-X</h3>
+         </div>
+      </section>
+
+      {/* Stats Grid (2x2) */}
+      <section className="px-4 mb-8">
+         <div className="grid grid-cols-2 gap-3">
+            {/* Total Orders */}
+            <div className="bg-white rounded-3xl p-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                   <ShoppingBag className="w-5 h-5 text-[#007AFF] fill-current opacity-20 absolute" />
+                   <ShoppingBag className="w-5 h-5 text-[#007AFF]" />
+                 </div>
+                 <div>
+                   <span className="block text-[7px] font-black uppercase tracking-widest text-slate-400 mb-0.5">TOTAL ORDERS</span>
+                   <span className="block text-xl font-black text-slate-900 leading-none">{orders.length}</span>
+                 </div>
+               </div>
+               <ChevronRight size={14} className="text-slate-300" />
             </div>
-          </div>
-        </div>
 
-        {/* Transmission Feed (Orders) */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-             <h3 className="tactile-label !text-slate-400">Service Activity</h3>
-             <div className="h-px flex-1 bg-black/[0.03] mx-4" />
-          </div>
+            {/* Completed Orders */}
+            <div className="bg-white rounded-3xl p-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
+                   <CheckCircle2 className="w-5 h-5 text-green-500" />
+                 </div>
+                 <div>
+                   <span className="block text-[7px] font-black uppercase tracking-widest text-slate-400 mb-0.5">COMPLETED ORDERS</span>
+                   <span className="block text-xl font-black text-green-500 leading-none">{completionPercentage}%</span>
+                 </div>
+               </div>
+               <ChevronRight size={14} className="text-slate-300" />
+            </div>
 
-          <div className="grid gap-3">
-            <AnimatePresence>
-              {orders.map((order, i) => (
-                <motion.div
-                  key={order.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="king-card !p-4 group flex items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-10 h-10 bg-black/[0.03] rounded-lg flex items-center justify-center shrink-0 shadow-xs">
-                      <Package className="w-5 h-5 text-[#007AFF]" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[8px] font-bold bg-[#007AFF]/10 text-[#007AFF] px-2 py-0.5 rounded-full uppercase tracking-widest">
-                          {order.status}
-                        </span>
-                        <span className="tactile-label font-mono !text-slate-300">#{order.id.slice(0, 6)}</span>
-                      </div>
-                      <h4 className="text-sm font-bold uppercase tracking-tight truncate">Service Request</h4>
-                    </div>
-                  </div>
-                  
-                  <Link href={`/track?id=${order.id}`} className="btn-primary !py-2.5 !px-4 !text-[8px] md:!text-[10px] shrink-0">
-                    STATUS
-                  </Link>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+            {/* Member Since */}
+            <div className="bg-white rounded-3xl p-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center">
+                   <CalendarDays className="w-5 h-5 text-[#007AFF]" />
+                 </div>
+                 <div>
+                   <span className="block text-[7px] font-black uppercase tracking-widest text-slate-400 mb-0.5">MEMBER SINCE</span>
+                   <span className="block text-lg font-black text-slate-900 leading-none">NEW</span>
+                 </div>
+               </div>
+               <ChevronRight size={14} className="text-slate-300" />
+            </div>
 
-            {orders.length === 0 && (
-              <div className="king-card py-20 text-center flex flex-col items-center gap-4 border-dashed border-slate-200">
-                <p className="tactile-label">No active services identified.</p>
-                <Link href="/services" className="btn-primary !bg-black !from-black !to-slate-800 !py-3 !px-6 !text-[10px]">
-                  NEW REQUEST
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
+            {/* Client ID */}
+            <div className="bg-white rounded-3xl p-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                   <UserIcon className="w-5 h-5 text-purple-500" />
+                 </div>
+                 <div>
+                   <span className="block text-[7px] font-black uppercase tracking-widest text-slate-400 mb-0.5">CLIENT ID</span>
+                   <span className="block text-lg font-black text-slate-900 leading-none uppercase">{user?.id ? user.id.slice(0, 4) : 'N/A'}</span>
+                 </div>
+               </div>
+               <ChevronRight size={14} className="text-slate-300" />
+            </div>
+         </div>
+      </section>
 
-      </div>
+      {/* Service Requests */}
+      <section className="px-4 mb-10">
+         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-1">SERVICE REQUESTS</h3>
+         
+         {/* Mocking the Empty State as per the design requirement */}
+         <div className="bg-white rounded-[2rem] p-6 flex flex-col md:flex-row items-center md:items-start gap-6 shadow-[0_5px_20px_-5px_rgba(0,0,0,0.02)] border border-slate-100 relative overflow-hidden text-center md:text-left">
+            <div className="w-32 h-32 shrink-0 drop-shadow-xl relative z-10 flex items-center justify-center -ml-4 -mt-2">
+               <img src="/clipboard_3d.png" alt="Clipboard" className="w-full h-full object-contain mix-blend-multiply" />
+            </div>
+            
+            <div className="relative z-10 flex flex-col items-center md:items-start py-2">
+               <h4 className="text-sm font-black text-slate-900 tracking-tight mb-1">No active service requests</h4>
+               <p className="text-[10px] text-slate-500 mb-5 leading-relaxed">You don't have any active service requests.</p>
+               
+               <Link href="/services" className="bg-black text-white px-5 py-3 rounded-full text-[9px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-slate-800 transition-colors active:scale-95 shadow-md shadow-black/10">
+                  BOOK A SERVICE <ArrowRight size={12} />
+               </Link>
+            </div>
+         </div>
+      </section>
+
+      {/* Back to Top */}
+      <section className="flex flex-col items-center justify-center mb-8 mt-12">
+        <button onClick={scrollToTop} className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md shadow-slate-200/50 text-slate-400 active:scale-90 transition-transform mb-2">
+          <ChevronUp size={20} />
+        </button>
+        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">BACK TO TOP</span>
+      </section>
     </div>
   );
 }

@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { insforge } from '@/lib/insforge';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 
 // Dynamic import for Leaflet to prevent SSR issues
@@ -112,7 +111,6 @@ function StandardMapContent() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 relative overflow-hidden font-sans">
-      <Navbar />
       
       {/* Map Layer - Professional Google Tiles */}
       <div className="absolute inset-0 z-10 pointer-events-auto">

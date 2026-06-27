@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Briefcase, Store, CheckCircle2, MapPin, Navigation, Lock, ShieldCheck, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Navigation, Lock, ShieldCheck, ArrowRight, Eye, EyeOff, ArrowLeft, Bell, ChevronRight, Check, User, Mail, Phone, Flag, Building2, MapPin, Send } from 'lucide-react';
 import Link from 'next/link';
 
 type Role = 'user' | 'worker' | 'shopkeeper';
 
-export default function Register() {
+function RegisterForm() {
   const router = useRouter();
   const [role, setRole] = useState<Role>('user');
   const [step, setStep] = useState(1);
@@ -283,246 +283,369 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4 md:p-10 pb-20 md:pb-32">
-      <div className="max-w-4xl w-full space-y-10">
-        
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center p-2 shadow-2xl shadow-black/5 mx-auto transition-transform border border-black/[0.03]">
-               <img src="/logo.png" alt="Repireo" className="w-full h-full object-contain" />
-          </div>
-          <div className="space-y-1">
-            <h1 className="text-4xl md:text-7xl font-bold uppercase tracking-tighter skew-title">
-              Create <br />
-              <span className="text-[#007AFF]">Account.</span>
-            </h1>
-            <p className="tactile-label tracking-[0.4em] text-slate-400">Join Repireo Today</p>
-          </div>
-        </div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="king-card bg-white shadow-2xl !p-6 md:!p-12 space-y-10"
-        >
-          {/* Step Indicator */}
-          <div className="flex items-center justify-center gap-4">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full transition-all duration-500 ${step >= s ? 'bg-[#007AFF] w-6' : 'bg-slate-200'}`} />
-              </div>
-            ))}
-          </div>
-
-          {/* Step 1: Account Type */}
-          {step === 1 && (
-            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-10">
-              <div className="text-center">
-                 <h2 className="tactile-label !text-slate-400 text-sm">Step 1 of 3</h2>
-                 <p className="text-xl font-bold uppercase tracking-tight text-slate-800">Choose Account Type</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { id: 'user', title: 'Customer', icon: User, desc: 'Book services & shop' },
-                  { id: 'worker', title: 'Specialist', icon: Briefcase, desc: 'Offer your skills' },
-                  { id: 'shopkeeper', title: 'Merchant', icon: Store, desc: 'Manage your store' },
-                ].map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => setRole(r.id as Role)}
-                    className={`p-8 rounded-2xl transition-all text-center flex flex-col items-center gap-4 group relative ${
-                      role === r.id 
-                      ? 'bg-white shadow-xl' 
-                      : 'bg-black/[0.02] hover:bg-black/[0.04]'
-                    }`}
-                  >
-                    <div className={`p-4 rounded-xl ${role === r.id ? 'bg-[#007AFF] text-white' : 'bg-black/5 text-slate-300'} group-hover:scale-110 transition-transform`}>
-                      <r.icon size={24} />
-                    </div>
-                    <div>
-                       <h3 className="font-bold uppercase tracking-tight text-sm text-slate-800">{r.title}</h3>
-                       <p className={`tactile-label !lowercase !tracking-normal mt-1 ${role === r.id ? 'text-[#007AFF]' : 'text-slate-400'}`}>{r.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <button 
-                onClick={() => setStep(2)} 
-                className="btn-primary w-full h-14 !text-[10px]"
-              >
-                Continue
-              </button>
-            </motion.div>
-          )}
-
-          {/* Step 2: Details Form */}
-          {step === 2 && (
-            <motion.form initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} onSubmit={handleRegister} className="space-y-8">
-              <div className="text-center">
-                 <h2 className="tactile-label !text-slate-400 text-sm">Step 2 of 3</h2>
-                 <p className="text-xl font-bold uppercase tracking-tight text-slate-800">Your Details</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { label: 'Full Name', name: 'name', type: 'text', placeholder: 'Your full name' },
-                  { label: 'Email Address', name: 'email', type: 'email', placeholder: 'you@example.com' },
-                  { label: 'Phone Number', name: 'phone', type: 'text', placeholder: '+91 00000 00000' },
-                  { label: 'Password', name: 'password', type: 'password', placeholder: '••••••••' }
-                ].map((field) => (
-                  <div key={field.name} className="space-y-2">
-                    <label className="tactile-label ml-2">{field.label}</label>
-                    <div className="relative">
-                      <input 
-                        required 
-                        type={field.name === 'password' && showPassword ? 'text' : field.type} 
-                        name={field.name} 
-                        onChange={handleInputChange} 
-                        className={`w-full h-14 bg-black/[0.02] pl-5 ${field.name === 'password' ? 'pr-12' : 'pr-5'} rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none`} 
-                        placeholder={field.placeholder} 
-                      />
-                      {field.name === 'password' && (
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {role === 'shopkeeper' && (
-                <div className="space-y-2">
-                  <label className="tactile-label ml-2">Shop Name</label>
-                  <input
-                    required
-                    type="text"
-                    name="shopName"
-                    value={formData.shopName}
-                    onChange={handleInputChange}
-                    className="w-full h-14 bg-black/[0.02] px-5 rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none"
-                    placeholder="Your shop name"
-                  />
-                </div>
-              )}
-
-              {role === 'worker' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="tactile-label ml-2">Service Category</label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full h-14 bg-black/[0.02] px-5 rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none"
-                    >
-                      <option value="">Select category</option>
-                      <option value="Plumbing">Plumbing</option>
-                      <option value="Electrical">Electrical</option>
-                      <option value="HVAC">HVAC / AC</option>
-                      <option value="Carpentry">Carpentry</option>
-                      <option value="Painting">Painting</option>
-                      <option value="General">General Repairs</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="tactile-label ml-2">Years of Experience</label>
-                    <input
-                      type="number"
-                      name="experience"
-                      value={formData.experience}
-                      onChange={handleInputChange}
-                      required
-                      min="0"
-                      className="w-full h-14 bg-black/[0.02] px-5 rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none"
-                      placeholder="e.g. 3"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-6">
-                <div className="space-y-2">
-                  <label className="tactile-label ml-2">Pin Code</label>
-                  <input required name="pincode" value={formData.pincode} onChange={handleInputChange} className="w-full h-12 bg-black/[0.02] px-3 rounded-xl text-xs outline-none" placeholder="Pincode" maxLength={6} />
-                </div>
-                <div className="space-y-2">
-                  <label className="tactile-label ml-2">State</label>
-                  <input required name="state" value={formData.state} onChange={handleInputChange} className="w-full h-12 bg-black/[0.02] px-3 rounded-xl text-xs outline-none" placeholder="State" />
-                </div>
-                <div className="space-y-2">
-                  <label className="tactile-label ml-2">District</label>
-                  <input required name="district" value={formData.district} onChange={handleInputChange} className="w-full h-12 bg-black/[0.02] px-3 rounded-xl text-xs outline-none" placeholder="District" />
-                </div>
-                <div className="space-y-2">
-                  <label className="tactile-label ml-2">Area</label>
-                  <div className="relative">
-                    <input required name="area" value={formData.area} onChange={handleInputChange} className="w-full h-12 bg-black/[0.02] pl-3 pr-8 rounded-xl text-xs outline-none" placeholder="Area" />
-                    <button type="button" onClick={detectLocation} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#007AFF] transition-colors">
-                      <Navigation size={14} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {error && <p className="text-[#FF3B30] text-[10px] font-bold uppercase tracking-widest p-4 bg-red-50 rounded-2xl">{error}</p>}
-
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setStep(1)} className="btn-secondary flex-1 h-14 !text-[10px] bg-slate-100 border-none text-slate-400">
-                  Back
-                </button>
-                <button disabled={loading} type="submit" className="btn-primary flex-[2] h-14 !text-[10px]">
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </button>
-              </div>
-            </motion.form>
-          )}
-
-          {/* Step 3: Email Verification */}
-          {step === 3 && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-sm mx-auto space-y-10">
-              <div className="w-20 h-20 bg-[#007AFF]/5 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm">
-                <ShieldCheck className="w-8 h-8 text-[#007AFF]" />
-              </div>
-              <div className="space-y-2">
-                 <h2 className="text-3xl font-bold tracking-tight uppercase leading-none">Verify Email</h2>
-                 <p className="tactile-label !tracking-normal text-slate-400">Code sent to {formData.email}</p>
-              </div>
-
-              <form onSubmit={handleVerifyOtp} className="space-y-8">
-                <input 
-                  required 
-                  name="otp" 
-                  value={formData.otp} 
-                  onChange={handleInputChange} 
-                  className="w-full text-center text-5xl font-bold tracking-[0.3em] py-8 bg-black/[0.02] border-none rounded-3xl outline-none text-[#007AFF]" 
-                  placeholder="000000" 
-                  maxLength={6} 
-                />
-
-                {error && <p className="text-[#FF3B30] text-[10px] font-bold tracking-widest p-4 bg-red-50 rounded-2xl">{error}</p>}
-
-                <button disabled={loading} type="submit" className="btn-primary w-full h-14 text-[10px]">
-                  {loading ? 'Verifying...' : 'Verify & Continue'}
-                </button>
-
-                <div className="flex flex-col gap-4 text-center">
-                  <button type="button" onClick={handleResendOtp} disabled={loading} className="tactile-label !text-[#007AFF] font-bold hover:underline">
-                    Resend Code
-                  </button>
-                  <Link href="/login" className="tactile-label !text-slate-300 hover:text-slate-600 transition-colors">Back to Sign In</Link>
-                </div>
-              </form>
-            </motion.div>
-          )}
-        </motion.div>
+    <div className="min-h-screen bg-[#F0F5FA] pb-24 relative overflow-hidden">
+      {/* Background soft gradients */}
+      <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-[#E6F0FA] to-[#F0F5FA] z-0 pointer-events-none">
+         <div className="absolute top-40 -left-20 w-96 h-96 bg-white/40 rounded-full blur-3xl"></div>
+         <div className="absolute top-20 -right-20 w-80 h-80 bg-blue-100/50 rounded-full blur-3xl"></div>
       </div>
+
+      {/* Navbar Area */}
+      <div className="relative z-10 px-4 pt-6 flex justify-between items-center mb-6">
+         <Link href="/login" className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm hover:bg-slate-50 transition-colors">
+            <ArrowLeft className="w-5 h-5 text-slate-700" />
+         </Link>
+         
+         <div className="flex flex-col items-center">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md p-1.5 mb-1">
+               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+            </div>
+            <h3 className="text-sm font-black uppercase tracking-tight leading-none text-[#0A1629]">
+               <span className="text-[#007AFF]">GO_</span>
+               <span className="text-[#FF9500]">REPIREO</span>
+            </h3>
+         </div>
+
+         <div className="flex items-center gap-2">
+            <div className="relative w-10 h-10 flex items-center justify-center">
+               <Bell className="w-5 h-5 text-slate-700" />
+               <div className="absolute top-1 right-2 w-3.5 h-3.5 bg-[#FF9500] border-2 border-[#F0F5FA] rounded-full flex items-center justify-center">
+                 <span className="text-[6px] text-white font-bold">3</span>
+               </div>
+            </div>
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-slate-200">
+               {/* Dummy Avatar */}
+               <img src="https://i.pravatar.cc/150?img=11" alt="Avatar" className="w-full h-full object-cover" />
+            </div>
+         </div>
+      </div>
+
+      {/* Hero Content */}
+      <div className="relative z-10 text-center mb-10 px-4">
+         <h1 className="text-4xl md:text-5xl font-black leading-none tracking-tight text-[#0A1629] uppercase">
+            CREATE<br />
+            <span className="text-[#007AFF]">ACCOUNT.</span>
+         </h1>
+         <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-3">JOIN REPIREO TODAY</p>
+      </div>
+
+      {/* Main Registration Card */}
+      <div className="relative z-10 px-4 max-w-2xl mx-auto">
+         <div className="bg-white rounded-[2rem] p-6 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] border border-slate-100/50">
+            
+            {/* Step Indicators */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              {[1, 2, 3].map((s) => (
+                <div 
+                  key={s} 
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    step === s ? 'bg-[#007AFF] w-6' : step > s ? 'bg-blue-300 w-3' : 'bg-slate-200 w-1.5'
+                  }`} 
+                />
+              ))}
+            </div>
+
+            <div className="text-center mb-8">
+               <p className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest mb-1">STEP {step} OF 3</p>
+               <h2 className="text-lg font-black uppercase tracking-tight text-[#0A1629]">
+                 {step === 1 ? 'CHOOSE ACCOUNT TYPE' : step === 2 ? 'YOUR DETAILS' : 'VERIFY EMAIL'}
+               </h2>
+               {step === 2 && (
+                 <p className="text-[9px] text-slate-500 mt-1">Please fill in your details to continue</p>
+               )}
+            </div>
+
+            {/* Step 1: Role Selection */}
+            {step === 1 && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                 
+                 {/* Customer Card */}
+                 <button 
+                   onClick={() => setRole('user')}
+                   className={`w-full text-left p-4 rounded-[1.5rem] flex items-center gap-4 transition-all ${
+                     role === 'user' 
+                     ? 'bg-blue-50/50 border border-[#007AFF]/20 shadow-sm' 
+                     : 'bg-white border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] hover:border-slate-200'
+                   }`}
+                 >
+                   <div className="w-20 h-20 shrink-0 bg-[#E6F0FA] rounded-2xl overflow-hidden flex items-end justify-center pt-2 px-1 relative">
+                      <img src="/customer_3d.png" alt="Customer" className="w-[120%] h-[120%] object-cover object-bottom translate-y-1" />
+                   </div>
+                   <div className="flex-1 py-1">
+                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">CUSTOMER</h3>
+                      <p className="text-[10px] text-slate-500 leading-tight mb-2 pr-2">Book services for your home and manage your orders</p>
+                      {role === 'user' && (
+                         <div className="inline-flex items-center gap-1 bg-blue-100 text-[#007AFF] px-2 py-0.5 rounded-full">
+                           <CheckCircle2 className="w-3 h-3 fill-current text-blue-100" />
+                           <span className="text-[8px] font-bold">Recommended</span>
+                         </div>
+                      )}
+                   </div>
+                   <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-50">
+                      <ChevronRight className={`w-4 h-4 ${role === 'user' ? 'text-[#007AFF]' : 'text-slate-300'}`} />
+                   </div>
+                 </button>
+
+                 {/* Specialist Card */}
+                 <button 
+                   onClick={() => setRole('worker')}
+                   className={`w-full text-left p-4 rounded-[1.5rem] flex items-center gap-4 transition-all ${
+                     role === 'worker' 
+                     ? 'bg-blue-50/50 border border-[#007AFF]/20 shadow-sm' 
+                     : 'bg-white border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] hover:border-slate-200'
+                   }`}
+                 >
+                   <div className="w-20 h-20 shrink-0 bg-slate-50 rounded-2xl flex items-center justify-center p-2">
+                      <img src="/specialist_toolbox_3d.png" alt="Specialist" className="w-full h-full object-contain" />
+                   </div>
+                   <div className="flex-1 py-1">
+                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">SPECIALIST</h3>
+                      <p className="text-[10px] text-slate-500 leading-tight pr-2">Offer your services and connect with customers</p>
+                   </div>
+                   <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-50">
+                      <ChevronRight className={`w-4 h-4 ${role === 'worker' ? 'text-[#007AFF]' : 'text-slate-300'}`} />
+                   </div>
+                 </button>
+
+                 {/* Merchant Card */}
+                 <button 
+                   disabled
+                   className="w-full text-left p-4 rounded-[1.5rem] flex items-center gap-4 transition-all bg-white border border-slate-100 opacity-60 cursor-not-allowed"
+                 >
+                   <div className="w-20 h-20 shrink-0 bg-slate-50 rounded-2xl flex items-center justify-center p-1 grayscale">
+                      <img src="/merchant_storefront_3d.png" alt="Merchant" className="w-full h-full object-contain" />
+                   </div>
+                   <div className="flex-1 py-1">
+                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">MERCHANT</h3>
+                      <p className="text-[10px] text-slate-500 leading-tight pr-2 mb-2">Sell products and equipment on Repireo platform</p>
+                      <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                        <span className="text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
+                      </div>
+                   </div>
+                   <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-50">
+                      <Lock className="w-3 h-3 text-slate-300" />
+                   </div>
+                 </button>
+
+                 <button 
+                   onClick={() => setStep(2)} 
+                   className="w-full h-14 bg-[#0A1629] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors active:scale-95 mt-6"
+                 >
+                   CONTINUE <ArrowRight size={14} />
+                 </button>
+              </motion.div>
+            )}
+
+            {/* Step 2: Form Details */}
+            {step === 2 && (
+              <motion.form initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} onSubmit={handleRegister} className="space-y-4">
+                 
+                 <div className="flex items-start gap-3">
+                   <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                      <User className="w-5 h-5 text-[#007AFF]" />
+                   </div>
+                   <div className="flex-1 space-y-1">
+                     <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+                     <input required name="name" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="Your full name" />
+                   </div>
+                 </div>
+                 
+                 <div className="flex items-start gap-3">
+                   <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                      <Mail className="w-5 h-5 text-[#007AFF]" />
+                   </div>
+                   <div className="flex-1 space-y-1">
+                     <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                     <input required type="email" name="email" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="you@example.com" />
+                   </div>
+                 </div>
+
+                 <div className="flex items-start gap-3">
+                   <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                      <Phone className="w-5 h-5 text-[#007AFF]" />
+                   </div>
+                   <div className="flex-1 space-y-1">
+                     <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
+                     <input required type="text" name="phone" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="Enter 10 digit mobile number" />
+                   </div>
+                 </div>
+
+                 <div className="flex items-start gap-3">
+                   <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                      <Lock className="w-5 h-5 text-[#007AFF]" />
+                   </div>
+                   <div className="flex-1 space-y-1">
+                     <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                     <div className="relative">
+                       <input required type={showPassword ? 'text' : 'password'} name="password" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 pl-3 pr-10 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="Create a strong password" />
+                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                         {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Location Details Grid */}
+                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-2">
+                   
+                   {/* State */}
+                   <div className="flex items-start gap-2">
+                     <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                        <Flag className="w-4 h-4 text-[#007AFF]" />
+                     </div>
+                     <div className="flex-1 min-w-0 space-y-1">
+                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">State</label>
+                       <input required name="state" value={formData.state} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="Select state" />
+                     </div>
+                   </div>
+
+                   {/* District / City */}
+                   <div className="flex items-start gap-2">
+                     <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                        <Building2 className="w-4 h-4 text-[#007AFF]" />
+                     </div>
+                     <div className="flex-1 min-w-0 space-y-1">
+                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">City</label>
+                       <input required name="district" value={formData.district} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="Select city" />
+                     </div>
+                   </div>
+
+                   {/* Pincode */}
+                   <div className="flex items-start gap-2">
+                     <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                        <MapPin className="w-4 h-4 text-[#007AFF]" />
+                     </div>
+                     <div className="flex-1 min-w-0 space-y-1">
+                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pincode</label>
+                       <input required name="pincode" value={formData.pincode} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="6 digit pincode" maxLength={6} />
+                     </div>
+                   </div>
+
+                   {/* Area */}
+                   <div className="flex items-start gap-2">
+                     <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                        <Send className="w-4 h-4 text-[#007AFF]" />
+                     </div>
+                     <div className="flex-1 min-w-0 space-y-1">
+                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Area</label>
+                       <div className="relative">
+                         <input required name="area" value={formData.area} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 pl-3 pr-8 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="Enter your area" />
+                         <button type="button" onClick={detectLocation} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#007AFF]">
+                           <Navigation size={12} />
+                         </button>
+                       </div>
+                     </div>
+                   </div>
+
+                 </div>
+
+                 {/* Conditional Fields based on role */}
+                 {role === 'shopkeeper' && (
+                   <div className="flex items-start gap-3 pt-2">
+                     <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                        <Building2 className="w-5 h-5 text-[#007AFF]" />
+                     </div>
+                     <div className="flex-1 space-y-1">
+                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Shop Name</label>
+                       <input required type="text" name="shopName" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="Your shop name" />
+                     </div>
+                   </div>
+                 )}
+
+                 {role === 'worker' && (
+                   <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-2">
+                     <div className="flex items-start gap-2">
+                       <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                          <CheckCircle2 className="w-4 h-4 text-[#007AFF]" />
+                       </div>
+                       <div className="flex-1 min-w-0 space-y-1">
+                         <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Category</label>
+                         <select name="category" onChange={handleInputChange} required className="w-full h-10 bg-white border border-slate-100 px-2 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none shadow-sm">
+                           <option value="">Select</option>
+                           <option value="Plumbing">Plumbing</option>
+                           <option value="Electrical">Electrical</option>
+                           <option value="HVAC">HVAC / AC</option>
+                         </select>
+                       </div>
+                     </div>
+                     <div className="flex items-start gap-2">
+                       <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                          <ShieldCheck className="w-4 h-4 text-[#007AFF]" />
+                       </div>
+                       <div className="flex-1 min-w-0 space-y-1">
+                         <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Experience</label>
+                         <input type="number" name="experience" onChange={handleInputChange} required className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="Years" />
+                       </div>
+                     </div>
+                   </div>
+                 )}
+
+                 {error && <p className="text-[#FF3B30] text-[10px] font-bold uppercase tracking-widest p-3 bg-red-50 rounded-xl border border-red-100 mt-2">{error}</p>}
+
+                 <div className="flex gap-4 pt-6">
+                   <button type="button" onClick={() => setStep(1)} className="flex-1 h-12 bg-blue-50 text-[#007AFF] rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-100 transition-colors">
+                     <ArrowLeft size={14} /> BACK
+                   </button>
+                   <button disabled={loading} type="submit" className="flex-[2] h-12 bg-[#007AFF] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-colors active:scale-95 shadow-md shadow-blue-500/20">
+                     {loading ? 'CREATING...' : 'CONTINUE'} <ArrowRight size={14} />
+                   </button>
+                 </div>
+              </motion.form>
+            )}
+
+            {/* Step 3: Verification */}
+            {step === 3 && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6">
+                 <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
+                    <ShieldCheck className="w-8 h-8 text-[#007AFF]" />
+                 </div>
+                 
+                 <div>
+                   <p className="text-[10px] text-slate-500 mb-1">We've sent a code to</p>
+                   <p className="text-sm font-bold text-slate-900">{formData.email}</p>
+                 </div>
+
+                 <form onSubmit={handleVerifyOtp} className="space-y-4">
+                   <input 
+                     required 
+                     name="otp" 
+                     value={formData.otp} 
+                     onChange={handleInputChange} 
+                     className="w-full text-center text-4xl font-black tracking-[0.2em] h-20 bg-[#F8FAFC] border border-slate-100 rounded-2xl outline-none text-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20" 
+                     placeholder="000000" 
+                     maxLength={6} 
+                   />
+
+                   {error && <p className="text-[#FF3B30] text-[10px] font-bold tracking-widest p-3 bg-red-50 rounded-xl border border-red-100">{error}</p>}
+
+                   <button disabled={loading} type="submit" className="w-full h-14 bg-[#0A1629] text-white rounded-full flex items-center justify-center text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors active:scale-95 mt-4">
+                     {loading ? 'VERIFYING...' : 'VERIFY & CONTINUE'}
+                   </button>
+
+                   <div className="pt-4 flex flex-col gap-3">
+                     <button type="button" onClick={handleResendOtp} disabled={loading} className="text-[10px] font-bold text-[#007AFF] uppercase tracking-widest hover:underline">
+                       Resend Code
+                     </button>
+                   </div>
+                 </form>
+              </motion.div>
+            )}
+
+         </div>
+      </div>
+
     </div>
+  );
+}
+
+export default function Register() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F0F5FA] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }

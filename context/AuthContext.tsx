@@ -8,6 +8,8 @@ interface Profile {
   role: 'user' | 'worker' | 'shopkeeper' | 'admin';
   status: 'active' | 'pending_approval' | 'suspended';
   display_name?: string;
+  avatar_url?: string;
+  email?: string;
   phone?: string;
   address?: {
     state: string;
@@ -45,6 +47,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUser = async () => {
     try {
+      if (typeof window !== 'undefined') {
+        const storedToken = localStorage.getItem('repireo_auth_token') || sessionStorage.getItem('repireo_auth_token');
+        if (storedToken) {
+          insforge.getHttpClient().setAuthToken(storedToken);
+        }
+      }
+
       const { data, error } = await insforge.auth.getCurrentUser();
       if (data?.user) {
         setUser(data.user);
@@ -76,10 +85,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
 
+        if (finalProfile) {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('repireo_cached_role', finalProfile.role);
+            if (finalProfile.avatar_url) {
+              localStorage.setItem('repireo_cached_avatar', finalProfile.avatar_url);
+            }
+          }
+        }
         setProfile(finalProfile);
       } else {
         setUser(null);
         setProfile(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('repireo_cached_role');
+          localStorage.removeItem('repireo_cached_avatar');
+        }
       }
     } catch (err) {
       console.error('Auth error:', err);
@@ -96,6 +117,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await insforge.auth.signOut();
     setUser(null);
     setProfile(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('repireo_auth_token');
+      sessionStorage.removeItem('repireo_auth_token');
+      localStorage.removeItem('repireo_cached_role');
+      localStorage.removeItem('repireo_cached_avatar');
+      insforge.getHttpClient().setAuthToken(null);
+    }
     window.location.href = '/login';
   };
 

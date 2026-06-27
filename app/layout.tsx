@@ -3,9 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import BottomNav from "@/components/BottomNav";
+import LayoutWrapper from "@/components/LayoutWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -39,14 +37,9 @@ export default function RootLayout({
       <body className={`${inter.className} bg-white text-slate-950`} data-deploy-v="REPIREO-ALPHA-1.2">
         <AuthProvider>
           <CartProvider>
-            <div id="root-container" className="flex flex-col min-h-screen">
-              <Navbar />
-              <main className="flex-1 pt-24 md:pt-32">
-                {children}
-              </main>
-              <Footer />
-              <BottomNav />
-            </div>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
           </CartProvider>
         </AuthProvider>
       </body>

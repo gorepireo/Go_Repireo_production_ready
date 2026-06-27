@@ -1,77 +1,83 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { 
+  Home,
   LayoutGrid,
-  Box, 
-  ShoppingCart, 
-  Navigation
+  ShoppingBag, 
+  ClipboardList, 
+  User,
+  MessageCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import Avatar from '@/components/Avatar';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { profile } = useAuth();
+  const [cachedRole, setCachedRole] = useState<string | null>(null);
 
-  const isSpecialUser = ['shopkeeper', 'worker', 'admin'].includes(profile?.role || '');
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCachedRole(localStorage.getItem('repireo_cached_role'));
+    }
+  }, []);
+
+  const activeRole = profile?.role || cachedRole || 'user';
+  const isSpecialUser = ['shopkeeper', 'admin'].includes(activeRole);
+  const isWorker = activeRole === 'worker';
 
   if (isSpecialUser) return null;
 
-  const navItems = [
-    { name: 'Hub', path: '/', icon: LayoutGrid },
-    { name: 'Ops', path: '/services', icon: Box },
-    { name: 'Assets', path: '/shop', icon: ShoppingCart },
-    { name: 'Radar', path: '/track', icon: Navigation },
+  const navItems = isWorker ? [
+    { name: 'Dashboard', path: '/dashboard/worker', icon: LayoutGrid },
+    { name: 'Chats', path: '/chat', icon: MessageCircle },
+    { name: 'Profile', path: '/dashboard/worker/settings', icon: User },
+  ] : [
+    { name: 'Home', path: '/', icon: Home },
+    { name: 'Services', path: '/services', icon: LayoutGrid },
+    { name: 'Shop', path: '/shop', icon: ShoppingBag },
+    { name: 'Chats', path: '/chat', icon: MessageCircle },
+    { name: 'Orders', path: '/track', icon: ClipboardList },
+    { name: 'Profile', path: '/dashboard/user', icon: User },
   ];
 
   return (
-    /* 1. TOEROOM: We changed 'pb-8' to 'pb-10' and added 'safe-area' padding 
-       This keeps the buttons from being squished at the bottom of the phone */
-    <div className="fixed bottom-0 left-0 right-0 z-50 px-6 pb-10 pt-4 bg-gradient-to-t from-[#F8F9FA] via-[#F8F9FA]/80 to-transparent pointer-events-none lg:hidden">
-      
-      {/* 2. SPACING: We ensured 'justify-between' and 'px-2' are used 
-         This keeps all the icons in their own happy personal bubbles */}
-      <nav className="max-w-md mx-auto h-20 bg-white/80 backdrop-blur-2xl px-4 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.12)] pointer-events-auto flex items-center justify-between relative overflow-hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe pt-2 lg:hidden shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+      <nav className="max-w-md mx-auto px-4 flex items-center justify-between pb-2">
         {navItems.map((item) => {
-          const isActive = pathname === item.path;
+          const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
           return (
             <Link 
               key={item.name} 
               href={item.path}
-              /* 3. CLICKING: 'active:scale-90' makes it feel like a real button */
-              className="relative flex-1 flex flex-col items-center justify-center gap-1 group active:scale-95 transition-all duration-300"
+              className="flex-1 flex items-center justify-center py-2"
             >
-              <div className="relative p-2 transition-all duration-500">
-                <item.icon 
-                  size={22} 
-                  strokeWidth={isActive ? 2.5 : 2}
-                  className={`transition-all duration-500 ${isActive ? 'text-[#007AFF] translate-y-[-2px]' : 'text-black/20 group-hover:text-black'}`}
-                />
+              <div className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 w-full mx-1 py-1.5 rounded-3xl ${isActive ? 'bg-[#F0F5FF]' : ''}`}>
+                <div className="relative z-10 flex items-center justify-center min-h-[24px]">
+                  {item.name === 'Profile' ? (
+                    <Avatar 
+                      src={profile?.avatar_url} 
+                      name={profile?.display_name || profile?.email || 'User'} 
+                      size={24} 
+                      className={isActive ? 'ring-2 ring-offset-1 ring-[#007AFF]' : 'opacity-80 grayscale-[20%] hover:grayscale-0 transition-all duration-300'}
+                    />
+                  ) : (
+                    <item.icon 
+                      size={20} 
+                      strokeWidth={isActive ? 2.5 : 2}
+                      className={`transition-colors duration-300 ${isActive ? 'text-[#007AFF]' : 'text-slate-400 group-hover:text-slate-600'}`}
+                    />
+                  )}
+                </div>
                 
-                {isActive && (
-                  <motion.div 
-                    layoutId="activeTabGlow"
-                    className="absolute inset-0 bg-[#007AFF]/10 rounded-2xl z-[-1] blur-md"
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                  />
-                )}
+                <span className={`text-[10px] font-bold z-10 transition-colors duration-300 ${isActive ? 'text-[#007AFF]' : 'text-slate-400'}`}>
+                  {item.name}
+                </span>
               </div>
-              
-              <span className={`text-[9px] font-bold uppercase tracking-[0.1em] transition-all duration-500 ${isActive ? 'text-[#007AFF] opacity-100 translate-y-[-1px]' : 'text-black/20 opacity-0 transform translate-y-2'}`}>
-                {item.name}
-              </span>
-
-              {isActive && (
-                <motion.div 
-                  layoutId="activeTabIndicator"
-                  className="absolute bottom-2 w-1.5 h-1.5 bg-[#007AFF] rounded-full"
-                  transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-                />
-              )}
             </Link>
           );
         })}

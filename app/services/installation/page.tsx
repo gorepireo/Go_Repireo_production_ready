@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ShoppingCart, ArrowRight, ShieldCheck, Truck, MapPin, Search, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 
 export default function InstallationFlow() {
   const { cart, total, clearCart } = useCart();
@@ -30,37 +31,83 @@ export default function InstallationFlow() {
     
     setLoading(true);
     try {
-      const { data, error } = await insforge.database
-        .from('orders')
-        .insert([{
-          user_email: user.email,
-          service_name: 'Installation',
-          status: 'pending',
-          total_price: total + 1500,
-          details: { address, items: cart },
-          lat: 12.9492, // Example lat
-          lng: 77.6412, // Example lng
-          order_type: 'installation'
-        }])
-        .select();
+      const res = await fetch('/api/razorpay', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ amount: total + 1500 })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Failed to create order');
 
-      if (data) {
-        // Initialize GPS tracking heartbeat
-        await insforge.database
-          .from('order_tracking')
-          .insert([{
-            order_id: data[0].id,
-            status: 'pending',
-            lat: data[0].lat - (Math.random() * 0.1),
-            lng: data[0].lng - (Math.random() * 0.1),
-            note: 'Logistic unit assigned. Initialising signal...'
-          }]);
+      // 2. Initialize Razorpay Checkout
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: (total + 1500) * 100,
+        currency: 'INR',
+        name: 'Repireo',
+        description: 'Installation & Parts',
+        order_id: data.orderId,
+        handler: async function (response: any) {
+          // 3. Save order on success
+          try {
+            const { data: orderData, error } = await insforge.database
+              .from('orders')
+              .insert([{
+                user_email: user.email,
+                service_name: 'Installation',
+                status: 'pending',
+                payment_status: 'paid',
+                payment_id: response.razorpay_payment_id,
+                total_price: total + 1500,
+                details: { address, items: cart },
+                lat: 12.9492,
+                lng: 77.6412,
+                order_type: 'installation'
+              }])
+              .select();
 
-        clearCart();
-        router.push(`/track?id=${data[0].id}`);
-      }
+            if (orderData) {
+              await insforge.database
+                .from('order_tracking')
+                .insert([{
+                  order_id: orderData[0].id,
+                  status: 'pending',
+                  lat: orderData[0].lat - (Math.random() * 0.1),
+                  lng: orderData[0].lng - (Math.random() * 0.1),
+                  note: 'Logistic unit assigned. Initialising signal...'
+                }]);
+
+              clearCart();
+              router.push(`/track?id=${orderData[0].id}`);
+            }
+          } catch (err) {
+            console.error('Database save error:', err);
+            alert("Payment successful, but failed to save order details.");
+          }
+        },
+        prefill: {
+          name: user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+        },
+        theme: {
+          color: '#007AFF'
+        }
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+      
+      paymentObject.on('payment.failed', function (response: any) {
+        console.error(response.error);
+        alert("Payment failed: " + response.error.description);
+      });
+
     } catch (err) {
       console.error('Installation error:', err);
+      alert("Something went wrong during checkout.");
     } finally {
       setLoading(false);
     }
@@ -78,8 +125,10 @@ export default function InstallationFlow() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <div className="flex flex-col md:flex-row justify-between items-start gap-12">
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-12">
         {/* Left: Selected Items */}
         <div className="flex-1 space-y-8">
           <div className="flex items-center justify-between">
@@ -182,5 +231,6 @@ export default function InstallationFlow() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -27,8 +27,6 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Prevent bounce effect on mobile to keep fixed elements stable */
-  overscroll-behavior-y: none;
 }
 
 #root-container,

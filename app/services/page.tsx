@@ -1,106 +1,193 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { 
+  ChevronRight, 
+  ArrowRight,
+  ShieldCheck,
   Zap,
   Wrench,
-  ArrowRight,
-  LayoutGrid,
-  ShieldCheck,
-  Activity
+  Clock,
+  Headphones,
+  UserCheck
 } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
-const PATHS = [
-  { 
-    id: 'service', 
-    name: 'Repair & Maintenance', 
-    desc: 'Get fast diagnostics, expert repairs, and ongoing care for systems you already use.', 
-    link: '/services/service',
-    icon: Wrench,
-    color: '#007AFF',
-    tag: 'FAST SUPPORT'
-  },
-  { 
-    id: 'installation', 
-    name: 'New Installation', 
-    desc: 'Plan and install new equipment with trained specialists and end-to-end coordination.', 
-    link: '/services/installation',
-    icon: Zap,
-    color: '#FFB800',
-    tag: 'SETUP'
-  }
+const avatars = [
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
+  'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=150'
+];
+
+
+
+const features = [
+  { title: 'SECURE BOOKING', desc: '100% safe and reliable', icon: ShieldCheck, color: 'text-blue-500' },
+  { title: 'VERIFIED EXPERTS', desc: 'Background checked professionals', icon: UserCheck, color: 'text-blue-500' },
+  { title: 'LIVE SUPPORT', desc: "We're here to help anytime", icon: Headphones, color: 'text-blue-500' },
+  { title: 'SERVICE GUARANTEE', desc: 'Satisfaction guaranteed', icon: ShieldCheck, color: 'text-green-500' },
 ];
 
 export default function ServicesPage() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-32">
-      <div className="max-w-4xl mx-auto px-4 md:px-6 pt-12 space-y-12">
-        
-        {/* Header Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-4xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] skew-title">
-              CHOOSE YOUR <br />
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-6">
+      
+      {/* Hero Section */}
+      <section className="px-4">
+        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[360px] flex flex-col justify-between shadow-sm">
+          <div className="relative z-10 space-y-4 max-w-[65%]">
+            <div className="inline-flex items-center gap-1.5 bg-blue-100/50 backdrop-blur-sm px-3 py-1 rounded-full text-[#007AFF] border border-blue-200">
+              <ShieldCheck size={12} className="fill-current text-[#007AFF]" />
+              <span className="text-[9px] font-bold uppercase tracking-widest">Verified & Trusted</span>
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629]">
+              CHOOSE YOUR<br />
               <span className="text-[#007AFF]">SERVICE.</span>
             </h1>
-             <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-xl shadow-black/5 rotate-3">
-                <LayoutGrid className="w-8 h-8 text-[#007AFF]" />
-             </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed max-w-[200px]">
+              Tell us what you need and we'll connect you with the right verified expert.
+            </p>
+
+            <div className="flex items-center gap-2 pt-2">
+              <div className="flex -space-x-2">
+                {avatars.map((src, idx) => (
+                  <div key={idx} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden bg-slate-200">
+                    <img src={src} alt="Customer" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+                <div className="w-6 h-6 rounded-full border-2 border-white overflow-hidden bg-[#007AFF] text-white flex items-center justify-center text-[7px] font-bold">
+                  10K+
+                </div>
+              </div>
+              <span className="text-[9px] text-slate-600 font-medium">Happy Customers</span>
+            </div>
           </div>
-          <p className="tactile-label !text-slate-400 max-w-sm tracking-[0.2em]">
-            Tell us what you need and we will connect you with the right verified expert.
-          </p>
+
+          {/* Hero Image */}
+          <div className="absolute -right-16 -bottom-4 w-[110%] max-w-[340px] h-72 z-0 pointer-events-none">
+            <img src="/hero_house_3d.png" alt="House Services" className="w-full h-full object-contain" />
+          </div>
+        </div>
+      </section>
+
+      {/* Popular Services Header */}
+      <section className="mt-8 px-4">
+        <div className="flex justify-between items-end mb-4">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">Popular Services</h2>
+            <p className="text-[10px] text-slate-500">Choose the service you need</p>
+          </div>
+          <Link href="/services" className="text-[10px] font-bold text-[#007AFF] flex items-center gap-1">
+            View all <ChevronRight size={12} />
+          </Link>
         </div>
 
-        {/* Selection Paths */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {PATHS.map((path, idx) => (
-            <Link href={path.link} key={path.id} className="block group">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.1 }}
-                className="king-card flex flex-col items-center text-center !p-12 h-full hover:shadow-2xl hover:shadow-black/5 transition-all duration-700 relative overflow-hidden"
-              >
-                 {/* Decorative background depth */}
-                 <div className="absolute inset-0 bg-gradient-to-br from-transparent via-black/[0.01] to-black/[0.03] opacity-0 group-hover:opacity-100 transition-opacity" />
-                 
-                 <div className="mb-10 w-24 h-24 bg-black/[0.01] rounded-[2.5rem] flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:-rotate-3 transition-all duration-700">
-                    <path.icon size={48} style={{ color: path.color }} className="opacity-20 group-hover:opacity-100 transition-all" />
-                 </div>
-                 
-                 <div className="space-y-4 relative z-10">
-                    <span className="tactile-label !text-slate-300 group-hover:!text-black transition-colors">{path.tag}</span>
-                    <h3 className="text-3xl font-black uppercase tracking-tighter group-hover:italic transition-all">{path.name}</h3>
-                    <p className="text-xs text-slate-400 leading-relaxed font-medium px-4">{path.desc}</p>
-                 </div>
+        <div className="space-y-4">
+          {/* Repair & Maintenance Card */}
+          <Link href="/services/service" className="block">
+            <motion.div whileTap={{ scale: 0.98 }} className="bg-white rounded-3xl p-5 flex gap-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group">
+              <div className="w-20 h-20 rounded-2xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
+                <Wrench className="w-10 h-10 text-[#007AFF] drop-shadow-md" />
+              </div>
+              
+              <div className="flex-1 space-y-1.5 min-w-0 pr-12">
+                <span className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest">Fast Support</span>
+                <h3 className="text-sm font-black text-slate-900 uppercase leading-none tracking-tight">Repair & Maintenance</h3>
+                <p className="text-[9px] text-slate-500 leading-snug line-clamp-2">
+                  Get fast diagnostics, expert repairs and ongoing care for systems you already use.
+                </p>
+                <div className="flex flex-col gap-0.5 pt-1">
+                  <span className="text-[8px] text-slate-400">Starting from</span>
+                  <span className="text-sm font-black text-[#007AFF]">₹499</span>
+                </div>
+              </div>
 
-                 <div className="mt-12 w-14 h-14 bg-black text-white rounded-2xl flex items-center justify-center group-hover:bg-[#007AFF] group-hover:shadow-xl group-hover:shadow-[#007AFF]/30 transition-all group-hover:translate-y-[-4px]">
-                    <ArrowRight size={24} />
-                 </div>
-              </motion.div>
-            </Link>
+              <div className="absolute top-5 right-5 flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-full">
+                 <Clock size={10} className="text-slate-400" />
+                 <span className="text-[8px] font-medium text-slate-600">45-90 mins</span>
+              </div>
+
+              <div className="absolute bottom-5 right-5 w-8 h-8 bg-[#007AFF] text-white rounded-full flex items-center justify-center group-hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30">
+                <ArrowRight size={16} />
+              </div>
+            </motion.div>
+          </Link>
+
+          {/* New Installation Card */}
+          <div className="block cursor-not-allowed opacity-90">
+            <div className="bg-white rounded-3xl p-5 flex gap-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
+              <div className="w-20 h-20 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0">
+                <Zap className="w-10 h-10 text-orange-400 drop-shadow-md fill-current" />
+              </div>
+              
+              <div className="flex-1 space-y-1.5 min-w-0 pr-12">
+                <span className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest">Setup</span>
+                <h3 className="text-sm font-black text-slate-900 uppercase leading-none tracking-tight">New Installation</h3>
+                <p className="text-[9px] text-slate-500 leading-snug line-clamp-2">
+                  Plan and install new equipment with trained specialists and end-to-end coordination.
+                </p>
+                <div className="flex flex-col gap-0.5 pt-1">
+                  <span className="text-[8px] text-slate-400">Starting from</span>
+                  <span className="text-sm font-black text-[#007AFF]">₹799</span>
+                </div>
+              </div>
+
+              <div className="absolute top-5 right-5 flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full">
+                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Coming Soon</span>
+              </div>
+
+              <div className="absolute bottom-5 right-5 w-8 h-8 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center">
+                <ArrowRight size={16} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
+      {/* Custom Service Plan CTA */}
+      <section className="mt-8 px-4">
+        <div className="bg-[#0A1629] rounded-3xl p-6 relative overflow-hidden min-h-[180px] flex items-center shadow-xl">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/50 to-transparent opacity-80 pointer-events-none"></div>
+          
+          <div className="relative z-10 space-y-3 max-w-[60%]">
+            <h2 className="text-xl font-black text-white leading-[1.1] tracking-tight uppercase">
+              NEED A CUSTOM<br/>SERVICE PLAN?
+            </h2>
+            <p className="text-[10px] text-slate-300 leading-relaxed max-w-[150px]">
+              Talk to our experts and get a personalized solution.
+            </p>
+            <button className="bg-white text-slate-900 px-4 py-2.5 rounded-full text-[9px] font-bold uppercase tracking-wider mt-2 flex items-center gap-2 hover:bg-slate-100 active:scale-95 transition-all">
+              TALK TO AN EXPERT <ArrowRight size={12} className="text-[#007AFF]" />
+            </button>
+          </div>
+
+          <div className="absolute -right-6 -bottom-0 w-48 h-56 z-0 pointer-events-none">
+             <img src="/custom_service_mechanic_3d.png" alt="Mechanic" className="w-full h-full object-contain object-bottom drop-shadow-2xl" />
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="mt-8 px-4 mb-8">
+        <div className="grid grid-cols-4 gap-2">
+          {features.map((feature, idx) => (
+            <div key={idx} className="flex flex-col items-center text-center gap-1.5">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center">
+                <feature.icon className={`w-5 h-5 ${feature.color}`} />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-[7px] font-black uppercase tracking-tight text-slate-900 leading-none">{feature.title}</h4>
+                <p className="text-[6px] text-slate-500 leading-tight mx-auto max-w-[60px]">{feature.desc}</p>
+              </div>
+            </div>
           ))}
         </div>
+      </section>
 
-        {/* Global Support Callout */}
-        <div className="king-card bg-[#007AFF] text-white p-12 text-center mt-12 space-y-6">
-           <h4 className="text-2xl font-black uppercase tracking-tighter">Need a custom service plan?</h4>
-           <div className="flex justify-center gap-8 py-4">
-              <div className="flex items-center gap-2">
-                 <ShieldCheck size={14} className="opacity-50" />
-                 <span className="text-[9px] font-black uppercase tracking-widest text-white/50">Secure Booking</span>
-              </div>
-              <div className="flex items-center gap-2">
-                 <Activity size={14} className="opacity-50" />
-                 <span className="text-[9px] font-black uppercase tracking-widest text-white/50">Live Support</span>
-              </div>
-           </div>
-           <button className="bg-white text-black px-10 py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] shadow-2xl transition-all active:scale-95 hover:bg-slate-100">Talk to an Expert</button>
-        </div>
-
-      </div>
     </div>
   );
 }
