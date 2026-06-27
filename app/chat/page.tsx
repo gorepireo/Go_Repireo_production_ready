@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Send, ArrowLeft, Loader2, Phone, MessageCircle } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Phone, MessageCircle, ChevronRight, ClipboardList, Wrench, Home, Calendar, Headphones, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 
 function ChatList() {
@@ -82,40 +82,74 @@ function ChatList() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24">
       {/* Header */}
-      <div className="bg-white sticky top-0 z-30 shadow-sm px-4 py-5 flex items-center justify-center border-b border-slate-100">
-        <h1 className="text-sm font-black uppercase tracking-widest text-[#0A1629] flex items-center gap-2">
-          <MessageCircle size={18} className="text-[#007AFF]" />
-          Your Chats
-        </h1>
+      <div className="px-4 py-8 flex items-center gap-3">
+        <div className="w-12 h-12 rounded-[1.25rem] bg-[#F0F5FF] flex items-center justify-center shrink-0">
+          <MessageCircle size={24} className="text-[#007AFF]" />
+        </div>
+        <div>
+          <h1 className="text-lg font-black uppercase tracking-widest text-[#0A1629]">
+            Your Chats
+          </h1>
+          <p className="text-xs font-medium text-slate-400 mt-0.5">
+            All your service orders in one place
+          </p>
+        </div>
       </div>
 
-      <div className="max-w-xl mx-auto px-4 pt-6 space-y-4">
+      <div className="max-w-xl mx-auto px-4 space-y-3">
         {chats.length === 0 ? (
           <div className="text-center py-20 opacity-50">
             <MessageCircle size={48} className="mx-auto mb-4 text-slate-300" />
             <p className="text-xs font-bold uppercase tracking-widest text-slate-500">No chats available</p>
           </div>
         ) : (
-          chats.map(chat => {
+          chats.map((chat, i) => {
             const isActive = ['shipping', 'in_progress'].includes(chat.status);
+            
+            const icons = [ClipboardList, Wrench, Home, Calendar, UserIcon, Headphones];
+            const Icon = icons[i % icons.length];
+            
+            const dummyMessages = [
+              "Order is confirmed",
+              "Service scheduled",
+              "Waiting for update",
+              "Payment pending",
+              "Technician assigned",
+              "How can we help you?"
+            ];
+            const lastMessage = dummyMessages[i % dummyMessages.length];
+
             return (
               <Link key={chat.id} href={`/chat?orderId=${chat.id}`}>
-                <div className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-all active:scale-[0.98] cursor-pointer">
-                  <div>
-                    <h3 className="font-bold text-slate-900 capitalize">{chat.service_type || 'Service Order'}</h3>
-                    <p className="text-xs text-slate-400 font-mono mt-1">ID: #{chat.id.slice(0, 6)}</p>
+                <div className="bg-white p-4 rounded-[1.5rem] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] flex items-center gap-4 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer relative border border-slate-50/50 mb-3">
+                  {/* Left green active strip */}
+                  {isActive && (
+                    <div className="absolute left-0 top-6 bottom-6 w-1 bg-[#10B981] rounded-r-md"></div>
+                  )}
+                  
+                  {/* Icon */}
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ml-1 bg-[#F0F5FF]">
+                    <Icon size={24} className="text-[#007AFF]" />
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+
+                  {/* Text Content */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-slate-900 text-[15px] truncate">{chat.service_type || 'Service Order'}</h3>
+                    <p className="text-[11px] text-slate-400 font-mono mt-0.5 tracking-wide">ID: #{chat.id.slice(0, 6)}</p>
+                    <p className="text-xs text-slate-500 font-medium truncate mt-1">Last message: {lastMessage}</p>
+                  </div>
+
+                  {/* Badges & Chevron */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`px-2.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
                       isActive 
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                        : 'bg-slate-50 text-slate-400 border-slate-200'
+                        ? 'bg-[#ECFDF5] text-[#10B981]' 
+                        : 'bg-[#F1F5F9] text-[#94A3B8]'
                     }`}>
                       {isActive ? 'Active' : 'Inactive'}
+                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>}
                     </span>
-                    {isActive && (
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                    )}
+                    <ChevronRight size={18} className="text-slate-400" />
                   </div>
                 </div>
               </Link>
