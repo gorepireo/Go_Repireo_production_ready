@@ -21,8 +21,13 @@ import {
   CloudUpload, 
   ArrowRight, 
   Check,
-  LayoutGrid
+  LayoutGrid,
+  X,
+  Map as MapIcon
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelector'), { ssr: false });
 
 export default function ServiceBooking() {
   const { user } = useAuth();
@@ -30,11 +35,13 @@ export default function ServiceBooking() {
   const [loading, setLoading] = useState(false);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [visualFiles, setVisualFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     category: 'plumbing',
     description: '',
-    preferredDate: '',
-    preferredTime: '',
+    preferredDate: new Date().toISOString().split('T')[0],
+    preferredTime: new Date().toTimeString().slice(0, 5),
     address: '',
     lat: 0,
     lng: 0
@@ -410,35 +417,44 @@ export default function ServiceBooking() {
                  onFocus={() => setShowAddressDropdown(true)}
                  onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
                  onChange={e => setFormData({ ...formData, address: e.target.value })}
-                 className="w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-12 pt-[14px] text-[10px] font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm placeholder:text-slate-400 relative z-0"
+                 className="w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-[90px] pt-[14px] text-[10px] font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm placeholder:text-slate-400 relative z-0"
                  placeholder="Auto-detect or select saved location"
                />
-               <button 
-                 type="button" 
-                 onClick={() => {
-                   if (navigator.geolocation) {
-                     navigator.geolocation.getCurrentPosition(
-                       async (position) => {
-                         try {
-                           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`);
-                           const data = await res.json();
-                           if (data && data.display_name) {
-                             setFormData({ ...formData, address: data.display_name, lat: position.coords.latitude, lng: position.coords.longitude });
-                           } else {
+               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
+                 <button 
+                   type="button" 
+                   onClick={() => setShowMapModal(true)}
+                   className="w-10 h-10 bg-slate-50/80 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                 >
+                   <MapIcon size={14} />
+                 </button>
+                 <button 
+                   type="button" 
+                   onClick={() => {
+                     if (navigator.geolocation) {
+                       navigator.geolocation.getCurrentPosition(
+                         async (position) => {
+                           try {
+                             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&email=info@repireo.com`);
+                             const data = await res.json();
+                             if (data && data.display_name) {
+                               setFormData({ ...formData, address: data.display_name, lat: position.coords.latitude, lng: position.coords.longitude });
+                             } else {
+                               setFormData({ ...formData, address: `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`, lat: position.coords.latitude, lng: position.coords.longitude });
+                             }
+                           } catch (error) {
                              setFormData({ ...formData, address: `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`, lat: position.coords.latitude, lng: position.coords.longitude });
                            }
-                         } catch (error) {
-                           setFormData({ ...formData, address: `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`, lat: position.coords.latitude, lng: position.coords.longitude });
-                         }
-                       },
-                       (err) => console.log(err)
-                     );
-                   }
-                 }}
-                 className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-blue-50/50 rounded-full flex items-center justify-center text-[#007AFF] hover:bg-blue-100 transition-colors z-10"
-               >
-                 <LocateFixed size={14} />
-               </button>
+                         },
+                         (err) => console.log(err)
+                       );
+                     }
+                   }}
+                   className="w-10 h-10 bg-blue-50/50 rounded-full flex items-center justify-center text-[#007AFF] hover:bg-blue-100 transition-colors"
+                 >
+                   <LocateFixed size={14} />
+                 </button>
+               </div>
 
                {/* Address Dropdown */}
                <AnimatePresence>
@@ -476,13 +492,54 @@ export default function ServiceBooking() {
               Optional <span className="mx-1.5">•</span> Visual Log
             </label>
             <label className="w-full h-[80px] bg-white border border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:bg-slate-50 hover:border-[#007AFF]/30 transition-all cursor-pointer relative overflow-hidden">
-               <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4" multiple />
+               <input 
+                 type="file" 
+                 className="absolute inset-0 opacity-0 cursor-pointer" 
+                 accept="image/*,video/mp4" 
+                 multiple 
+                 onChange={(e) => {
+                   if (e.target.files) {
+                     setVisualFiles(prev => [...prev, ...Array.from(e.target.files as FileList)]);
+                   }
+                 }}
+               />
                <CloudUpload size={24} className="text-[#007AFF]" />
                <div className="text-center">
                   <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Attach Images or Videos</p>
                   <p className="text-[7px] font-medium text-slate-400 uppercase tracking-widest mt-0.5">JPG, PNG, MP4 up to 20MB</p>
                </div>
             </label>
+            
+            {/* Visual Previews */}
+            {visualFiles.length > 0 && (
+              <div className="flex flex-wrap gap-3 mt-3">
+                {visualFiles.map((file, idx) => {
+                  const isVideo = file.type.startsWith('video/');
+                  const fileUrl = URL.createObjectURL(file);
+                  return (
+                    <div key={`${file.name}-${idx}`} className="relative w-16 h-16 rounded-xl border border-slate-200 overflow-hidden group shadow-sm bg-white">
+                      {isVideo ? (
+                         <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center p-1">
+                           <p className="text-[8px] text-white font-bold text-center line-clamp-2">{file.name}</p>
+                           <p className="text-[7px] text-slate-400 mt-0.5">MP4</p>
+                         </div>
+                      ) : (
+                         <img src={fileUrl} alt="preview" className="w-full h-full object-cover" />
+                      )}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setVisualFiles(prev => prev.filter((_, i) => i !== idx));
+                        }}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all shadow-md z-10"
+                      >
+                        <X size={10} strokeWidth={3} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Estimated Price Section */}
@@ -578,6 +635,21 @@ export default function ServiceBooking() {
 
         </motion.form>
       </div>
+
+      {/* Map Modal */}
+      <AnimatePresence>
+        {showMapModal && (
+          <LocationMapSelector 
+            initialLat={formData.lat || 22.5726}
+            initialLng={formData.lng || 88.3639}
+            onConfirm={(loc) => {
+              setFormData({ ...formData, address: loc.address, lat: loc.lat, lng: loc.lng });
+              setShowMapModal(false);
+            }}
+            onClose={() => setShowMapModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
