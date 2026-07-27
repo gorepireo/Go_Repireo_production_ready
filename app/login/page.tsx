@@ -102,24 +102,26 @@ function LoginForm() {
     <div className="min-h-screen bg-[#F8FAFC] pb-24 pt-6">
       
       {/* Hero Section */}
-      <section className="px-4 relative mb-6">
-        <div className="relative z-10 max-w-[65%] pt-4">
-          <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 mb-6">
-            <img src="/logo.png" alt="Repireo Logo" className="w-10 h-10 object-contain" />
+      <section className="px-4 mb-6">
+        <div className="relative flex items-center justify-between min-h-[180px] overflow-hidden">
+          <div className="relative z-10 max-w-[58%] sm:max-w-[65%] pt-2">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 mb-4">
+              <img src="/logo.png" alt="Go_Repireo Logo" className="w-8 h-8 object-contain" />
+            </div>
+            
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629] uppercase">
+              WELCOME<br />
+              <span className="text-[#007AFF]">BACK.</span>
+            </h1>
+            <p className="text-[11px] text-slate-500 leading-relaxed mt-3 max-w-[200px]">
+              Sign in to continue managing your services, orders and account.
+            </p>
           </div>
-          
-          <h1 className="text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629] uppercase">
-            WELCOME<br />
-            <span className="text-[#007AFF]">BACK.</span>
-          </h1>
-          <p className="text-xs text-slate-500 leading-relaxed mt-4">
-            Sign in to continue managing your services, orders and account.
-          </p>
-        </div>
 
-        {/* Hero Image */}
-        <div className="absolute top-0 -right-24 w-[140%] max-w-[400px] h-64 z-0 pointer-events-none">
-          <img src="/login_mechanic_3d.png" alt="Mechanic" className="w-full h-full object-contain relative z-10" />
+          {/* Hero Image - Properly Anchored */}
+          <div className="absolute right-0 top-0 bottom-0 w-[42%] max-w-[220px] h-full z-0 pointer-events-none flex items-center justify-end">
+            <img src="/login_mechanic_3d.png" alt="Mechanic" className="w-full h-full object-contain object-right" />
+          </div>
         </div>
       </section>
 

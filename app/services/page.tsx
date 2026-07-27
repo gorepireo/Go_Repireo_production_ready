@@ -34,23 +34,23 @@ export default function ServicesPage() {
       
       {/* Hero Section */}
       <section className="px-4">
-        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[360px] flex flex-col justify-between shadow-sm">
-          <div className="relative z-10 space-y-4 max-w-[65%]">
+        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[340px] flex items-center justify-between shadow-sm">
+          <div className="relative z-10 space-y-3.5 max-w-[58%] sm:max-w-[62%]">
             <div className="inline-flex items-center gap-1.5 bg-blue-100/50 backdrop-blur-sm px-3 py-1 rounded-full text-[#007AFF] border border-blue-200">
               <ShieldCheck size={12} className="fill-current text-[#007AFF]" />
               <span className="text-[9px] font-bold uppercase tracking-widest">Verified & Trusted</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629]">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629]">
               CHOOSE YOUR<br />
               <span className="text-[#007AFF]">SERVICE.</span>
             </h1>
 
-            <p className="text-xs text-slate-600 leading-relaxed max-w-[200px]">
+            <p className="text-[11px] text-slate-600 leading-relaxed max-w-[190px]">
               Tell us what you need and we'll connect you with the right verified expert.
             </p>
 
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-2 pt-1 flex-wrap">
               <div className="flex -space-x-2">
                 {avatars.map((src, idx) => (
                   <div key={idx} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden bg-slate-200">
@@ -65,9 +65,9 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          {/* Hero Image */}
-          <div className="absolute -right-16 -bottom-4 w-[110%] max-w-[340px] h-72 z-0 pointer-events-none">
-            <img src="/hero_house_3d.png" alt="House Services" className="w-full h-full object-contain" />
+          {/* Hero Image - Properly Positioned */}
+          <div className="absolute right-0 bottom-0 w-[42%] max-w-[240px] sm:max-w-[320px] h-[85%] z-0 pointer-events-none flex items-end justify-end">
+            <img src="/hero_house_3d.png" alt="House Services" className="w-full h-full object-contain object-bottom" />
           </div>
         </div>
       </section>

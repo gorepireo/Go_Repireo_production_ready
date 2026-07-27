@@ -344,7 +344,7 @@ export default function AdminPanel() {
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-[#007AFF]">
               <div className="w-8 h-[2px] bg-current" />
-              <span className="text-[10px] font-black uppercase tracking-[0.6em]">Repireo Control Center</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.6em]">Go_Repireo Control Center</span>
             </div>
             <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] skew-title">
               ADMIN <br />

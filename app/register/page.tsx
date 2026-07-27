@@ -417,7 +417,7 @@ function RegisterForm() {
                    </div>
                    <div className="flex-1 py-1">
                       <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">MERCHANT</h3>
-                      <p className="text-[10px] text-slate-500 leading-tight pr-2 mb-2">Sell products and equipment on Repireo platform</p>
+                      <p className="text-[10px] text-slate-500 leading-tight pr-2 mb-2">Sell products and equipment on Go_Repireo platform</p>
                       <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
                         <span className="text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
                       </div>

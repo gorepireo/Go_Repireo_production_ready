@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Color tokens — grounded in the trade materials, not a template palette */
+  --charcoal: #1a1714;
+  --charcoal-2: #221e1a;
+  --paper: #ece9e2;
+  --paper-2: #e2ded4;
+  --ink: #201c18;
+  --copper: #b8703c;
+  --copper-light: #d68f5c;
+  --amber: #f0b429;
+  --amber-deep: #c98d17;
+  --white: #ffffff;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-dark: rgba(0, 0, 0, 0.1);
+
+  /* Type tokens */
+  --font-display: 'Oswald', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-devanagari: 'Noto Sans Devanagari', 'Inter', sans-serif;
+
+  --wa-green: #25d366;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Devanagari typography override when Hindi is active */
+body.lang-hi {
+  font-family: var(--font-devanagari);
+}
+
+body.lang-hi .display {
+  font-family: var(--font-devanagari);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+body.lang-hi .eyebrow {
+  font-family: var(--font-devanagari);
+  letter-spacing: 0.08em;
+}
+
+img { max-width: 100%; display: block; }
+
+a { color: inherit; text-decoration: none; }
+
+button { font-family: inherit; cursor: pointer; border: none; }
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.section {
+  padding: 88px 24px;
+}
+
+.section-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.02;
+}
+
+@media (max-width: 640px) {
+  .section { padding: 56px 20px; }
+}
+
+:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

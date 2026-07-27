@@ -1,21 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useRef } from 'react';
+import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 import { X, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-// Component to handle map movement and get center coordinates
-function MapEvents({ onMoveEnd }: { onMoveEnd: (center: { lat: number; lng: number }) => void }) {
-  const map = useMapEvents({
-    moveend: () => {
-      const center = map.getCenter();
-      onMoveEnd({ lat: center.lat, lng: center.lng });
-    },
-  });
-  return null;
-}
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%'
+};
 
 interface LocationMapSelectorProps {
   initialLat?: number;
@@ -30,9 +23,15 @@ export default function LocationMapSelector({
   onConfirm, 
   onClose 
 }: LocationMapSelectorProps) {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
+  });
+
   const [center, setCenter] = useState({ lat: initialLat, lng: initialLng });
   const [address, setAddress] = useState('Fetching location...');
   const [isFetching, setIsFetching] = useState(false);
+  const mapRef = useRef<google.maps.Map | null>(null);
 
   // Initialize center with current position if defaults are used and geolocation is available
   useEffect(() => {
@@ -46,11 +45,20 @@ export default function LocationMapSelector({
     }
   }, [initialLat]);
 
-  // Fetch address whenever the center changes
+  // Fetch address whenever the center changes using Google Geocoding API if key is present, else fallback
   useEffect(() => {
     const fetchAddress = async () => {
       setIsFetching(true);
       try {
+        if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+          const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${center.lat},${center.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+          const data = await res.json();
+          if (data.status === 'OK' && data.results && data.results.length > 0) {
+            setAddress(data.results[0].formatted_address);
+            return;
+          }
+        }
+        // Fallback to nominatim if no Google key or failed
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${center.lat}&lon=${center.lng}&format=json&email=info@repireo.com`);
         const data = await res.json();
         if (data && data.display_name) {
@@ -90,18 +98,28 @@ export default function LocationMapSelector({
 
         {/* Map Area */}
         <div className="relative flex-1 bg-slate-100">
-          <MapContainer 
-            center={[center.lat, center.lng]} 
-            zoom={16} 
-            zoomControl={false}
-            className="w-full h-full"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapEvents onMoveEnd={setCenter} />
-          </MapContainer>
+          {isLoaded ? (
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
+              center={center}
+              zoom={16}
+              options={{ disableDefaultUI: true, zoomControl: false }}
+              onLoad={(map) => { mapRef.current = map; }}
+              onDragEnd={() => {
+                if (mapRef.current) {
+                  const newCenter = mapRef.current.getCenter();
+                  if (newCenter) {
+                    setCenter({ lat: newCenter.lat(), lng: newCenter.lng() });
+                  }
+                }
+              }}
+            >
+            </GoogleMap>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <p className="text-slate-400 text-sm font-medium">Loading Map...</p>
+            </div>
+          )}
 
           {/* Fixed Center Pin */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-[400] pb-8">

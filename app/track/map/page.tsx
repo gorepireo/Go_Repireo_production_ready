@@ -9,15 +9,12 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import BottomNav from '@/components/BottomNav';
 
-// Dynamic import for Leaflet to prevent SSR issues
-const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
-const Polyline = dynamic(() => import('react-leaflet').then(mod => mod.Polyline), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
+import { GoogleMap, useJsApiLoader, OverlayView, Polyline } from '@react-google-maps/api';
 
-// Leaflet styles
-import 'leaflet/dist/leaflet.css';
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%'
+};
 
 function StandardMapContent() {
   const searchParams = useSearchParams();
@@ -28,14 +25,10 @@ function StandardMapContent() {
   const [tracking, setTracking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mapType, setMapType] = useState('m'); // m: roadmap, s: satellite, y: hybrid
-  const [L, setL] = useState<any>(null);
-
-  // Initialize Leaflet Icons only on client
-  useEffect(() => {
-    import('leaflet').then(leaflet => {
-      setL(leaflet);
-    });
-  }, []);
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
+  });
 
   const fetchTracking = useCallback(async () => {
     if (!orderId) {
@@ -53,16 +46,34 @@ function StandardMapContent() {
       if (orderData) {
         setOrder(orderData);
         
-        const { data: trackData } = await insforge.database
-          .from('order_tracking')
+        let finalTrackData = null;
+        
+        // 1. Try to get the real-time live location first
+        const { data: liveData } = await insforge.database
+          .from('order_live_location')
           .select('*')
           .eq('order_id', orderId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+          .maybeSingle();
+
+        if (liveData) {
+          finalTrackData = liveData;
+        } else {
+          // 2. Fallback to the historical order tracking log
+          const { data: trackData } = await insforge.database
+            .from('order_tracking')
+            .select('*')
+            .eq('order_id', orderId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+            
+          if (trackData) {
+            finalTrackData = trackData;
+          }
+        }
         
-        if (trackData) {
-          setTracking(trackData);
+        if (finalTrackData) {
+          setTracking(finalTrackData);
         }
       }
     } catch (err) {
@@ -74,112 +85,78 @@ function StandardMapContent() {
 
   useEffect(() => {
     fetchTracking();
-    const interval = setInterval(fetchTracking, 10000); 
+    const interval = setInterval(fetchTracking, 5000); 
     return () => clearInterval(interval);
   }, [fetchTracking]);
 
-  const center: [number, number] = tracking 
-    ? [Number(tracking.lat), Number(tracking.lng)] 
-    : order 
-      ? [Number(order.lat), Number(order.lng)]
-      : [28.6139, 77.2090]; // Default to Delhi coordinates if no data
+  const centerLat = tracking ? Number(tracking.lat) : (order ? Number(order.lat) : 28.6139);
+  const centerLng = tracking ? Number(tracking.lng) : (order ? Number(order.lng) : 77.2090);
 
-  const partnerIcon = L ? L.divIcon({
-    className: 'custom-partner-icon',
-    html: `<div class="relative w-10 h-10 flex items-center justify-center">
-             <div class="absolute inset-0 bg-[#007AFF]/20 rounded-full animate-ping"></div>
-             <div class="w-6 h-6 bg-[#007AFF] rounded-full border-4 border-white shadow-xl flex items-center justify-center">
-                <div class="w-2 h-2 bg-white rounded-full"></div>
-             </div>
-             <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] font-black px-2 py-1 rounded-md whitespace-nowrap shadow-xl">LIVE PARTNER</div>
-           </div>`,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
-  }) : null;
-
-  const targetIcon = L ? L.divIcon({
-    className: 'custom-target-icon',
-    html: `<div class="relative w-12 h-12 flex items-center justify-center">
-             <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-2xl border-2 border-red-500">
-                <div class="w-4 h-4 bg-red-500 rounded-sm rotate-45"></div>
-             </div>
-             <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-md whitespace-nowrap shadow-xl">DESTINATION</div>
-           </div>`,
-    iconSize: [48, 48],
-    iconAnchor: [24, 24]
-  }) : null;
+  const mapOptionsType = mapType === 'm' ? 'roadmap' : (mapType === 's' ? 'satellite' : 'hybrid');
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 relative overflow-hidden font-sans">
       
       {/* Map Layer - Professional Google Tiles */}
       <div className="absolute inset-0 z-10 pointer-events-auto">
-        {!loading && L && (
-          <MapContainer 
-            center={center} 
-            zoom={14} 
-            scrollWheelZoom={true}
-            style={{ width: '100%', height: '100%', background: '#e5e7eb' }}
-            zoomControl={false}
+        {!loading && isLoaded && (
+          <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            center={{ lat: centerLat, lng: centerLng }}
+            zoom={14}
+            options={{ 
+              disableDefaultUI: true, 
+              zoomControl: false,
+              mapTypeId: mapOptionsType
+            }}
           >
-            <TileLayer
-              attribution='&copy; Google Maps'
-              url={`http://{s}.google.com/vt/lyrs=${mapType}&x={x}&y={y}&z={z}`}
-              maxZoom={20}
-              subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
-            />
-
-            {tracking && partnerIcon && (
-              <Marker position={[Number(tracking.lat), Number(tracking.lng)]} icon={partnerIcon}>
-                <Popup className="standard-popup">Logistical Node Location</Popup>
-              </Marker>
+            {tracking && (
+              <OverlayView
+                position={{ lat: Number(tracking.lat), lng: Number(tracking.lng) }}
+                mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                getPixelPositionOffset={(width, height) => ({ x: -(width / 2), y: -(height / 2) })}
+              >
+                <div className="relative w-10 h-10 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-[#007AFF]/20 rounded-full animate-ping"></div>
+                  <div className="w-6 h-6 bg-[#007AFF] rounded-full border-4 border-white shadow-xl flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] font-black px-2 py-1 rounded-md whitespace-nowrap shadow-xl">LIVE PARTNER</div>
+                </div>
+              </OverlayView>
             )}
 
-            {order && targetIcon && (
-              <Marker position={[Number(order.lat), Number(order.lng)]} icon={targetIcon}>
-                <Popup className="standard-popup">Client Asset Destination</Popup>
-              </Marker>
+            {order && (
+              <OverlayView
+                position={{ lat: Number(order.lat), lng: Number(order.lng) }}
+                mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                getPixelPositionOffset={(width, height) => ({ x: -(width / 2), y: -(height / 2) })}
+              >
+                <div className="relative w-12 h-12 flex items-center justify-center">
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-2xl border-2 border-red-500">
+                    <div className="w-4 h-4 bg-red-500 rounded-sm rotate-45"></div>
+                  </div>
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-md whitespace-nowrap shadow-xl">DESTINATION</div>
+                </div>
+              </OverlayView>
             )}
 
             {tracking && order && (
                <Polyline
-                  positions={[
-                     [Number(tracking.lat), Number(tracking.lng)],
-                     [Number(order.lat), Number(order.lng)]
+                  path={[
+                     { lat: Number(tracking.lat), lng: Number(tracking.lng) },
+                     { lat: Number(order.lat), lng: Number(order.lng) }
                   ]}
-                  pathOptions={{
-                     color: "#007AFF",
-                     weight: 4,
-                     opacity: 0.6,
-                     dashArray: '1, 10',
-                     lineCap: 'round'
+                  options={{
+                     strokeColor: "#007AFF",
+                     strokeWeight: 4,
+                     strokeOpacity: 0.6
                   }}
                />
             )}
-          </MapContainer>
+          </GoogleMap>
         )}
       </div>
-
-      <style jsx global>{`
-        .leaflet-container {
-          background: #e5e7eb !important;
-        }
-        .standard-popup .leaflet-popup-content-wrapper {
-          background: white !important;
-          border: none;
-          color: #1E293B;
-          border-radius: 0.75rem;
-          font-weight: 800;
-          text-transform: uppercase;
-          font-size: 10px;
-          letter-spacing: 0.1em;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-          padding: 4px;
-        }
-        .standard-popup .leaflet-popup-tip {
-          background: white;
-        }
-      `}</style>
 
       {/* Map Controls */}
       <div className="absolute bottom-32 right-8 z-50 flex flex-col gap-2 pointer-events-auto">

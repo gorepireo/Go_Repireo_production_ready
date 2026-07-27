@@ -11,7 +11,7 @@ export default function Footer() {
         <div className="space-y-4 max-w-[200px]">
           <div className="flex flex-col gap-2">
             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
-              <img src="/logo.png" alt="Repireo" className="w-8 h-8 object-contain" />
+              <img src="/logo.png" alt="Go_Repireo" className="w-8 h-8 object-contain" />
             </div>
             <div>
               <h3 className="text-xl font-black uppercase tracking-tight leading-none">

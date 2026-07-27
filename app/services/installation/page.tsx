@@ -47,7 +47,7 @@ export default function InstallationFlow() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: (total + 1500) * 100,
         currency: 'INR',
-        name: 'Repireo',
+        name: 'Go_Repireo',
         description: 'Installation & Parts',
         order_id: data.orderId,
         handler: async function (response: any) {

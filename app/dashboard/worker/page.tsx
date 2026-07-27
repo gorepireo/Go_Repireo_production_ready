@@ -4,8 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Activity, Shield, ChevronRight, Navigation, Zap, Map, MessageCircle } from 'lucide-react';
+import { MapPin, Activity, Shield, ChevronRight, Navigation, Zap, Map, MessageCircle, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { isServiceMatching } from '@/lib/serviceMatcher';
 
 function WorkerDashboardContent() {
   const { user, profile: rawProfile, refresh } = useAuth();
@@ -13,8 +14,21 @@ function WorkerDashboardContent() {
   const router = useRouter();
   const [activeJobs, setActiveJobs] = useState<any[]>([]);
   const [acceptedJobs, setAcceptedJobs] = useState<any[]>([]);
+  const [completedJobs, setCompletedJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAvailable, setIsAvailable] = useState(profile?.is_available || false);
+  const [workerTrade, setWorkerTrade] = useState<string>('');
+  const [declinedJobIds, setDeclinedJobIds] = useState<string[]>(() => {
+    if (typeof window !== 'undefined' && user?.id) {
+      try {
+        const saved = localStorage.getItem(`declined_jobs_${user.id}`);
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -22,9 +36,12 @@ function WorkerDashboardContent() {
       
       const { data: worker } = await insforge.database
         .from('workers')
-        .select('id')
+        .select('id, service')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      const trade = worker?.service || profile?.service || profile?.service_name || '';
+      setWorkerTrade(trade);
 
       const { data: pending } = await insforge.database
         .from('orders')
@@ -32,7 +49,12 @@ function WorkerDashboardContent() {
         .is('worker_id', null)
         .eq('status', 'pending');
 
-      if (pending) setActiveJobs(pending);
+      if (pending) {
+        const suitable = pending.filter(job => 
+          isServiceMatching(trade, job.service_name, job.details?.category)
+        );
+        setActiveJobs(suitable);
+      }
 
       if (worker) {
         const { data: accepted } = await insforge.database
@@ -42,13 +64,21 @@ function WorkerDashboardContent() {
           .in('status', ['shipping', 'in_progress']);
           
         if (accepted) setAcceptedJobs(accepted);
+
+        const { data: completed } = await insforge.database
+          .from('orders')
+          .select('*')
+          .eq('worker_id', worker.id)
+          .eq('status', 'completed');
+
+        if (completed) setCompletedJobs(completed);
       }
 
       setLoading(false);
     };
 
     fetchJobs();
-  }, [user]);
+  }, [user, profile]);
 
   useEffect(() => {
     const fetchWorkerData = async () => {
@@ -60,6 +90,40 @@ function WorkerDashboardContent() {
     };
     fetchWorkerData();
   }, [user]);
+
+  // Live Location Tracker for Active Missions
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (acceptedJobs.length > 0 && user) {
+      intervalId = setInterval(() => {
+        if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+              for (const job of acceptedJobs) {
+                await insforge.database.from('order_live_location').upsert({
+                  order_id: job.id,
+                  worker_id: user.id,
+                  lat: latitude,
+                  lng: longitude,
+                  updated_at: new Date().toISOString()
+                }, { onConflict: 'order_id' });
+              }
+            } catch (err) {
+              console.error("Error upserting live location:", err);
+            }
+          }, (err) => {
+            console.error("Location tracking error:", err);
+          }, { enableHighAccuracy: true });
+        }
+      }, 5000); // Send every 5 seconds
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [acceptedJobs, user]);
 
   const toggleAvailability = async () => {
     const newVal = !isAvailable;
@@ -79,6 +143,48 @@ function WorkerDashboardContent() {
     }
   };
 
+  const handleCompleteJob = async (jobId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await insforge.database
+        .from('orders')
+        .update({ status: 'completed' })
+        .eq('id', jobId);
+
+      if (error) throw error;
+
+      await insforge.database.from('order_tracking').insert({
+        order_id: jobId,
+        status: 'completed',
+        lat: profile?.lat || profile?.address?.lat || 28.6139,
+        lng: profile?.lng || profile?.address?.lng || 77.2090,
+        note: 'Service mission completed successfully by worker.'
+      });
+
+      // Cleanup live tracking location from database
+      await insforge.database.from('order_live_location').delete().eq('order_id', jobId);
+
+      const finishedJob = acceptedJobs.find(j => j.id === jobId);
+      if (finishedJob) {
+        setCompletedJobs(prev => [{ ...finishedJob, status: 'completed' }, ...prev]);
+        setAcceptedJobs(prev => prev.filter(j => j.id !== jobId));
+      }
+      refresh?.();
+    } catch (err: any) {
+      console.error("Failed to complete job:", err);
+      alert("Error marking job as completed");
+    }
+  };
+
+  const handleDeclineJob = (jobId: string) => {
+    if (!user) return;
+    const updated = [...declinedJobIds, jobId];
+    setDeclinedJobIds(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`declined_jobs_${user.id}`, JSON.stringify(updated));
+    }
+  };
+
   const handleAcceptJob = async (jobId: string) => {
     if (!user) return;
     
@@ -86,7 +192,7 @@ function WorkerDashboardContent() {
       // The orders.worker_id references the workers table primary key, not the user_id.
       const { data: worker, error: workerErr } = await insforge.database
         .from('workers')
-        .select('id')
+        .select('id, from_name, service')
         .eq('user_id', user.id)
         .single();
         
@@ -105,20 +211,45 @@ function WorkerDashboardContent() {
         return;
       }
 
+      const acceptedJob = activeJobs.find(j => j.id === jobId);
+
+      // Notify customer that worker accepted the job
+      if (acceptedJob && acceptedJob.user_email) {
+        try {
+          const { data: customerUser } = await insforge.database
+            .from('users')
+            .select('id')
+            .eq('email', acceptedJob.user_email)
+            .maybeSingle();
+
+          if (customerUser) {
+            const workerName = worker.from_name || profile?.full_name || 'A verified service provider';
+            const serviceCat = (acceptedJob.service_name || acceptedJob.details?.category || 'service').toUpperCase();
+            await insforge.database.from('notifications').insert([{
+              user_id: customerUser.id,
+              title: 'Worker Assigned',
+              message: `${workerName} has accepted your ${serviceCat} request and is en route!`,
+              type: 'order',
+              link: `/track?id=${jobId}`
+            }]);
+          }
+        } catch (notifErr) {
+          console.warn("Could not notify customer:", notifErr);
+        }
+      }
+
       const { error: trackingErr } = await insforge.database.from('order_tracking').insert({
         order_id: jobId,
         status: 'shipping',
         lat: profile?.lat || profile?.address?.lat || 28.6139,
         lng: profile?.lng || profile?.address?.lng || 77.2090,
-        note: 'Worker accepted the job and is en route.'
+        note: `${worker.from_name || 'Worker'} accepted the job and is en route.`
       });
       
       if (trackingErr) {
         console.error("Failed to insert tracking:", trackingErr);
-        // We don't fail the whole process if tracking insert fails, but good to know
       }
 
-      const acceptedJob = activeJobs.find(j => j.id === jobId);
       if (acceptedJob) {
         setAcceptedJobs(prev => [...prev, { ...acceptedJob, status: 'shipping', worker_id: worker.id }]);
       }
@@ -216,125 +347,217 @@ function WorkerDashboardContent() {
           </div>
         </div>
 
-        {/* Active Missions (Accepted) */}
+        {/* Active Missions (Accepted & Assigned) */}
         {acceptedJobs.length > 0 && (
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                <h3 className="text-[10px] font-bold text-[#007AFF] uppercase tracking-widest flex items-center gap-1.5">
-                 <Zap size={12} /> ACTIVE MISSIONS
+                 <Zap size={12} /> ACTIVE MISSIONS (ASSIGNED)
                </h3>
                <span className="text-[10px] font-bold text-[#007AFF] uppercase tracking-widest flex items-center gap-1">{acceptedJobs.length} ONGOING <ChevronRight size={12} /></span>
             </div>
 
             <div className="grid grid-cols-1 gap-3">
               <AnimatePresence>
-                {acceptedJobs.map((job) => (
-                  <motion.div
-                    key={job.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-[20px] p-3.5 shadow-sm border border-slate-100 flex flex-col gap-4"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#F0F6FF] rounded-lg flex items-center justify-center shadow-inner border border-blue-50">
-                          <Activity size={18} className="text-[#007AFF]" />
+                {acceptedJobs.map((job) => {
+                  const isScheduled = job.details?.bookingType === 'scheduled';
+                  return (
+                    <motion.div
+                      key={job.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white rounded-[20px] p-4 shadow-sm border border-slate-100 flex flex-col gap-3"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[#F0F6FF] rounded-lg flex items-center justify-center shadow-inner border border-blue-50">
+                            <Activity size={18} className="text-[#007AFF]" />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-extrabold uppercase tracking-tight text-[#0F172A]">{job.service_name || job.details?.category || 'SERVICE'}</h4>
+                            <p className="text-[9px] font-bold text-slate-400 font-mono tracking-widest mt-0.5">ID: #{job.id.slice(0, 6).toUpperCase()}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="text-base font-extrabold uppercase tracking-tight text-[#0F172A]">{job.service_type || 'PROVISION'}</h4>
-                          <p className="text-[9px] font-bold text-slate-400 font-mono tracking-widest mt-0.5">ID: #{job.id.slice(0, 6).toUpperCase()}</p>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="px-2.5 py-1 bg-[#F0F6FF] text-[#007AFF] rounded-md text-[8px] font-extrabold uppercase tracking-widest">ASSIGNED TO YOU</span>
+                          {isScheduled ? (
+                            <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[8px] font-bold uppercase tracking-wider">
+                              📅 {job.details?.preferredDate} @ {job.details?.preferredTime}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded text-[8px] font-bold uppercase tracking-wider">
+                              ⚡ IMMEDIATE (ASAP)
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div>
-                        <span className="px-2.5 py-1 bg-[#F0F6FF] text-[#007AFF] rounded-md text-[8px] font-extrabold uppercase tracking-widest">EN ROUTE</span>
+
+                      {/* Full Problem Description - Shown ONLY after accept */}
+                      {job.details?.description && (
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                          <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest mb-0.5">PROBLEM DESCRIPTION</p>
+                          <p className="text-xs font-semibold text-slate-700 leading-relaxed">{job.details.description}</p>
+                        </div>
+                      )}
+
+                      {/* Full Address & Map Location - Shown ONLY after accept */}
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <MapPin size={14} className="text-red-500 flex-shrink-0" />
+                        <p className="text-xs font-semibold">{job.details?.address || 'Client Address'}</p>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <MapPin size={12} className="text-red-500 flex-shrink-0" />
-                      <p className="text-xs font-semibold truncate">{job.details?.address || 'Client Location'}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 mt-0.5">
-                      <a 
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${job.lat},${job.lng}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-2.5 bg-[#007AFF] hover:bg-blue-600 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors shadow-[0_4px_14px_-4px_rgba(0,122,255,0.4)]"
-                      >
-                        <Map size={12} /> NAVIGATE
-                      </a>
-                      <button 
-                        onClick={() => router.push(`/chat?orderId=${job.id}`)}
-                        className="w-full py-2.5 bg-white border border-slate-200 hover:border-blue-300 text-slate-700 rounded-xl text-[10px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors shadow-sm"
-                      >
-                        <MessageCircle size={12} className="text-[#007AFF]" /> CHAT
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="grid grid-cols-3 gap-2 mt-1">
+                        <a 
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${job.lat},${job.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="py-2.5 bg-[#007AFF] hover:bg-blue-600 text-white rounded-xl text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1 transition-colors shadow-sm"
+                        >
+                          <Map size={12} /> NAVIGATE
+                        </a>
+                        <button 
+                          onClick={() => router.push(`/chat?orderId=${job.id}`)}
+                          className="py-2.5 bg-white border border-slate-200 hover:border-blue-300 text-slate-700 rounded-xl text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1 transition-colors shadow-sm"
+                        >
+                          <MessageCircle size={12} className="text-[#007AFF]" /> CHAT
+                        </button>
+                        <button 
+                          onClick={() => handleCompleteJob(job.id)}
+                          className="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1 transition-colors shadow-sm"
+                        >
+                          COMPLETE
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
           </div>
         )}
 
         {/* Mission Feed (Available) */}
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-             <h3 className="text-[10px] font-bold text-[#007AFF] uppercase tracking-widest flex items-center gap-1.5">
-               <Zap size={12} /> AVAILABLE SERVICES
-             </h3>
-             <span className="text-[10px] font-bold text-[#007AFF] uppercase tracking-widest flex items-center gap-1">{activeJobs.length} JOBS <ChevronRight size={12} /></span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <AnimatePresence>
-              {activeJobs.map((job) => (
-                <motion.div
-                  key={job.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-[20px] p-3.5 shadow-sm border border-slate-100 flex flex-col gap-4"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#F0F6FF] rounded-lg flex items-center justify-center shadow-inner border border-blue-50">
-                        <Activity size={18} className="text-[#007AFF]" />
-                      </div>
-                      <div>
-                        <h4 className="text-base font-extrabold uppercase tracking-tight text-[#0F172A]">{job.service_type || 'PROVISION'}</h4>
-                        <p className="text-[9px] font-bold text-slate-400 font-mono tracking-widest mt-0.5">ID: #{job.id.slice(0, 6).toUpperCase()}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest">EARNINGS</p>
-                      <p className="text-lg font-extrabold tracking-tight">₹{job.total_price}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <MapPin size={12} className="text-red-500 flex-shrink-0" />
-                    <p className="text-xs font-semibold uppercase tracking-widest">{profile?.address?.district || 'Sector Prime'}</p>
-                  </div>
-
-                  <button 
-                    onClick={() => handleAcceptJob(job.id)}
-                    className="w-full py-3 bg-black hover:bg-slate-800 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-colors shadow-md mt-0.5"
-                  >
-                    ACCEPT JOB
-                  </button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {activeJobs.length === 0 && (
-              <div className="col-span-full py-10 text-center flex flex-col items-center gap-2 border-2 border-dashed border-slate-200 rounded-[20px] opacity-50">
-                <Activity size={20} className="text-slate-400" />
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Awaiting Service Requests...</p>
+        {(() => {
+          const visibleJobs = activeJobs.filter(job => !declinedJobIds.includes(job.id));
+          return (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                 <h3 className="text-[10px] font-bold text-[#007AFF] uppercase tracking-widest flex items-center gap-1.5">
+                   <Zap size={12} /> AVAILABLE SERVICES {workerTrade ? `(${workerTrade.toUpperCase()})` : ''}
+                 </h3>
+                 <span className="text-[10px] font-bold text-[#007AFF] uppercase tracking-widest flex items-center gap-1">{visibleJobs.length} MATCHING JOBS <ChevronRight size={12} /></span>
               </div>
-            )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <AnimatePresence>
+                  {visibleJobs.map((job) => {
+                    const categoryTitle = (job.service_name || job.details?.category || job.service_type || 'PROVISION').toUpperCase();
+                    const isScheduled = job.details?.bookingType === 'scheduled';
+                    const generalLocation = job.details?.address ? job.details.address.split(',')[0] : (profile?.address?.district || 'Nearby Location');
+                    return (
+                      <motion.div
+                        key={job.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-white rounded-[20px] p-3.5 shadow-sm border border-slate-100 flex flex-col gap-3"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-[#F0F6FF] rounded-lg flex items-center justify-center shadow-inner border border-blue-50">
+                              <Activity size={18} className="text-[#007AFF]" />
+                            </div>
+                            <div>
+                              <h4 className="text-base font-extrabold uppercase tracking-tight text-[#0F172A]">{categoryTitle}</h4>
+                              <p className="text-[9px] font-bold text-slate-400 font-mono tracking-widest mt-0.5">ID: #{job.id.slice(0, 6).toUpperCase()}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest">EARNINGS</p>
+                            <p className="text-lg font-extrabold tracking-tight">₹{job.total_price}</p>
+                          </div>
+                        </div>
+
+                        {/* Timing Badge: Immediate vs Scheduled */}
+                        <div className="flex items-center justify-between text-xs font-semibold">
+                          <div className="flex items-center gap-2 truncate text-slate-600">
+                            <MapPin size={12} className="text-red-500 flex-shrink-0" />
+                            <p className="truncate uppercase tracking-widest">{generalLocation}</p>
+                          </div>
+                          {isScheduled ? (
+                            <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[8px] font-bold uppercase tracking-wider flex-shrink-0">
+                              📅 {job.details?.preferredDate} @ {job.details?.preferredTime}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded text-[8px] font-bold uppercase tracking-wider flex-shrink-0">
+                              ⚡ IMMEDIATE
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Privacy notice - Description & Map Location concealed until accept */}
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 p-2 rounded-lg text-center border border-slate-100">
+                          🔒 Exact address & problem description revealed upon accepting
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2 mt-0.5">
+                          <button 
+                            onClick={() => handleAcceptJob(job.id)}
+                            className="py-3 bg-black hover:bg-slate-800 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-colors shadow-md flex items-center justify-center gap-1"
+                          >
+                            ACCEPT JOB
+                          </button>
+                          <button 
+                            onClick={() => handleDeclineJob(job.id)}
+                            className="py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-colors flex items-center justify-center gap-1"
+                          >
+                            <X size={12} /> DECLINE
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+
+                {visibleJobs.length === 0 && (
+                  <div className="col-span-full py-10 text-center flex flex-col items-center gap-2 border-2 border-dashed border-slate-200 rounded-[20px] opacity-50">
+                    <Activity size={20} className="text-slate-400" />
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Awaiting {workerTrade ? workerTrade.toUpperCase() : 'Service'} Requests...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Completed Missions (Isolated strictly to this assigned worker) */}
+        {completedJobs.length > 0 && (
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+               <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5">
+                 <Shield size={12} /> COMPLETED MISSIONS ({completedJobs.length})
+               </h3>
+               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PRIVATE HISTORY</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {completedJobs.map((job) => (
+                <div key={job.id} className="bg-white rounded-[20px] p-3.5 shadow-sm border border-emerald-100 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-extrabold uppercase text-[#0F172A]">{job.service_name || job.details?.category || 'SERVICE'}</h4>
+                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[8px] font-extrabold uppercase tracking-widest">
+                      ✓ COMPLETED
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                    <p>Earned: ₹{job.total_price}</p>
+                    <p className="font-mono text-[9px]">ID: #{job.id.slice(0, 6).toUpperCase()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Promo Banner */}
         <div className="mt-6 relative overflow-hidden rounded-[20px] bg-[#091533] p-5 flex items-center shadow-lg border border-slate-800">

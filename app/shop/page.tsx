@@ -91,41 +91,37 @@ export default function ShopPage() {
 
       {/* Hero Section */}
       <section className="px-4">
-        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[340px] flex flex-col justify-between shadow-sm">
-          <div className="relative z-10 space-y-4 max-w-[65%]">
+        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[320px] flex items-center justify-between shadow-sm">
+          <div className="relative z-10 space-y-3.5 max-w-[58%] sm:max-w-[62%]">
             <div className="inline-flex items-center gap-1.5 bg-blue-100/50 backdrop-blur-sm px-3 py-1 rounded-full text-[#007AFF] border border-blue-200">
               <ShieldCheck size={12} className="fill-current text-[#007AFF]" />
               <span className="text-[9px] font-bold uppercase tracking-widest">Verified Merchant</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629]">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629]">
               ASSET<br />
               <span className="text-[#007AFF]">SUPPLY.</span>
             </h1>
 
-            <p className="text-xs text-slate-600 leading-relaxed max-w-[200px]">
-              Deployment-ready hardware and digital nodes for tactical operations.
+            <p className="text-[11px] text-slate-600 leading-relaxed max-w-[190px]">
+              Deployment-ready hardware and digital tools for your repair needs.
             </p>
 
-            <div className="flex items-center gap-4 pt-2">
-               <div className="flex flex-col gap-0.5">
-                 <ShieldCheck size={14} className="text-[#007AFF]" />
-                 <span className="text-[7px] font-bold text-slate-600 max-w-[40px] leading-tight">Genuine Products</span>
+            <div className="flex items-center gap-3 pt-1 flex-wrap">
+               <div className="flex items-center gap-1">
+                 <ShieldCheck size={12} className="text-[#007AFF]" />
+                 <span className="text-[8px] font-bold text-slate-600">Genuine Products</span>
                </div>
-               <div className="flex flex-col gap-0.5">
-                 <Truck size={14} className="text-[#007AFF]" />
-                 <span className="text-[7px] font-bold text-slate-600 max-w-[40px] leading-tight">Fast & Secure Delivery</span>
-               </div>
-               <div className="flex flex-col gap-0.5">
-                 <Activity size={14} className="text-[#007AFF]" />
-                 <span className="text-[7px] font-bold text-slate-600 max-w-[40px] leading-tight">Quality Assured</span>
+               <div className="flex items-center gap-1">
+                 <Truck size={12} className="text-[#007AFF]" />
+                 <span className="text-[8px] font-bold text-slate-600">Fast Delivery</span>
                </div>
             </div>
           </div>
 
-          {/* Hero Image */}
-          <div className="absolute -right-20 -bottom-8 w-[120%] max-w-[380px] h-80 z-0 pointer-events-none">
-            <img src="/shop_hero_3d.png" alt="Hardware Supply" className="w-full h-full object-contain" />
+          {/* Hero Image - Properly Positioned */}
+          <div className="absolute right-0 bottom-0 w-[42%] max-w-[240px] sm:max-w-[320px] h-[85%] z-0 pointer-events-none flex items-end justify-end">
+            <img src="/shop_hero_3d.png" alt="Hardware Supply" className="w-full h-full object-contain object-bottom" />
           </div>
         </div>
       </section>

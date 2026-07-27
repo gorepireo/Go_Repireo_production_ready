@@ -26,6 +26,7 @@ import {
   Map as MapIcon
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { isServiceMatching } from '@/lib/serviceMatcher';
 
 const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelector'), { ssr: false });
 
@@ -40,6 +41,7 @@ export default function ServiceBooking() {
   const [formData, setFormData] = useState({
     category: 'plumbing',
     description: '',
+    bookingType: 'immediately' as 'immediately' | 'scheduled',
     preferredDate: new Date().toISOString().split('T')[0],
     preferredTime: new Date().toTimeString().slice(0, 5),
     address: '',
@@ -101,9 +103,7 @@ export default function ServiceBooking() {
   const estimatedPrice = estimation ? estimation.totalMin : 500;
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login?redirect=/services/service');
-    } else if (user) {
+    if (user) {
       insforge.database.from('user_addresses').select('*').eq('user_id', user.id)
         .then(({ data }) => { if (data) setAddresses(data); });
     }
@@ -135,7 +135,7 @@ export default function ServiceBooking() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: estimatedPrice * 100,
         currency: 'INR',
-        name: 'Repireo',
+        name: 'Go_Repireo',
         description: `${formData.category.toUpperCase()} Service Base Estimation`,
         order_id: orderResData.orderId,
         handler: async function (response: any) {
@@ -177,6 +177,38 @@ export default function ServiceBooking() {
                   type: 'order',
                   link: `/track?id=${data[0].id}`
                 }]);
+
+              // Dispatch notifications to active workers specializing in this service
+              try {
+                const { data: activeWorkers } = await insforge.database
+                  .from('workers')
+                  .select('user_id, service')
+                  .eq('status', 'active');
+
+                if (activeWorkers && activeWorkers.length > 0) {
+                  const matchingWorkers = activeWorkers.filter(w => 
+                    isServiceMatching(w.service, formData.category)
+                  );
+
+                  if (matchingWorkers.length > 0) {
+                    const timingText = formData.bookingType === 'immediately'
+                      ? 'IMMEDIATE (ASAP)'
+                      : `SCHEDULED for ${formData.preferredDate} at ${formData.preferredTime}`;
+
+                    const workerNotifications = matchingWorkers.map(w => ({
+                      user_id: w.user_id,
+                      title: `New ${formData.category.toUpperCase()} Request`,
+                      message: `A new ${formData.category.toUpperCase()} request (${timingText}) is available in your workspace. Log in to accept.`,
+                      type: 'order',
+                      link: '/dashboard/worker'
+                    }));
+
+                    await insforge.database.from('notifications').insert(workerNotifications);
+                  }
+                }
+              } catch (notifyErr) {
+                console.warn('Could not notify workers:', notifyErr);
+              }
 
               router.push(`/track?id=${data[0].id}`);
             }
@@ -244,9 +276,9 @@ export default function ServiceBooking() {
         {/* Subtle background decoration */}
         <div className="absolute top-0 right-0 w-[80%] h-full bg-gradient-to-l from-blue-50/80 to-transparent pointer-events-none" />
         
-        <div className="max-w-4xl mx-auto px-6 relative z-10 flex justify-between items-center">
-           <div className="w-[65%] space-y-3 py-6">
-             <h1 className="text-4xl font-black italic tracking-tighter leading-[0.9]">
+        <div className="max-w-4xl mx-auto px-6 relative z-10 flex justify-between items-center min-h-[140px]">
+           <div className="max-w-[58%] sm:max-w-[65%] space-y-2 py-4">
+             <h1 className="text-3xl sm:text-4xl font-black italic tracking-tighter leading-[0.9]">
                <span className="text-[#0A1629]">BOOK A</span><br />
                <span className="text-[#007AFF]">PROFESSIONAL.</span>
              </h1>
@@ -256,9 +288,9 @@ export default function ServiceBooking() {
            </div>
         </div>
 
-        {/* Mechanic Image */}
-        <div className="absolute -right-2 bottom-0 w-[55%] max-w-[200px] h-[130%] z-20 pointer-events-none flex items-end">
-           <img src="/custom_service_mechanic_3d.png" alt="Mechanic" className="w-full h-[90%] object-contain object-bottom drop-shadow-2xl" />
+        {/* Mechanic Image - Properly Constrained */}
+        <div className="absolute right-0 bottom-0 w-[38%] max-w-[160px] sm:max-w-[200px] h-full z-10 pointer-events-none flex items-end justify-end">
+           <img src="/custom_service_mechanic_3d.png" alt="Mechanic" className="w-full h-full object-contain object-bottom drop-shadow-xl" />
         </div>
       </div>
 
@@ -332,72 +364,105 @@ export default function ServiceBooking() {
             </div>
           </div>
 
-          {/* Temporal Field */}
+          {/* Dispatch Preference: Immediately vs Scheduled */}
           <div className="space-y-3">
              <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-               Section 03 <span className="mx-1.5">•</span> Temporal Sync
+               Section 03 <span className="mx-1.5">•</span> Dispatch Preference
              </label>
-             <div className="flex gap-3">
-                <div 
-                  className="flex-1 relative cursor-pointer"
-                  onClick={() => {
-                    try { (document.getElementById('dateInput') as HTMLInputElement)?.showPicker(); } catch (e) {}
-                  }}
-                >
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                     <Calendar size={16} className="text-[#007AFF]" />
-                  </div>
-                  <div className="absolute left-11 top-[10px] pointer-events-none">
-                     <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Preferred Date</span>
-                  </div>
-                  <input 
-                    id="dateInput"
-                    required
-                    type="date"
-                    value={formData.preferredDate}
-                    onChange={e => setFormData({ ...formData, preferredDate: e.target.value })}
-                    className={`w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-10 pt-[14px] text-[10px] font-medium outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm [color-scheme:light] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer ${!formData.preferredDate ? 'text-transparent' : 'text-slate-900'}`}
-                  />
-                  {!formData.preferredDate && (
-                    <div className="absolute left-11 top-[26px] pointer-events-none">
-                      <span className="text-[10px] font-medium text-slate-400">Select date</span>
-                    </div>
-                  )}
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                     <ChevronDown size={14} className="text-slate-400" />
-                  </div>
-                </div>
-                <div 
-                  className="flex-1 relative cursor-pointer"
-                  onClick={() => {
-                    try { (document.getElementById('timeInput') as HTMLInputElement)?.showPicker(); } catch (e) {}
-                  }}
-                >
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                     <Clock size={16} className="text-[#007AFF]" />
-                  </div>
-                  <div className="absolute left-11 top-[10px] pointer-events-none">
-                     <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Preferred Time</span>
-                  </div>
-                  <input 
-                    id="timeInput"
-                    required
-                    type="time"
-                    value={formData.preferredTime}
-                    onChange={e => setFormData({ ...formData, preferredTime: e.target.value })}
-                    className={`w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-10 pt-[14px] text-[10px] font-medium outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm [color-scheme:light] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer ${!formData.preferredTime ? 'text-transparent' : 'text-slate-900'}`}
-                  />
-                  {!formData.preferredTime && (
-                    <div className="absolute left-11 top-[26px] pointer-events-none">
-                      <span className="text-[10px] font-medium text-slate-400">Select time</span>
-                    </div>
-                  )}
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                     <ChevronDown size={14} className="text-slate-400" />
-                  </div>
-                </div>
+             <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-100/70 rounded-2xl border border-slate-200/50">
+               <button
+                 type="button"
+                 onClick={() => setFormData({ ...formData, bookingType: 'immediately' })}
+                 className={`py-3 px-4 rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                   formData.bookingType === 'immediately'
+                     ? 'bg-[#007AFF] text-white shadow-md'
+                     : 'bg-transparent text-slate-600 hover:text-slate-900'
+                 }`}
+               >
+                 <Zap size={14} /> Immediately (ASAP)
+               </button>
+               <button
+                 type="button"
+                 onClick={() => setFormData({ ...formData, bookingType: 'scheduled' })}
+                 className={`py-3 px-4 rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                   formData.bookingType === 'scheduled'
+                     ? 'bg-[#007AFF] text-white shadow-md'
+                     : 'bg-transparent text-slate-600 hover:text-slate-900'
+                 }`}
+               >
+                 <Calendar size={14} /> Scheduled
+               </button>
              </div>
           </div>
+
+          {/* Temporal Field (Date & Time) - Shown ONLY when Scheduled */}
+          {formData.bookingType === 'scheduled' && (
+             <div className="space-y-3">
+                <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
+                  Section 04 <span className="mx-1.5">•</span> Temporal Sync
+                </label>
+                <div className="flex gap-3">
+                   <div 
+                     className="flex-1 relative cursor-pointer"
+                     onClick={() => {
+                       try { (document.getElementById('dateInput') as HTMLInputElement)?.showPicker(); } catch (e) {}
+                     }}
+                   >
+                     <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <Calendar size={16} className="text-[#007AFF]" />
+                     </div>
+                     <div className="absolute left-11 top-[10px] pointer-events-none">
+                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Preferred Date</span>
+                     </div>
+                     <input 
+                       id="dateInput"
+                       required={formData.bookingType === 'scheduled'}
+                       type="date"
+                       value={formData.preferredDate}
+                       onChange={e => setFormData({ ...formData, preferredDate: e.target.value })}
+                       className={`w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-10 pt-[14px] text-[10px] font-medium outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm [color-scheme:light] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer ${!formData.preferredDate ? 'text-transparent' : 'text-slate-900'}`}
+                     />
+                     {!formData.preferredDate && (
+                       <div className="absolute left-11 top-[26px] pointer-events-none">
+                         <span className="text-[10px] font-medium text-slate-400">Select date</span>
+                       </div>
+                     )}
+                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <ChevronDown size={14} className="text-slate-400" />
+                     </div>
+                   </div>
+                   <div 
+                     className="flex-1 relative cursor-pointer"
+                     onClick={() => {
+                       try { (document.getElementById('timeInput') as HTMLInputElement)?.showPicker(); } catch (e) {}
+                     }}
+                   >
+                     <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <Clock size={16} className="text-[#007AFF]" />
+                     </div>
+                     <div className="absolute left-11 top-[10px] pointer-events-none">
+                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Preferred Time</span>
+                     </div>
+                     <input 
+                       id="timeInput"
+                       required={formData.bookingType === 'scheduled'}
+                       type="time"
+                       value={formData.preferredTime}
+                       onChange={e => setFormData({ ...formData, preferredTime: e.target.value })}
+                       className={`w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-10 pt-[14px] text-[10px] font-medium outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm [color-scheme:light] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer ${!formData.preferredTime ? 'text-transparent' : 'text-slate-900'}`}
+                     />
+                     {!formData.preferredTime && (
+                       <div className="absolute left-11 top-[26px] pointer-events-none">
+                         <span className="text-[10px] font-medium text-slate-400">Select time</span>
+                       </div>
+                     )}
+                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <ChevronDown size={14} className="text-slate-400" />
+                     </div>
+                   </div>
+                </div>
+             </div>
+          )}
 
           {/* Geographical Field */}
           <div className="space-y-3">
@@ -435,6 +500,14 @@ export default function ServiceBooking() {
                        navigator.geolocation.getCurrentPosition(
                          async (position) => {
                            try {
+                             if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+                               const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.coords.latitude},${position.coords.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+                               const data = await res.json();
+                               if (data.status === 'OK' && data.results && data.results.length > 0) {
+                                 setFormData({ ...formData, address: data.results[0].formatted_address, lat: position.coords.latitude, lng: position.coords.longitude });
+                                 return;
+                               }
+                             }
                              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&email=info@repireo.com`);
                              const data = await res.json();
                              if (data && data.display_name) {
@@ -517,15 +590,14 @@ export default function ServiceBooking() {
                   const isVideo = file.type.startsWith('video/');
                   const fileUrl = URL.createObjectURL(file);
                   return (
-                    <div key={`${file.name}-${idx}`} className="relative w-16 h-16 rounded-xl border border-slate-200 overflow-hidden group shadow-sm bg-white">
-                      {isVideo ? (
-                         <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center p-1">
-                           <p className="text-[8px] text-white font-bold text-center line-clamp-2">{file.name}</p>
-                           <p className="text-[7px] text-slate-400 mt-0.5">MP4</p>
-                         </div>
-                      ) : (
-                         <img src={fileUrl} alt="preview" className="w-full h-full object-cover" />
-                      )}
+                    <div key={`${file.name}-${idx}`} className="relative w-16 h-16 group">
+                      <div className="w-full h-full rounded-xl border border-slate-200 overflow-hidden shadow-sm bg-white">
+                        {isVideo ? (
+                           <video src={fileUrl} className="w-full h-full object-cover" />
+                        ) : (
+                           <img src={fileUrl} alt="preview" className="w-full h-full object-cover" />
+                        )}
+                      </div>
                       <button 
                         type="button"
                         onClick={() => {

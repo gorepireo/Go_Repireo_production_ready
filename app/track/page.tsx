@@ -61,21 +61,22 @@ export default function TrackPage() {
     <div className="min-h-screen bg-[#F8FAFC] pb-24 pt-6">
       
       {/* Hero Section */}
-      <section className="px-4 relative mb-6">
-        <div className="relative z-10 max-w-[65%] pt-4">
-          <h1 className="text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629]">
-            SIGNAL<br />
-            <span className="text-[#007AFF]">TRACK.</span>
-          </h1>
-          <p className="text-xs text-slate-500 leading-relaxed max-w-[180px] mt-4">
-            Track, analyze and monitor your assets with real-time signal data.
-          </p>
-        </div>
+      <section className="px-4 mb-6">
+        <div className="relative flex items-center justify-between min-h-[160px] overflow-hidden">
+          <div className="relative z-10 max-w-[58%] sm:max-w-[65%] pt-2">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629]">
+              SIGNAL<br />
+              <span className="text-[#007AFF]">TRACK.</span>
+            </h1>
+            <p className="text-[11px] text-slate-500 leading-relaxed max-w-[180px] mt-3">
+              Track, analyze and monitor your assets with real-time signal data.
+            </p>
+          </div>
 
-        {/* Hero Image */}
-        <div className="absolute top-0 -right-16 w-[130%] max-w-[360px] h-48 z-0 pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-100/50 via-transparent to-transparent opacity-80"></div>
-          <img src="/track_satellite_3d.png" alt="Satellite" className="w-full h-full object-contain drop-shadow-xl relative z-10" />
+          {/* Hero Image - Properly Positioned */}
+          <div className="absolute right-0 top-0 bottom-0 w-[42%] max-w-[220px] h-full z-0 pointer-events-none flex items-center justify-end">
+            <img src="/track_satellite_3d.png" alt="Satellite" className="w-full h-full object-contain object-right drop-shadow-xl" />
+          </div>
         </div>
       </section>
 
