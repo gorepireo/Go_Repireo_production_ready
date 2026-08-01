@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import SkeletonLoader from '@/components/SkeletonLoader';
 import { 
   ShieldCheck, 
   Activity,
@@ -50,11 +51,7 @@ export default function TrackPage() {
   // We'll build the empty state layout perfectly.
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6">
-        <Activity className="w-12 h-12 text-[#007AFF] animate-spin mb-4 opacity-20" />
-      </div>
-    );
+    return <SkeletonLoader />;
   }
 
   return (

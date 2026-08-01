@@ -54,3 +54,5 @@ Thumbs.db
 .roo
 .trae
 .windsurf
+# Scratch & temporary scripts
+run_sql*.js

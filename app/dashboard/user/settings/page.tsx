@@ -10,12 +10,17 @@ import { useRouter } from 'next/navigation';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
 
+import dynamic from 'next/dynamic';
+
+const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelector'), { ssr: false });
+
 export default function UserSettings() {
   const { user, profile, refresh, signOut } = useAuth();
   const router = useRouter();
   
   const [loading, setLoading] = useState(false);
   const [addresses, setAddresses] = useState<any[]>([]);
+  const [showMapModal, setShowMapModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: ''
@@ -324,7 +329,7 @@ export default function UserSettings() {
                     onChange={e => setNewAddress({...newAddress, address_text: e.target.value})}
                     className="flex-1 h-12 bg-white rounded-xl px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-[#007AFF]/20 border border-slate-100"
                   />
-                  <button type="button" onClick={detectLocationForNewAddress} className="w-12 h-12 bg-[#007AFF] text-white rounded-xl flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all shadow-md">
+                  <button type="button" onClick={() => setShowMapModal(true)} className="w-12 h-12 bg-[#007AFF] text-white rounded-xl flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all shadow-md">
                     <MapPin size={16} />
                   </button>
                 </div>
@@ -334,6 +339,24 @@ export default function UserSettings() {
                 <button type="button" onClick={() => setIsAddingAddress(false)} className="flex-1 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all">Cancel</button>
               </div>
             </form>
+          )}
+
+          {/* Location Map Selector Modal */}
+          {showMapModal && (
+            <LocationMapSelector 
+              initialLat={newAddress.lat || 22.5726}
+              initialLng={newAddress.lng || 88.3639}
+              onConfirm={(loc) => {
+                setNewAddress(prev => ({
+                  ...prev,
+                  address_text: loc.address,
+                  lat: loc.lat,
+                  lng: loc.lng
+                }));
+                setShowMapModal(false);
+              }}
+              onClose={() => setShowMapModal(false)}
+            />
           )}
 
           <div className="space-y-3">

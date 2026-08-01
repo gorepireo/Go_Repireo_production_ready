@@ -1,0 +1,287 @@
+[
+  {
+    "id": "plumb_l1_01",
+    "category": "plumbing",
+    "gravity": 1,
+    "gravityName": "Minor / Basic",
+    "subIssue": "Single Tap Drip / Washer Loose",
+    "texts": [
+      "Kitchen tap dripping slowly when turned off",
+      "washbasin tap leking small water drops",
+      "paani ka nal halke se tapak raha hai",
+      "loose faucet knob in bathroom sink",
+      "bathroom tap thread leaking slightly"
+    ],
+    "keywords": ["tap", "drip", "dripping", "slow", "small", "knob", "washer", "tapak", "leking", "faucet"],
+    "baseInspection": 100,
+    "baseMinService": 150,
+    "baseMaxService": 300,
+    "suggestedTools": ["Adjustable Wrench", "Teflon Tape", "Rubber Washer"]
+  },
+  {
+    "id": "plumb_l2_02",
+    "category": "plumbing",
+    "gravity": 2,
+    "gravityName": "Moderate / Standard",
+    "subIssue": "Basin Trap & Washbasin Drain Clog",
+    "text": "Washbasin drain water is stagnant and draining very slowly with hair clogging",
+    "texts": [
+      "Washbasin drain water is stagnant and draining very slowly",
+      "bathroom sink drain block ho gaya hai paani nahi jaa raha",
+      "basin bottle trap clogged with debris and grease",
+      "shower drain clogging slowly"
+    ],
+    "keywords": ["basin", "clogged", "drain", "stagnant", "slow", "block", "sink", "bottle trap", "naali"],
+    "baseInspection": 100,
+    "baseMinService": 300,
+    "baseMaxService": 550,
+    "suggestedTools": ["Basin Wrench", "Drain Cleaner Snake", "Plunger"]
+  },
+  {
+    "id": "plumb_l3_03",
+    "category": "plumbing",
+    "gravity": 3,
+    "gravityName": "Severe / Structural",
+    "subIssue": "Concealed In-Wall Pipe Leakage",
+    "texts": [
+      "Bathroom concealed CPVC pipe leaking inside wall creating dampness in bedroom wall",
+      "deewar ke andar pipe leak hai dampness aur plaster kharab ho raha hai",
+      "heavy dampness on adjoining wall due to leaking shower pipe inside wall",
+      "wall embedded water pipe seepage destroying wallpaper"
+    ],
+    "keywords": ["concealed", "in-wall", "inside wall", "dampness", "seepage", "deewar", "cpvc", "heavy leak", "adjoining"],
+    "baseInspection": 150,
+    "baseMinService": 700,
+    "baseMaxService": 1600,
+    "suggestedTools": ["Wall Grinder / Chisel", "CPVC Solvent & Pipe Segment", "Couplers", "Pressure Testing Pump"]
+  },
+  {
+    "id": "plumb_l4_04",
+    "category": "plumbing",
+    "gravity": 4,
+    "gravityName": "Critical / Emergency",
+    "subIssue": "Main Line Pipe Burst & Active Flooding",
+    "texts": [
+      "Main water line pipe burst under high pressure flooding the entire floor rapidly",
+      "pipe burst active flooding water everywhere in house urgent help needed",
+      "main paani ka pipe phat gaya hai poora ghar paani se bhar raha hai jaldi aao",
+      "gushing water burst from main inlet valve flooding hallway"
+    ],
+    "keywords": ["burst", "phat gaya", "flooding", "flood", "gushing", "main line", "emergency", "urgent", "water everywhere"],
+    "baseInspection": 200,
+    "baseMinService": 1200,
+    "baseMaxService": 2800,
+    "suggestedTools": ["Emergency Main Shutoff Wrench", "Heavy Duty Pipe Clamp", "Submersible Sump Pump", "Pipe Replacement Kit"]
+  },
+
+  {
+    "id": "elec_l1_01",
+    "category": "electrical",
+    "gravity": 1,
+    "gravityName": "Minor / Basic",
+    "subIssue": "Single Switch / Plug Socket Replace",
+    "texts": [
+      "One bedroom switch is loose and single 6A socket not working",
+      "ek switch kharab hai badalna hai",
+      "light switch knob broken needs replacement",
+      "socket pin loose in hall"
+    ],
+    "keywords": ["switch", "socket", "loose", "broken", "single", "plug", "kharab", "badalna"],
+    "baseInspection": 100,
+    "baseMinService": 150,
+    "baseMaxService": 300,
+    "suggestedTools": ["Voltage Tester Pen", "Modular Switch 6A", "Insulated Screwdriver"]
+  },
+  {
+    "id": "elec_l2_02",
+    "category": "electrical",
+    "gravity": 2,
+    "gravityName": "Moderate / Standard",
+    "subIssue": "Ceiling Fan Regulator & Panel Light Wiring",
+    "texts": [
+      "Ceiling fan making hum noise and regulator spark when changing speed",
+      "pankha speed regulator spark kar raha hai aur noise hai",
+      "hall ceiling led panel lights flickering continuously",
+      "regulator replacement and fan capacitor check"
+    ],
+    "keywords": ["fan", "regulator", "spark", "humming", "flickering", "pankha", "panel light", "capacitor"],
+    "baseInspection": 100,
+    "baseMinService": 300,
+    "baseMaxService": 600,
+    "suggestedTools": ["Digital Multimeter", "Fan Capacitor 2.5uF", "Regulator Module"]
+  },
+  {
+    "id": "elec_l3_03",
+    "category": "electrical",
+    "gravity": 3,
+    "gravityName": "Severe / Structural",
+    "subIssue": "Distribution Box MCB Trip & Phase Fault",
+    "texts": [
+      "Main MCB trips continuously when heavy load appliances AC or Geyser are turned on",
+      "mcb baar baar trip ho raha hai heavy load chalane par",
+      "distribution board single phase burning smell and neutral wire heating",
+      "short circuit in main room wiring board"
+    ],
+    "keywords": ["mcb", "trip", "burning smell", "distribution board", "heavy load", "ac", "geyser", "neutral", "short circuit"],
+    "baseInspection": 150,
+    "baseMinService": 650,
+    "baseMaxService": 1500,
+    "suggestedTools": ["Insulated Torque Driver", "Replacement MCB 32A C-Curve", "Thermal Camera / Clamp Meter"]
+  },
+  {
+    "id": "elec_l4_04",
+    "category": "electrical",
+    "gravity": 4,
+    "gravityName": "Critical / Emergency",
+    "subIssue": "Main Line Wiring Fire Hazard & Sparks",
+    "texts": [
+      "Sparks and smoke coming out from main electrical meter board with loud cracking sound",
+      "main meter board me aag aur dhua nikal raha hai sparks hai danger",
+      "short circuit fire hazard heavy electrical sparks and complete house blackout",
+      "meter wire burning with active smoke emergency"
+    ],
+    "keywords": ["fire", "smoke", "sparks", "dhua", "aag", "meter board", "blackout", "danger", "emergency", "cracking sound"],
+    "baseInspection": 250,
+    "baseMinService": 1500,
+    "baseMaxService": 3500,
+    "suggestedTools": ["CO2 Fire Extinguisher", "Heavy Service Cable 10mm", "Busbar Isolator", "High Voltage Gloves"]
+  },
+
+  {
+    "id": "clean_l1_01",
+    "category": "cleaning",
+    "gravity": 1,
+    "gravityName": "Minor / Basic",
+    "subIssue": "Single Washroom Express Clean",
+    "texts": [
+      "Single guest bathroom routine cleaning",
+      "ek bathroom ki safai karni hai",
+      "washbasin and mirror basic clean"
+    ],
+    "keywords": ["bathroom", "guest", "routine", "single", "safai", "mirror", "basin"],
+    "baseInspection": 100,
+    "baseMinService": 250,
+    "baseMaxService": 450,
+    "suggestedTools": ["Bathroom Cleaner", "Squeegee", "Scrubbing Pads"]
+  },
+  {
+    "id": "clean_l2_02",
+    "category": "cleaning",
+    "gravity": 2,
+    "gravityName": "Moderate / Standard",
+    "subIssue": "Hard Water Tile Stain Removal",
+    "texts": [
+      "Bathroom floor tiles have tough hard water yellow stains and limescale",
+      "tiles pe paani ke dagh hai limescale hard water cleaning",
+      "shower enclosure glass scale removal"
+    ],
+    "keywords": ["hard water", "stains", "limescale", "dagh", "yellow", "tiles", "glass"],
+    "baseInspection": 100,
+    "baseMinService": 450,
+    "baseMaxService": 850,
+    "suggestedTools": ["Acidic Tile Cleaner", "Rotary Buffer Hand Tool", "Protective Gloves"]
+  },
+  {
+    "id": "clean_l3_03",
+    "category": "cleaning",
+    "gravity": 3,
+    "gravityName": "Severe / Structural",
+    "subIssue": "Full Kitchen Heavy Oil Degreasing",
+    "texts": [
+      "Kitchen oil grease coating on tiles, cabinets, chimney hood and exhaust fan",
+      "kitchen me tel ki chiknai aur chimney me soot bhara hai deep cleaning",
+      "sticky grease restoration on kitchen walls"
+    ],
+    "keywords": ["kitchen", "oil", "grease", "chiknai", "chimney", "soot", "exhaust fan", "degreasing"],
+    "baseInspection": 100,
+    "baseMinService": 800,
+    "baseMaxService": 1800,
+    "suggestedTools": ["Industrial Degreaser", "Steam Injection Cleaner", "Scraper Blades"]
+  },
+  {
+    "id": "clean_l4_04",
+    "category": "cleaning",
+    "gravity": 4,
+    "gravityName": "Critical / Emergency",
+    "subIssue": "Post Renovation / Flood Sewage Deep Restoration",
+    "texts": [
+      "Entire 3BHK flat deep cleaning after renovation cement dust mud and debris everywhere",
+      "post renovation full house deep clean cement debris dust mud floor polishing",
+      "sewage flood restoration full house deep sanitization emergency"
+    ],
+    "keywords": ["post renovation", "renovation", "cement", "mud", "debris", "sewage", "flood", "full house", "3bhk", "4bhk"],
+    "baseInspection": 200,
+    "baseMinService": 2500,
+    "baseMaxService": 6500,
+    "suggestedTools": ["Heavy Wet/Dry Vacuum", "Floor Single Disc Polishing Machine", "Sanitization Fogger"]
+  },
+
+  {
+    "id": "app_l1_01",
+    "category": "appliance",
+    "gravity": 1,
+    "gravityName": "Minor / Basic",
+    "subIssue": "Filter Cleaning & Battery Change",
+    "texts": [
+      "AC filter dust cleaning and remote battery replacement",
+      "ac ka filter saaf karna hai dust hai",
+      "ro water purifier filter service notification"
+    ],
+    "keywords": ["filter", "dust", "cleaning", "battery", "remote", "purifier"],
+    "baseInspection": 100,
+    "baseMinService": 200,
+    "baseMaxService": 400,
+    "suggestedTools": ["Air Blower", "Filter Cleaner Spray"]
+  },
+  {
+    "id": "app_l2_02",
+    "category": "appliance",
+    "gravity": 2,
+    "gravityName": "Moderate / Standard",
+    "subIssue": "Washing Machine / Refrigerator Thermostat Repair",
+    "texts": [
+      "Washing machine drum making loud noise during spin cycle",
+      "washing machine ki awaaz aa rahi hai spin me vibration",
+      "refrigerator cooling slow ice forming on back panel"
+    ],
+    "keywords": ["washing machine", "refrigerator", "spin", "vibration", "noise", "cooling slow", "awaaz"],
+    "baseInspection": 150,
+    "baseMinService": 450,
+    "baseMaxService": 900,
+    "suggestedTools": ["Drum Bearing Puller", "Multimeter", "Thermostat Sensor"]
+  },
+  {
+    "id": "app_l3_03",
+    "category": "appliance",
+    "gravity": 3,
+    "gravityName": "Severe / Structural",
+    "subIssue": "AC Gas Leak & Re-charging",
+    "texts": [
+      "Split AC outdoor unit running but indoor unit blowing room temperature air. Gas leakage suspected.",
+      "ac thandi hawa nahi de raha gas khatam leak lag raha hai",
+      "copper pipe ice buildup ac gas leak repairing and vacuum charging"
+    ],
+    "keywords": ["ac", "gas leak", "gas refill", "thandi hawa nahi", "copper pipe", "split ac", "vacuum"],
+    "baseInspection": 150,
+    "baseMinService": 1200,
+    "baseMaxService": 2400,
+    "suggestedTools": ["Gas Manifold Set", "R32/R410 Refrigerant", "Brazing Torch", "Vacuum Pump"]
+  },
+  {
+    "id": "app_l4_04",
+    "category": "appliance",
+    "gravity": 4,
+    "gravityName": "Critical / Emergency",
+    "subIssue": "Compressor Failure & Power Shortage Circuit",
+    "texts": [
+      "AC compressor seized loud metallic bang sound followed by smoke and PCB board burning",
+      "compressor burst smoke burning smell ac pcb burnt out emergency repair",
+      "refrigerator compressor short circuit fire hazard"
+    ],
+    "keywords": ["compressor", "seized", "burst", "pcb burnt", "bang", "smoke", "fire hazard", "short circuit"],
+    "baseInspection": 200,
+    "baseMinService": 2200,
+    "baseMaxService": 5500,
+    "suggestedTools": ["Replacement Compressor", "Universal PCB Kit", "Capillary Tube", "Filter Drier"]
+  }
+]

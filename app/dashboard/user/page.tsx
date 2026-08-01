@@ -7,6 +7,8 @@ import { ShoppingBag, CheckCircle2, CalendarDays, User as UserIcon, Activity, Ch
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
 
+import { UserDashboardSkeleton } from '@/components/SkeletonLoader';
+
 function UserDashboardContent() {
   const { user, profile } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
@@ -42,30 +44,26 @@ function UserDashboardContent() {
   const completedOrdersCount = orders.filter(o => o.status === 'delivered').length;
   const completionPercentage = orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0;
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  if (loading) return <UserDashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-24 pt-6">
       
       {/* Hero Section */}
       <section className="px-4 mb-6 relative">
-        <div className="flex items-start justify-between pt-4">
-          <div className="flex items-center gap-4">
-            <Avatar src={profile?.avatar_url} name={profile?.display_name || profile?.email || 'User'} size={56} className="shadow-lg border-2 border-white" />
-            <div>
-              <h1 className="text-3xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629] uppercase">
-                {profile?.display_name || 'CLIENT'}<br />
-                <span className="text-[#007AFF]">PORTAL.</span>
+        <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1 pr-3">
+            <Avatar src={profile?.avatar_url} name={profile?.display_name || profile?.email || 'User'} size={48} className="shadow-sm border-2 border-white shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold text-[#007AFF] uppercase tracking-wider">Welcome Back</p>
+              <h1 className="text-lg md:text-xl font-extrabold text-[#0A1629] tracking-tight truncate mt-0.5">
+                {profile?.display_name || user?.email?.split('@')[0] || 'Customer'}
               </h1>
-              <p className="text-xs text-slate-500 mt-2">Manage your services and account.</p>
+              <p className="text-xs text-slate-500 font-medium truncate mt-0.5">Manage your services and account</p>
             </div>
           </div>
           
-          <Link href="/dashboard/user/settings" className="w-12 h-12 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all text-slate-400 hover:text-slate-900">
+          <Link href="/dashboard/user/settings" className="w-10 h-10 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all text-slate-400 hover:text-slate-900 shrink-0">
             <Settings className="w-5 h-5" />
           </Link>
         </div>

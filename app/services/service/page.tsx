@@ -23,10 +23,13 @@ import {
   Check,
   LayoutGrid,
   X,
-  Map as MapIcon
+  Map as MapIcon,
+  Banknote,
+  CreditCard
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { isServiceMatching } from '@/lib/serviceMatcher';
+import { ServiceBookingSkeleton } from '@/components/SkeletonLoader';
 
 const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelector'), { ssr: false });
 
@@ -38,6 +41,7 @@ export default function ServiceBooking() {
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [visualFiles, setVisualFiles] = useState<File[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('cash');
   const [formData, setFormData] = useState({
     category: 'plumbing',
     description: '',
@@ -109,6 +113,90 @@ export default function ServiceBooking() {
     }
   }, [user, loading, router]);
 
+  const createOrderRecord = async (payStatus: string, payMethod: string, payId?: string) => {
+    const { data, error } = await insforge.database
+      .from('orders')
+      .insert([{
+        user_email: user?.email,
+        service_name: formData.category,
+        status: 'pending',
+        payment_status: payStatus,
+        payment_method: payMethod,
+        payment_id: payId || null,
+        total_price: estimatedPrice,
+        details: { ...formData, payment_method: payMethod, items: [{ type: 'service', name: formData.category }], estimation },
+        lat: formData.lat || (12.9716 + (Math.random() - 0.5) * 0.1),
+        lng: formData.lng || (77.5946 + (Math.random() - 0.5) * 0.1),
+        order_type: 'direct_service'
+      }])
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    if (data && data.length > 0) {
+      await insforge.database
+        .from('order_tracking')
+        .insert([{
+          order_id: data[0].id,
+          status: 'pending',
+          lat: data[0].lat - (Math.random() * 0.1),
+          lng: data[0].lng - (Math.random() * 0.1),
+          note: payMethod === 'cash' 
+            ? 'Order placed with Cash payment option. Awaiting worker dispatch...'
+            : 'Order placed & prepaid online. Initialising logistic unit...'
+        }]);
+
+      await insforge.database
+        .from('notifications')
+        .insert([{
+          user_id: user?.id,
+          title: 'Service Requested',
+          message: payMethod === 'cash'
+            ? `Your ${formData.category} service request has been placed (Cash payment upon service completion).`
+            : `Your ${formData.category} service request has been received and payment confirmed.`,
+          type: 'order',
+          link: `/track?id=${data[0].id}`
+        }]);
+
+      // Notify matching active workers
+      try {
+        const { data: activeWorkers } = await insforge.database
+          .from('workers')
+          .select('user_id, service')
+          .eq('status', 'active');
+
+        if (activeWorkers && activeWorkers.length > 0) {
+          const matchingWorkers = activeWorkers.filter(w => 
+            isServiceMatching(w.service, formData.category)
+          );
+
+          if (matchingWorkers.length > 0) {
+            const timingText = formData.bookingType === 'immediately'
+              ? 'IMMEDIATE (ASAP)'
+              : `SCHEDULED for ${formData.preferredDate} at ${formData.preferredTime}`;
+            const payText = payMethod === 'cash' ? 'CASH ON SERVICE' : 'PREPAID ONLINE';
+
+            const workerNotifications = matchingWorkers.map(w => ({
+              user_id: w.user_id,
+              title: `New ${formData.category.toUpperCase()} Request`,
+              message: `A new ${formData.category.toUpperCase()} request (${timingText}, ${payText}) is available in your workspace. Log in to accept.`,
+              type: 'order',
+              link: '/dashboard/worker'
+            }));
+
+            await insforge.database.from('notifications').insert(workerNotifications);
+          }
+        }
+      } catch (notifyErr) {
+        console.warn('Could not notify workers:', notifyErr);
+      }
+
+      router.push(`/track?id=${data[0].id}`);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -118,147 +206,64 @@ export default function ServiceBooking() {
     
     setLoading(true);
     try {
-      // 1. Create order on backend for Razorpay
-      const res = await fetch('/api/razorpay', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ amount: estimatedPrice })
-      });
-      const orderResData = await res.json();
-      
-      if (!res.ok) throw new Error(orderResData.error || 'Failed to create order');
+      if (paymentMethod === 'cash') {
+        // Direct order creation for Cash payment
+        await createOrderRecord('cash_on_delivery', 'cash');
+      } else {
+        // Online Payment via Razorpay
+        const res = await fetch('/api/razorpay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: estimatedPrice })
+        });
+        const orderResData = await res.json();
+        
+        if (!res.ok) throw new Error(orderResData.error || 'Failed to create Razorpay order');
 
-      // 2. Initialize Razorpay Checkout
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: estimatedPrice * 100,
-        currency: 'INR',
-        name: 'Go_Repireo',
-        description: `${formData.category.toUpperCase()} Service Base Estimation`,
-        order_id: orderResData.orderId,
-        handler: async function (response: any) {
-          // 3. Save order on success
-          try {
-            const { data, error } = await insforge.database
-              .from('orders')
-              .insert([{
-                user_email: user.email,
-                service_name: formData.category,
-                status: 'pending',
-                payment_status: 'paid',
-                payment_id: response.razorpay_payment_id,
-                total_price: estimatedPrice,
-                details: { ...formData, items: [{ type: 'service', name: formData.category }], estimation },
-                lat: formData.lat || (12.9716 + (Math.random() - 0.5) * 0.1),
-                lng: formData.lng || (77.5946 + (Math.random() - 0.5) * 0.1),
-                order_type: 'direct_service'
-              }])
-              .select();
-
-            if (data) {
-              await insforge.database
-                .from('order_tracking')
-                .insert([{
-                  order_id: data[0].id,
-                  status: 'pending',
-                  lat: data[0].lat - (Math.random() * 0.1),
-                  lng: data[0].lng - (Math.random() * 0.1),
-                  note: 'Logistic unit assigned. Initialising signal...'
-                }]);
-
-              await insforge.database
-                .from('notifications')
-                .insert([{
-                  user_id: user.id,
-                  title: 'Service Requested',
-                  message: `Your ${formData.category} service request has been received and payment confirmed. Our team is reviewing the details.`,
-                  type: 'order',
-                  link: `/track?id=${data[0].id}`
-                }]);
-
-              // Dispatch notifications to active workers specializing in this service
-              try {
-                const { data: activeWorkers } = await insforge.database
-                  .from('workers')
-                  .select('user_id, service')
-                  .eq('status', 'active');
-
-                if (activeWorkers && activeWorkers.length > 0) {
-                  const matchingWorkers = activeWorkers.filter(w => 
-                    isServiceMatching(w.service, formData.category)
-                  );
-
-                  if (matchingWorkers.length > 0) {
-                    const timingText = formData.bookingType === 'immediately'
-                      ? 'IMMEDIATE (ASAP)'
-                      : `SCHEDULED for ${formData.preferredDate} at ${formData.preferredTime}`;
-
-                    const workerNotifications = matchingWorkers.map(w => ({
-                      user_id: w.user_id,
-                      title: `New ${formData.category.toUpperCase()} Request`,
-                      message: `A new ${formData.category.toUpperCase()} request (${timingText}) is available in your workspace. Log in to accept.`,
-                      type: 'order',
-                      link: '/dashboard/worker'
-                    }));
-
-                    await insforge.database.from('notifications').insert(workerNotifications);
-                  }
-                }
-              } catch (notifyErr) {
-                console.warn('Could not notify workers:', notifyErr);
-              }
-
-              router.push(`/track?id=${data[0].id}`);
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          amount: estimatedPrice * 100,
+          currency: 'INR',
+          name: 'Go_Repireo',
+          description: `${formData.category.toUpperCase()} Service Base Estimation`,
+          order_id: orderResData.orderId,
+          handler: async function (response: any) {
+            try {
+              await createOrderRecord('paid', 'online', response.razorpay_payment_id);
+            } catch (err) {
+              console.error('Database save error:', err);
+              alert("Payment successful, but failed to save order details. Our team will contact you.");
+            } finally {
+              setLoading(false);
             }
-          } catch (err) {
-            console.error('Database save error:', err);
-            alert("Payment successful, but failed to save order details. Our team will contact you.");
-          } finally {
-            setLoading(false);
+          },
+          modal: {
+            ondismiss: function() {
+              setLoading(false);
+            }
+          },
+          prefill: {
+            name: user.email?.split('@')[0] || 'User',
+            email: user.email || '',
+          },
+          theme: {
+            color: '#007AFF'
           }
-        },
-        modal: {
-          ondismiss: function() {
-            setLoading(false);
-          }
-        },
-        prefill: {
-          name: user.email?.split('@')[0] || 'User',
-          email: user.email || '',
-        },
-        theme: {
-          color: '#007AFF'
-        }
-      };
+        };
 
-      const paymentObject = new (window as any).Razorpay(options);
-      paymentObject.open();
+        const paymentObject = new (window as any).Razorpay(options);
+        paymentObject.open();
+      }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Booking error:', err);
+      alert(err.message || 'Error processing request');
       setLoading(false);
     }
   };
 
   if (loading || !user) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl relative overflow-hidden">
-           <motion.div 
-             animate={{ rotate: 360 }} 
-             transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-             className="absolute inset-0 bg-gradient-to-br from-[#007AFF]/10 to-transparent" 
-           />
-           <LayoutGrid className="w-10 h-10 text-[#007AFF] animate-pulse" />
-        </div>
-        <div className="space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.5em] text-black/10">Establishing Protocol</p>
-          <p className="text-sm font-bold uppercase tracking-widest text-[#007AFF] animate-pulse">Initialising Secure Gateway</p>
-        </div>
-      </div>
-    );
+    return <ServiceBookingSkeleton />;
   }
 
   const categories = [
@@ -304,7 +309,7 @@ export default function ServiceBooking() {
           {/* Category Selector */}
           <div className="space-y-3">
             <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-              Section 01 <span className="mx-1.5">•</span> Select Discipline
+              Step 1 <span className="mx-1.5">•</span> Select Service Category
             </label>
             <div className="grid grid-cols-2 gap-3">
               {categories.map((cat) => {
@@ -348,7 +353,7 @@ export default function ServiceBooking() {
           {/* Core Problem Description */}
           <div className="space-y-3">
             <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-              Section 02 <span className="mx-1.5">•</span> Brief Entry
+              Step 2 <span className="mx-1.5">•</span> Describe Your Issue
             </label>
             <div className="relative">
               <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -359,7 +364,7 @@ export default function ServiceBooking() {
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                 className="w-full h-14 bg-white border border-slate-100 rounded-2xl pl-12 pr-6 text-[10px] font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm placeholder:text-slate-400"
-                placeholder="E.g. System breach in plumbing cluster A-4..."
+                placeholder="E.g. Kitchen tap is leaking or bathroom drain is clogged..."
               />
             </div>
           </div>
@@ -367,7 +372,7 @@ export default function ServiceBooking() {
           {/* Dispatch Preference: Immediately vs Scheduled */}
           <div className="space-y-3">
              <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-               Section 03 <span className="mx-1.5">•</span> Dispatch Preference
+               Step 3 <span className="mx-1.5">•</span> Choose Service Timing
              </label>
              <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-100/70 rounded-2xl border border-slate-200/50">
                <button
@@ -399,7 +404,7 @@ export default function ServiceBooking() {
           {formData.bookingType === 'scheduled' && (
              <div className="space-y-3">
                 <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-                  Section 04 <span className="mx-1.5">•</span> Temporal Sync
+                  Preferred Date & Time
                 </label>
                 <div className="flex gap-3">
                    <div 
@@ -467,14 +472,14 @@ export default function ServiceBooking() {
           {/* Geographical Field */}
           <div className="space-y-3">
              <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-               Section 04 <span className="mx-1.5">•</span> Geo Lock
+               Step 4 <span className="mx-1.5">•</span> Service Address & Location
              </label>
              <div className="relative">
                <div className="absolute left-4 top-1/2 -translate-y-1/2">
                  <MapPin size={16} className="text-[#007AFF]" />
                </div>
                <div className="absolute left-11 top-[10px] pointer-events-none z-10">
-                 <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Destination Coordinates</span>
+                 <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Delivery Address</span>
                </div>
                <input 
                  required 
@@ -483,7 +488,7 @@ export default function ServiceBooking() {
                  onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
                  onChange={e => setFormData({ ...formData, address: e.target.value })}
                  className="w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-[90px] pt-[14px] text-[10px] font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm placeholder:text-slate-400 relative z-0"
-                 placeholder="Auto-detect or select saved location"
+                 placeholder="Enter your address or select saved location"
                />
                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
                  <button 
@@ -562,7 +567,7 @@ export default function ServiceBooking() {
           {/* Visual Linkage */}
           <div className="space-y-3 pt-2">
             <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-              Optional <span className="mx-1.5">•</span> Visual Log
+              Optional <span className="mx-1.5">•</span> Attach Photos or Videos
             </label>
             <label className="w-full h-[80px] bg-white border border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:bg-slate-50 hover:border-[#007AFF]/30 transition-all cursor-pointer relative overflow-hidden">
                <input 
@@ -621,15 +626,16 @@ export default function ServiceBooking() {
                 type="button"
                 onClick={handleEstimate}
                 disabled={isEstimating}
-                className="w-full h-12 bg-white border border-[#007AFF] text-[#007AFF] rounded-full text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-50 active:scale-[0.98] transition-all"
+                className="w-full h-12 bg-[#007AFF] hover:bg-blue-600 active:scale-[0.98] text-white rounded-full text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(0,122,255,0.25)] transition-all"
               >
                 {isEstimating ? (
                   <span className="flex items-center gap-2">
-                    <LayoutGrid className="w-4 h-4 animate-spin" /> ANALYZING REQUIREMENTS...
+                    <LayoutGrid className="w-4 h-4 animate-spin" /> CALCULATING ESTIMATE...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" /> GENERATE ESTIMATE
+                    <span>CALCULATE SERVICE ESTIMATE</span>
+                    <ArrowRight size={15} />
                   </span>
                 )}
               </button>
@@ -639,15 +645,29 @@ export default function ServiceBooking() {
                 animate={{ opacity: 1, height: 'auto' }}
                 className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4"
               >
-                 <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                   <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center">
-                     <Sparkles size={14} className="text-[#007AFF]" />
-                   </div>
-                   <div>
-                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">AI Analysis</p>
-                     <p className="text-[9px] text-slate-500 leading-tight mt-0.5">{estimation.reasoning}</p>
-                   </div>
-                 </div>
+                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center">
+                        <Sparkles size={14} className="text-[#007AFF]" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">AI Gravity & Problem Analysis</p>
+                        <p className="text-[9px] text-slate-500 leading-tight mt-0.5">{estimation.reasoning}</p>
+                      </div>
+                    </div>
+
+                    {estimation.gravityName && (
+                      <span className={`px-2.5 py-1 rounded-full text-[8px] font-extrabold uppercase tracking-wider flex-shrink-0 ${
+                        estimation.gravityLevel >= 3 
+                          ? 'bg-red-50 text-red-600 border border-red-200' 
+                          : estimation.gravityLevel === 2
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      }`}>
+                        ⚡ {estimation.gravityName}
+                      </span>
+                    )}
+                  </div>
                  
                  <div className="space-y-2.5">
                    <div className="flex justify-between items-center">
@@ -673,15 +693,61 @@ export default function ServiceBooking() {
                  </div>
 
                  <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100 flex items-center justify-between mt-2">
-                    <div>
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Base Deposit</p>
-                      <p className="text-[9px] font-medium text-slate-400 mt-0.5">Final amount may vary</p>
+                     <div>
+                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Estimated Total</p>
+                       <p className="text-[9px] font-medium text-slate-400 mt-0.5">Final amount based on work required</p>
+                     </div>
+                     <div className="text-right">
+                       <p className="text-2xl font-black text-[#007AFF]">₹{estimation.totalMin}</p>
+                     </div>
+                  </div>
+
+                  {/* Payment Method Option */}
+                  <div className="space-y-2 pt-3 border-t border-slate-100">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
+                      Payment Option <span className="mx-1.5">•</span> Select Method
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('cash')}
+                        className={`p-3.5 rounded-2xl border transition-all text-left flex flex-col justify-between gap-3 ${
+                          paymentMethod === 'cash'
+                            ? 'bg-[#001D4A] text-white border-[#001D4A] shadow-md'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <Banknote size={20} className={paymentMethod === 'cash' ? 'text-[#007AFF]' : 'text-slate-500'} />
+                          {paymentMethod === 'cash' && <span className="w-2.5 h-2.5 rounded-full bg-[#007AFF]" />}
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-extrabold uppercase tracking-tight">Cash on Service</p>
+                          <p className="text-[9px] opacity-75 mt-0.5 leading-snug">Pay worker cash after job completion</p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('online')}
+                        className={`p-3.5 rounded-2xl border transition-all text-left flex flex-col justify-between gap-3 ${
+                          paymentMethod === 'online'
+                            ? 'bg-[#001D4A] text-white border-[#001D4A] shadow-md'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <CreditCard size={20} className={paymentMethod === 'online' ? 'text-[#007AFF]' : 'text-slate-500'} />
+                          {paymentMethod === 'online' && <span className="w-2.5 h-2.5 rounded-full bg-[#007AFF]" />}
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-extrabold uppercase tracking-tight">Online Payment</p>
+                          <p className="text-[9px] opacity-75 mt-0.5 leading-snug">Pay online via UPI, Cards, NetBanking</p>
+                        </div>
+                      </button>
                     </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-black text-[#007AFF]">₹{estimation.totalMin}</p>
-                    </div>
-                 </div>
-              </motion.div>
+                  </div>
+               </motion.div>
             )}
           </div>
 
@@ -698,8 +764,19 @@ export default function ServiceBooking() {
                   type="submit" 
                   className="w-full h-12 bg-[#007AFF] text-white rounded-full text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_10px_20px_rgba(0,122,255,0.2)] hover:bg-blue-600 active:scale-[0.98] transition-all"
                 >
-                  <span>{loading ? 'INITIALISING...' : 'CONFIRM & DEPOSIT'}</span>
-                  {!loading && <ArrowRight size={16} />}
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <LayoutGrid className="w-4 h-4 animate-spin" /> PLACING SERVICE REQUEST...
+                    </span>
+                  ) : paymentMethod === 'cash' ? (
+                    <span className="flex items-center gap-2">
+                      <Banknote size={16} /> CONFIRM & PLACE ORDER (CASH ON SERVICE)
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <CreditCard size={16} /> PAY ₹{estimation.totalMin} & PLACE ORDER
+                    </span>
+                  )}
                 </button>
               </motion.div>
             )}

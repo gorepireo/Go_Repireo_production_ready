@@ -1,5 +1,7 @@
 'use client';
 
+import { WorkerDashboardSkeleton } from '@/components/SkeletonLoader';
+
 import { useState, useEffect, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
@@ -261,22 +263,7 @@ function WorkerDashboardContent() {
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#F8F9FA] text-[#0F172A] pb-24 font-sans px-4 md:px-6 pt-6">
-      <div className="max-w-4xl mx-auto space-y-5">
-        <div className="h-32 bg-white rounded-3xl animate-pulse shadow-sm border border-slate-100"></div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="h-24 bg-white rounded-3xl animate-pulse shadow-sm border border-slate-100"></div>
-          <div className="h-24 bg-white rounded-3xl animate-pulse shadow-sm border border-slate-100"></div>
-        </div>
-        <div className="h-10 w-48 bg-slate-200 rounded-full animate-pulse mt-8 mb-4"></div>
-        <div className="space-y-4">
-          <div className="h-32 bg-white rounded-3xl animate-pulse shadow-sm border border-slate-100"></div>
-          <div className="h-32 bg-white rounded-3xl animate-pulse shadow-sm border border-slate-100"></div>
-        </div>
-      </div>
-    </div>
-  );
+  if (loading) return <WorkerDashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#0F172A] pb-24 font-sans">
@@ -285,11 +272,11 @@ function WorkerDashboardContent() {
         {/* Header with Graphic */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-50/50 to-transparent p-5 md:p-6 border border-white shadow-sm flex flex-col md:flex-row items-center justify-between">
           <div className="z-10 w-full md:w-1/2">
-            <h1 className="text-3xl md:text-4xl font-extrabold uppercase tracking-tight leading-[1.1]">
-              SERVICE <br />
-              <span className="text-[#007AFF]">WORKSPACE.</span>
+            <p className="text-[10px] font-bold text-[#007AFF] uppercase tracking-wider">Worker Workspace</p>
+            <h1 className="text-lg md:text-xl font-extrabold text-[#0A1629] tracking-tight truncate mt-0.5">
+              {profile?.display_name || 'Service Partner'}
             </h1>
-            <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mt-2">Service Provider Interface</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Manage your active jobs and service requests</p>
           </div>
           <div className="absolute right-[-40px] md:right-0 bottom-[-20px] md:bottom-[-30px] w-[240px] md:w-[280px] opacity-90 md:opacity-100 z-0 pointer-events-none">
              <img src="/house_toolbox_3d.png" alt="Workspace Graphic" className="w-full object-contain" />
@@ -334,12 +321,12 @@ function WorkerDashboardContent() {
           {/* Earnings Card */}
           <div className="bg-white rounded-2xl md:rounded-3xl p-3 md:p-4 shadow-sm border border-slate-100 relative overflow-hidden flex flex-col justify-between min-h-[100px] md:min-h-[110px]">
             <div className="z-10">
-              <p className="text-[8px] md:text-[10px] font-bold text-[#007AFF] uppercase tracking-widest">Earnings</p>
-              <h3 className="text-2xl md:text-3xl font-extrabold mt-1 tracking-tight">₹{profile?.earnings || 0}</h3>
+              <p className="text-[8px] md:text-[10px] font-bold text-[#007AFF] uppercase tracking-widest">Worker Payout Earnings</p>
+              <h3 className="text-2xl md:text-3xl font-extrabold mt-1 tracking-tight">₹{completedJobs.reduce((acc, job) => acc + (Math.max(0, (Number(job.total_price) || 0) - (Number(job.details?.estimation?.platformFee) || 49))), profile?.earnings || 0)}</h3>
             </div>
             <div className="z-10 flex items-center gap-1 md:gap-1.5 mt-2">
               <Shield size={10} className="text-[#007AFF]" />
-              <p className="text-[8px] md:text-[10px] font-bold text-[#007AFF] uppercase tracking-widest">Level 4</p>
+              <p className="text-[8px] md:text-[10px] font-bold text-[#007AFF] uppercase tracking-widest">Verified Worker Share</p>
             </div>
             <div className="absolute right-[-10px] bottom-[-10px] md:bottom-[-20px] w-[90px] md:w-[130px] pointer-events-none">
               <img src="/wallet_coins_3d.png" alt="Earnings Graphic" className="w-full object-contain" />
@@ -361,6 +348,10 @@ function WorkerDashboardContent() {
               <AnimatePresence>
                 {acceptedJobs.map((job) => {
                   const isScheduled = job.details?.bookingType === 'scheduled';
+                  const platformFee = Number(job.details?.estimation?.platformFee) || 49;
+                  const workerPayout = Math.max(0, (Number(job.total_price) || 0) - platformFee);
+                  const isCash = job.payment_method === 'cash' || job.payment_status === 'cash_on_delivery';
+
                   return (
                     <motion.div
                       key={job.id}
@@ -389,6 +380,20 @@ function WorkerDashboardContent() {
                               ⚡ IMMEDIATE (ASAP)
                             </span>
                           )}
+                        </div>
+                      </div>
+
+                      {/* Payment & Worker Share Banner */}
+                      <div className="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-100 flex items-center justify-between">
+                        <div>
+                          <p className="text-[8px] font-extrabold text-emerald-800 uppercase tracking-widest">PAYMENT TYPE</p>
+                          <p className="text-xs font-black text-emerald-900 mt-0.5">
+                            {isCash ? '💵 Cash Payment from Client' : '💳 Prepaid Online'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[8px] font-extrabold text-emerald-800 uppercase tracking-widest">YOUR PAYOUT SHARE</p>
+                          <p className="text-lg font-black text-emerald-700">₹{workerPayout}</p>
                         </div>
                       </div>
 
@@ -454,6 +459,10 @@ function WorkerDashboardContent() {
                     const categoryTitle = (job.service_name || job.details?.category || job.service_type || 'PROVISION').toUpperCase();
                     const isScheduled = job.details?.bookingType === 'scheduled';
                     const generalLocation = job.details?.address ? job.details.address.split(',')[0] : (profile?.address?.district || 'Nearby Location');
+                    const platformFee = Number(job.details?.estimation?.platformFee) || 49;
+                    const workerPayout = Math.max(0, (Number(job.total_price) || 0) - platformFee);
+                    const isCash = job.payment_method === 'cash' || job.payment_status === 'cash_on_delivery';
+
                     return (
                       <motion.div
                         key={job.id}
@@ -473,26 +482,32 @@ function WorkerDashboardContent() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest">EARNINGS</p>
-                            <p className="text-lg font-extrabold tracking-tight">₹{job.total_price}</p>
+                            <p className="text-[8px] font-extrabold text-emerald-600 uppercase tracking-widest">WORKER PAYOUT</p>
+                            <p className="text-lg font-extrabold text-emerald-700 tracking-tight">₹{workerPayout}</p>
+                            <p className="text-[8px] font-medium text-slate-400">Excl. ₹{platformFee} Fee</p>
                           </div>
                         </div>
 
-                        {/* Timing Badge: Immediate vs Scheduled */}
-                        <div className="flex items-center justify-between text-xs font-semibold">
-                          <div className="flex items-center gap-2 truncate text-slate-600">
+                        {/* Timing & Payment Method Badges */}
+                        <div className="flex items-center justify-between text-xs font-semibold gap-2">
+                          <div className="flex items-center gap-1.5 truncate text-slate-600">
                             <MapPin size={12} className="text-red-500 flex-shrink-0" />
-                            <p className="truncate uppercase tracking-widest">{generalLocation}</p>
+                            <p className="truncate uppercase tracking-widest text-[10px]">{generalLocation}</p>
                           </div>
-                          {isScheduled ? (
-                            <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[8px] font-bold uppercase tracking-wider flex-shrink-0">
-                              📅 {job.details?.preferredDate} @ {job.details?.preferredTime}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wider ${isCash ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+                              {isCash ? '💵 CASH' : '💳 ONLINE'}
                             </span>
-                          ) : (
-                            <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded text-[8px] font-bold uppercase tracking-wider flex-shrink-0">
-                              ⚡ IMMEDIATE
-                            </span>
-                          )}
+                            {isScheduled ? (
+                              <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[8px] font-bold uppercase tracking-wider">
+                                📅 {job.details?.preferredDate}
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded text-[8px] font-bold uppercase tracking-wider">
+                                ⚡ ASAP
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {/* Privacy notice - Description & Map Location concealed until accept */}

@@ -83,7 +83,7 @@ export default function ShopPage() {
     <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-6">
       
       {/* Coming Soon Overlay */}
-      <div className="fixed top-16 bottom-[72px] left-0 right-0 z-40 bg-white/60 backdrop-blur-sm flex items-center justify-center pointer-events-auto overflow-hidden">
+      <div className="fixed inset-0 z-40 bg-white/70 backdrop-blur-md flex items-center justify-center pointer-events-auto overflow-hidden">
         <div className="bg-[#FF9500] text-white px-8 sm:px-24 py-3 sm:py-4 -rotate-12 shadow-2xl border-y-[4px] sm:border-y-[6px] border-dashed border-[#CC7700] transform scale-110 sm:scale-125 w-[150vw] text-center flex items-center justify-center">
           <span className="text-2xl sm:text-4xl font-black uppercase tracking-widest sm:tracking-[0.3em] drop-shadow-md whitespace-nowrap opacity-90">Coming Soon</span>
         </div>

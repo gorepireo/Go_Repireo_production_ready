@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ShoppingCart, ArrowRight, ShieldCheck, Truck, MapPin, Search, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import SkeletonLoader from '@/components/SkeletonLoader';
 import Script from 'next/script';
 
 export default function InstallationFlow() {
@@ -114,14 +115,7 @@ export default function InstallationFlow() {
   };
 
   if (loading || !user) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl animate-pulse">
-           <LayoutGrid className="w-10 h-10 text-[#007AFF] opacity-20" />
-        </div>
-        <p className="tactile-label !text-slate-300 animate-pulse uppercase tracking-[0.4em]">Initialising Provisioning Staging...</p>
-      </div>
-    );
+    return <SkeletonLoader />;
   }
 
   return (
