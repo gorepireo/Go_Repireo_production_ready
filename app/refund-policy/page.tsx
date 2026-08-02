@@ -41,7 +41,7 @@ export default function RefundPolicy() {
 
         <section className="space-y-2">
           <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">4. Help & Support</h2>
-          <p>To request a refund or raise a billing discrepancy, reach out to us at <a href="mailto:support@gorepireo.com" className="text-[#007AFF] font-bold underline">support@gorepireo.com</a> or call our support line at <a href="tel:+919800615892" className="text-[#007AFF] font-bold underline">+91 9800615892</a>.</p>
+          <p>To request a refund or raise a billing discrepancy, reach out to us at <a href="mailto:support@gorepireo.com" className="text-[#007AFF] font-bold underline">support@gorepireo.com</a> or call our support line at <a href="tel:+918679245568" className="text-[#007AFF] font-bold underline">+91 8679245568</a>.</p>
         </section>
       </div>
     </div>

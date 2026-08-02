@@ -35,7 +35,7 @@ export default function ContactUs() {
               <Phone size={18} />
             </div>
             <h3 className="text-xs font-bold text-slate-900">Phone Support</h3>
-            <p className="text-[10px] text-slate-500">+91 9800615892</p>
+            <p className="text-[10px] text-slate-500">+91 8679245568</p>
           </div>
 
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
