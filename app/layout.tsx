@@ -182,6 +182,19 @@ export default function RootLayout({
           }
           #root-container { background-color: #FFFFFF !important; }
         ` }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              'name': 'Go_Repireo',
+              'url': 'https://gorepireo.in',
+              'logo': 'https://gorepireo.in/logo.png',
+              'telephone': '+91-8679245568'
+            })
+          }}
+        />
       </head>
       <body className={`${inter.className} bg-white text-slate-950`} data-deploy-v="REPIREO-ALPHA-1.2">
         <AuthProvider>
