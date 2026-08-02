@@ -76,7 +76,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-6">
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pt-6">
       {/* Hero Section */}
       <section className="px-4">
         <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[340px] flex items-center justify-between">
