@@ -10,6 +10,19 @@ import { MapPin, Activity, Shield, ChevronRight, Navigation, Zap, Map, MessageCi
 import { useRouter } from 'next/navigation';
 import { isServiceMatching } from '@/lib/serviceMatcher';
 
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round((R * c) * 10) / 10;
+}
+
 function WorkerDashboardContent() {
   const { user, profile: rawProfile, refresh } = useAuth();
   const profile = rawProfile as any;
@@ -20,6 +33,7 @@ function WorkerDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [isAvailable, setIsAvailable] = useState(profile?.is_available || false);
   const [workerTrade, setWorkerTrade] = useState<string>('');
+  const [workerCoords, setWorkerCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [declinedJobIds, setDeclinedJobIds] = useState<string[]>(() => {
     if (typeof window !== 'undefined' && user?.id) {
       try {
@@ -45,6 +59,27 @@ function WorkerDashboardContent() {
       const trade = worker?.service || profile?.service || profile?.service_name || '';
       setWorkerTrade(trade);
 
+      // Detect worker GPS coordinates
+      let currentWorkerLat: number | null = workerCoords?.lat || null;
+      let currentWorkerLng: number | null = workerCoords?.lng || null;
+
+      if (!currentWorkerLat && "geolocation" in navigator) {
+        try {
+          const pos: any = await new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), { timeout: 3000 });
+          });
+          if (pos?.coords) {
+            const lat = Number(pos.coords.latitude);
+            const lng = Number(pos.coords.longitude);
+            currentWorkerLat = lat;
+            currentWorkerLng = lng;
+            setWorkerCoords({ lat, lng });
+          }
+        } catch (err) {
+          console.warn("GPS resolution error:", err);
+        }
+      }
+
       const { data: pending } = await insforge.database
         .from('orders')
         .select('*')
@@ -52,9 +87,23 @@ function WorkerDashboardContent() {
         .eq('status', 'pending');
 
       if (pending) {
-        const suitable = pending.filter(job => 
-          isServiceMatching(trade, job.service_name, job.details?.category)
-        );
+        const MAX_RADIUS_KM = 15; // 10-15 km radius limit
+        const suitable = pending.filter(job => {
+          const matchesService = isServiceMatching(trade, job.service_name, job.details?.category);
+          if (!matchesService) return false;
+
+          const jobLat = Number(job.lat || job.details?.lat || job.details?.selectedLocation?.lat);
+          const jobLng = Number(job.lng || job.details?.lng || job.details?.selectedLocation?.lng);
+
+          if (currentWorkerLat && currentWorkerLng && jobLat && jobLng) {
+            const dist = calculateDistanceKm(currentWorkerLat, currentWorkerLng, jobLat, jobLng);
+            job.distanceKm = dist;
+            // Exclude job requests outside the 15 km radius
+            return dist <= MAX_RADIUS_KM;
+          }
+
+          return true;
+        });
         setActiveJobs(suitable);
       }
 
@@ -494,7 +543,12 @@ function WorkerDashboardContent() {
                             <MapPin size={12} className="text-red-500 flex-shrink-0" />
                             <p className="truncate uppercase tracking-widest text-[10px]">{generalLocation}</p>
                           </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
+                          <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
+                            {job.distanceKm !== undefined && (
+                              <span className="px-2 py-0.5 bg-blue-50 text-[#007AFF] rounded text-[8px] font-black uppercase tracking-wider border border-blue-100">
+                                📍 {job.distanceKm} KM AWAY
+                              </span>
+                            )}
                             <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wider ${isCash ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
                               {isCash ? '💵 CASH' : '💳 ONLINE'}
                             </span>
