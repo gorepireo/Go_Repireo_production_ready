@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import Footer from '@/components/Footer';
 
 const categories = [
   { name: 'All Services', icon: LayoutGrid, color: 'text-blue-500', bg: 'bg-blue-50', active: true },
@@ -317,6 +318,7 @@ export default function Home() {
         </div>
       </section>
 
+      <Footer />
     </div>
   );
 }
