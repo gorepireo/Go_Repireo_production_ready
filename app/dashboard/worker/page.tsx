@@ -34,6 +34,12 @@ function WorkerDashboardContent() {
   const [isAvailable, setIsAvailable] = useState(profile?.is_available || false);
   const [workerTrade, setWorkerTrade] = useState<string>('');
   const [workerCoords, setWorkerCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [startOtpModalJob, setStartOtpModalJob] = useState<any>(null);
+  const [startOtpInput, setStartOtpInput] = useState('');
+  const [completionOtpModalJob, setCompletionOtpModalJob] = useState<any>(null);
+  const [completionOtpInput, setCompletionOtpInput] = useState('');
+  const [paymentCollectionModalJob, setPaymentCollectionModalJob] = useState<any>(null);
+
   const [declinedJobIds, setDeclinedJobIds] = useState<string[]>(() => {
     if (typeof window !== 'undefined' && user?.id) {
       try {
@@ -45,6 +51,79 @@ function WorkerDashboardContent() {
     }
     return [];
   });
+
+  const handleVerifyStartOtp = async () => {
+    if (!startOtpModalJob) return;
+    const expectedOtp = startOtpModalJob.details?.start_otp;
+    if (expectedOtp && startOtpInput.trim() !== expectedOtp.trim()) {
+      alert("Incorrect Start OTP. Please ask the customer for the 4-digit Start OTP shown on their screen.");
+      return;
+    }
+
+    try {
+      const { error } = await insforge.database
+        .from('orders')
+        .update({ status: 'in_progress' })
+        .eq('id', startOtpModalJob.id);
+
+      if (error) throw error;
+
+      await insforge.database.from('order_tracking').insert({
+        order_id: startOtpModalJob.id,
+        status: 'in_progress',
+        lat: profile?.lat || 28.6139,
+        lng: profile?.lng || 77.2090,
+        note: 'Start OTP verified. Service technician has arrived and commenced work.'
+      });
+
+      setAcceptedJobs(prev => prev.map(j => j.id === startOtpModalJob.id ? { ...j, status: 'in_progress' } : j));
+      setStartOtpModalJob(null);
+      setStartOtpInput('');
+    } catch (err: any) {
+      console.error("Start OTP error:", err);
+      alert("Error starting service");
+    }
+  };
+
+  const handleVerifyCompletionOtp = async () => {
+    if (!completionOtpModalJob) return;
+    const expectedOtp = completionOtpModalJob.details?.completion_otp;
+    if (expectedOtp && completionOtpInput.trim() !== expectedOtp.trim()) {
+      alert("Incorrect Completion OTP. Please ask the customer for their 4-digit Completion OTP.");
+      return;
+    }
+
+    await handleCompleteJob(completionOtpModalJob.id);
+    setCompletionOtpModalJob(null);
+    setCompletionOtpInput('');
+  };
+
+  const handleConfirmCashCollection = async () => {
+    if (!paymentCollectionModalJob) return;
+    try {
+      const { error } = await insforge.database
+        .from('orders')
+        .update({ status: 'completed', payment_status: 'paid' })
+        .eq('id', paymentCollectionModalJob.id);
+
+      if (error) throw error;
+
+      await insforge.database.from('order_tracking').insert({
+        order_id: paymentCollectionModalJob.id,
+        status: 'completed',
+        lat: profile?.lat || 28.6139,
+        lng: profile?.lng || 77.2090,
+        note: 'Payment collected on site & service marked completed.'
+      });
+
+      setCompletedJobs(prev => [{ ...paymentCollectionModalJob, status: 'completed', payment_status: 'paid' }, ...prev]);
+      setAcceptedJobs(prev => prev.filter(j => j.id !== paymentCollectionModalJob.id));
+      setPaymentCollectionModalJob(null);
+    } catch (err: any) {
+      console.error("Payment collection error:", err);
+      alert("Error completing payment & job");
+    }
+  };
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -460,27 +539,47 @@ function WorkerDashboardContent() {
                         <p className="text-xs font-semibold">{job.details?.address || 'Client Address'}</p>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 mt-1">
-                        <a 
-                          href={`https://www.google.com/maps/dir/?api=1&destination=${job.lat},${job.lng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="py-2.5 bg-[#007AFF] hover:bg-blue-600 text-white rounded-xl text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1 transition-colors shadow-sm"
-                        >
-                          <Map size={12} /> NAVIGATE
-                        </a>
-                        <button 
-                          onClick={() => router.push(`/chat?orderId=${job.id}`)}
-                          className="py-2.5 bg-white border border-slate-200 hover:border-blue-300 text-slate-700 rounded-xl text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1 transition-colors shadow-sm"
-                        >
-                          <MessageCircle size={12} className="text-[#007AFF]" /> CHAT
-                        </button>
-                        <button 
-                          onClick={() => handleCompleteJob(job.id)}
-                          className="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1 transition-colors shadow-sm"
-                        >
-                          COMPLETE
-                        </button>
+                      <div className="flex flex-col gap-2 mt-1">
+                        <div className="grid grid-cols-2 gap-2">
+                          <a 
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${job.lat},${job.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-2.5 bg-[#007AFF] hover:bg-blue-600 text-white rounded-xl text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1 transition-colors shadow-sm"
+                          >
+                            <Map size={12} /> NAVIGATE
+                          </a>
+                          <button 
+                            onClick={() => router.push(`/chat?orderId=${job.id}`)}
+                            className="py-2.5 bg-white border border-slate-200 hover:border-blue-300 text-slate-700 rounded-xl text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1 transition-colors shadow-sm"
+                          >
+                            <MessageCircle size={12} className="text-[#007AFF]" /> CHAT
+                          </button>
+                        </div>
+
+                        {/* Workflow Step Action */}
+                        {job.status !== 'in_progress' ? (
+                          <button 
+                            onClick={() => { setStartOtpModalJob(job); setStartOtpInput(''); }}
+                            className="py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-amber-500/20 active:scale-98"
+                          >
+                            🔑 ENTER START OTP (ARRIVED AT CLIENT)
+                          </button>
+                        ) : isCash ? (
+                          <button 
+                            onClick={() => setPaymentCollectionModalJob(job)}
+                            className="py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-emerald-600/20 active:scale-98"
+                          >
+                            💵 COMPLETE WORK & COLLECT PAYMENT
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => { setCompletionOtpModalJob(job); setCompletionOtpInput(''); }}
+                            className="py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-emerald-600/20 active:scale-98"
+                          >
+                            ✅ COMPLETE WORK & VERIFY OTP
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   );
@@ -489,6 +588,152 @@ function WorkerDashboardContent() {
             </div>
           </div>
         )}
+
+        {/* ─── MODAL 1: START OTP VERIFICATION ─── */}
+        <AnimatePresence>
+          {startOtpModalJob && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center font-bold">🔑</div>
+                    <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">Enter Start OTP</h3>
+                  </div>
+                  <button onClick={() => setStartOtpModalJob(null)} className="text-slate-400 hover:text-slate-600 p-1"><X size={18} /></button>
+                </div>
+
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Ask the customer for the <strong>4-digit Start OTP</strong> shown on their tracking screen to begin service work.
+                </p>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">4-Digit Start OTP</label>
+                  <input 
+                    type="text"
+                    maxLength={4}
+                    value={startOtpInput}
+                    onChange={(e) => setStartOtpInput(e.target.value)}
+                    placeholder="e.g. 4812"
+                    className="w-full text-center text-2xl font-black tracking-[0.5em] bg-slate-50 border border-slate-200 rounded-2xl py-3 text-slate-900 focus:outline-none focus:border-[#007AFF]"
+                  />
+                </div>
+
+                <button 
+                  onClick={handleVerifyStartOtp}
+                  disabled={startOtpInput.length !== 4}
+                  className="w-full py-3 bg-[#007AFF] disabled:bg-slate-300 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-md shadow-blue-500/20 active:scale-95"
+                >
+                  Verify OTP & Start Work
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* ─── MODAL 2: COMPLETION OTP VERIFICATION (Prepaid Online) ─── */}
+        <AnimatePresence>
+          {completionOtpModalJob && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold">✅</div>
+                    <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">Verify Completion OTP</h3>
+                  </div>
+                  <button onClick={() => setCompletionOtpModalJob(null)} className="text-slate-400 hover:text-slate-600 p-1"><X size={18} /></button>
+                </div>
+
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  This order was <strong>prepaid online</strong>. Ask the customer to inspect the completed work and provide their <strong>4-digit Completion OTP</strong>.
+                </p>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">4-Digit Completion OTP</label>
+                  <input 
+                    type="text"
+                    maxLength={4}
+                    value={completionOtpInput}
+                    onChange={(e) => setCompletionOtpInput(e.target.value)}
+                    placeholder="e.g. 7924"
+                    className="w-full text-center text-2xl font-black tracking-[0.5em] bg-slate-50 border border-slate-200 rounded-2xl py-3 text-slate-900 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <button 
+                  onClick={handleVerifyCompletionOtp}
+                  disabled={completionOtpInput.length !== 4}
+                  className="w-full py-3 bg-emerald-600 disabled:bg-slate-300 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-md shadow-emerald-600/20 active:scale-95"
+                >
+                  Verify & Finish Mission
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* ─── MODAL 3: PAYMENT COLLECTION SCREEN (Pay After Work / Cash) ─── */}
+        <AnimatePresence>
+          {paymentCollectionModalJob && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4 text-center"
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2 text-left">
+                    <div className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold">💵</div>
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">Payment Collection</h3>
+                      <p className="text-[9px] font-bold text-slate-400">Pay After Work • Order #{paymentCollectionModalJob.id.slice(0,6).toUpperCase()}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setPaymentCollectionModalJob(null)} className="text-slate-400 hover:text-slate-600 p-1"><X size={18} /></button>
+                </div>
+
+                <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800">Total Amount To Collect</p>
+                  <p className="text-3xl font-black text-emerald-700 mt-0.5">₹{paymentCollectionModalJob.total_price || 499}</p>
+                </div>
+
+                {/* QR Code Option */}
+                <div className="space-y-2 pt-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Option 1: Customer UPI / QR Scan</p>
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200 inline-block shadow-sm">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`upi://pay?pa=gorepireo@razorpay&pn=Go_Repireo&am=${paymentCollectionModalJob.total_price || 499}&tn=Order_${paymentCollectionModalJob.id.slice(0,6)}`)}`} 
+                      alt="Payment QR Code"
+                      className="w-36 h-36 object-contain mx-auto"
+                    />
+                  </div>
+                  <p className="text-[9px] text-slate-400">Customer can scan using Google Pay, PhonePe, Paytm, or BHIM</p>
+                </div>
+
+                {/* Cash Received Option */}
+                <div className="pt-2 space-y-2">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Option 2: Physical Cash</p>
+                  <button 
+                    onClick={handleConfirmCashCollection}
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
+                  >
+                    Confirm Cash Received (₹{paymentCollectionModalJob.total_price || 499})
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Mission Feed (Available) */}
         {(() => {

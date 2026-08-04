@@ -225,6 +225,49 @@ function StandardMapContent() {
           </div>
         )}
 
+        {/* Bottom Overlay: Customer Security OTP Card */}
+        {order && (
+          <div className="absolute bottom-24 left-4 right-4 md:left-12 md:right-12 z-50 pointer-events-auto max-w-lg mx-auto">
+            <div className="bg-white/95 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-slate-100 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={18} className="text-[#007AFF]" />
+                  <span className="text-xs font-black uppercase tracking-tight text-slate-900">SERVICE VERIFICATION CODES</span>
+                </div>
+                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${order.payment_method === 'cash' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+                  {order.payment_method === 'cash' ? '💵 Pay After Work' : '💳 Prepaid Online'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-amber-50/70 p-2.5 rounded-2xl border border-amber-100 text-center">
+                  <p className="text-[8px] font-extrabold text-amber-800 uppercase tracking-wider">START OTP</p>
+                  <p className="text-xl font-black text-amber-900 tracking-[0.2em] mt-0.5">
+                    {order.details?.start_otp || '4812'}
+                  </p>
+                  <p className="text-[7px] text-amber-700 mt-0.5">Share with technician upon arrival</p>
+                </div>
+
+                {order.payment_method !== 'cash' ? (
+                  <div className="bg-emerald-50/70 p-2.5 rounded-2xl border border-emerald-100 text-center">
+                    <p className="text-[8px] font-extrabold text-emerald-800 uppercase tracking-wider">COMPLETION OTP</p>
+                    <p className="text-xl font-black text-emerald-900 tracking-[0.2em] mt-0.5">
+                      {order.details?.completion_otp || '7924'}
+                    </p>
+                    <p className="text-[7px] text-emerald-700 mt-0.5">Share ONLY after work is verified</p>
+                  </div>
+                ) : (
+                  <div className="bg-blue-50/70 p-2.5 rounded-2xl border border-blue-100 text-center flex flex-col justify-center">
+                    <p className="text-[8px] font-extrabold text-[#007AFF] uppercase tracking-wider">PAYMENT DUE</p>
+                    <p className="text-sm font-black text-blue-900 mt-0.5">₹{order.total_price || 499}</p>
+                    <p className="text-[7px] text-slate-500 mt-0.5">Pay via Cash / QR Code when done</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Global Bottom Navigation Interface */}

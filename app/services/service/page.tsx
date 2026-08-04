@@ -114,6 +114,9 @@ export default function ServiceBooking() {
   }, [user, loading, router]);
 
   const createOrderRecord = async (payStatus: string, payMethod: string, payId?: string) => {
+    const startOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    const completionOtp = Math.floor(1000 + Math.random() * 9000).toString();
+
     const { data, error } = await insforge.database
       .from('orders')
       .insert([{
@@ -124,7 +127,14 @@ export default function ServiceBooking() {
         payment_method: payMethod,
         payment_id: payId || null,
         total_price: estimatedPrice,
-        details: { ...formData, payment_method: payMethod, items: [{ type: 'service', name: formData.category }], estimation },
+        details: { 
+          ...formData, 
+          payment_method: payMethod, 
+          items: [{ type: 'service', name: formData.category }], 
+          estimation,
+          start_otp: startOtp,
+          completion_otp: payMethod === 'cash' ? null : completionOtp
+        },
         lat: formData.lat || (12.9716 + (Math.random() - 0.5) * 0.1),
         lng: formData.lng || (77.5946 + (Math.random() - 0.5) * 0.1),
         order_type: 'direct_service'
