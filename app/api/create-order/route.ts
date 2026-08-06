@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       key_secret: keySecret,
     });
 
-    let body = { amount: 49900, currency: 'INR', receipt: `receipt_${Date.now()}` };
+    let body = { amount: 499, currency: 'INR', receipt: `receipt_${Date.now()}` };
     try {
       const parsed = await req.json();
       if (parsed && parsed.amount) {
@@ -21,10 +21,9 @@ export async function POST(req: Request) {
       // Default amount
     }
 
-    let amountInPaise = Number(body.amount);
-    if (amountInPaise < 100) {
-      amountInPaise = amountInPaise * 100;
-    }
+    const rawAmount = Number(body.amount);
+    // Convert Rupees to Paise (e.g., ₹306 -> 30600 paise). If already in paise (> 5000), keep as is.
+    const amountInPaise = rawAmount > 5000 ? Math.round(rawAmount) : Math.round(rawAmount * 100);
 
     const options = {
       amount: amountInPaise,

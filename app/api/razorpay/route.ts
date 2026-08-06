@@ -18,10 +18,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Amount is required' }, { status: 400 });
     }
 
-    let amountInPaise = Number(amount);
-    if (amountInPaise < 100) {
-      amountInPaise = amountInPaise * 100;
-    }
+    const rawAmount = Number(amount);
+    // Convert Rupees to Paise (e.g., ₹306 -> 30600 paise). If already in paise (> 5000), keep as is.
+    const amountInPaise = rawAmount > 5000 ? Math.round(rawAmount) : Math.round(rawAmount * 100);
 
     const options = {
       amount: amountInPaise,
@@ -30,7 +29,7 @@ export async function POST(req: Request) {
     };
 
     const order = await razorpay.orders.create(options);
-    return NextResponse.json({ orderId: order.id }, { status: 200 });
+    return NextResponse.json({ orderId: order.id, amount: order.amount }, { status: 200 });
   } catch (error: any) {
     console.error('Error creating Live Razorpay order:', error);
     const errMsg = error.error?.description || error.message || 'Failed to create Razorpay order';
