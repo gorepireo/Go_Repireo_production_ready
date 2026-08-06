@@ -3,45 +3,45 @@ import crypto from 'crypto';
 
 export async function POST(req: Request) {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required parameters: razorpay_order_id, razorpay_payment_id, razorpay_signature' },
-        { status: 400 }
-      );
+    if (!keySecret) {
+      return NextResponse.json({ error: 'Razorpay secret key missing' }, { status: 500 });
     }
 
-    const secret = process.env.RAZORPAY_KEY_SECRET;
-    if (!secret) {
-      return NextResponse.json(
-        { success: false, error: 'Razorpay secret key not configured on server' },
-        { status: 500 }
-      );
+    const body = await req.json();
+    const orderId = body.razorpay_order_id || body.order_id;
+    const paymentId = body.razorpay_payment_id || body.payment_id;
+    const signature = body.razorpay_signature || body.signature;
+
+    if (!orderId || !paymentId || !signature) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Missing required fields (order_id, payment_id, or signature)' 
+      }, { status: 400 });
     }
 
     // HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
-    const generated_signature = crypto
-      .createHmac('sha256', secret)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    const generatedSignature = crypto
+      .createHmac('sha256', keySecret)
+      .update(`${orderId}|${paymentId}`)
       .digest('hex');
 
-    if (generated_signature === razorpay_signature) {
-      return NextResponse.json(
-        { success: true, message: 'Razorpay payment signature verified successfully' },
-        { status: 200 }
-      );
+    if (generatedSignature === signature) {
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Payment verified successfully',
+        order_id: orderId,
+        payment_id: paymentId
+      }, { status: 200 });
     } else {
-      return NextResponse.json(
-        { success: false, error: 'Payment signature mismatch' },
-        { status: 400 }
-      );
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Signature verification failed' 
+      }, { status: 400 });
     }
   } catch (error: any) {
-    console.error('Razorpay payment signature verification error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error verifying Razorpay signature:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

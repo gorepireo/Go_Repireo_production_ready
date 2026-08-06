@@ -13,13 +13,14 @@ import {
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
+import { useState } from 'react';
+import Script from 'next/script';
+
 const avatars = [
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150',
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
   'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=150'
 ];
-
-
 
 const features = [
   { title: 'SECURE BOOKING', desc: '100% safe and reliable', icon: ShieldCheck, color: 'text-blue-500' },
@@ -29,8 +30,76 @@ const features = [
 ];
 
 export default function ServicesPage() {
+  const [testLoading, setTestLoading] = useState(false);
+
+  const handleOneRupeeTestPayment = async () => {
+    setTestLoading(true);
+    try {
+      const res = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 100, currency: 'INR', receipt: `test_rcpt_${Date.now()}` })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create test order');
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TMXeXqbhAyurNL',
+        amount: data.amount || 100,
+        currency: data.currency || 'INR',
+        name: 'Go_Repireo Test',
+        description: '₹1 Test Payment (No DB Storage)',
+        order_id: data.order_id || data.id,
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              alert(`🎉 ₹1 Test Payment Verified Successfully!\n\nPayment ID: ${response.razorpay_payment_id}\nOrder ID: ${response.razorpay_order_id}\n\n(No database record was created)`);
+            } else {
+              alert(`❌ Signature Verification Failed: ${verifyData.error}`);
+            }
+          } catch (vErr: any) {
+            alert(`Verification Error: ${vErr.message}`);
+          }
+        },
+        prefill: {
+          name: 'Test Customer',
+          email: 'test@gorepireo.com',
+          contact: '9800000000'
+        },
+        theme: {
+          color: '#007AFF'
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+
+      rzp.on('payment.failed', function (response: any) {
+        alert("Payment Failed: " + (response.error?.description || 'Cancelled'));
+      });
+    } catch (err: any) {
+      alert("Error initializing test payment: " + err.message);
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-6">
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+      <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-6">
       
       {/* Hero Section */}
       <section className="px-4">
@@ -116,7 +185,7 @@ export default function ServicesPage() {
           </Link>
 
           {/* New Installation Card */}
-          <div className="block cursor-not-allowed opacity-90">
+          <div className="block opacity-90">
             <div className="bg-white rounded-3xl p-5 flex gap-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
               <div className="w-20 h-20 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0">
                 <Zap className="w-10 h-10 text-orange-400 drop-shadow-md fill-current" />
@@ -143,6 +212,42 @@ export default function ServicesPage() {
               </div>
             </div>
           </div>
+
+          {/* ₹1 Test Payment Card (Razorpay Direct Gateway) */}
+          <motion.div 
+            whileTap={{ scale: 0.98 }} 
+            onClick={handleOneRupeeTestPayment}
+            className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-3xl p-5 flex gap-4 shadow-sm border border-emerald-200/80 relative overflow-hidden cursor-pointer group"
+          >
+            <div className="w-20 h-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
+              <span className="text-2xl font-black">₹1</span>
+            </div>
+            
+            <div className="flex-1 space-y-1.5 min-w-0 pr-12">
+              <span className="text-[8px] font-extrabold text-emerald-700 uppercase tracking-widest bg-emerald-100/80 px-2 py-0.5 rounded-full inline-block">
+                INSTANT TEST GATEWAY • NO DB STORE
+              </span>
+              <h3 className="text-sm font-black text-slate-900 uppercase leading-none tracking-tight">
+                ₹1 Razorpay Test Payment
+              </h3>
+              <p className="text-[9px] text-slate-600 leading-snug">
+                Click to test instant ₹1 payment modal via Razorpay Standard Checkout. No form filling required & no database records saved.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-sm font-black text-emerald-700">₹1.00 Only</span>
+                <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-widest">(Test Mode)</span>
+              </div>
+            </div>
+
+            <div className="absolute top-5 right-5 flex items-center gap-1 bg-emerald-100 px-2.5 py-1 rounded-full text-emerald-800 border border-emerald-200">
+               <Zap size={10} className="fill-current" />
+               <span className="text-[8px] font-extrabold uppercase tracking-wider">LIVE TEST</span>
+            </div>
+
+            <div className="absolute bottom-5 right-5 w-9 h-9 bg-emerald-600 text-white rounded-full flex items-center justify-center group-hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/30">
+              <ArrowRight size={16} />
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -189,5 +294,6 @@ export default function ServicesPage() {
       </section>
 
     </div>
+    </>
   );
 }
