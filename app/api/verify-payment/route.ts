@@ -3,7 +3,7 @@ import crypto from 'crypto';
 
 export async function POST(req: Request) {
   try {
-    const keySecret = '2b4IiOHLfBo4S0UUK7iB4k6r';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || 'g4ty13wsRTflfdVa2pVB061T';
 
     const body = await req.json();
     const orderId = body.razorpay_order_id || body.order_id;
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
   } catch (error: any) {
-    console.error('Error verifying Razorpay signature:', error);
+    console.error('Error verifying Live Razorpay signature:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

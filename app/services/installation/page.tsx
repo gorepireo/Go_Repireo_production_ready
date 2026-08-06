@@ -45,14 +45,14 @@ export default function InstallationFlow() {
 
       // 2. Initialize Razorpay Checkout
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TMY7lcMkI2vpQ1',
         amount: (total + 1500) * 100,
         currency: 'INR',
         name: 'Go_Repireo',
         description: 'Installation & Parts',
+        image: 'https://xipxmg4q.insforge.site/icon.png',
         order_id: data.orderId,
         handler: async function (response: any) {
-          // 3. Save order on success
           try {
             const { data: orderData, error } = await insforge.database
               .from('orders')
@@ -89,12 +89,17 @@ export default function InstallationFlow() {
             alert("Payment successful, but failed to save order details.");
           }
         },
+        modal: {
+          handleback: true,
+          backdropclose: true
+        },
         prefill: {
           name: user.email?.split('@')[0] || 'User',
           email: user.email || '',
         },
         theme: {
-          color: '#007AFF'
+          color: '#007AFF',
+          backdrop_color: 'rgba(15, 23, 42, 0.7)'
         }
       };
 

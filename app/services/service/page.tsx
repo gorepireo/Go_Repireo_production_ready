@@ -231,11 +231,12 @@ export default function ServiceBooking() {
         if (!res.ok) throw new Error(orderResData.error || 'Failed to create Razorpay order');
 
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TMY7lcMkI2vpQ1',
           amount: estimatedPrice * 100,
           currency: 'INR',
           name: 'Go_Repireo',
           description: `${formData.category.toUpperCase()} Service Base Estimation`,
+          image: 'https://xipxmg4q.insforge.site/icon.png',
           order_id: orderResData.orderId,
           handler: async function (response: any) {
             try {
@@ -248,6 +249,8 @@ export default function ServiceBooking() {
             }
           },
           modal: {
+            handleback: true,
+            backdropclose: true,
             ondismiss: function() {
               setLoading(false);
             }
@@ -257,7 +260,8 @@ export default function ServiceBooking() {
             email: user.email || '',
           },
           theme: {
-            color: '#007AFF'
+            color: '#007AFF',
+            backdrop_color: 'rgba(15, 23, 42, 0.7)'
           }
         };
 
