@@ -115,6 +115,11 @@ export default function ServiceBooking() {
   }, [user, loading, router]);
 
   const createOrderRecord = async (payStatus: string, payMethod: string, payId?: string) => {
+    if (formData.category === 'test_verify') {
+      // Test mode: Do not store anything in database
+      return;
+    }
+
     const startOtp = Math.floor(1000 + Math.random() * 9000).toString();
     const completionOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -256,7 +261,11 @@ export default function ServiceBooking() {
                 throw new Error(verifyData.error || 'Signature verification failed');
               }
 
-              await createOrderRecord('paid', 'online', response.razorpay_payment_id);
+              if (formData.category === 'test_verify') {
+                alert("✅ Razorpay test payment of ₹1 verified successfully!\n\n(Test Mode: Payment gateway is working perfectly. Nothing has been saved to the database as requested.)");
+              } else {
+                await createOrderRecord('paid', 'online', response.razorpay_payment_id);
+              }
             } catch (err: any) {
               console.error('Database/verification error:', err);
               alert(err.message || "Payment verification failed.");
