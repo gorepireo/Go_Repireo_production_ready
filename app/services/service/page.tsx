@@ -11,6 +11,7 @@ import {
   Zap, 
   Sparkles, 
   Wrench, 
+  ShieldCheck,
   MessageSquare, 
   Paperclip, 
   Calendar, 
@@ -104,7 +105,7 @@ export default function ServiceBooking() {
     }
   };
 
-  const estimatedPrice = estimation ? estimation.totalMin : 500;
+  const estimatedPrice = formData.category === 'test_verify' ? 1 : (estimation ? estimation.totalMin : 500);
 
   useEffect(() => {
     if (user) {
@@ -221,7 +222,7 @@ export default function ServiceBooking() {
         await createOrderRecord('cash_on_delivery', 'cash');
       } else {
         // Online Payment via Razorpay
-        const res = await fetch('/api/razorpay', {
+        const res = await fetch('/api/create-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount: estimatedPrice })
@@ -235,14 +236,30 @@ export default function ServiceBooking() {
           amount: estimatedPrice * 100,
           currency: 'INR',
           name: 'Go_Repireo',
-          description: `${formData.category.toUpperCase()} Service Base Estimation`,
-          order_id: orderResData.orderId,
+          description: `${formData.category.toUpperCase()} Service Order`,
+          order_id: orderResData.orderId || orderResData.order_id,
           handler: async function (response: any) {
             try {
+              // Verify signature via backend endpoint
+              const verifyRes = await fetch('/api/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                })
+              });
+              const verifyData = await verifyRes.json();
+              
+              if (!verifyRes.ok || !verifyData.success) {
+                throw new Error(verifyData.error || 'Signature verification failed');
+              }
+
               await createOrderRecord('paid', 'online', response.razorpay_payment_id);
-            } catch (err) {
-              console.error('Database save error:', err);
-              alert("Payment successful, but failed to save order details. Our team will contact you.");
+            } catch (err: any) {
+              console.error('Database/verification error:', err);
+              alert(err.message || "Payment verification failed.");
             } finally {
               setLoading(false);
             }
@@ -280,7 +297,8 @@ export default function ServiceBooking() {
     { id: 'plumbing', label: 'PLUMBING', desc: 'Pipes, fittings, leaks & more', Icon: Droplet, colorClass: 'text-blue-500' },
     { id: 'electrical', label: 'ELECTRICAL', desc: 'Wiring, circuits, panels & more', Icon: Zap, colorClass: 'text-orange-500' },
     { id: 'cleaning', label: 'CLEANING', desc: 'Deep cleaning, sanitization & more', Icon: Sparkles, colorClass: 'text-orange-500' },
-    { id: 'repair', label: 'REPAIR', desc: 'Appliances, fixtures & more', Icon: Wrench, colorClass: 'text-purple-600' }
+    { id: 'repair', label: 'REPAIR', desc: 'Appliances, fixtures & more', Icon: Wrench, colorClass: 'text-purple-600' },
+    { id: 'test_verify', label: 'TEST PAYMENT (₹1)', desc: 'Razorpay Gateway 1 Rupee Verification', Icon: ShieldCheck, colorClass: 'text-emerald-600' }
   ];
 
   return (
