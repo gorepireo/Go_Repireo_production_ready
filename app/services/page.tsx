@@ -114,10 +114,10 @@ export default function ServicesPage() {
           </Link>
 
           {/* New Installation Card */}
-          <Link href="/services/installation" className="block">
-            <motion.div whileTap={{ scale: 0.98 }} className="bg-white rounded-3xl p-5 flex gap-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group">
+          <div className="block cursor-not-allowed opacity-90">
+            <div className="bg-white rounded-3xl p-5 flex gap-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
               <div className="w-20 h-20 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0">
-                <Zap className="w-10 h-10 text-orange-500 drop-shadow-md fill-current" />
+                <Zap className="w-10 h-10 text-orange-400 drop-shadow-md fill-current" />
               </div>
               
               <div className="flex-1 space-y-1.5 min-w-0 pr-12">
@@ -132,15 +132,15 @@ export default function ServicesPage() {
                 </div>
               </div>
 
-              <div className="absolute top-5 right-5 flex items-center gap-1 bg-[#e8f0fe] px-3 py-1 rounded-full">
-                 <span className="text-[8px] font-extrabold uppercase tracking-widest text-[#007AFF]">Available</span>
+              <div className="absolute top-5 right-5 flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full">
+                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Coming Soon</span>
               </div>
 
-              <div className="absolute bottom-5 right-5 w-8 h-8 bg-[#007AFF] text-white rounded-full flex items-center justify-center group-hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30">
+              <div className="absolute bottom-5 right-5 w-8 h-8 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center">
                 <ArrowRight size={16} />
               </div>
-            </motion.div>
-          </Link>
+            </div>
+          </div>
         </div>
       </section>
 
