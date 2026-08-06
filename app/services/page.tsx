@@ -48,8 +48,9 @@ export default function ServicesPage() {
         key: 'rzp_test_TMXeXqbhAyurNL',
         amount: data.amount || 100,
         currency: data.currency || 'INR',
-        name: 'Go_Repireo Test',
+        name: 'Go_Repireo',
         description: '₹1 Test Payment (No DB Storage)',
+        image: 'https://xipxmg4q.insforge.site/icon.png',
         order_id: data.order_id || data.id,
         handler: async function (response: any) {
           try {
@@ -73,13 +74,18 @@ export default function ServicesPage() {
             alert(`Verification Error: ${vErr.message}`);
           }
         },
+        modal: {
+          handleback: true,
+          backdropclose: true
+        },
         prefill: {
           name: 'Test Customer',
           email: 'support@gorepireo.com',
           contact: '8679245568'
         },
         theme: {
-          color: '#007AFF'
+          color: '#007AFF',
+          backdrop_color: 'rgba(15, 23, 42, 0.7)'
         }
       };
 
