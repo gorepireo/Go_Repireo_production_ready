@@ -45,7 +45,7 @@ export default function ServicesPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to create test order');
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TMXeXqbhAyurNL',
+        key: 'rzp_test_TMXeXqbhAyurNL',
         amount: data.amount || 100,
         currency: data.currency || 'INR',
         name: 'Go_Repireo Test',

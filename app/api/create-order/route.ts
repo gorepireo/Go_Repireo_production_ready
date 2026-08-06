@@ -3,12 +3,16 @@ import Razorpay from 'razorpay';
 
 export async function POST(req: Request) {
   try {
-    const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TMXeXqbhAyurNL';
+    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_TMXeXqbhAyurNL';
     const keySecret = process.env.RAZORPAY_KEY_SECRET || '2b4IiOHLfBo4S0UUK7iB4k6r';
 
+    // Ensure matched credentials for rzp_test_TMXeXqbhAyurNL
+    const activeKeyId = (keyId && keyId.includes('TMXeXqbhAyurNL')) ? keyId : 'rzp_test_TMXeXqbhAyurNL';
+    const activeKeySecret = (keySecret && keySecret.includes('2b4IiOHLfBo4S0UUK7iB4k6r')) ? keySecret : '2b4IiOHLfBo4S0UUK7iB4k6r';
+
     const razorpay = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
+      key_id: activeKeyId,
+      key_secret: activeKeySecret,
     });
 
     let body = { amount: 100, currency: 'INR', receipt: `receipt_${Date.now()}` };
@@ -18,7 +22,7 @@ export async function POST(req: Request) {
         body = { ...body, ...parsed };
       }
     } catch (e) {
-      // Use default ₹1 test amount if body empty
+      // Default to 100 paise (₹1) if body empty
     }
 
     let amountInPaise = Number(body.amount);
@@ -27,7 +31,7 @@ export async function POST(req: Request) {
     }
 
     if (!amountInPaise || amountInPaise < 100) {
-      amountInPaise = 100; // Minimum 100 paise (₹1)
+      amountInPaise = 100;
     }
 
     const options = {
