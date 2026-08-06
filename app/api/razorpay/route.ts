@@ -3,22 +3,28 @@ import Razorpay from 'razorpay';
 
 export async function POST(req: Request) {
   try {
-    const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TMY7lcMkI2vpQ1';
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || 'g4ty13wsRTflfdVa2pVB061T';
+    const keyId = 'rzp_live_TMY7lcMkI2vpQ1';
+    const keySecret = 'g4ty13wsRTflfdVa2pVB061T';
 
     const razorpay = new Razorpay({
       key_id: keyId,
       key_secret: keySecret,
     });
 
-    const { amount } = await req.json();
+    const body = await req.json();
+    const amount = body.amount;
 
     if (!amount) {
       return NextResponse.json({ error: 'Amount is required' }, { status: 400 });
     }
 
+    let amountInPaise = Number(amount);
+    if (amountInPaise < 100) {
+      amountInPaise = amountInPaise * 100;
+    }
+
     const options = {
-      amount: amount * 100, // Razorpay expects amount in paise
+      amount: amountInPaise,
       currency: 'INR',
       receipt: `receipt_${Date.now()}`,
     };
@@ -27,6 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ orderId: order.id }, { status: 200 });
   } catch (error: any) {
     console.error('Error creating Live Razorpay order:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const errMsg = error.error?.description || error.message || 'Failed to create Razorpay order';
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

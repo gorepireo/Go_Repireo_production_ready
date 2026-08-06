@@ -3,8 +3,8 @@ import Razorpay from 'razorpay';
 
 export async function POST(req: Request) {
   try {
-    const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TMY7lcMkI2vpQ1';
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || 'g4ty13wsRTflfdVa2pVB061T';
+    const keyId = 'rzp_live_TMY7lcMkI2vpQ1';
+    const keySecret = 'g4ty13wsRTflfdVa2pVB061T';
 
     const razorpay = new Razorpay({
       key_id: keyId,
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
         body = { ...body, ...parsed };
       }
     } catch (e) {
-      // Use default amount if body empty
+      // Default amount
     }
 
     let amountInPaise = Number(body.amount);
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     }, { status: 200 });
   } catch (error: any) {
     console.error('Error creating Live Razorpay order:', error);
-    const errMsg = error.error?.description || error.message || 'Failed to create order';
+    const errMsg = error.error?.description || error.message || 'Failed to create Razorpay order';
     return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

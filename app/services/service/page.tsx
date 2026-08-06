@@ -231,7 +231,7 @@ export default function ServiceBooking() {
         if (!res.ok) throw new Error(orderResData.error || 'Failed to create Razorpay order');
 
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TMY7lcMkI2vpQ1',
+          key: 'rzp_live_TMY7lcMkI2vpQ1',
           amount: estimatedPrice * 100,
           currency: 'INR',
           name: 'Go_Repireo',
