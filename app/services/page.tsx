@@ -75,8 +75,8 @@ export default function ServicesPage() {
         },
         prefill: {
           name: 'Test Customer',
-          email: 'test@gorepireo.com',
-          contact: '9800000000'
+          email: 'support@gorepireo.com',
+          contact: '8679245568'
         },
         theme: {
           color: '#007AFF'
