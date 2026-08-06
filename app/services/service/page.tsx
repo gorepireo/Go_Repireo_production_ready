@@ -217,8 +217,8 @@ export default function ServiceBooking() {
     setLoading(true);
     try {
       if (paymentMethod === 'cash') {
-        // Direct order creation for Cash payment
-        await createOrderRecord('cash_on_delivery', 'cash');
+        // Direct order creation for Cash payment (payment_status: 'pending' until work completed & collected)
+        await createOrderRecord('pending', 'cash');
       } else {
         // Online Payment via Razorpay
         const res = await fetch('/api/razorpay', {
