@@ -32,14 +32,6 @@ import {
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 
-const quickFilters = [
-  { name: 'AC repair', icon: Snowflake, color: 'text-cyan-500' },
-  { name: 'Plumbing issue', icon: Droplet, color: 'text-blue-500' },
-  { name: 'Install lights', icon: Lightbulb, color: 'text-amber-500' },
-  { name: 'Cleaning service', icon: Sparkles, color: 'text-emerald-500' },
-  { name: 'More', icon: LayoutGrid, color: 'text-slate-400' },
-];
-
 const categories = [
   { name: 'All Services', icon: LayoutGrid, color: 'text-[#007AFF]', bg: 'bg-[#EFF6FF] border-[#007AFF]/30', active: true },
   { name: 'Plumbing', icon: Droplet, color: 'text-[#007AFF]', bg: 'bg-white border-slate-100', active: false },
@@ -87,7 +79,6 @@ const recentBookings = [
 ];
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeTestimonial, setActiveTestimonial] = useState(0);
 
   const testimonials = [
@@ -204,35 +195,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. Search Bar & Quick Filter Chips */}
-      <section className="px-4 mt-4 space-y-2.5">
-        <form onSubmit={(e) => { e.preventDefault(); if (searchQuery) window.location.href = `/services?q=${encodeURIComponent(searchQuery)}`; }} className="relative flex items-center bg-white rounded-2xl p-1.5 pl-4 border border-slate-200/80 shadow-xs">
-          <Search size={16} className="text-slate-400 shrink-0 mr-2" />
-          <input
-            type="text"
-            placeholder='Search for a service, e.g. "AC repair"'
-            className="w-full text-xs text-slate-900 bg-transparent focus:outline-none placeholder:text-slate-400"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button type="button" className="w-9 h-9 bg-[#007AFF] text-white rounded-full flex items-center justify-center shrink-0 shadow-sm hover:bg-blue-600 transition-all active:scale-95">
-            <Mic size={16} />
-          </button>
-        </form>
 
-        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar text-[10px] pb-1">
-          {quickFilters.map((filter, idx) => (
-            <button 
-              key={idx}
-              onClick={() => setSearchQuery(filter.name)}
-              className="bg-white text-slate-700 font-semibold px-3 py-1.5 rounded-full border border-slate-200/70 flex items-center gap-1.5 shrink-0 hover:border-blue-300 transition-colors shadow-xs"
-            >
-              <filter.icon size={13} className={filter.color} />
-              <span>{filter.name}</span>
-            </button>
-          ))}
-        </div>
-      </section>
 
       {/* 4. Category Icons */}
       <section className="px-4 mt-5">
