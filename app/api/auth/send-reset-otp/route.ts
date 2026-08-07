@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { insforge } from '@/lib/insforge';
+import { sendBrevoEmail } from '@/lib/brevo';
 
 export async function POST(request: Request) {
   try {
@@ -24,9 +25,9 @@ export async function POST(request: Request) {
       }, { status: 444 });
     }
 
-    // 2. Generate 6-digit numeric OTP & Store in Database (Valid for 5 minutes)
+    // 2. Generate 6-digit numeric OTP & Store in Database (Valid for 10 minutes)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes strictly
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
     await insforge.database
       .from('users')
@@ -36,48 +37,23 @@ export async function POST(request: Request) {
       })
       .eq('email', cleanEmail);
 
-    // 3. Trigger native InsForge Auth reset password email (Works on Free Plan)
-    const { error: authError } = await insforge.auth.sendResetPasswordEmail({ 
-      email: cleanEmail 
+    // 3. Send Brevo Transactional OTP Email (Template 1)
+    const userName = (userRow as any).name || cleanEmail.split('@')[0];
+    
+    await sendBrevoEmail({
+      toEmail: cleanEmail,
+      toName: userName,
+      templateId: Number(process.env.BREVO_TEMPLATE_OTP || 1),
+      params: {
+        CUSTOMER_NAME: userName,
+        OTP_CODE: otp,
+        EXPIRY_MINS: '10'
+      }
     });
-
-    if (authError) {
-      console.warn('InsForge auth email trigger message:', authError.message);
-    }
-
-    // 4. Try custom email as optional enhancement (suppress free plan restriction error)
-    const userName = (userRow as any).name || 'Valued User';
-    const otpFormatted = otp.split('').join(' ');
-
-    const emailHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Reset Password OTP</title></head>
-<body style="margin:0; padding:20px; background-color:#F8FAFC; font-family:sans-serif;">
-  <div style="max-width:500px; margin:0 auto; background:#FFFFFF; border-radius:16px; padding:32px; border:1px solid #E2E8F0; text-align:center;">
-    <h2 style="color:#0A1629; margin-top:0;">Go_Repireo Password Reset</h2>
-    <p style="color:#475569; font-size:14px;">Hi ${userName}, use the code below to reset your password:</p>
-    <div style="background:#F0F7FF; border:2px dashed #007AFF; padding:20px; border-radius:12px; font-size:32px; font-weight:bold; letter-spacing:8px; color:#0A1629; margin:20px 0;">
-      ${otpFormatted}
-    </div>
-    <p style="color:#64748B; font-size:12px;">⏱️ Valid strictly for <strong>5 minutes</strong>. If you did not request this, please ignore.</p>
-  </div>
-</body>
-</html>`;
-
-    try {
-      await insforge.emails.send({
-        to: cleanEmail,
-        subject: `🔒 ${otp} is your Go_Repireo Password Reset OTP`,
-        html: emailHtml,
-      });
-    } catch (e: any) {
-      console.log('Custom email API skipped (free plan mode enabled)');
-    }
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Reset OTP code sent! Please check your Gmail inbox for the 6-digit verification code.' 
+      message: 'Reset OTP code sent! Please check your email inbox for the 6-digit verification code.' 
     });
 
   } catch (error: any) {
