@@ -20,26 +20,24 @@ import {
   CalendarDays,
   UserCheck,
   Phone,
-  Globe
+  Globe,
+  MoreHorizontal
 } from 'lucide-react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import Footer from '@/components/Footer';
 
 const categories = [
-  { name: 'All Services', icon: LayoutGrid, color: 'text-blue-500', bg: 'bg-blue-50', active: true },
-  { name: 'Plumbing', icon: Droplet, color: 'text-blue-400', bg: 'bg-white' },
-  { name: 'Electrical', icon: Zap, color: 'text-orange-400', bg: 'bg-white' },
-  { name: 'Cleaning', icon: Sparkles, color: 'text-green-400', bg: 'bg-white' },
-  { name: 'Painting', icon: Paintbrush, color: 'text-red-400', bg: 'bg-white' },
-  { name: 'Carpentry', icon: Hammer, color: 'text-amber-700', bg: 'bg-white' },
-  { name: 'HVAC', icon: Snowflake, color: 'text-cyan-400', bg: 'bg-white' },
+  { name: 'All Services', icon: LayoutGrid, color: 'text-[#007AFF]', bg: 'bg-[#EFF6FF]', active: true },
+  { name: 'Plumbing', icon: Droplet, color: 'text-[#007AFF]', bg: 'bg-white', active: false },
+  { name: 'Electrical', icon: Zap, color: 'text-[#FF6B00]', bg: 'bg-white', active: false },
+  { name: 'Cleaning', icon: Sparkles, color: 'text-[#10B981]', bg: 'bg-white', active: false },
+  { name: 'More', icon: MoreHorizontal, color: 'text-slate-400', bg: 'bg-white', active: false },
 ];
 
 const features = [
-  { title: 'Live Tracking', desc: 'Track your service in real-time', icon: Zap, iconColor: 'text-orange-500', iconBg: 'bg-orange-50' },
-  { title: 'Expert Teams', desc: 'Skilled & verified professionals', icon: Users, iconColor: 'text-blue-500', iconBg: 'bg-blue-50' },
-  { title: 'Secure Booking', desc: 'Safe, secure & hassle-free', icon: ShieldCheck, iconColor: 'text-green-500', iconBg: 'bg-green-50' },
+  { title: 'Live Tracking', desc: 'Track your service in real-time', icon: Zap, iconColor: 'text-[#FF6B00]', iconBg: 'bg-amber-50' },
+  { title: 'Expert Teams', desc: 'Skilled & verified professionals', icon: Users, iconColor: 'text-[#007AFF]', iconBg: 'bg-blue-50' },
+  { title: 'Secure Booking', desc: 'Safe, secure & hassle-free', icon: ShieldCheck, iconColor: 'text-[#10B981]', iconBg: 'bg-emerald-50' },
   { title: '24/7 Support', desc: "We're here to help anytime", icon: Headphones, iconColor: 'text-purple-500', iconBg: 'bg-purple-50' },
 ];
 
@@ -51,7 +49,7 @@ const popularServices = [
 ];
 
 export default function Home() {
-  const [locationText, setLocationText] = useState('Available Near You');
+  const [locationText, setLocationText] = useState('ETAWAH');
   const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
@@ -62,13 +60,13 @@ export default function Home() {
         const data = await res.json();
         
         if (data.city) {
-          setLocationText(data.city);
+          setLocationText(data.city.toUpperCase());
         } else {
-          setLocationText('Available Near You');
+          setLocationText('ETAWAH');
         }
       } catch (error) {
         console.error('IP Geolocation error', error);
-        setLocationText('Available Near You');
+        setLocationText('ETAWAH');
       } finally {
         setIsLocating(false);
       }
@@ -78,88 +76,107 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pt-6">
-      {/* Hero Section */}
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pt-4">
+      {/* Hero Section Card */}
       <section className="px-4">
-        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[340px] flex items-center justify-between">
-          <div className="relative z-10 space-y-3.5 max-w-[58%] sm:max-w-[62%]">
-            <div className="inline-flex items-center gap-1.5 bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full border border-blue-100">
-              <ShieldCheck size={12} className="text-[#007AFF] fill-[#007AFF]/20" />
-              <span className="text-[9px] font-bold text-[#007AFF] uppercase tracking-widest">Verified & Trusted</span>
+        <div className="relative bg-gradient-to-b from-[#EBF3FF] to-[#D9E8FF] rounded-[28px] p-6 sm:p-8 overflow-hidden min-h-[420px] flex flex-col justify-between shadow-sm border border-blue-100/50">
+          
+          <div className="relative z-10 space-y-4 max-w-[60%] sm:max-w-[55%]">
+            {/* Top Verified Badge */}
+            <div className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3.5 py-1.5 rounded-full shadow-xs border border-blue-100/60">
+              <ShieldCheck size={14} className="text-[#007AFF] fill-[#007AFF]/10" />
+              <span className="text-[10px] font-extrabold text-[#007AFF] uppercase tracking-wider">VERIFIED & TRUSTED</span>
             </div>
             
-            <div role="heading" aria-level={2} className="text-3xl sm:text-5xl font-black leading-[0.95] tracking-tight text-slate-900">
-              EXPERT<br />REPAIRS<br />
-              <span className="text-[#007AFF]">ON DEMAND.</span>
+            {/* Main Headline */}
+            <div role="heading" aria-level={2} className="text-3xl sm:text-5xl font-black leading-[0.92] tracking-tight text-slate-900 uppercase">
+              EXPERT<br />
+              REPAIRS<br />
+              <span className="text-[#007AFF]">ON</span><br />
+              <span className="text-[#007AFF]">DEMAND.</span>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Ratings & Subtitle */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5">
                 <div className="flex text-[#FFB800]">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={10} className="fill-current" />
+                    <Star key={i} size={12} className="fill-current" />
                   ))}
                 </div>
-                <span className="text-[9px] text-slate-600 font-medium">10,000+ happy clients</span>
+                <span className="text-[10px] text-slate-600 font-semibold">10,000+ happy clients</span>
               </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed max-w-[200px]">
+              <p className="text-[11px] text-slate-600 font-medium leading-relaxed max-w-[210px]">
                 Book trusted professionals for home repairs & maintenance.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-1 relative z-20">
-              <Link href="/services" className="bg-[#007AFF] text-white px-3.5 py-2 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 hover:bg-blue-600 active:scale-95 transition-all">
-                Book Service <ChevronRight size={12} />
+            {/* Action Buttons Column */}
+            <div className="flex flex-col gap-2.5 pt-2 max-w-[210px] relative z-20">
+              <Link 
+                href="/services" 
+                className="w-full bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs uppercase tracking-wider py-3 px-5 rounded-full shadow-md shadow-blue-500/25 flex items-center justify-between active:scale-95 transition-all"
+              >
+                <span>BOOK SERVICE</span>
+                <ChevronRight size={14} />
               </Link>
-              <a href="tel:+918679245568" className="bg-emerald-600 text-white px-3 py-2 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 hover:bg-emerald-700 active:scale-95 transition-all shadow-sm">
-                <Phone size={11} /> +91 8679245568
+              
+              <a 
+                href="tel:+918679245568" 
+                className="w-full bg-[#00A86B] hover:bg-emerald-700 text-white font-extrabold text-xs tracking-wider py-3 px-5 rounded-full shadow-md shadow-emerald-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all"
+              >
+                <Phone size={14} />
+                <span>+91 8679245568</span>
               </a>
+
               <button 
                 onClick={() => {
-                  if (locationText === 'Available Near You' || locationText === 'Location Unavailable') {
+                  if (locationText === 'ETAWAH' || locationText === 'AVAILABLE NEAR YOU') {
                      navigator.geolocation.getCurrentPosition(() => window.location.reload());
                   }
                 }}
-                className="bg-white/80 backdrop-blur-sm text-slate-700 px-3 py-2 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 border border-white shadow-sm"
+                className="w-full bg-white hover:bg-slate-50 text-slate-700 font-extrabold text-xs uppercase tracking-wider py-3 px-5 rounded-full shadow-xs border border-slate-100 flex items-center justify-center gap-2 active:scale-95 transition-all"
               >
-                <MapPin size={11} className={isLocating ? "text-slate-400 animate-pulse" : "text-[#FF6B00]"} /> 
-                {isLocating ? 'Detecting...' : locationText}
+                <MapPin size={14} className={isLocating ? "text-slate-400 animate-pulse" : "text-[#FF6B00]"} /> 
+                <span>{isLocating ? 'DETECTING...' : locationText}</span>
               </button>
             </div>
           </div>
 
-          {/* Hero Image - Right Aligned & Constrained */}
-          <div className="absolute right-0 bottom-0 w-[42%] max-w-[240px] sm:max-w-[320px] h-[85%] z-0 pointer-events-none flex items-end justify-end">
-            <img src="/hero_house_3d.png" alt="House Repairs" className="w-full h-full object-contain object-bottom" />
+          {/* Hero 3D House Image on Right */}
+          <div className="absolute right-0 bottom-0 w-[48%] max-w-[260px] sm:max-w-[340px] h-[90%] z-0 pointer-events-none flex items-end justify-end p-2">
+            <img src="/hero_house_3d.png" alt="House Repairs" className="w-full h-full object-contain object-bottom drop-shadow-md" />
           </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="mt-8 px-4">
-        <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-2">
+      {/* Categories Bar */}
+      <section className="mt-7 px-4">
+        <div className="flex overflow-x-auto hide-scrollbar justify-between items-center gap-2 pb-3 border-b-2 border-slate-100/80">
           {categories.map((category, idx) => (
-            <Link href="/services" key={idx} className="flex flex-col items-center gap-2 min-w-[72px] group">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-sm border border-slate-100 transition-transform active:scale-95 ${category.bg} ${category.active ? 'border-blue-200 shadow-blue-100' : ''}`}>
+            <Link href="/services" key={idx} className="flex flex-col items-center gap-1.5 flex-1 min-w-[68px] group">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xs border border-slate-100 transition-transform active:scale-95 ${category.bg} ${category.active ? 'ring-2 ring-[#007AFF]/20 border-[#007AFF]' : ''}`}>
                 <category.icon className={`w-6 h-6 ${category.color}`} />
               </div>
-              <span className={`text-[10px] font-semibold text-center ${category.active ? 'text-[#007AFF]' : 'text-slate-600'}`}>{category.name}</span>
+              <span className={`text-[10px] font-bold text-center ${category.active ? 'text-[#007AFF]' : 'text-slate-600'}`}>{category.name}</span>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="mt-8 px-4">
+      {/* Features Grid 2x2 */}
+      <section className="mt-6 px-4">
         <div className="grid grid-cols-2 gap-3">
           {features.map((feature, idx) => (
-            <div key={idx} className="bg-white p-4 rounded-2xl flex items-center gap-3 shadow-sm border border-slate-100 active:scale-95 transition-transform">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${feature.iconBg}`}>
-                <feature.icon className={`w-5 h-5 ${feature.iconColor}`} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-xs font-bold text-slate-900 truncate">{feature.title}</h3>
-                <p className="text-[9px] text-slate-500 leading-snug pr-2">{feature.desc}</p>
+            <div key={idx} className="bg-white p-3.5 rounded-2xl flex items-center justify-between gap-2 shadow-xs border border-slate-100/80 active:scale-95 transition-transform">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${feature.iconBg}`}>
+                  <feature.icon className={`w-4 h-4 ${feature.iconColor}`} />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xs font-bold text-slate-900 truncate">{feature.title}</h3>
+                  <p className="text-[9px] text-slate-500 leading-tight truncate">{feature.desc}</p>
+                </div>
               </div>
               <ChevronRight size={14} className="text-slate-300 shrink-0" />
             </div>
@@ -168,34 +185,34 @@ export default function Home() {
       </section>
 
       {/* Stats Strip */}
-      <section className="mt-8 px-4">
-        <div className="bg-white rounded-2xl p-4 flex justify-between items-center shadow-sm border border-slate-100 divide-x divide-slate-100 overflow-x-auto hide-scrollbar">
+      <section className="mt-6 px-4">
+        <div className="bg-white rounded-2xl p-4 flex justify-between items-center shadow-xs border border-slate-100 divide-x divide-slate-100 overflow-x-auto hide-scrollbar">
           <div className="flex flex-col items-center gap-1 px-4 min-w-fit">
             <Users size={18} className="text-blue-500" />
             <span className="text-sm font-bold text-slate-900">10K+</span>
-            <span className="text-[8px] text-slate-500">Happy Customers</span>
+            <span className="text-[8px] text-slate-500 font-semibold">Happy Customers</span>
           </div>
           <div className="flex flex-col items-center gap-1 px-4 min-w-fit">
             <UserCheck size={18} className="text-orange-500" />
             <span className="text-sm font-bold text-slate-900">500+</span>
-            <span className="text-[8px] text-slate-500">Expert Technicians</span>
+            <span className="text-[8px] text-slate-500 font-semibold">Expert Technicians</span>
           </div>
           <div className="flex flex-col items-center gap-1 px-4 min-w-fit">
             <Star size={18} className="text-green-500 fill-green-500" />
             <span className="text-sm font-bold text-slate-900">4.9</span>
-            <span className="text-[8px] text-slate-500">Customer Rating</span>
+            <span className="text-[8px] text-slate-500 font-semibold">Customer Rating</span>
           </div>
           <div className="flex flex-col items-center gap-1 px-4 min-w-fit">
             <MapPin size={18} className="text-purple-500" />
             <span className="text-sm font-bold text-slate-900">50+</span>
-            <span className="text-[8px] text-slate-500">Cities Covered</span>
+            <span className="text-[8px] text-slate-500 font-semibold">Cities Covered</span>
           </div>
         </div>
       </section>
 
       {/* Popular Services */}
       <section className="mt-8">
-        <div className="flex justify-between items-end px-4 mb-4">
+        <div className="flex justify-between items-end px-4 mb-3">
           <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">
             Popular <span className="text-[#007AFF]">Services in Etawah</span>
           </h2>
@@ -204,13 +221,13 @@ export default function Home() {
           </Link>
         </div>
         
-        <div className="flex overflow-x-auto hide-scrollbar gap-4 px-4 pb-4">
+        <div className="flex overflow-x-auto hide-scrollbar gap-3 px-4 pb-4">
           {popularServices.map((service, idx) => (
-            <div key={idx} className="bg-white rounded-2xl p-3 min-w-[160px] max-w-[200px] shadow-sm border border-slate-100 flex flex-col gap-3">
+            <div key={idx} className="bg-white rounded-2xl p-3 min-w-[160px] max-w-[200px] shadow-xs border border-slate-100 flex flex-col gap-3">
               <div className="w-full h-28 rounded-xl overflow-hidden bg-slate-100">
                 <img src={service.image} alt={service.name} className="w-full h-full object-cover" />
               </div>
-              <div className="space-y-1.5 flex-1">
+              <div className="space-y-1 flex-1">
                 <h3 className="text-xs font-bold text-slate-900 truncate">{service.name}</h3>
                 <div className="flex items-center gap-1">
                   <Star size={10} className="text-[#FFB800] fill-[#FFB800]" />
@@ -219,9 +236,9 @@ export default function Home() {
                 </div>
                 <div className="text-sm font-black text-slate-900">{service.price}</div>
               </div>
-              <button className="w-full bg-[#007AFF] text-white py-2 rounded-xl text-[10px] font-bold hover:bg-blue-600 active:scale-95 transition-all">
+              <Link href="/services" className="w-full bg-[#007AFF] text-white py-2 rounded-xl text-[10px] font-bold text-center block hover:bg-blue-600 active:scale-95 transition-all">
                 Book Now
-              </button>
+              </Link>
             </div>
           ))}
         </div>
@@ -229,7 +246,7 @@ export default function Home() {
 
       {/* How It Works */}
       <section className="mt-6 px-4">
-        <div className="flex justify-between items-end mb-6">
+        <div className="flex justify-between items-end mb-5">
           <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">
             How it <span className="text-[#007AFF]">Works</span>
           </h2>
@@ -243,8 +260,8 @@ export default function Home() {
           <div className="absolute top-4 left-6 right-6 h-[2px] border-t-2 border-dashed border-slate-200 -z-10"></div>
           
           <div className="flex flex-col items-center text-center gap-2 w-[70px]">
-            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-md shadow-blue-500/20">1</div>
-            <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mt-1">
+            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-xs">1</div>
+            <div className="w-10 h-10 bg-white rounded-xl shadow-xs border border-slate-100 flex items-center justify-center mt-1">
               <ClipboardList className="w-5 h-5 text-[#007AFF]" />
             </div>
             <h4 className="text-[9px] font-bold text-slate-900 mt-1">Select Service</h4>
@@ -252,8 +269,8 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col items-center text-center gap-2 w-[70px]">
-            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-md shadow-blue-500/20">2</div>
-            <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mt-1">
+            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-xs">2</div>
+            <div className="w-10 h-10 bg-white rounded-xl shadow-xs border border-slate-100 flex items-center justify-center mt-1">
               <CalendarDays className="w-5 h-5 text-[#007AFF]" />
             </div>
             <h4 className="text-[9px] font-bold text-slate-900 mt-1">Choose Schedule</h4>
@@ -261,17 +278,17 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col items-center text-center gap-2 w-[70px]">
-            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-md shadow-blue-500/20">3</div>
-            <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mt-1">
-              <ShieldCheck className="w-5 h-5 text-green-500" />
+            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-xs">3</div>
+            <div className="w-10 h-10 bg-white rounded-xl shadow-xs border border-slate-100 flex items-center justify-center mt-1">
+              <ShieldCheck className="w-5 h-5 text-emerald-500" />
             </div>
             <h4 className="text-[9px] font-bold text-slate-900 mt-1">Confirm Booking</h4>
             <p className="text-[7px] text-slate-500 leading-tight">Confirm and pay<br/>securely</p>
           </div>
 
           <div className="flex flex-col items-center text-center gap-2 w-[70px]">
-            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-md shadow-blue-500/20">4</div>
-            <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mt-1 overflow-hidden">
+            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-xs">4</div>
+            <div className="w-10 h-10 bg-white rounded-xl shadow-xs border border-slate-100 flex items-center justify-center mt-1 overflow-hidden">
                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" alt="Technician" className="w-full h-full object-cover" />
             </div>
             <h4 className="text-[9px] font-bold text-slate-900 mt-1">Technician Arrives</h4>
@@ -281,7 +298,7 @@ export default function Home() {
       </section>
 
       {/* Subscribe & Direct Contact Banner */}
-      <section className="mt-10 px-4 mb-8">
+      <section className="mt-8 px-4 mb-6">
         <div className="bg-[#0A1629] rounded-3xl p-6 sm:p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
           
@@ -348,8 +365,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SEO Content Block (Visually subtle but accessible for search engines) */}
-      <section className="mt-8 px-4 mb-4">
+      {/* SEO Content Block */}
+      <section className="mt-6 px-4 mb-4">
         <div className="bg-white/50 rounded-2xl p-6 border border-slate-100 text-left">
           <h1 className="text-xs font-bold text-slate-900 mb-2">Expert Home Repairs & Services On-Demand in Etawah</h1>
           <h2 className="text-[11px] font-semibold text-slate-800 mb-1">Trusted Local Professionals for Every Home Need</h2>
