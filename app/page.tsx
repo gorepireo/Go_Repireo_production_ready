@@ -18,7 +18,9 @@ import {
   Snowflake,
   ClipboardList,
   CalendarDays,
-  UserCheck
+  UserCheck,
+  Phone,
+  Globe
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -109,6 +111,9 @@ export default function Home() {
               <Link href="/services" className="bg-[#007AFF] text-white px-3.5 py-2 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 hover:bg-blue-600 active:scale-95 transition-all">
                 Book Service <ChevronRight size={12} />
               </Link>
+              <a href="tel:+918679245568" className="bg-emerald-600 text-white px-3 py-2 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 hover:bg-emerald-700 active:scale-95 transition-all shadow-sm">
+                <Phone size={11} /> +91 8679245568
+              </a>
               <button 
                 onClick={() => {
                   if (locationText === 'Available Near You' || locationText === 'Location Unavailable') {
@@ -275,26 +280,70 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Bottom CTA Banner */}
+      {/* Subscribe & Direct Contact Banner */}
       <section className="mt-10 px-4 mb-8">
-        <div className="bg-[#0A1629] rounded-3xl p-6 relative overflow-hidden min-h-[160px] flex items-center shadow-xl">
+        <div className="bg-[#0A1629] rounded-3xl p-6 sm:p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
           
-          <div className="relative z-10 space-y-3 max-w-[60%]">
-            <p className="text-[8px] font-bold uppercase tracking-widest text-blue-400">PROFESSIONAL SUPPORT</p>
-            <h2 className="text-2xl font-black text-white leading-tight uppercase tracking-tight">
-              GET HELP <span className="text-[#007AFF]">FASTER.</span>
+          <div className="relative z-10 space-y-3 max-w-xl text-left w-full">
+            <div className="inline-flex items-center gap-1.5 bg-blue-500/20 px-3 py-1 rounded-full border border-blue-400/30">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+              <p className="text-[9px] font-extrabold uppercase tracking-widest text-blue-400">Subscribe & Stay Connected</p>
+            </div>
+            
+            <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight uppercase tracking-tight">
+              Get Exclusive Offers & <span className="text-[#007AFF]">Instant Support</span>
             </h2>
-            <p className="text-[9px] text-slate-400 leading-relaxed max-w-[160px]">
-              Fast, reliable and trusted home repair solutions. We're just a tap away!
+            <p className="text-xs text-slate-300 leading-relaxed max-w-md">
+              Subscribe with your phone number to receive instant repair updates, or reach us directly via our hotline or website.
             </p>
-            <Link href="/services" className="inline-flex items-center gap-2 bg-white text-slate-900 px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-wider mt-2 hover:bg-slate-100 active:scale-95 transition-all">
-              BOOK A SERVICE <ChevronRight size={12} />
-            </Link>
+
+            {/* Subscribe Form & Contact Buttons */}
+            <div className="pt-2 space-y-3">
+              <form 
+                onSubmit={(e) => { 
+                  e.preventDefault(); 
+                  const val = (e.currentTarget.querySelector('input')?.value || '').trim();
+                  alert('Thank you for subscribing! We will send updates to ' + (val || 'your phone number') + '.'); 
+                }} 
+                className="flex items-center gap-2 max-w-md bg-white/10 backdrop-blur-md p-1.5 rounded-full border border-white/20"
+              >
+                <input 
+                  type="tel" 
+                  placeholder="Enter phone number to subscribe" 
+                  className="bg-transparent text-white text-xs px-4 py-2 focus:outline-none w-full placeholder:text-slate-400" 
+                  required 
+                />
+                <button type="submit" className="bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold px-5 py-2.5 rounded-full whitespace-nowrap active:scale-95 transition-all shadow-md">
+                  Subscribe
+                </button>
+              </form>
+
+              {/* Direct Action Pills with Phone Number & Website Link */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <a 
+                  href="tel:+918679245568" 
+                  className="inline-flex items-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 px-4 py-2 rounded-full text-xs font-bold transition-all active:scale-95"
+                >
+                  <Phone size={14} className="text-emerald-400" />
+                  <span>Call: +91 8679245568</span>
+                </a>
+
+                <a 
+                  href="https://gorepireo.in" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="inline-flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 px-4 py-2 rounded-full text-xs font-bold transition-all active:scale-95"
+                >
+                  <Globe size={14} className="text-blue-400" />
+                  <span>gorepireo.in</span>
+                </a>
+              </div>
+            </div>
           </div>
 
-          <div className="absolute -right-6 -bottom-6 w-52 h-52 z-0 pointer-events-none">
-             <img src="/bottom_toolbox_3d.png" alt="Toolbox" className="w-full h-full object-contain" />
+          <div className="relative z-10 w-full md:w-auto flex justify-end shrink-0 pointer-events-none">
+             <img src="/bottom_toolbox_3d.png" alt="Toolbox" className="w-44 h-44 sm:w-52 sm:h-52 object-contain" />
           </div>
         </div>
       </section>

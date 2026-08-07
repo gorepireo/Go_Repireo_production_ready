@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Phone, Globe } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -9,6 +10,15 @@ export default function Footer() {
         <div>
           <p className="text-xs font-bold text-slate-900">Go_Repireo</p>
           <p className="text-[10px] text-slate-400 mt-0.5">© 2026 Go_Repireo. All rights reserved.</p>
+          <div className="flex items-center gap-3 mt-2 text-[11px] font-medium">
+            <a href="tel:+918679245568" className="text-emerald-600 hover:underline flex items-center gap-1 font-semibold">
+              <Phone size={12} /> +91 8679245568
+            </a>
+            <span className="text-slate-300">•</span>
+            <a href="https://gorepireo.in" target="_blank" rel="noopener noreferrer" className="text-[#007AFF] hover:underline flex items-center gap-1 font-semibold">
+              <Globe size={12} /> gorepireo.in
+            </a>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] font-medium text-slate-600">
