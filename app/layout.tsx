@@ -10,10 +10,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://gorepireo.in"),
   title: {
-    default: "Go_Repireo - Book Verified Home Services | Plumber, Electrician, AC Repair in Etawah",
-    template: "%s | Go_Repireo - Verified Home Services"
+    default: "Go_Repireo - Etawah's Trusted Home Services | Plumber, Electrician, AC Repair",
+    template: "%s | Go_Repireo"
   },
-  description: "Go_Repireo is India's trusted home services marketplace. Book verified plumbers, electricians, AC technicians, appliance repair experts, cleaners, painters, carpenters, RO technicians, CCTV installers, and home maintenance professionals in Etawah. Instant booking, live technician tracking, secure online payments, same-day service, affordable pricing, and professional doorstep repairs.",
+  description: "Go_Repireo is Etawah's trusted on-demand home services marketplace. Book verified plumbers, electricians, AC technicians, appliance repair experts, cleaners, painters, carpenters, RO technicians, and CCTV installers in Etawah, UP. Instant booking, live technician tracking, secure UPI & card payments, same-day service, and professional doorstep repairs.",
   keywords: [
     // ─── Brand: Correct & Primary ───
     "Go Repireo", "Go_Repireo", "GoRepireo", "Repireo", "GoRepireo.in",
@@ -144,8 +144,8 @@ export const metadata: Metadata = {
   classification: "Home Services Marketplace",
   applicationName: "Go_Repireo",
   openGraph: {
-    title: "Go_Repireo - Book Verified Home Services | Plumber, Electrician, AC Repair",
-    description: "Go_Repireo is India's trusted on-demand home services platform. Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah with live tracking and secure payments.",
+    title: "Go_Repireo - Etawah's Trusted Home Services | Plumber, Electrician, AC Repair",
+    description: "Go_Repireo is Etawah's on-demand home services platform. Book verified plumbers, electricians, AC technicians, and appliance repair experts with live tracking and secure UPI payments.",
     url: "https://gorepireo.in",
     siteName: "Go_Repireo",
     locale: "en_IN",
@@ -161,8 +161,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Go_Repireo - Book Verified Home Services",
-    description: "Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah with live technician tracking.",
+    title: "Go_Repireo - Etawah's Trusted Home Services",
+    description: "Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah with live technician tracking and secure UPI payments.",
     images: ["https://gorepireo.in/icon.png"],
     creator: "@gorepireo",
   },
@@ -229,13 +229,14 @@ export default function RootLayout({
                 'height': 512
               },
               'image': 'https://gorepireo.in/icon.png',
-              'description': 'Go_Repireo is India\'s trusted on-demand home services marketplace. We connect customers with verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah with live tracking and secure payments.',
+              'description': 'Go_Repireo is Etawah\'s trusted on-demand home services marketplace. We connect customers with verified plumbers, electricians, AC technicians, and appliance repair experts with live tracking and secure payments.',
               'telephone': '+91-8679245568',
               'email': 'support@gorepireo.com',
               'foundingDate': '2025',
               'areaServed': {
                 '@type': 'City',
                 'name': 'Etawah',
+                'addressRegion': 'Uttar Pradesh',
                 'addressCountry': 'IN'
               },
               'contactPoint': {

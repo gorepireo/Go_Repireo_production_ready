@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/register`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
   ];
 
+  // Near-me pages for Etawah (current service area)
   const nearMeServices = [
     'electrician-near-me',
     'plumber-near-me',
@@ -35,17 +36,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.95
   }));
 
+  // City-specific service pages — currently only Etawah (our active service area).
+  // TODO: When expanding to new cities, add them to this `activeCities` array.
   const categories = ['plumbing', 'electrical', 'ac-repair', 'cleaning', 'appliances', 'carpentry'];
-  const cities = ['etawah', 'delhi', 'mumbai', 'bangalore', 'hyderabad', 'pune', 'chennai', 'kolkata', 'lucknow', 'jaipur'];
+  const activeCities = ['etawah'];
 
   const cityPages: MetadataRoute.Sitemap = [];
   categories.forEach(cat => {
-    cities.forEach(city => {
+    activeCities.forEach(city => {
       cityPages.push({
         url: `${baseUrl}/services/${cat}/${city}`,
         lastModified: new Date(),
         changeFrequency: 'weekly',
-        priority: 0.85
+        priority: 0.9
       });
     });
   });

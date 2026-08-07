@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About Go_Repireo | India\'s Trusted On-Demand Home Services Platform',
-  description: 'Go_Repireo (also spelled GoRepireo, Go Repireo, Repireo) is India\'s verified on-demand home services platform. Book plumbers, electricians, AC technicians, appliance repair experts in Etawah. Founded in 2025.',
+  title: 'About Go_Repireo | Etawah Home Services | Expanding Across India',
+  description: 'Go_Repireo (also spelled GoRepireo, Go Repireo, Repireo) is Etawah\'s trusted on-demand home services platform. Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah, UP. Founded 2025 — expanding across India.',
   keywords: [
     'Go_Repireo', 'GoRepireo', 'Go Repireo', 'Repireo', 'about gorepireo',
     'gorepireo company', 'gorepireo brand', 'gorepireo India', 'gorepireo etawah',
@@ -46,7 +46,7 @@ export default function AboutPage() {
         <div style={{ background: '#FFFFFF', borderRadius: '20px', padding: '36px', border: '1px solid #E2E8F0', marginBottom: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
           <h2 style={{ color: '#0A1629', fontSize: '20px', fontWeight: 800, margin: '0 0 16px 0' }}>What is Go_Repireo?</h2>
           <p style={{ color: '#475569', fontSize: '15px', lineHeight: 1.7, margin: '0 0 16px 0' }}>
-            <strong>Go_Repireo</strong> (pronounced "go-re-pi-re-oh", also written as <em>GoRepireo</em>, <em>Go Repireo</em>, or <em>Repireo</em>) is India's fastest-growing on-demand home services marketplace, headquartered in Etawah, Uttar Pradesh.
+            <strong>Go_Repireo</strong> (pronounced "go-re-pi-re-oh", also written as <em>GoRepireo</em>, <em>Go Repireo</em>, or <em>Repireo</em>) is an on-demand home services marketplace currently serving <strong>Etawah, Uttar Pradesh</strong> — with plans to expand across India.
           </p>
           <p style={{ color: '#475569', fontSize: '15px', lineHeight: 1.7, margin: 0 }}>
             We connect homeowners and businesses with background-verified plumbers, electricians, AC technicians, appliance repair specialists, cleaning experts, painters, and carpenters — all within a 15 km proximity radius for guaranteed fast arrival.
@@ -56,7 +56,7 @@ export default function AboutPage() {
         <div style={{ background: '#FFFFFF', borderRadius: '20px', padding: '36px', border: '1px solid #E2E8F0', marginBottom: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
           <h2 style={{ color: '#0A1629', fontSize: '20px', fontWeight: 800, margin: '0 0 16px 0' }}>Our Mission</h2>
           <p style={{ color: '#475569', fontSize: '15px', lineHeight: 1.7, margin: 0 }}>
-            To make professional, affordable, and reliable home repairs accessible to every household in India — starting from Etawah. Go_Repireo's anti-fraud Start OTP system ensures that every job starts and ends only after the customer's confirmation, guaranteeing safety and accountability.
+            To make professional, affordable home repairs accessible to every household — starting from Etawah. We are building the infrastructure to expand this service to every city in India, one verified technician at a time. Go_Repireo's Start OTP system ensures every job is confirmed by the customer for maximum safety and accountability.
           </p>
         </div>
 
