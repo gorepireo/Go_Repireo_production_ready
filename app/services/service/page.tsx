@@ -203,30 +203,6 @@ export default function ServiceBooking() {
         console.warn('Could not notify workers:', notifyErr);
       }
 
-      // Trigger Brevo Order Confirmation Email
-      try {
-        fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            toEmail: user?.email,
-            toName: user?.email?.split('@')[0] || 'Customer',
-            type: 'order_confirmation',
-            params: {
-              CUSTOMER_NAME: user?.email?.split('@')[0] || 'Customer',
-              ORDER_ID: data[0].id.slice(0, 8),
-              SERVICE_NAME: formData.category.toUpperCase(),
-              START_OTP: startOtp,
-              PAYMENT_METHOD: payMethod === 'cash' ? 'Cash on Service' : 'Prepaid Online',
-              TOTAL_PRICE: estimatedPrice,
-              TRACKING_LINK: `https://xipxmg4q.insforge.site/track?id=${data[0].id}`
-            }
-          })
-        });
-      } catch (emailErr) {
-        console.warn('Could not send Brevo confirmation email:', emailErr);
-      }
-
       router.push(`/track?id=${data[0].id}`);
     }
   };
