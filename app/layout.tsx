@@ -10,8 +10,8 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://gorepireo.in"),
   title: {
-    default: "Go_Repireo | Book Trusted Home Services, Plumber, Electrician, AC Repair & Appliance Repair in Etawah",
-    template: "%s | Go_Repireo"
+    default: "Go_Repireo - Book Verified Home Services | Plumber, Electrician, AC Repair in Etawah",
+    template: "%s | Go_Repireo - Verified Home Services"
   },
   description: "Go_Repireo is India's trusted home services marketplace. Book verified plumbers, electricians, AC technicians, appliance repair experts, cleaners, painters, carpenters, RO technicians, CCTV installers, and home maintenance professionals in Etawah. Instant booking, live technician tracking, secure online payments, same-day service, affordable pricing, and professional doorstep repairs.",
   keywords: [
@@ -137,27 +137,56 @@ export const metadata: Metadata = {
     "Home Service Website", "Uber for Home Repairs", "Urban Company Alternative",
     "Local Technician Booking", "Nearby Verified Workers"
   ],
-  authors: [{ name: "Go_Repireo Team" }],
+  authors: [{ name: "Go_Repireo" }],
+  creator: "Go_Repireo",
+  publisher: "Go_Repireo Technologies",
+  category: "Home Services",
+  classification: "Home Services Marketplace",
+  applicationName: "Go_Repireo",
   openGraph: {
-    title: "Go_Repireo | Book Trusted Home Services in Etawah",
-    description: "Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah.",
+    title: "Go_Repireo - Book Verified Home Services | Plumber, Electrician, AC Repair",
+    description: "Go_Repireo is India's trusted on-demand home services platform. Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah with live tracking and secure payments.",
     url: "https://gorepireo.in",
     siteName: "Go_Repireo",
     locale: "en_IN",
     type: "website",
+    images: [
+      {
+        url: "https://gorepireo.in/icon.png",
+        width: 512,
+        height: 512,
+        alt: "Go_Repireo - Verified Home Services",
+      }
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Go_Repireo | Book Trusted Home Services in Etawah",
-    description: "Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah.",
+    title: "Go_Repireo - Book Verified Home Services",
+    description: "Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah with live technician tracking.",
+    images: ["https://gorepireo.in/icon.png"],
+    creator: "@gorepireo",
   },
   alternates: {
     canonical: "https://gorepireo.in",
   },
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'gorepireo-google-site-verification',
   },
 };
 
@@ -182,16 +211,123 @@ export default function RootLayout({
           }
           #root-container { background-color: #FFFFFF !important; }
         ` }} />
+        {/* Organization Schema - Teaches Google our brand identity */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'Organization',
+              '@id': 'https://gorepireo.in/#organization',
               'name': 'Go_Repireo',
+              'alternateName': ['GoRepireo', 'Go Repireo', 'Repireo', 'Go_Repireo Technologies', 'gorepireo'],
               'url': 'https://gorepireo.in',
-              'logo': 'https://gorepireo.in/logo.png',
-              'telephone': '+91-8679245568'
+              'logo': {
+                '@type': 'ImageObject',
+                'url': 'https://gorepireo.in/icon.png',
+                'width': 512,
+                'height': 512
+              },
+              'image': 'https://gorepireo.in/icon.png',
+              'description': 'Go_Repireo is India\'s trusted on-demand home services marketplace. We connect customers with verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah with live tracking and secure payments.',
+              'telephone': '+91-8679245568',
+              'email': 'support@gorepireo.com',
+              'foundingDate': '2025',
+              'areaServed': {
+                '@type': 'City',
+                'name': 'Etawah',
+                'addressCountry': 'IN'
+              },
+              'contactPoint': {
+                '@type': 'ContactPoint',
+                'telephone': '+91-8679245568',
+                'contactType': 'customer service',
+                'availableLanguage': ['English', 'Hindi']
+              },
+              'sameAs': [
+                'https://gorepireo.in',
+                'https://xipxmg4q.insforge.site'
+              ]
+            })
+          }}
+        />
+        {/* WebSite Schema - Enables Google Sitelinks Search Box */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              '@id': 'https://gorepireo.in/#website',
+              'name': 'Go_Repireo',
+              'alternateName': ['GoRepireo', 'Go Repireo', 'Repireo'],
+              'url': 'https://gorepireo.in',
+              'description': 'Book verified home services - plumber, electrician, AC repair, appliance repair, cleaning in Etawah',
+              'publisher': {
+                '@id': 'https://gorepireo.in/#organization'
+              },
+              'potentialAction': {
+                '@type': 'SearchAction',
+                'target': {
+                  '@type': 'EntryPoint',
+                  'urlTemplate': 'https://gorepireo.in/services?q={search_term_string}'
+                },
+                'query-input': 'required name=search_term_string'
+              }
+            })
+          }}
+        />
+        {/* LocalBusiness Schema - Boosts local search relevance */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'LocalBusiness',
+              '@id': 'https://gorepireo.in/#localbusiness',
+              'name': 'Go_Repireo',
+              'image': 'https://gorepireo.in/icon.png',
+              'telephone': '+91-8679245568',
+              'email': 'support@gorepireo.com',
+              'url': 'https://gorepireo.in',
+              'priceRange': '₹99 - ₹4999',
+              'currenciesAccepted': 'INR',
+              'paymentAccepted': 'Cash, UPI, Credit Card, Debit Card, Net Banking',
+              'address': {
+                '@type': 'PostalAddress',
+                'streetAddress': 'Etawah',
+                'addressLocality': 'Etawah',
+                'addressRegion': 'Uttar Pradesh',
+                'postalCode': '206001',
+                'addressCountry': 'IN'
+              },
+              'geo': {
+                '@type': 'GeoCoordinates',
+                'latitude': 26.7773,
+                'longitude': 79.0208
+              },
+              'openingHoursSpecification': {
+                '@type': 'OpeningHoursSpecification',
+                'dayOfWeek': ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],
+                'opens': '07:00',
+                'closes': '21:00'
+              },
+              'serviceArea': {
+                '@type': 'City',
+                'name': 'Etawah'
+              },
+              'hasOfferCatalog': {
+                '@type': 'OfferCatalog',
+                'name': 'Go_Repireo Home Services',
+                'itemListElement': [
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Plumbing Services' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Electrical Services' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'AC Repair & Service' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Appliance Repair' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Deep Cleaning' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Carpentry & Painting' } }
+                ]
+              }
             })
           }}
         />
