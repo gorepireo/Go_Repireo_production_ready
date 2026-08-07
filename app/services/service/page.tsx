@@ -281,51 +281,80 @@ export default function ServiceBooking() {
   }
 
   const categories = [
-    { id: 'plumbing', label: 'PLUMBING', desc: 'Pipes, fittings, leaks & more', Icon: Droplet, colorClass: 'text-blue-500' },
-    { id: 'electrical', label: 'ELECTRICAL', desc: 'Wiring, circuits, panels & more', Icon: Zap, colorClass: 'text-orange-500' },
-    { id: 'cleaning', label: 'CLEANING', desc: 'Deep cleaning, sanitization & more', Icon: Sparkles, colorClass: 'text-orange-500' },
-    { id: 'repair', label: 'REPAIR', desc: 'Appliances, fixtures & more', Icon: Wrench, colorClass: 'text-purple-600' }
+    { id: 'plumbing', label: 'Plumbing', desc: 'Pipes, fittings, leaks & more', Icon: Droplet, colorClass: 'text-[#007AFF]', activeBg: 'bg-[#F0F6FF] border-[#007AFF]' },
+    { id: 'electrical', label: 'Electrical', desc: 'Wiring, circuits, panels & more', Icon: Zap, colorClass: 'text-amber-500', activeBg: 'bg-[#F0F6FF] border-[#007AFF]' },
+    { id: 'cleaning', label: 'Cleaning', desc: 'Deep cleaning, sanitization & more', Icon: Sparkles, colorClass: 'text-orange-500', activeBg: 'bg-[#F0F6FF] border-[#007AFF]' },
+    { id: 'repair', label: 'Repair', desc: 'Appliances, fixtures & more', Icon: Wrench, colorClass: 'text-purple-600', activeBg: 'bg-[#F0F6FF] border-[#007AFF]' }
   ];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-32">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
-      {/* Top Banner / Header Section */}
-      <div className="relative pt-6 pb-4 overflow-hidden bg-white shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
-        {/* Subtle background decoration */}
-        <div className="absolute top-0 right-0 w-[80%] h-full bg-gradient-to-l from-blue-50/80 to-transparent pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto px-6 relative z-10 flex justify-between items-center min-h-[140px]">
-           <div className="max-w-[58%] sm:max-w-[65%] space-y-2 py-4">
-             <h1 className="text-3xl sm:text-4xl font-black italic tracking-tighter leading-[0.9]">
-               <span className="text-[#0A1629]">BOOK A</span><br />
-               <span className="text-[#007AFF]">PROFESSIONAL.</span>
-             </h1>
-             <p className="text-[10px] text-slate-500 max-w-[180px] leading-relaxed">
-               Secure assignment of elite service experts for essential maintenance.
-             </p>
-           </div>
+      
+      {/* Top Hero Banner Section */}
+      <div className="relative pt-6 pb-6 overflow-hidden bg-gradient-to-br from-[#EEF5FF] via-[#E2EEFF] to-[#D6E6FF] border-b border-blue-100/60 shadow-xs">
+        {/* Soft Floating Decorative Circles */}
+        <div className="absolute top-4 left-[48%] w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-xs flex items-center justify-center text-blue-500 text-sm z-10">
+          💧
+        </div>
+        <div className="absolute top-10 right-4 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-xs flex items-center justify-center text-amber-500 text-sm z-10">
+          ⚡
+        </div>
+        <div className="absolute bottom-6 left-[46%] w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-xs flex items-center justify-center text-purple-500 text-xs z-10">
+          🔧
+        </div>
+        <div className="absolute bottom-10 right-8 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-xs flex items-center justify-center text-orange-400 text-sm z-10">
+          ✨
         </div>
 
-        {/* Mechanic Image - Properly Constrained */}
-        <div className="absolute right-0 bottom-0 w-[38%] max-w-[160px] sm:max-w-[200px] h-full z-10 pointer-events-none flex items-end justify-end">
-           <img src="/custom_service_mechanic_3d.png" alt="Mechanic" className="w-full h-full object-contain object-bottom drop-shadow-xl" />
+        <div className="max-w-4xl mx-auto px-5 relative z-10 flex justify-between items-center min-h-[160px]">
+          <div className="max-w-[62%] sm:max-w-[65%] space-y-2.5 py-2">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[0.95] text-slate-900 uppercase">
+              BOOK A<br />
+              <span className="text-[#007AFF]">PROFESSIONAL</span>
+            </h1>
+            <p className="text-[10px] sm:text-xs text-slate-500 max-w-[260px] leading-relaxed">
+              Secure assignment of elite service experts for essential maintenance.
+            </p>
+
+            {/* Feature Pills */}
+            <div className="flex items-center gap-2 pt-1 flex-wrap">
+              <span className="inline-flex items-center gap-1 bg-white/80 backdrop-blur-sm border border-blue-100/80 px-2.5 py-1 rounded-full text-[9px] font-semibold text-slate-700 shadow-2xs">
+                🛡️ <span className="font-extrabold text-slate-800">Verified Experts</span>
+              </span>
+              <span className="inline-flex items-center gap-1 bg-white/80 backdrop-blur-sm border border-blue-100/80 px-2.5 py-1 rounded-full text-[9px] font-semibold text-slate-700 shadow-2xs">
+                🕒 <span className="font-extrabold text-slate-800">On-Time Service</span>
+              </span>
+              <span className="inline-flex items-center gap-1 bg-white/80 backdrop-blur-sm border border-blue-100/80 px-2.5 py-1 rounded-full text-[9px] font-semibold text-slate-700 shadow-2xs">
+                🏷️ <span className="font-extrabold text-slate-800">Upfront Pricing</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Technician Image on Right */}
+        <div className="absolute right-0 bottom-0 w-[42%] max-w-[200px] sm:max-w-[280px] h-[95%] z-10 pointer-events-none flex items-end justify-end">
+          <img src="/custom_service_mechanic_3d.png" alt="Mechanic" className="w-full h-full object-contain object-bottom drop-shadow-xl" />
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 md:px-6 pt-6 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 pt-5 space-y-5">
         <motion.form 
           onSubmit={handleSubmit}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          className="space-y-5"
         >
-          {/* Category Selector */}
-          <div className="space-y-3">
-            <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-              Step 1 <span className="mx-1.5">•</span> Select Service Category
-            </label>
-            <div className="grid grid-cols-2 gap-3">
+          {/* STEP 1: Select Service Category */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-100 text-[#007AFF] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full">
+                STEP 1
+              </span>
+              <h2 className="text-xs font-bold text-slate-900">Select Service Category</h2>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {categories.map((cat) => {
                  const isSelected = formData.category === cat.id;
                  return (
@@ -333,30 +362,28 @@ export default function ServiceBooking() {
                      key={cat.id}
                      type="button"
                      onClick={() => setFormData({ ...formData, category: cat.id })}
-                     className={`relative p-4 rounded-2xl transition-all text-left flex flex-col gap-3 ${
+                     className={`relative p-4 rounded-2xl transition-all text-center flex flex-col items-center gap-2 ${
                        isSelected 
-                         ? 'bg-[#001D4A] text-white shadow-lg shadow-blue-900/20' 
-                         : 'bg-white text-slate-900 shadow-sm border border-slate-100 hover:shadow-md'
+                         ? 'bg-[#F0F6FF] border-2 border-[#007AFF] shadow-sm' 
+                         : 'bg-white text-slate-900 border border-slate-100 hover:border-slate-200'
                      }`}
                    >
-                     {/* Checkmark badge */}
+                     {/* Blue Checkmark Badge on Top Right */}
                      {isSelected && (
-                       <div className="absolute top-3 right-3 w-5 h-5 bg-[#007AFF] rounded-full flex items-center justify-center shadow-md">
+                       <div className="absolute top-2.5 right-2.5 w-5 h-5 bg-[#007AFF] rounded-full flex items-center justify-center shadow-xs">
                           <Check size={12} className="text-white" strokeWidth={3} />
                        </div>
                      )}
                      
-                     {/* Icon */}
-                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border ${
-                       isSelected ? 'bg-[#153468] border-transparent' : 'bg-white border-slate-100'
-                     }`}>
-                        <cat.Icon size={20} className={isSelected ? 'text-blue-300 fill-current' : `${cat.colorClass} fill-current`} />
+                     {/* Category Icon */}
+                     <div className="w-10 h-10 rounded-xl flex items-center justify-center">
+                        <cat.Icon size={26} className={cat.colorClass} />
                      </div>
                      
-                     {/* Text */}
+                     {/* Label & Description */}
                      <div>
-                        <h3 className="text-[11px] font-black uppercase tracking-tight">{cat.label}</h3>
-                        <p className={`text-[8px] mt-0.5 leading-tight ${isSelected ? 'text-blue-100/70' : 'text-slate-500'}`}>{cat.desc}</p>
+                        <h3 className="text-xs font-black text-slate-900">{cat.label}</h3>
+                        <p className="text-[9px] text-slate-400 font-medium leading-tight mt-0.5">{cat.desc}</p>
                      </div>
                    </button>
                  );
@@ -364,229 +391,171 @@ export default function ServiceBooking() {
             </div>
           </div>
 
-          {/* Core Problem Description */}
-          <div className="space-y-3">
-            <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-              Step 2 <span className="mx-1.5">•</span> Describe Your Issue
-            </label>
+          {/* STEP 2: Describe Your Issue */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-100 text-[#007AFF] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full">
+                STEP 2
+              </span>
+              <h2 className="text-xs font-bold text-slate-900">Describe Your Issue</h2>
+            </div>
+
             <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                 <MessageSquare size={16} className="text-[#007AFF]" />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                 <MessageSquare size={16} />
               </div>
               <input 
                 required
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
-                className="w-full h-14 bg-white border border-slate-100 rounded-2xl pl-12 pr-6 text-[10px] font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm placeholder:text-slate-400"
+                className="w-full h-12 bg-white border border-slate-200/80 rounded-2xl pl-11 pr-4 text-xs font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all placeholder:text-slate-400"
                 placeholder="E.g. Kitchen tap is leaking or bathroom drain is clogged..."
               />
             </div>
           </div>
 
-          {/* Dispatch Preference: Immediately vs Scheduled */}
-          <div className="space-y-3">
-             <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-               Step 3 <span className="mx-1.5">•</span> Choose Service Timing
-             </label>
-             <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-100/70 rounded-2xl border border-slate-200/50">
-               <button
-                 type="button"
-                 onClick={() => setFormData({ ...formData, bookingType: 'immediately' })}
-                 className={`py-3 px-4 rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                   formData.bookingType === 'immediately'
-                     ? 'bg-[#007AFF] text-white shadow-md'
-                     : 'bg-transparent text-slate-600 hover:text-slate-900'
-                 }`}
-               >
-                 <Zap size={14} /> Immediately (ASAP)
-               </button>
-               <button
-                 type="button"
-                 onClick={() => setFormData({ ...formData, bookingType: 'scheduled' })}
-                 className={`py-3 px-4 rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                   formData.bookingType === 'scheduled'
-                     ? 'bg-[#007AFF] text-white shadow-md'
-                     : 'bg-transparent text-slate-600 hover:text-slate-900'
-                 }`}
-               >
-                 <Calendar size={14} /> Scheduled
-               </button>
-             </div>
-          </div>
+          {/* STEP 3: Choose Service Timing */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-100 text-[#007AFF] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full">
+                STEP 3
+              </span>
+              <h2 className="text-xs font-bold text-slate-900">Choose Service Timing</h2>
+            </div>
 
-          {/* Temporal Field (Date & Time) - Shown ONLY when Scheduled */}
-          {formData.bookingType === 'scheduled' && (
-             <div className="space-y-3">
-                <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-                  Preferred Date & Time
-                </label>
-                <div className="flex gap-3">
-                   <div 
-                     className="flex-1 relative cursor-pointer"
-                     onClick={() => {
-                       try { (document.getElementById('dateInput') as HTMLInputElement)?.showPicker(); } catch (e) {}
-                     }}
-                   >
-                     <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <Calendar size={16} className="text-[#007AFF]" />
-                     </div>
-                     <div className="absolute left-11 top-[10px] pointer-events-none">
-                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Preferred Date</span>
-                     </div>
-                     <input 
-                       id="dateInput"
-                       required={formData.bookingType === 'scheduled'}
-                       type="date"
-                       value={formData.preferredDate}
-                       onChange={e => setFormData({ ...formData, preferredDate: e.target.value })}
-                       className={`w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-10 pt-[14px] text-[10px] font-medium outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm [color-scheme:light] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer ${!formData.preferredDate ? 'text-transparent' : 'text-slate-900'}`}
-                     />
-                     {!formData.preferredDate && (
-                       <div className="absolute left-11 top-[26px] pointer-events-none">
-                         <span className="text-[10px] font-medium text-slate-400">Select date</span>
-                       </div>
-                     )}
-                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <ChevronDown size={14} className="text-slate-400" />
-                     </div>
-                   </div>
-                   <div 
-                     className="flex-1 relative cursor-pointer"
-                     onClick={() => {
-                       try { (document.getElementById('timeInput') as HTMLInputElement)?.showPicker(); } catch (e) {}
-                     }}
-                   >
-                     <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <Clock size={16} className="text-[#007AFF]" />
-                     </div>
-                     <div className="absolute left-11 top-[10px] pointer-events-none">
-                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Preferred Time</span>
-                     </div>
-                     <input 
-                       id="timeInput"
-                       required={formData.bookingType === 'scheduled'}
-                       type="time"
-                       value={formData.preferredTime}
-                       onChange={e => setFormData({ ...formData, preferredTime: e.target.value })}
-                       className={`w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-10 pt-[14px] text-[10px] font-medium outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm [color-scheme:light] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer ${!formData.preferredTime ? 'text-transparent' : 'text-slate-900'}`}
-                     />
-                     {!formData.preferredTime && (
-                       <div className="absolute left-11 top-[26px] pointer-events-none">
-                         <span className="text-[10px] font-medium text-slate-400">Select time</span>
-                       </div>
-                     )}
-                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <ChevronDown size={14} className="text-slate-400" />
-                     </div>
-                   </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, bookingType: 'immediately' })}
+                className={`p-4 rounded-2xl text-left transition-all flex items-center gap-3 ${
+                  formData.bookingType === 'immediately'
+                    ? 'bg-[#007AFF] text-white shadow-md shadow-blue-500/20'
+                    : 'bg-white text-slate-900 border border-slate-200/80'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${formData.bookingType === 'immediately' ? 'bg-white/20' : 'bg-blue-50 text-[#007AFF]'}`}>
+                  <Zap size={16} />
                 </div>
-             </div>
-          )}
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-tight">IMMEDIATELY (ASAP)</h4>
+                  <p className={`text-[9px] ${formData.bookingType === 'immediately' ? 'text-blue-100' : 'text-slate-400'}`}>Get expert at your door soon</p>
+                </div>
+              </button>
 
-          {/* Geographical Field */}
-          <div className="space-y-3">
-             <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-               Step 4 <span className="mx-1.5">•</span> Service Address & Location
-             </label>
-             <div className="relative">
-               <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                 <MapPin size={16} className="text-[#007AFF]" />
-               </div>
-               <div className="absolute left-11 top-[10px] pointer-events-none z-10">
-                 <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Delivery Address</span>
-               </div>
-               <input 
-                 required 
-                 value={formData.address}
-                 onFocus={() => setShowAddressDropdown(true)}
-                 onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
-                 onChange={e => setFormData({ ...formData, address: e.target.value })}
-                 className="w-full h-14 bg-white border border-slate-100 rounded-2xl pl-11 pr-[90px] pt-[14px] text-[10px] font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all shadow-sm placeholder:text-slate-400 relative z-0"
-                 placeholder="Enter your address or select saved location"
-               />
-               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
-                 <button 
-                   type="button" 
-                   onClick={() => setShowMapModal(true)}
-                   className="w-10 h-10 bg-slate-50/80 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                 >
-                   <MapIcon size={14} />
-                 </button>
-                 <button 
-                   type="button" 
-                   onClick={() => {
-                     if (navigator.geolocation) {
-                       navigator.geolocation.getCurrentPosition(
-                         async (position) => {
-                           try {
-                             if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-                               const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.coords.latitude},${position.coords.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
-                               const data = await res.json();
-                               if (data.status === 'OK' && data.results && data.results.length > 0) {
-                                 setFormData({ ...formData, address: data.results[0].formatted_address, lat: position.coords.latitude, lng: position.coords.longitude });
-                                 return;
-                               }
-                             }
-                             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&email=info@repireo.com`);
-                             const data = await res.json();
-                             if (data && data.display_name) {
-                               setFormData({ ...formData, address: data.display_name, lat: position.coords.latitude, lng: position.coords.longitude });
-                             } else {
-                               setFormData({ ...formData, address: `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`, lat: position.coords.latitude, lng: position.coords.longitude });
-                             }
-                           } catch (error) {
-                             setFormData({ ...formData, address: `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`, lat: position.coords.latitude, lng: position.coords.longitude });
-                           }
-                         },
-                         (err) => console.log(err)
-                       );
-                     }
-                   }}
-                   className="w-10 h-10 bg-blue-50/50 rounded-full flex items-center justify-center text-[#007AFF] hover:bg-blue-100 transition-colors"
-                 >
-                   <LocateFixed size={14} />
-                 </button>
-               </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, bookingType: 'scheduled' })}
+                className={`p-4 rounded-2xl text-left transition-all flex items-center gap-3 ${
+                  formData.bookingType === 'scheduled'
+                    ? 'bg-[#007AFF] text-white shadow-md shadow-blue-500/20'
+                    : 'bg-white text-slate-900 border border-slate-200/80'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${formData.bookingType === 'scheduled' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
+                  <Calendar size={16} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-tight">SCHEDULED</h4>
+                  <p className={`text-[9px] ${formData.bookingType === 'scheduled' ? 'text-blue-100' : 'text-slate-400'}`}>Pick a convenient time</p>
+                </div>
+              </button>
+            </div>
 
-               {/* Address Dropdown */}
-               <AnimatePresence>
-                 {showAddressDropdown && addresses.length > 0 && (
-                   <motion.div 
-                     initial={{ opacity: 0, y: -10 }}
-                     animate={{ opacity: 1, y: 0 }}
-                     exit={{ opacity: 0, y: -10 }}
-                     className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-20"
-                   >
-                     {addresses.map(addr => (
-                       <div 
-                         key={addr.id}
-                         onClick={() => setFormData({ ...formData, address: addr.address_text })}
-                         className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-center gap-3 transition-colors"
-                       >
-                         <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center text-[#007AFF] shrink-0">
-                           <MapPin size={14} />
-                         </div>
-                         <div>
-                           <p className="text-[11px] font-bold text-slate-900">{addr.name}</p>
-                           <p className="text-[9px] text-slate-500 line-clamp-1">{addr.address_text}</p>
-                         </div>
-                       </div>
-                     ))}
-                   </motion.div>
-                 )}
-               </AnimatePresence>
-             </div>
+            {/* Date & Time Picker when Scheduled */}
+            {formData.bookingType === 'scheduled' && (
+               <div className="flex gap-3 pt-1">
+                  <div className="flex-1 relative">
+                    <input 
+                      type="date"
+                      value={formData.preferredDate}
+                      onChange={e => setFormData({ ...formData, preferredDate: e.target.value })}
+                      className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#007AFF]"
+                    />
+                  </div>
+                  <div className="flex-1 relative">
+                    <input 
+                      type="time"
+                      value={formData.preferredTime}
+                      onChange={e => setFormData({ ...formData, preferredTime: e.target.value })}
+                      className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#007AFF]"
+                    />
+                  </div>
+               </div>
+            )}
           </div>
 
-          {/* Visual Linkage */}
-          <div className="space-y-3 pt-2">
-            <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-              Optional <span className="mx-1.5">•</span> Attach Photos or Videos
-            </label>
-            <label className="w-full h-[80px] bg-white border border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:bg-slate-50 hover:border-[#007AFF]/30 transition-all cursor-pointer relative overflow-hidden">
+          {/* STEP 4: Service Address & Location */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-100 text-[#007AFF] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full">
+                STEP 4
+              </span>
+              <h2 className="text-xs font-bold text-slate-900">Service Address & Location</h2>
+            </div>
+
+            <div className="relative flex items-center gap-2">
+              <div className="relative flex-1">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                  <MapPin size={16} />
+                </div>
+                <input 
+                  required 
+                  value={formData.address}
+                  onFocus={() => setShowAddressDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
+                  onChange={e => setFormData({ ...formData, address: e.target.value })}
+                  className="w-full h-12 bg-white border border-slate-200/80 rounded-2xl pl-11 pr-4 text-xs font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all placeholder:text-slate-400"
+                  placeholder="Enter your address or select saved location"
+                />
+              </div>
+
+              <button 
+                type="button" 
+                onClick={() => setShowMapModal(true)}
+                className="w-12 h-12 bg-[#F0F6FF] text-[#007AFF] rounded-2xl flex items-center justify-center hover:bg-blue-100 transition-colors shrink-0"
+              >
+                <MapIcon size={18} />
+              </button>
+
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                      async (position) => {
+                        try {
+                          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&email=info@repireo.com`);
+                          const data = await res.json();
+                          if (data && data.display_name) {
+                            setFormData({ ...formData, address: data.display_name, lat: position.coords.latitude, lng: position.coords.longitude });
+                          }
+                        } catch (err) {
+                          setFormData({ ...formData, address: `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`, lat: position.coords.latitude, lng: position.coords.longitude });
+                        }
+                      }
+                    );
+                  }
+                }}
+                className="w-12 h-12 bg-[#F0F6FF] text-[#007AFF] rounded-2xl flex items-center justify-center hover:bg-blue-100 transition-colors shrink-0"
+              >
+                <LocateFixed size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* OPTIONAL: Attach Photos or Videos */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-50 text-blue-600 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full">
+                OPTIONAL
+              </span>
+              <h2 className="text-xs font-bold text-slate-900">Attach Photos or Videos</h2>
+            </div>
+
+            <label className="w-full h-28 bg-[#F8FAFC] border-2 border-dashed border-blue-200 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:bg-blue-50/40 transition-all cursor-pointer">
                <input 
                  type="file" 
-                 className="absolute inset-0 opacity-0 cursor-pointer" 
+                 className="hidden" 
                  accept="image/*,video/mp4" 
                  multiple 
                  onChange={(e) => {
@@ -595,206 +564,58 @@ export default function ServiceBooking() {
                    }
                  }}
                />
-               <CloudUpload size={24} className="text-[#007AFF]" />
+               <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#007AFF]">
+                 <CloudUpload size={20} />
+               </div>
                <div className="text-center">
-                  <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Attach Images or Videos</p>
-                  <p className="text-[7px] font-medium text-slate-400 uppercase tracking-widest mt-0.5">JPG, PNG, MP4 up to 20MB</p>
+                  <p className="text-xs font-bold text-slate-700">Drag & drop or tap to upload</p>
+                  <p className="text-[9px] text-slate-400 mt-0.5">JPG, PNG, MP4 up to 20MB</p>
                </div>
             </label>
-            
-            {/* Visual Previews */}
-            {visualFiles.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-3">
-                {visualFiles.map((file, idx) => {
-                  const isVideo = file.type.startsWith('video/');
-                  const fileUrl = URL.createObjectURL(file);
-                  return (
-                    <div key={`${file.name}-${idx}`} className="relative w-16 h-16 group">
-                      <div className="w-full h-full rounded-xl border border-slate-200 overflow-hidden shadow-sm bg-white">
-                        {isVideo ? (
-                           <video src={fileUrl} className="w-full h-full object-cover" />
-                        ) : (
-                           <img src={fileUrl} alt="preview" className="w-full h-full object-cover" />
-                        )}
-                      </div>
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          setVisualFiles(prev => prev.filter((_, i) => i !== idx));
-                        }}
-                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all shadow-md z-10"
-                      >
-                        <X size={10} strokeWidth={3} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
-          {/* Estimated Price Section */}
-          <div className="space-y-3 pt-4">
+          {/* CTA Button */}
+          <div className="pt-2">
             {!estimation ? (
               <button 
                 type="button"
                 onClick={handleEstimate}
                 disabled={isEstimating}
-                className="w-full h-12 bg-[#007AFF] hover:bg-blue-600 active:scale-[0.98] text-white rounded-full text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(0,122,255,0.25)] transition-all"
+                className="w-full py-4 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs tracking-wider uppercase rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
               >
                 {isEstimating ? (
-                  <span className="flex items-center gap-2">
-                    <LayoutGrid className="w-4 h-4 animate-spin" /> CALCULATING ESTIMATE...
-                  </span>
+                  <span>CALCULATING ESTIMATE...</span>
                 ) : (
-                  <span className="flex items-center gap-2">
+                  <>
                     <span>CALCULATE SERVICE ESTIMATE</span>
-                    <ArrowRight size={15} />
-                  </span>
+                    <ArrowRight size={16} />
+                  </>
                 )}
               </button>
             ) : (
               <motion.div 
-                initial={{ opacity: 0, height: 0 }} 
-                animate={{ opacity: 1, height: 'auto' }}
-                className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-4"
               >
-                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center">
-                        <Sparkles size={14} className="text-[#007AFF]" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">AI Gravity & Problem Analysis</p>
-                        <p className="text-[9px] text-slate-500 leading-tight mt-0.5">{estimation.reasoning}</p>
-                      </div>
-                    </div>
-
-                    {estimation.gravityName && (
-                      <span className={`px-2.5 py-1 rounded-full text-[8px] font-extrabold uppercase tracking-wider flex-shrink-0 ${
-                        estimation.gravityLevel >= 3 
-                          ? 'bg-red-50 text-red-600 border border-red-200' 
-                          : estimation.gravityLevel === 2
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      }`}>
-                        ⚡ {estimation.gravityName}
-                      </span>
-                    )}
+                <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Estimated Total</span>
+                    <p className="text-2xl font-black text-[#007AFF]">₹{estimation.totalMin}</p>
                   </div>
-                 
-                 <div className="space-y-2.5">
-                   <div className="flex justify-between items-center">
-                     <span className="text-[10px] font-bold text-slate-500">Inspection Charge</span>
-                     <span className="text-[11px] font-black text-slate-900">₹{estimation.inspectionFee}</span>
-                   </div>
-                   <div className="flex justify-between items-center">
-                     <span className="text-[10px] font-bold text-slate-500">Service Fee (Est.)</span>
-                     <span className="text-[11px] font-black text-slate-900">₹{estimation.minServiceFee} - ₹{estimation.maxServiceFee}</span>
-                   </div>
-                   <div className="flex justify-between items-center">
-                     <span className="text-[10px] font-bold text-slate-500">Travel Charges</span>
-                     <span className="text-[11px] font-black text-slate-900">{estimation.travelFee === 0 ? 'FREE' : `₹${estimation.travelFee}`}</span>
-                   </div>
-                   <div className="flex justify-between items-center">
-                     <span className="text-[10px] font-bold text-slate-500">Platform Fee</span>
-                     <span className="text-[11px] font-black text-slate-900">₹{estimation.platformFee}</span>
-                   </div>
-                   <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                     <span className="text-[10px] font-bold text-slate-500 italic">* Material Costs</span>
-                     <span className="text-[10px] font-bold text-orange-500">Evaluated On-site</span>
-                   </div>
-                 </div>
+                  <span className="text-[10px] text-slate-500">{estimation.reasoning}</span>
+                </div>
 
-                 <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100 flex items-center justify-between mt-2">
-                     <div>
-                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Estimated Total</p>
-                       <p className="text-[9px] font-medium text-slate-400 mt-0.5">Final amount based on work required</p>
-                     </div>
-                     <div className="text-right">
-                       <p className="text-2xl font-black text-[#007AFF]">₹{estimation.totalMin}</p>
-                     </div>
-                  </div>
-
-                  {/* Payment Method Option */}
-                  <div className="space-y-2 pt-3 border-t border-slate-100">
-                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.15em] block pl-1">
-                      Payment Option <span className="mx-1.5">•</span> Select Method
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('cash')}
-                        className={`p-3.5 rounded-2xl border transition-all text-left flex flex-col justify-between gap-3 ${
-                          paymentMethod === 'cash'
-                            ? 'bg-[#001D4A] text-white border-[#001D4A] shadow-md'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <Banknote size={20} className={paymentMethod === 'cash' ? 'text-[#007AFF]' : 'text-slate-500'} />
-                          {paymentMethod === 'cash' && <span className="w-2.5 h-2.5 rounded-full bg-[#007AFF]" />}
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-extrabold uppercase tracking-tight">Cash on Service</p>
-                          <p className="text-[9px] opacity-75 mt-0.5 leading-snug">Pay worker cash after job completion</p>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('online')}
-                        className={`p-3.5 rounded-2xl border transition-all text-left flex flex-col justify-between gap-3 ${
-                          paymentMethod === 'online'
-                            ? 'bg-[#001D4A] text-white border-[#001D4A] shadow-md'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <CreditCard size={20} className={paymentMethod === 'online' ? 'text-[#007AFF]' : 'text-slate-500'} />
-                          {paymentMethod === 'online' && <span className="w-2.5 h-2.5 rounded-full bg-[#007AFF]" />}
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-extrabold uppercase tracking-tight">Online Payment</p>
-                          <p className="text-[9px] opacity-75 mt-0.5 leading-snug">Pay online via UPI, Cards, NetBanking</p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-               </motion.div>
-            )}
-          </div>
-
-          {/* High-Impact Action */}
-          <AnimatePresence>
-            {estimation && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="pt-2"
-              >
                 <button 
-                  disabled={loading}
                   type="submit" 
-                  className="w-full h-12 bg-[#007AFF] text-white rounded-full text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_10px_20px_rgba(0,122,255,0.2)] hover:bg-blue-600 active:scale-[0.98] transition-all"
+                  disabled={loading}
+                  className="w-full py-4 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs tracking-wider uppercase rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
                 >
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <LayoutGrid className="w-4 h-4 animate-spin" /> PLACING SERVICE REQUEST...
-                    </span>
-                  ) : paymentMethod === 'cash' ? (
-                    <span className="flex items-center gap-2">
-                      <Banknote size={16} /> CONFIRM & PLACE ORDER (CASH ON SERVICE)
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <CreditCard size={16} /> PAY ₹{estimation.totalMin} & PLACE ORDER
-                    </span>
-                  )}
+                  {loading ? 'PROCESSING...' : 'CONFIRM & PLACE ORDER'}
                 </button>
               </motion.div>
             )}
-          </AnimatePresence>
+          </div>
 
         </motion.form>
       </div>
