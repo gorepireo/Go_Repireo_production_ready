@@ -93,10 +93,6 @@ export default function Home() {
       {/* 1. Header Bar */}
       <header className="bg-white border-b border-slate-100 px-4 py-2.5 sticky top-0 z-40 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2">
-          <button className="p-1.5 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors">
-            <Menu size={22} />
-          </button>
-          
           <button className="inline-flex items-center gap-1 bg-slate-50 hover:bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-slate-200/60 transition-colors">
             <MapPin size={13} className="text-[#007AFF]" />
             <span>Etawah</span>
@@ -118,7 +114,6 @@ export default function Home() {
               3
             </span>
           </button>
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-8 h-8 rounded-full object-cover border-2 border-emerald-500 shadow-xs" />
         </div>
       </header>
 
