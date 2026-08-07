@@ -38,8 +38,6 @@ const popularServices = [
 ];
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('');
-
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
       {/* 1. Header Bar */}
@@ -63,34 +61,7 @@ export default function Home() {
         </button>
       </header>
 
-      {/* 2. Search Box & Suggestion Chips */}
-      <section className="px-4 mt-3">
-        <form onSubmit={(e) => { e.preventDefault(); if (searchQuery) window.location.href = `/services?q=${encodeURIComponent(searchQuery)}`; }} className="relative flex items-center bg-white rounded-2xl p-1.5 pl-4 border border-slate-200/80 shadow-xs">
-          <input
-            type="text"
-            placeholder="What service do you need today?"
-            className="w-full text-xs text-slate-900 bg-transparent focus:outline-none placeholder:text-slate-400"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button type="submit" className="w-9 h-9 bg-[#007AFF] text-white rounded-full flex items-center justify-center shrink-0 shadow-sm hover:bg-blue-600 transition-all active:scale-95">
-            <ArrowRight size={16} />
-          </button>
-        </form>
 
-        <div className="flex items-center gap-2 mt-2.5 overflow-x-auto hide-scrollbar text-[10px]">
-          <span className="text-slate-400 shrink-0 font-medium">Try:</span>
-          <button onClick={() => setSearchQuery('AC repair')} className="bg-white text-slate-600 px-3 py-1 rounded-full border border-slate-200/60 shrink-0 hover:border-blue-300 transition-colors">
-            "AC repair"
-          </button>
-          <button onClick={() => setSearchQuery('Plumbing issue')} className="bg-white text-slate-600 px-3 py-1 rounded-full border border-slate-200/60 shrink-0 hover:border-blue-300 transition-colors">
-            "Plumbing issue"
-          </button>
-          <button onClick={() => setSearchQuery('Install lights')} className="bg-white text-slate-600 px-3 py-1 rounded-full border border-slate-200/60 shrink-0 hover:border-blue-300 transition-colors">
-            "Install lights"
-          </button>
-        </div>
-      </section>
 
       {/* 3. Hero Banner Card */}
       <section className="px-4 mt-4">
