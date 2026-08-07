@@ -393,46 +393,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 10. Subscribe & Direct Contact Banner */}
-      <section className="mt-7 px-4 mb-8">
-        <div className="bg-[#0A1629] rounded-3xl p-5 text-white space-y-3 shadow-lg relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
 
-          <div className="relative z-10 space-y-2">
-            <h3 className="text-sm font-black uppercase tracking-wider text-blue-400">Subscribe for Updates</h3>
-            <p className="text-[10px] text-slate-300">Enter your phone number to receive instant repair status & service discounts.</p>
-            
-            <form 
-              onSubmit={(e) => { 
-                e.preventDefault(); 
-                const val = (e.currentTarget.querySelector('input')?.value || '').trim();
-                alert('Thank you for subscribing! We will send updates to ' + (val || 'your phone number') + '.'); 
-              }} 
-              className="flex items-center gap-2 bg-white/10 backdrop-blur-md p-1 rounded-full border border-white/20 mt-2"
-            >
-              <input 
-                type="tel" 
-                placeholder="Enter phone number to subscribe" 
-                className="bg-transparent text-xs text-white px-3 py-1.5 focus:outline-none w-full placeholder:text-slate-400" 
-                required 
-              />
-              <button type="submit" className="bg-[#007AFF] hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-full whitespace-nowrap active:scale-95 transition-all shadow-md">
-                Subscribe
-              </button>
-            </form>
-
-            <div className="flex items-center gap-4 text-[10px] pt-2 text-slate-300">
-              <a href="tel:+918679245568" className="flex items-center gap-1 hover:text-white font-semibold">
-                <Phone size={12} className="text-emerald-400" /> +91 8679245568
-              </a>
-              <span>•</span>
-              <a href="https://gorepireo.in" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-white font-semibold">
-                <Globe size={12} className="text-blue-400" /> gorepireo.in
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <Footer />
     </div>
