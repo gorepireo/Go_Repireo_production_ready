@@ -2,6 +2,20 @@
 
 import { useState } from 'react';
 import { 
+  Menu,
+  MapPin,
+  ChevronDown,
+  Bell,
+  Search,
+  Mic,
+  Snowflake,
+  Droplet,
+  Lightbulb,
+  Sparkles,
+  LayoutGrid,
+  MoreHorizontal,
+  Hammer,
+  Zap,
   ShieldCheck, 
   Clock, 
   IndianRupee, 
@@ -10,18 +24,21 @@ import {
   CalendarDays, 
   Phone, 
   Globe, 
-  Droplet, 
-  Zap, 
-  Sparkles, 
-  Hammer,
-  LayoutGrid, 
-  MoreHorizontal,
   ChevronRight,
   ArrowRight,
-  Quote
+  Quote,
+  Headphones
 } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
+
+const quickFilters = [
+  { name: 'AC repair', icon: Snowflake, color: 'text-cyan-500' },
+  { name: 'Plumbing issue', icon: Droplet, color: 'text-blue-500' },
+  { name: 'Install lights', icon: Lightbulb, color: 'text-amber-500' },
+  { name: 'Cleaning service', icon: Sparkles, color: 'text-emerald-500' },
+  { name: 'More', icon: LayoutGrid, color: 'text-slate-400' },
+];
 
 const categories = [
   { name: 'All Services', icon: LayoutGrid, color: 'text-[#007AFF]', bg: 'bg-[#EFF6FF] border-[#007AFF]/30', active: true },
@@ -70,6 +87,7 @@ const recentBookings = [
 ];
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeTestimonial, setActiveTestimonial] = useState(0);
 
   const testimonials = [
@@ -81,12 +99,147 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
       
-      {/* 1. Category Icons Row */}
-      <section className="px-4 pt-5 pb-2">
-        <div className="flex overflow-x-auto hide-scrollbar justify-between items-center gap-3">
+      {/* 1. Header Bar */}
+      <header className="bg-white border-b border-slate-100 px-4 py-2.5 sticky top-0 z-40 flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-2">
+          <button className="p-1.5 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors">
+            <Menu size={22} />
+          </button>
+          
+          <button className="inline-flex items-center gap-1 bg-slate-50 hover:bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-slate-200/60 transition-colors">
+            <MapPin size={13} className="text-[#007AFF]" />
+            <span>Etawah</span>
+            <ChevronDown size={12} className="text-slate-400" />
+          </button>
+        </div>
+
+        <div className="text-center">
+          <h1 className="text-sm font-bold text-slate-900 flex items-center justify-center gap-1">
+            Hi, Priithibi <span className="text-base">👋</span>
+          </h1>
+          <p className="text-[10px] text-slate-400">What can we help you with today?</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button className="relative p-1.5 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors">
+            <Bell size={20} />
+            <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+              3
+            </span>
+          </button>
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-8 h-8 rounded-full object-cover border-2 border-emerald-500 shadow-xs" />
+        </div>
+      </header>
+
+      {/* 2. Royal Blue Hero Banner (Carousel) */}
+      <section className="px-4 mt-3">
+        <div className="relative bg-gradient-to-r from-[#002255] via-[#002B66] to-[#0A3B82] rounded-3xl p-5 sm:p-7 overflow-hidden text-white shadow-md">
+          
+          <div className="relative z-10 space-y-2.5 max-w-[62%]">
+            <span className="inline-block border border-amber-400/50 text-amber-300 text-[9px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full bg-amber-400/10">
+              TRUSTED EXPERTS
+            </span>
+
+            <h2 className="text-xl sm:text-3xl font-black leading-tight tracking-tight uppercase">
+              EXPERT REPAIRS,<br />
+              <span className="text-amber-400">RIGHT ON TIME.</span>
+            </h2>
+
+            <p className="text-[10px] text-blue-100/90 font-medium leading-relaxed">
+              Verified Professionals • On-Time Service<br />
+              Upfront Pricing • 100% Satisfaction
+            </p>
+
+            <div className="pt-1">
+              <Link 
+                href="/services" 
+                className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-xs px-4 py-2.5 rounded-full shadow-md transition-all active:scale-95"
+              >
+                <span>Book a Service</span>
+                <ArrowRight size={14} className="text-[#007AFF]" />
+              </Link>
+            </div>
+
+            {/* Avatars row */}
+            <div className="flex items-center gap-2 pt-1 flex-wrap">
+              <div className="flex -space-x-2">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 rounded-full border border-white object-cover" />
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 rounded-full border border-white object-cover" />
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 rounded-full border border-white object-cover" />
+              </div>
+              <span className="text-[9px] font-bold text-blue-100">10K+ Happy Customers</span>
+            </div>
+          </div>
+
+          {/* Technician Image on Right */}
+          <div className="absolute right-0 bottom-0 w-[45%] max-w-[200px] sm:max-w-[280px] h-[98%] pointer-events-none flex items-end justify-end">
+            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400" alt="Technician" className="w-full h-full object-cover object-top rounded-b-3xl" />
+          </div>
+
+          {/* Floating Badges on Hero */}
+          <div className="absolute top-4 right-4 z-20 hidden sm:flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30 text-white text-[10px] font-bold shadow-sm">
+            <Headphones size={12} className="text-cyan-300" />
+            <span>24/7 Support</span>
+          </div>
+
+          <div className="absolute bottom-4 right-4 z-20 hidden sm:block bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white text-slate-900 text-[10px] shadow-sm">
+            <div className="font-extrabold flex items-center gap-1">
+              <span>4.8</span>
+              <div className="flex text-amber-400">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={10} className="fill-current" />
+                ))}
+              </div>
+            </div>
+            <p className="text-[8px] text-slate-500 font-semibold">(2.3k reviews)</p>
+          </div>
+
+          {/* Carousel Dots */}
+          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+            <span className="w-2.5 h-1 rounded-full bg-white"></span>
+            <span className="w-1.5 h-1 rounded-full bg-white/40"></span>
+            <span className="w-1.5 h-1 rounded-full bg-white/40"></span>
+            <span className="w-1.5 h-1 rounded-full bg-white/40"></span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Search Bar & Quick Filter Chips */}
+      <section className="px-4 mt-4 space-y-2.5">
+        <form onSubmit={(e) => { e.preventDefault(); if (searchQuery) window.location.href = `/services?q=${encodeURIComponent(searchQuery)}`; }} className="relative flex items-center bg-white rounded-2xl p-1.5 pl-4 border border-slate-200/80 shadow-xs">
+          <Search size={16} className="text-slate-400 shrink-0 mr-2" />
+          <input
+            type="text"
+            placeholder='Search for a service, e.g. "AC repair"'
+            className="w-full text-xs text-slate-900 bg-transparent focus:outline-none placeholder:text-slate-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button type="button" className="w-9 h-9 bg-[#007AFF] text-white rounded-full flex items-center justify-center shrink-0 shadow-sm hover:bg-blue-600 transition-all active:scale-95">
+            <Mic size={16} />
+          </button>
+        </form>
+
+        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar text-[10px] pb-1">
+          {quickFilters.map((filter, idx) => (
+            <button 
+              key={idx}
+              onClick={() => setSearchQuery(filter.name)}
+              className="bg-white text-slate-700 font-semibold px-3 py-1.5 rounded-full border border-slate-200/70 flex items-center gap-1.5 shrink-0 hover:border-blue-300 transition-colors shadow-xs"
+            >
+              <filter.icon size={13} className={filter.color} />
+              <span>{filter.name}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. Category Icons */}
+      <section className="px-4 mt-5">
+        <div className="flex overflow-x-auto hide-scrollbar justify-between items-center gap-2 pb-3 border-b border-slate-100">
           {categories.map((cat, idx) => (
-            <Link href="/services" key={idx} className="flex flex-col items-center gap-2 flex-1 min-w-[62px] group">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-xs transition-transform active:scale-95 ${cat.bg}`}>
+            <Link href="/services" key={idx} className="flex flex-col items-center gap-1.5 flex-1 min-w-[62px] group">
+              <div className={`w-13 h-13 rounded-2xl flex items-center justify-center border shadow-xs transition-transform active:scale-95 ${cat.bg}`}>
                 <cat.icon size={22} className={cat.color} />
               </div>
               <span className={`text-[10px] font-bold text-center ${cat.active ? 'text-[#007AFF]' : 'text-slate-600'}`}>{cat.name}</span>
@@ -95,8 +248,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. Limited Time Offer Banner */}
-      <section className="px-4 mt-4">
+      {/* 5. Limited Time Offer Banner */}
+      <section className="px-4 mt-5">
         <div className="relative bg-gradient-to-r from-[#EBF3FF] to-[#D9E8FF] rounded-3xl p-5 flex items-center justify-between overflow-hidden border border-blue-100/60 shadow-xs">
           <div className="space-y-1.5 z-10 max-w-[62%]">
             <span className="bg-[#007AFF] text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-xs inline-block">
@@ -123,7 +276,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. Why Choose Us? */}
+      {/* 6. Why Choose Us? */}
       <section className="mt-7">
         <div className="flex justify-between items-center px-4 mb-3">
           <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Why Choose Us?</h3>
@@ -165,7 +318,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. Popular Services */}
+      {/* 7. Popular Services */}
       <section className="mt-7">
         <div className="flex justify-between items-center px-4 mb-3">
           <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Popular Services</h3>
@@ -194,7 +347,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. Recent Bookings */}
+      {/* 8. Recent Bookings */}
       <section className="mt-7 px-4">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Recent Bookings</h3>
@@ -226,7 +379,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. Testimonials & Social Proof Card */}
+      {/* 9. Testimonials & Social Proof Card */}
       <section className="px-4 mt-7">
         <div className="bg-gradient-to-r from-[#EFF6FF] to-[#E0EDFF] rounded-3xl p-5 border border-blue-100/60 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
           
@@ -270,7 +423,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. Subscribe & Direct Contact Banner */}
+      {/* 10. Subscribe & Direct Contact Banner */}
       <section className="mt-7 px-4 mb-8">
         <div className="bg-[#0A1629] rounded-3xl p-5 text-white space-y-3 shadow-lg relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
