@@ -124,80 +124,80 @@ export default function Home() {
 
       {/* 2. Royal Blue Hero Banner (Carousel) */}
       <section className="px-4 mt-3">
-        <div className="relative bg-gradient-to-r from-[#002B66] via-[#0B3C85] to-[#062557] rounded-[28px] p-5 sm:p-7 md:p-8 overflow-hidden text-white shadow-xl min-h-[220px] sm:min-h-[280px]">
+        <div className="relative bg-gradient-to-r from-[#002B66] via-[#0B3C85] to-[#062557] rounded-[24px] p-4 sm:p-6 overflow-hidden text-white shadow-xl min-h-[170px] sm:min-h-[220px]">
           
-          <div className="relative z-10 space-y-3 max-w-[62%] sm:max-w-[58%]">
+          <div className="relative z-10 space-y-2 max-w-[62%] sm:max-w-[58%]">
             {/* Top Left Outline Badge */}
-            <div className="inline-block border-2 border-[#FFC700] text-[#FFC700] bg-black/20 font-black text-[9px] sm:text-xs px-3.5 py-0.5 rounded-full uppercase tracking-wider">
+            <div className="inline-block border border-[#FFC700] text-[#FFC700] bg-black/20 font-black text-[8px] sm:text-[10px] px-3 py-0.5 rounded-full uppercase tracking-wider">
               TRUSTED EXPERTS
             </div>
 
             {/* Main Headline */}
-            <div role="heading" aria-level={2} className="text-xl sm:text-3xl lg:text-4xl font-black leading-tight tracking-tight uppercase">
+            <div role="heading" aria-level={2} className="text-lg sm:text-2xl lg:text-3xl font-black leading-tight tracking-tight uppercase">
               <span className="text-[#FFC700]">EXPERT REPAIRS,</span><br />
               <span className="text-white">RIGHT ON TIME.</span>
             </div>
 
             {/* Subtitle Bullets */}
-            <div className="text-[10px] sm:text-xs text-blue-100/90 font-medium leading-relaxed space-y-0.5">
+            <div className="text-[9px] sm:text-xs text-blue-100/90 font-medium leading-tight space-y-0.5">
               <p>Verified Professionals • On-Time Service</p>
               <p>Upfront Pricing • 100% Satisfaction</p>
             </div>
 
             {/* Book a Service Button */}
-            <div className="pt-1.5">
+            <div className="pt-1">
               <Link 
                 href="/services" 
-                className="inline-flex items-center gap-2.5 bg-white hover:bg-slate-100 text-[#0B3C85] font-extrabold text-xs sm:text-sm px-6 py-2.5 sm:py-3 rounded-full shadow-lg transition-all active:scale-95"
+                className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-[#0B3C85] font-extrabold text-[11px] sm:text-xs px-5 py-2 rounded-full shadow-md transition-all active:scale-95"
               >
                 <span>Book a Service</span>
-                <ArrowRight size={15} className="text-[#0B3C85]" />
+                <ArrowRight size={13} className="text-[#0B3C85]" />
               </Link>
             </div>
 
             {/* Bottom Left 10K+ Happy Customers Avatars */}
-            <div className="flex items-center gap-2 pt-1 flex-wrap">
-              <div className="flex -space-x-2">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white object-cover shadow-xs" />
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white object-cover shadow-xs" />
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white object-cover shadow-xs" />
-                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white object-cover shadow-xs" />
+            <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+              <div className="flex -space-x-1.5">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
               </div>
-              <span className="text-[10px] sm:text-xs font-bold text-white tracking-tight">10K+ Happy Customers</span>
+              <span className="text-[9px] sm:text-[10px] font-bold text-white tracking-tight">10K+ Happy Customers</span>
             </div>
           </div>
 
-          {/* Center-Right Technician Image */}
-          <div className="absolute right-0 bottom-0 w-[46%] max-w-[220px] sm:max-w-[320px] h-[98%] pointer-events-none flex items-end justify-end">
-            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400" alt="Technician" className="w-full h-full object-cover object-top rounded-b-[28px]" />
+          {/* Center-Right Technician Image generated specifically for this banner */}
+          <div className="absolute right-0 bottom-0 w-[48%] max-w-[240px] sm:max-w-[340px] h-[100%] pointer-events-none flex items-end justify-end">
+            <img src="/hero_technician_banner.jpg" alt="Technician" className="w-full h-full object-cover object-center rounded-r-[24px]" />
           </div>
 
           {/* Right Floating Badge 1: 24/7 Support */}
-          <div className="absolute top-6 right-5 z-20 hidden sm:flex items-center gap-2 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white shadow-lg text-slate-900">
-            <Headphones size={18} className="text-[#007AFF]" />
+          <div className="absolute top-4 right-4 z-20 hidden sm:flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white shadow-md text-slate-900">
+            <Headphones size={15} className="text-[#007AFF]" />
             <div className="text-left">
               <span className="text-xs font-black text-[#007AFF] block leading-tight">24/7</span>
-              <span className="text-[9px] text-slate-500 font-bold block leading-tight">Support</span>
+              <span className="text-[8px] text-slate-500 font-bold block leading-tight">Support</span>
             </div>
           </div>
 
           {/* Right Floating Badge 2: 4.8 Rating */}
-          <div className="absolute bottom-6 right-5 z-20 hidden sm:block bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-white text-slate-900 shadow-lg min-w-[110px]">
-            <div className="text-base font-black text-slate-900 leading-tight">4.8</div>
+          <div className="absolute bottom-4 right-4 z-20 hidden sm:block bg-white/95 backdrop-blur-md p-2.5 rounded-xl border border-white text-slate-900 shadow-md min-w-[100px]">
+            <div className="text-sm font-black text-slate-900 leading-tight">4.8</div>
             <div className="flex text-amber-400 my-0.5">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} size={11} className="fill-current" />
+                <Star key={i} size={10} className="fill-current" />
               ))}
             </div>
-            <p className="text-[9px] text-slate-400 font-semibold">(2.3k reviews)</p>
+            <p className="text-[8px] text-slate-400 font-semibold">(2.3k reviews)</p>
           </div>
 
           {/* Bottom Center Carousel Notch & Indicator Dots */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-white px-4 py-1 rounded-t-full z-20 flex items-center justify-center gap-1.5 shadow-sm border-t border-x border-slate-100">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#007AFF]"></span>
-            <span className="w-2 h-2 rounded-full bg-slate-300"></span>
-            <span className="w-2 h-2 rounded-full bg-slate-300"></span>
-            <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-white px-3 py-0.5 rounded-t-full z-20 flex items-center justify-center gap-1 shadow-sm border-t border-x border-slate-100">
+            <span className="w-2 h-2 rounded-full bg-[#007AFF]"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
           </div>
         </div>
       </section>
