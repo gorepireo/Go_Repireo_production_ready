@@ -1,7 +1,6 @@
 # next.js
 /.next/
 /out/
-tsconfig.tsbuildinfo
 
 # production
 /build
@@ -16,11 +15,5 @@ tsconfig.tsbuildinfo
 # logs
 *.log
 
-# insforge internal
-.insforge/
-
-# temporary scripts
+# temporary helper scripts
 scripts/setup-brevo-templates.js
-scripts/test-send-all-emails.js
-run_sql.js
-run_sql_tmp.js
