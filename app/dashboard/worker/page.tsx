@@ -115,7 +115,12 @@ function WorkerDashboardContent() {
           .limit(1);
 
         if (pendingJobs && pendingJobs.length > 0) {
-          setActiveJob(pendingJobs[0]);
+          const isLocallyAccepted = typeof window !== 'undefined' && localStorage.getItem(`accepted_job_${pendingJobs[0].id}`) === 'true';
+          if (isLocallyAccepted) {
+            setActiveJob({ ...pendingJobs[0], status: 'in_progress', worker_id: user?.id || 'w-rohit-sharma' });
+          } else {
+            setActiveJob(pendingJobs[0]);
+          }
         } else {
           setActiveJob(null);
         }
@@ -149,6 +154,10 @@ function WorkerDashboardContent() {
 
   // Worker Explicitly Accepts Order
   const handleAcceptJob = async (jobId: string) => {
+    if (typeof window !== 'undefined' && jobId) {
+      localStorage.setItem(`accepted_job_${jobId}`, 'true');
+    }
+
     const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.jpg';
     const workerPhone = (profile as any)?.phone || '+918679245568';
 
@@ -180,7 +189,6 @@ function WorkerDashboardContent() {
           })
           .eq('id', jobId);
       }
-      fetchWorkerDashboardData();
     } catch (err) {
       console.error('Accept job error:', err);
     }
@@ -336,11 +344,9 @@ function WorkerDashboardContent() {
   const isPaid = activeJob?.payment_status === 'paid' || cashCollected;
 
   // Extract Client Problem Description & Customer Uploaded Media Attachments
-  const problemDescription = activeJob?.details?.description || activeJob?.description || 'AC is not cooling properly and making a strange rattling sound.';
-  const mediaAttachments: string[] = activeJob?.details?.attachments || activeJob?.attachments || [
-    '/hero_technician_banner.jpg',
-    '/shop_hero_3d.png'
-  ];
+  const problemDescription = activeJob?.details?.description || activeJob?.description || 'Service requested as per customer order details.';
+  const rawAttachments = activeJob?.details?.attachments || activeJob?.attachments;
+  const mediaAttachments: string[] = Array.isArray(rawAttachments) ? rawAttachments.filter((url: any) => typeof url === 'string' && url.length > 0) : [];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-32 font-sans">
