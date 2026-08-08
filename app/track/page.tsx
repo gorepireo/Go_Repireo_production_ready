@@ -37,6 +37,7 @@ export default function TrackPage() {
   const [liveLocation, setLiveLocation] = useState<any>(null);
   const [prevLocation, setPrevLocation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isWorkStarted, setIsWorkStarted] = useState(false);
 
   // Fetch Latest Order & Live Tracking Data
   const fetchLatestOrder = useCallback(async () => {
@@ -52,6 +53,11 @@ export default function TrackPage() {
       if (data && data.length > 0) {
         const currentOrder = data[0];
         setOrder(currentOrder);
+
+        const currentStatus = (currentOrder.status || '').toLowerCase();
+        if (['working', 'work_in_progress', 'completed', 'delivered'].includes(currentStatus)) {
+          setIsWorkStarted(true);
+        }
 
         // Fetch live worker tracking telemetry data
         const { data: trackData } = await insforge.database
@@ -103,12 +109,18 @@ export default function TrackPage() {
     timeDeltaSec: 4,
     userLat,
     userLng,
-    orderStatus: order?.status || 'in_progress',
+    orderStatus: isWorkStarted ? 'work_in_progress' : (order?.status || 'in_progress'),
     isMovingExplicit: liveLocation?.is_moving !== undefined ? Boolean(liveLocation.is_moving) : false
   });
 
   const orderIdText = order?.id ? `#GR-${order.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
   const serviceName = order?.service_name || 'AC Repair & Service';
+  const startOtp = order?.details?.start_otp || '4812';
+  const completionOtp = order?.details?.completion_otp || '7924';
+
+  const handleGiveStartOtp = () => {
+    setIsWorkStarted(true);
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-28 pt-4">
@@ -139,29 +151,20 @@ export default function TrackPage() {
         </button>
       </header>
 
-      {/* 2. Top Order Card (Light Blue Gradient matching Mockup) */}
+      {/* 2. Top Order Card (NO BACKGROUND IMAGE - Dynamic OTP Box) */}
       <section className="px-4 mb-5">
-        <div className="relative bg-gradient-to-r from-[#EFF4FF] via-[#E7F1FF] to-[#DBEAFF] rounded-3xl p-5 sm:p-6 border border-blue-100/60 shadow-xs overflow-hidden flex flex-col sm:block justify-between gap-4">
+        <div className="relative bg-gradient-to-r from-[#EFF4FF] via-[#E7F1FF] to-[#DBEAFF] rounded-3xl p-5 sm:p-6 border border-blue-100/60 shadow-xs flex flex-col md:flex-row items-stretch justify-between gap-5">
           
-          {/* Background AC Repair Image Fade on Right */}
-          <div className="absolute right-0 top-0 bottom-0 w-[55%] pointer-events-none flex items-center justify-end overflow-hidden">
-            <img 
-              src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=600" 
-              alt="AC Service Background" 
-              className="w-full h-full object-cover opacity-20 mix-blend-multiply rounded-r-3xl"
-            />
-          </div>
-
           {/* Order Info Left */}
-          <div className="relative z-10 space-y-3.5 sm:max-w-[58%] pb-1 sm:pb-0">
+          <div className="space-y-3.5 flex-1 min-w-0">
             <div>
               <span className="text-[10px] font-medium text-slate-400 block">Order ID</span>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
                 {orderIdText}
               </h2>
-              <span className="bg-[#DCEBFF] text-[#007AFF] text-[10px] font-extrabold px-3 py-1 rounded-full inline-flex items-center gap-1.5 mt-1.5 shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-[#007AFF] animate-pulse"></span>
-                In Progress
+              <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full inline-flex items-center gap-1.5 mt-1.5 shadow-2xs ${isWorkStarted ? 'bg-emerald-100 text-emerald-700' : 'bg-[#DCEBFF] text-[#007AFF]'}`}>
+                <span className={`w-2 h-2 rounded-full animate-pulse ${isWorkStarted ? 'bg-emerald-500' : 'bg-[#007AFF]'}`}></span>
+                {isWorkStarted ? 'Work In Progress' : 'In Progress'}
               </span>
             </div>
 
@@ -178,36 +181,77 @@ export default function TrackPage() {
             </div>
           </div>
 
-          {/* Floating White Expert Card (Responsive Placement to Avoid Text Overlap) */}
-          <div className="relative sm:absolute sm:bottom-4 sm:right-4 z-20 bg-white p-3 sm:p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-xl flex items-center justify-between gap-3 w-full sm:w-auto sm:min-w-[240px]">
-            {/* Circular Expert Avatar */}
-            <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-2xs">
-              <img 
-                src="/hero_technician_banner.jpg" 
-                alt="Rohit Sharma" 
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
-
-            {/* Expert Details */}
-            <div className="space-y-0.5 flex-1 min-w-0">
-              <span className="text-[9px] font-medium text-slate-400 block">Your Expert</span>
-              <h3 className="text-xs sm:text-sm font-black text-slate-900 block leading-tight truncate">Rohit Sharma</h3>
-              <div className="flex items-center gap-1 text-[10px] font-bold text-slate-700 pt-0.5">
-                <Star size={11} className="fill-amber-400 text-amber-400" />
-                <span>4.8</span>
-                <span className="text-slate-400 font-normal">(230 reviews)</span>
+          {/* Dynamic Security OTP Card & Expert Info Right */}
+          <div className="flex flex-col sm:flex-row md:flex-col justify-between gap-3 w-full md:w-auto md:min-w-[280px]">
+            
+            {/* Security OTP Card (Phase 1: Start Work OTP -> Phase 2: Completion OTP) */}
+            <div className={`p-4 rounded-3xl border shadow-md flex flex-col justify-between transition-all ${isWorkStarted ? 'bg-emerald-50/90 border-emerald-200' : 'bg-amber-50/90 border-amber-200'}`}>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck size={16} className={isWorkStarted ? 'text-emerald-600' : 'text-amber-600'} />
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${isWorkStarted ? 'text-emerald-800' : 'text-amber-800'}`}>
+                    {isWorkStarted ? 'WORK COMPLETION OTP' : 'START WORK OTP'}
+                  </span>
+                </div>
+                <span className="text-[8px] font-extrabold bg-white/80 px-2 py-0.5 rounded text-slate-600 border border-slate-200">
+                  {isWorkStarted ? 'Phase 2' : 'Phase 1'}
+                </span>
               </div>
+
+              <div className="flex items-center justify-between py-1">
+                <div className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-slate-900 font-mono">
+                  {isWorkStarted ? completionOtp : startOtp}
+                </div>
+
+                {!isWorkStarted && (
+                  <button 
+                    onClick={handleGiveStartOtp}
+                    className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-[9px] px-3 py-1.5 rounded-full shadow-sm transition-all"
+                  >
+                    Give OTP to Worker
+                  </button>
+                )}
+              </div>
+
+              <p className={`text-[8.5px] font-medium leading-tight mt-1 ${isWorkStarted ? 'text-emerald-700' : 'text-amber-700'}`}>
+                {isWorkStarted 
+                  ? 'Share this OTP with technician ONLY after work is verified & completed.'
+                  : 'Share this OTP with technician upon arrival to start the service.'}
+              </p>
             </div>
 
-            {/* Phone Button */}
-            <a 
-              href="tel:+918679245568" 
-              className="w-10 h-10 bg-[#007AFF] hover:bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
-              aria-label="Call Expert"
-            >
-              <Phone size={16} className="fill-current" />
-            </a>
+            {/* Expert Info White Card */}
+            <div className="bg-white p-3 sm:p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-xl flex items-center justify-between gap-3">
+              {/* Circular Expert Avatar */}
+              <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-2xs">
+                <img 
+                  src="/hero_technician_banner.jpg" 
+                  alt="Rohit Sharma" 
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+
+              {/* Expert Details */}
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <span className="text-[9px] font-medium text-slate-400 block">Your Expert</span>
+                <h3 className="text-xs sm:text-sm font-black text-slate-900 block leading-tight truncate">Rohit Sharma</h3>
+                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-700 pt-0.5">
+                  <Star size={11} className="fill-amber-400 text-amber-400" />
+                  <span>4.8</span>
+                  <span className="text-slate-400 font-normal">(230 reviews)</span>
+                </div>
+              </div>
+
+              {/* Phone Button */}
+              <a 
+                href="tel:+918679245568" 
+                className="w-10 h-10 bg-[#007AFF] hover:bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
+                aria-label="Call Expert"
+              >
+                <Phone size={16} className="fill-current" />
+              </a>
+            </div>
+
           </div>
 
         </div>
