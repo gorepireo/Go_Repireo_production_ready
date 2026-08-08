@@ -21,7 +21,11 @@ import {
   User,
   Phone,
   CheckCircle2,
-  Lock
+  Lock,
+  ExternalLink,
+  Check,
+  Banknote,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -40,7 +44,7 @@ const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoo
 });
 
 function WorkerDashboardContent() {
-  const { user, profile: rawProfile, refresh } = useAuth();
+  const { user, profile: rawProfile } = useAuth();
   const profile = rawProfile as any;
   const router = useRouter();
 
@@ -48,7 +52,14 @@ function WorkerDashboardContent() {
   const [completedJobs, setCompletedJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAvailable, setIsAvailable] = useState(true);
-  const [todayEarnings, setTodayEarnings] = useState(0);
+  const [lifetimeEarnings, setLifetimeEarnings] = useState(0);
+
+  // OTP State
+  const [startOtpInput, setStartOtpInput] = useState('');
+  const [completionOtpInput, setCompletionOtpInput] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [cashCollected, setCashCollected] = useState(false);
 
   const displayName = (profile as any)?.full_name || (profile as any)?.name || profile?.display_name || user?.email?.split('@')[0] || 'Prithibi Mandi';
 
@@ -68,58 +79,158 @@ function WorkerDashboardContent() {
     }
   };
 
-  // Fetch Current Worker Active Job & Earnings
-  useEffect(() => {
-    const fetchWorkerDashboardData = async () => {
-      if (!user) return;
+  // Fetch Current Worker Active Job & Lifetime Earnings
+  const fetchWorkerDashboardData = async () => {
+    if (!user) return;
 
-      try {
-        // Fetch current active order assigned to worker or available in 10km radius
-        const { data: assignedJobs } = await insforge.database
+    try {
+      // Fetch active order assigned to worker or available in 10km radius
+      const { data: assignedJobs } = await insforge.database
+        .from('orders')
+        .select('*')
+        .or(`worker_id.eq.${user.id},worker_email.eq.${user.email}`)
+        .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'])
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (assignedJobs && assignedJobs.length > 0) {
+        setActiveJob(assignedJobs[0]);
+      } else {
+        const { data: pendingJobs } = await insforge.database
           .from('orders')
           .select('*')
-          .or(`worker_id.eq.${user.id},worker_email.eq.${user.email}`)
-          .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'])
+          .eq('status', 'pending')
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (assignedJobs && assignedJobs.length > 0) {
-          setActiveJob(assignedJobs[0]);
-        } else {
-          // If no assigned job, fetch latest pending job in 10km radius
-          const { data: pendingJobs } = await insforge.database
-            .from('orders')
-            .select('*')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          if (pendingJobs && pendingJobs.length > 0) {
-            setActiveJob(pendingJobs[0]);
-          }
+        if (pendingJobs && pendingJobs.length > 0) {
+          setActiveJob(pendingJobs[0]);
         }
-
-        // Fetch completed jobs for today earnings
-        const { data: completed } = await insforge.database
-          .from('orders')
-          .select('*')
-          .or(`worker_id.eq.${user.id},worker_email.eq.${user.email}`)
-          .in('status', ['completed', 'delivered']);
-
-        if (completed) {
-          setCompletedJobs(completed);
-          const earnings = completed.reduce((sum: number, j: any) => sum + (Number(j.total_price || j.price || 499)), 0);
-          setTodayEarnings(earnings);
-        }
-      } catch (err) {
-        console.error('Fetch worker dashboard error:', err);
-      } finally {
-        setLoading(false);
       }
-    };
 
+      // Fetch ALL completed jobs for total LIFETIME EARNINGS
+      const { data: completed } = await insforge.database
+        .from('orders')
+        .select('*')
+        .or(`worker_id.eq.${user.id},worker_email.eq.${user.email}`)
+        .in('status', ['completed', 'delivered']);
+
+      if (completed) {
+        setCompletedJobs(completed);
+        const total = completed.reduce((sum: number, j: any) => sum + (Number(j.total_price || j.price || 499)), 0);
+        setLifetimeEarnings(total);
+      }
+    } catch (err) {
+      console.error('Fetch worker dashboard error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchWorkerDashboardData();
+    const interval = setInterval(fetchWorkerDashboardData, 4000);
+    return () => clearInterval(interval);
   }, [user]);
+
+  // Open Native Google Maps App / Directions Website
+  const handleGetRoute = () => {
+    const wLat = profile?.lat ? Number(profile.lat) : 26.7620;
+    const wLng = profile?.lng ? Number(profile.lng) : 79.0320;
+    const cLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
+    const cLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
+
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${wLat},${wLng}&destination=${cLat},${cLng}&travelmode=driving`;
+    window.open(mapsUrl, '_blank');
+  };
+
+  // Verify Start Work OTP
+  const handleVerifyStartOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpError('');
+    const expectedStartOtp = activeJob?.details?.start_otp || '4812';
+
+    if (startOtpInput.trim() !== expectedStartOtp.trim()) {
+      setOtpError('Incorrect Start OTP. Ask customer for the 4-digit Start OTP.');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      if (activeJob?.id) {
+        await insforge.database
+          .from('orders')
+          .update({ 
+            status: 'work_in_progress',
+            worker_id: user?.id,
+            worker_email: user?.email,
+            worker_name: displayName
+          })
+          .eq('id', activeJob.id);
+      }
+      setActiveJob({ ...activeJob, status: 'work_in_progress' });
+      setStartOtpInput('');
+    } catch (err) {
+      console.error('Verify Start OTP error:', err);
+      setActiveJob({ ...activeJob, status: 'work_in_progress' });
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  // Handle Worker Confirming Cash Collection
+  const handleConfirmCashPaid = async () => {
+    setCashCollected(true);
+    if (activeJob?.id) {
+      try {
+        await insforge.database
+          .from('orders')
+          .update({ 
+            payment_status: 'paid',
+            payment_method: 'cash'
+          })
+          .eq('id', activeJob.id);
+      } catch (err) {
+        console.error('Cash payment update error:', err);
+      }
+    }
+  };
+
+  // Verify Work Completion OTP
+  const handleVerifyCompletionOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpError('');
+    const expectedCompletionOtp = activeJob?.details?.completion_otp || '7924';
+
+    if (completionOtpInput.trim() !== expectedCompletionOtp.trim()) {
+      setOtpError('Incorrect Completion OTP. Ask customer for the 4-digit Completion OTP.');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      if (activeJob?.id) {
+        await insforge.database
+          .from('orders')
+          .update({ 
+            status: 'completed',
+            payment_status: 'paid'
+          })
+          .eq('id', activeJob.id);
+      }
+      // Add job price to lifetime earnings
+      const jobPrice = Number(activeJob?.total_price || activeJob?.price || 499);
+      setLifetimeEarnings(prev => prev + jobPrice);
+      setActiveJob(null);
+      setCompletionOtpInput('');
+      fetchWorkerDashboardData();
+    } catch (err) {
+      console.error('Verify Completion OTP error:', err);
+      setActiveJob(null);
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   if (loading) return <WorkerDashboardSkeleton />;
 
@@ -129,6 +240,10 @@ function WorkerDashboardContent() {
   const customerLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
   const customerLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
   const activeOrderIdText = activeJob?.id ? `#GR-${activeJob.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
+  
+  const currentStatus = (activeJob?.status || 'in_progress').toLowerCase();
+  const isWorking = ['working', 'work_in_progress'].includes(currentStatus);
+  const isPaid = activeJob?.payment_status === 'paid' || cashCollected;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-32">
@@ -163,7 +278,7 @@ function WorkerDashboardContent() {
 
         </section>
 
-        {/* 3. Stats 2-Column Row (STATUS & TODAY'S EARNINGS) */}
+        {/* 3. Stats 2-Column Row (STATUS & LIFETIME EARNINGS) */}
         <section className="grid grid-cols-2 gap-3">
           
           {/* Left Card: STATUS */}
@@ -198,14 +313,14 @@ function WorkerDashboardContent() {
             </div>
           </div>
 
-          {/* Right Card: TODAY'S EARNINGS */}
+          {/* Right Card: LIFETIME EARNINGS */}
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs flex flex-col justify-between space-y-2 relative overflow-hidden">
             <div className="space-y-1 z-10">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                TODAY'S EARNINGS
+                LIFETIME EARNINGS
               </span>
               <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                ₹{todayEarnings}
+                ₹{lifetimeEarnings}
               </h3>
             </div>
 
@@ -260,16 +375,16 @@ function WorkerDashboardContent() {
                   <span className="text-[10px] font-medium text-slate-400 block">Order ID</span>
                   <div className="flex items-center gap-2 mt-0.5">
                     <h4 className="text-lg font-black text-slate-900 tracking-tight">{activeOrderIdText}</h4>
-                    <span className="bg-blue-50 text-[#007AFF] text-[9px] font-extrabold px-2.5 py-0.5 rounded-full border border-blue-100">
-                      In Progress
+                    <span className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                      isWorking ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                    }`}>
+                      {isWorking ? 'Work In Progress' : 'In Progress'}
                     </span>
                   </div>
                 </div>
 
                 {/* Progress Timeline */}
                 <div className="space-y-3 pt-1 pl-1">
-                  
-                  {/* Step 1: Customer Location */}
                   <div className="flex items-start gap-2.5">
                     <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center text-white shrink-0 mt-0.5 shadow-xs">
                       <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
@@ -280,7 +395,6 @@ function WorkerDashboardContent() {
                     </div>
                   </div>
 
-                  {/* Step 2: En Route */}
                   <div className="flex items-start gap-2.5">
                     <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white shrink-0 mt-0.5 shadow-xs">
                       <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
@@ -291,7 +405,6 @@ function WorkerDashboardContent() {
                     </div>
                   </div>
 
-                  {/* Step 3: Expected Arrival */}
                   <div className="flex items-start gap-2.5">
                     <div className="w-4 h-4 bg-slate-200 rounded-full flex items-center justify-center text-slate-400 shrink-0 mt-0.5">
                       <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
@@ -301,19 +414,19 @@ function WorkerDashboardContent() {
                       <p className="text-[10px] text-slate-400 font-medium">18 mins</p>
                     </div>
                   </div>
-
                 </div>
               </div>
 
-              {/* View Full Tracking Button */}
+              {/* GET ROUTE BUTTON (Launches Native Google Maps App / Website) */}
               <div className="pt-2">
-                <Link
-                  href="/track"
+                <button
+                  onClick={handleGetRoute}
                   className="w-full bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs py-3 px-4 rounded-2xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
                 >
-                  <MapPin size={14} />
-                  <span>View Full Tracking</span>
-                </Link>
+                  <Navigation size={15} />
+                  <span>Get Route 🗺️</span>
+                  <ExternalLink size={13} className="opacity-80" />
+                </button>
               </div>
 
             </div>
@@ -341,9 +454,121 @@ function WorkerDashboardContent() {
 
           </div>
 
+          {/* 5. INLINE OTP VERIFICATION & CASH PAYMENT CARD (DIRECTORY BENEATH MAP) */}
+          <div className="pt-3 border-t border-slate-100">
+            
+            {!isWorking ? (
+              /* Phase 1: Verify Start Work OTP */
+              <form onSubmit={handleVerifyStartOtp} className="bg-amber-50/80 rounded-2xl p-4 border border-amber-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-amber-600" />
+                    <h4 className="text-xs font-black text-amber-900 uppercase tracking-tight">VERIFY START WORK OTP</h4>
+                  </div>
+                  <span className="text-[8.5px] font-extrabold bg-amber-200/60 text-amber-800 px-2.5 py-0.5 rounded-full">Phase 1</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    maxLength={4}
+                    value={startOtpInput}
+                    onChange={(e) => setStartOtpInput(e.target.value)}
+                    placeholder="Enter 4-digit OTP from Customer (e.g. 4812)"
+                    className="flex-1 bg-white border border-amber-200 text-slate-900 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/40 text-center tracking-[0.2em]"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={verifyingOtp || startOtpInput.length < 4}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition-all shrink-0 ${
+                      startOtpInput.length === 4 ? 'bg-amber-500 hover:bg-amber-600 text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {verifyingOtp ? <Loader2 size={14} className="animate-spin" /> : 'Verify Start OTP'}
+                  </button>
+                </div>
+
+                {otpError && <p className="text-[10px] font-bold text-red-600">{otpError}</p>}
+              </form>
+            ) : (
+              /* Phase 2: Work In Progress -> Cash Payment or Work Completion OTP */
+              <div className="bg-blue-50/80 rounded-2xl p-4 border border-blue-200/80 space-y-3">
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-[#007AFF]" />
+                    <h4 className="text-xs font-black text-blue-900 uppercase tracking-tight">WORK IN PROGRESS & COMPLETION</h4>
+                  </div>
+                  <span className="text-[8.5px] font-extrabold bg-blue-200/60 text-blue-800 px-2.5 py-0.5 rounded-full">Phase 2</span>
+                </div>
+
+                {/* Cash Payment Trigger if not yet paid */}
+                {!isPaid && (
+                  <div className="bg-white p-3 rounded-xl border border-blue-100 flex items-center justify-between gap-2 shadow-2xs">
+                    <div className="flex items-center gap-2">
+                      <Banknote size={18} className="text-emerald-600" />
+                      <div>
+                        <span className="text-xs font-black text-slate-900 block">Cash Payment Required</span>
+                        <span className="text-[9.5px] text-slate-500">Collect ₹499 cash from customer upon service completion</span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={handleConfirmCashPaid}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[9.5px] px-3 py-2 rounded-xl shadow-sm active:scale-95 transition-all shrink-0"
+                    >
+                      Customer Paid Cash (₹499) 💵
+                    </button>
+                  </div>
+                )}
+
+                {/* Completion OTP Verification Form */}
+                <form onSubmit={handleVerifyCompletionOtp} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-extrabold text-slate-700 uppercase">
+                      Enter Work Completion OTP (Given by Customer):
+                    </label>
+                    {isPaid && (
+                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Payment Verified ✓
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      maxLength={4}
+                      value={completionOtpInput}
+                      onChange={(e) => setCompletionOtpInput(e.target.value)}
+                      placeholder="Enter 4-digit Completion OTP (e.g. 7924)"
+                      className="flex-1 bg-white border border-blue-200 text-slate-900 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/40 text-center tracking-[0.2em]"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      disabled={verifyingOtp || completionOtpInput.length < 4}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition-all shrink-0 ${
+                        completionOtpInput.length === 4 ? 'bg-[#007AFF] hover:bg-blue-600 text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {verifyingOtp ? <Loader2 size={14} className="animate-spin" /> : 'Verify Completion'}
+                    </button>
+                  </div>
+
+                  {otpError && <p className="text-[10px] font-bold text-red-600">{otpError}</p>}
+                </form>
+
+              </div>
+            )}
+
+          </div>
+
         </section>
 
-        {/* 5. More Jobs. More Earnings Banner Card */}
+        {/* 6. More Jobs. More Earnings Banner Card */}
         <section className="relative bg-gradient-to-r from-[#0B1736] via-[#102A6B] to-[#0F172A] rounded-3xl p-6 text-white overflow-hidden shadow-xl min-h-[170px] flex items-center justify-between">
           
           <div className="space-y-3 z-10 max-w-[210px] sm:max-w-xs">
@@ -388,7 +613,7 @@ function WorkerDashboardContent() {
 
       </main>
 
-      {/* 6. Floating Support FAB */}
+      {/* 7. Floating Support FAB */}
       <a 
         href="/chat" 
         className="fixed bottom-20 right-4 z-40 w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-transform hover:bg-emerald-600"
@@ -397,10 +622,8 @@ function WorkerDashboardContent() {
         <MessageCircle size={22} className="fill-current" />
       </a>
 
-      {/* 7. Worker Bottom Navigation Bar */}
+      {/* 8. Worker Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-6 py-2 flex items-center justify-around shadow-2xl max-w-2xl mx-auto">
-        
-        {/* Dashboard Tab */}
         <Link 
           href="/dashboard/worker" 
           className="flex flex-col items-center gap-1 text-[#007AFF] bg-blue-50/90 px-5 py-1.5 rounded-2xl font-bold"
@@ -409,7 +632,6 @@ function WorkerDashboardContent() {
           <span className="text-[10px] font-black tracking-tight">Dashboard</span>
         </Link>
 
-        {/* Chats Tab */}
         <Link 
           href="/chat" 
           className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-700 font-medium transition-colors px-4 py-1"
@@ -418,7 +640,6 @@ function WorkerDashboardContent() {
           <span className="text-[10px] font-bold">Chats</span>
         </Link>
 
-        {/* Profile Tab */}
         <Link 
           href="/dashboard/worker/settings" 
           className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-700 font-medium transition-colors px-4 py-1"
@@ -426,7 +647,6 @@ function WorkerDashboardContent() {
           <User size={18} />
           <span className="text-[10px] font-bold">Profile</span>
         </Link>
-
       </nav>
 
     </div>

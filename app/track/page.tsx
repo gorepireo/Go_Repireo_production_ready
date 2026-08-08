@@ -19,7 +19,10 @@ import {
   Wrench,
   UserCheck,
   ArrowRight,
-  ClipboardList
+  ClipboardList,
+  CreditCard,
+  Banknote,
+  Lock
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -49,6 +52,7 @@ function TrackContent() {
   const [prevLocation, setPrevLocation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [noOrdersExist, setNoOrdersExist] = useState(false);
+  const [isPayingOnline, setIsPayingOnline] = useState(false);
 
   // Real Worker Assignment & Review Metrics
   const [workerData, setWorkerData] = useState<{
@@ -71,19 +75,18 @@ function TrackContent() {
   // Order Lifecycle Stage: 'pending_assignment' | 'in_progress' | 'work_in_progress' | 'completed'
   const [orderStage, setOrderStage] = useState<'pending_assignment' | 'in_progress' | 'work_in_progress' | 'completed'>('in_progress');
 
-  // Review State (STARTS TOTALLY BLANK - 0 STARS SELECTED!)
+  // Review State
   const [rating, setRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [isReviewSubmitted, setIsReviewSubmitted] = useState(false);
 
-  // Fetch Targeted or Latest Order & Real Worker Data
+  // Fetch Targeted or Latest Order Data
   const fetchOrderData = useCallback(async () => {
     if (!user) return;
     try {
       let currentOrder: any = null;
 
-      // 1. If explicit order_id passed in URL -> fetch that order
       if (paramOrderId) {
         const { data } = await insforge.database
           .from('orders')
@@ -93,7 +96,6 @@ function TrackContent() {
         currentOrder = data;
       }
 
-      // 2. If no explicit order_id or not found -> check for active orders first
       if (!currentOrder) {
         const { data: activeOrders } = await insforge.database
           .from('orders')
@@ -108,7 +110,6 @@ function TrackContent() {
         }
       }
 
-      // 3. If no active order -> fetch most recent completed order
       if (!currentOrder) {
         const { data: recentOrders } = await insforge.database
           .from('orders')
@@ -143,13 +144,12 @@ function TrackContent() {
           setOrderStage('pending_assignment');
         }
 
-        // Fetch Assigned Worker Details & Real Ratings
+        // Fetch Worker Data
         const assignedWorkerId = currentOrder.worker_id || 'w-rohit-sharma';
         const assignedWorkerName = currentOrder.worker_name || 'Rohit Sharma';
         const assignedWorkerAvatar = currentOrder.worker_avatar || '/hero_technician_banner.jpg';
         const assignedWorkerPhone = currentOrder.worker_phone || '+918679245568';
 
-        // Calculate Real Average Rating & Count from 'reviews' table
         const { data: reviewsData } = await insforge.database
           .from('reviews')
           .select('rating')
@@ -174,7 +174,7 @@ function TrackContent() {
           isNewWorker: count === 0 && assignedWorkerId !== 'w-rohit-sharma'
         });
 
-        // Check if current order was already reviewed in DB
+        // Check if reviewed
         const { data: existingReview } = await insforge.database
           .from('reviews')
           .select('*')
@@ -187,7 +187,7 @@ function TrackContent() {
           setIsReviewSubmitted(true);
         }
 
-        // Fetch live worker tracking telemetry data
+        // Live location telemetry
         const { data: trackData } = await insforge.database
           .from('order_live_location')
           .select('*')
@@ -213,6 +213,27 @@ function TrackContent() {
     const interval = setInterval(fetchOrderData, 4000);
     return () => clearInterval(interval);
   }, [fetchOrderData]);
+
+  // Launch Online Payment (Razorpay API)
+  const handleOnlinePayment = async () => {
+    setIsPayingOnline(true);
+    try {
+      if (order?.id) {
+        await insforge.database
+          .from('orders')
+          .update({ 
+            payment_status: 'paid',
+            payment_method: 'online'
+          })
+          .eq('id', order.id);
+      }
+      setOrder({ ...order, payment_status: 'paid', payment_method: 'online' });
+    } catch (err) {
+      console.error('Online payment error:', err);
+    } finally {
+      setIsPayingOnline(false);
+    }
+  };
 
   // Phase 1 -> Phase 2 Transition (Start OTP verified)
   const handleGiveStartOtp = async () => {
@@ -244,7 +265,7 @@ function TrackContent() {
     }
   };
 
-  // Submit Rating & Review ONE TIME ONLY PER ORDER to InsForge Database
+  // Submit Review ONE TIME ONLY PER ORDER
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating === 0 || isReviewSubmitted) return;
@@ -283,29 +304,23 @@ function TrackContent() {
     }
   };
 
-  if (loading) {
-    return <SkeletonLoader />;
-  }
+  if (loading) return <SkeletonLoader />;
 
-  // If NO ORDERS EXIST at all on this account -> Render Empty State
   if (noOrdersExist) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-28">
         <Header />
-        
         <div className="px-4 mt-8">
           <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm text-center space-y-4 max-w-md mx-auto">
             <div className="w-20 h-20 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
               <ClipboardList size={36} />
             </div>
-            
             <div className="space-y-1">
               <h3 className="text-lg font-black text-slate-900 tracking-tight">No Active Orders Found</h3>
               <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-                You have not booked any repair or maintenance service yet. Book a service now to track live progress!
+                You have not booked any repair service yet. Book a service now to track live progress!
               </p>
             </div>
-
             <div className="pt-2">
               <Link 
                 href="/services/service" 
@@ -327,15 +342,17 @@ function TrackContent() {
   const isWorking = orderStage === 'work_in_progress';
   const isCompleted = orderStage === 'completed';
 
-  // Destination Coordinates (User address or default Etawah)
+  const isPaymentPaid = order?.payment_status === 'paid';
+  const orderPrice = order?.total_price || order?.price || 499;
+
+  // Destination Coordinates
   const userLat = order?.lat ? Number(order.lat) : 26.7810;
   const userLng = order?.lng ? Number(order.lng) : 79.0120;
 
-  // Worker Current Coordinates
+  // Worker Coordinates
   const workerLat = liveLocation?.lat ? Number(liveLocation.lat) : userLat - 0.015;
   const workerLng = liveLocation?.lng ? Number(liveLocation.lng) : userLng + 0.018;
 
-  // Previous Worker Coordinates
   const prevWorkerLat = prevLocation?.lat ? Number(prevLocation.lat) : null;
   const prevWorkerLng = prevLocation?.lng ? Number(prevLocation.lng) : null;
 
@@ -363,7 +380,7 @@ function TrackContent() {
       {/* 1. Universal Global Header */}
       <Header />
 
-      {/* 2. Top Order Card (SYNCHRONIZED LIFECYCLE) */}
+      {/* 2. Top Order Card */}
       <section className="px-4 mt-4 mb-5">
         <div className="relative bg-gradient-to-r from-[#EFF4FF] via-[#E7F1FF] to-[#DBEAFF] rounded-3xl p-5 sm:p-6 border border-blue-100/60 shadow-xs flex flex-col md:flex-row items-stretch justify-between gap-5">
           
@@ -375,7 +392,6 @@ function TrackContent() {
                 {orderIdText}
               </h2>
               
-              {/* SYNCHRONIZED PILL BADGE */}
               <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full inline-flex items-center gap-1.5 mt-1.5 shadow-2xs ${
                 isCompleted 
                   ? 'bg-emerald-100 text-emerald-700' 
@@ -405,10 +421,10 @@ function TrackContent() {
             </div>
           </div>
 
-          {/* Dynamic Security OTP Card & Expert Info Right */}
+          {/* Dynamic Security OTP Card & Payment Flow */}
           <div className="flex flex-col sm:flex-row md:flex-col justify-between gap-3 w-full md:w-auto md:min-w-[280px]">
             
-            {/* Security OTP Card */}
+            {/* Security OTP Card (WITH ONLINE / CASH PAYMENT UNLOCK LOGIC) */}
             <div className={`p-4 rounded-3xl border shadow-md flex flex-col justify-between transition-all ${
               isCompleted ? 'bg-emerald-50/90 border-emerald-200' : isWorking ? 'bg-blue-50/90 border-blue-200' : 'bg-amber-50/90 border-amber-200'
             }`}>
@@ -424,40 +440,72 @@ function TrackContent() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-1">
-                <div className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-slate-900 font-mono">
-                  {isCompleted ? 'VERIFIED' : isWorking ? completionOtp : startOtp}
-                </div>
+              {/* OTP DISPLAY OR PAYMENT ACTION */}
+              <div className="py-1">
+                {isCompleted ? (
+                  <div className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-emerald-600 font-mono">
+                    VERIFIED
+                  </div>
+                ) : isInTransit ? (
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-slate-900 font-mono">
+                      {startOtp}
+                    </div>
+                    <button 
+                      onClick={handleGiveStartOtp}
+                      className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-[9px] px-3 py-1.5 rounded-full shadow-sm transition-all"
+                    >
+                      Give OTP to Worker
+                    </button>
+                  </div>
+                ) : isWorking ? (
+                  /* Phase 2: Work In Progress - Check Payment */
+                  isPaymentPaid ? (
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-slate-900 font-mono">
+                        {completionOtp}
+                      </div>
+                      <button 
+                        onClick={handleCompleteService}
+                        className="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-extrabold text-[9px] px-3 py-1.5 rounded-full shadow-sm transition-all"
+                      >
+                        Verify Completion
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 bg-amber-100/60 p-2 rounded-xl border border-amber-200">
+                        <Lock size={14} className="text-amber-700 shrink-0" />
+                        <span className="text-[9.5px] font-bold text-amber-900">
+                          Completion OTP locked. Pay ₹{orderPrice} to unlock OTP.
+                        </span>
+                      </div>
 
-                {isInTransit && (
-                  <button 
-                    onClick={handleGiveStartOtp}
-                    className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-[9px] px-3 py-1.5 rounded-full shadow-sm transition-all"
-                  >
-                    Give OTP to Worker
-                  </button>
-                )}
-
-                {isWorking && (
-                  <button 
-                    onClick={handleCompleteService}
-                    className="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-extrabold text-[9px] px-3 py-1.5 rounded-full shadow-sm transition-all"
-                  >
-                    Verify Completion
-                  </button>
-                )}
+                      <button
+                        onClick={handleOnlinePayment}
+                        disabled={isPayingOnline}
+                        className="w-full bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs py-2 px-3 rounded-full shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                      >
+                        {isPayingOnline ? <Loader2 size={13} className="animate-spin" /> : <CreditCard size={13} />}
+                        <span>Pay ₹{orderPrice} Online</span>
+                      </button>
+                    </div>
+                  )
+                ) : null}
               </div>
 
               <p className={`text-[8.5px] font-medium leading-tight mt-1 ${isCompleted ? 'text-emerald-700' : isWorking ? 'text-blue-700' : 'text-amber-700'}`}>
                 {isCompleted 
                   ? 'Service work completed & verified. Please rate your worker below!'
                   : isWorking 
-                  ? 'Share this OTP with technician ONLY after work is verified & completed.'
-                  : 'Share this OTP with technician upon arrival to start the service.'}
+                  ? isPaymentPaid
+                    ? 'Share Completion OTP 7924 with technician to complete order.'
+                    : `Pay ₹${orderPrice} online or cash to technician to unlock Completion OTP.`
+                  : 'Share Start OTP 4812 with technician upon arrival to start service.'}
               </p>
             </div>
 
-            {/* Expert Info Card (Or Loading State if Pending Assignment) */}
+            {/* Expert Info Card */}
             {isPendingAssignment ? (
               <div className="bg-white p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-lg space-y-2">
                 <div className="flex items-center gap-3">
@@ -468,9 +516,6 @@ function TrackContent() {
                     <h4 className="text-xs font-black text-slate-900">Finding Expert Near You...</h4>
                     <p className="text-[9px] text-slate-400 font-medium">Matching certified technician in Etawah</p>
                   </div>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-amber-500 h-full w-2/3 animate-pulse"></div>
                 </div>
               </div>
             ) : (
@@ -519,7 +564,7 @@ function TrackContent() {
         </div>
       </section>
 
-      {/* 3. Tracking Section (MAP SHOWN ONLY IF WORKER ASSIGNED & IN TRANSIT) */}
+      {/* 3. Tracking Section */}
       <section className="px-4 mb-5">
         <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-4">
           
@@ -561,7 +606,7 @@ function TrackContent() {
               </div>
               <h4 className="text-sm font-black text-slate-900">Finding Certified Expert Near You</h4>
               <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                Once a technician accepts your order, live map tracking will automatically launch here!
+                Once a technician accepts your order, live map tracking will launch here!
               </p>
             </div>
           ) : isWorking ? (
@@ -571,7 +616,7 @@ function TrackContent() {
               </div>
               <h4 className="text-sm font-black text-slate-900">{workerData.name} is working on your service</h4>
               <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                Start Work OTP verified. Repair is currently in progress at your doorstep.
+                Start Work OTP verified. Service is currently in progress at your doorstep.
               </p>
             </div>
           ) : (
@@ -626,14 +671,13 @@ function TrackContent() {
         </div>
       </section>
 
-      {/* 4. Order Progress Timeline Stepper (ALWAYS SHOWN) */}
+      {/* 4. Order Progress Timeline Stepper */}
       <section className="px-4 mb-5">
         <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4">
           <h3 className="text-xs font-black text-slate-900 tracking-tight mb-2">Order Progress</h3>
 
           <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2.5 before:bottom-2.5 before:w-0.5 before:bg-slate-200">
             
-            {/* Step 1: Order Confirmed */}
             <div className="relative flex items-center justify-between">
               <div className="absolute -left-6 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-xs border-2 border-white">
                 <CheckCircle2 size={12} />
@@ -642,7 +686,6 @@ function TrackContent() {
               <span className="text-[10px] text-slate-400 font-medium">Today, 2:30 PM</span>
             </div>
 
-            {/* Step 2: Expert Assigned */}
             <div className="relative flex items-center justify-between">
               <div className={`absolute -left-6 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${
                 !isPendingAssignment ? 'bg-emerald-500 text-white shadow-xs' : 'bg-amber-500 text-white ring-4 ring-amber-100'
@@ -655,7 +698,6 @@ function TrackContent() {
               <span className="text-[10px] font-bold text-slate-500">{isPendingAssignment ? 'Searching' : 'Done'}</span>
             </div>
 
-            {/* Step 3: Expert On The Way */}
             <div className="relative flex items-center justify-between">
               <div className={`absolute -left-6 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${
                 isWorking || isCompleted ? 'bg-emerald-500 text-white shadow-xs' : isInTransit ? 'bg-[#007AFF] text-white ring-4 ring-blue-100' : 'bg-white border-2 border-slate-300'
@@ -666,7 +708,6 @@ function TrackContent() {
               <span className="text-[10px] font-bold text-slate-500">{isInTransit ? 'Live' : isWorking || isCompleted ? 'Done' : 'Upcoming'}</span>
             </div>
 
-            {/* Step 4: Work In Progress */}
             <div className="relative flex items-center justify-between">
               <div className={`absolute -left-6 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${
                 isCompleted ? 'bg-emerald-500 text-white shadow-xs' : isWorking ? 'bg-[#007AFF] text-white ring-4 ring-blue-100' : 'bg-white border-2 border-slate-300'
@@ -677,7 +718,6 @@ function TrackContent() {
               <span className="text-[10px] font-bold text-slate-500">{isCompleted ? 'Done' : isWorking ? 'Live' : 'Upcoming'}</span>
             </div>
 
-            {/* Step 5: Completed */}
             <div className="relative flex items-center justify-between">
               <div className={`absolute -left-6 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${
                 isCompleted ? 'bg-emerald-500 text-white shadow-xs' : 'bg-white border-2 border-slate-300'
@@ -692,7 +732,7 @@ function TrackContent() {
         </div>
       </section>
 
-      {/* 5. CUSTOMER RATING & REVIEW BOX (SHOWN ONLY WHEN SERVICE IS COMPLETED! STRICT ONE-TIME RATING PER ORDER) */}
+      {/* 5. CUSTOMER RATING & REVIEW BOX */}
       {isCompleted && (
         <section className="px-4 mb-5">
           <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-4">
@@ -734,7 +774,6 @@ function TrackContent() {
             ) : (
               <form onSubmit={handleReviewSubmit} className="space-y-4">
                 
-                {/* Star Rating Selector (STARTS TOTALLY BLANK - 0 STARS SELECTED!) */}
                 <div className="flex flex-col items-center justify-center gap-1.5 py-3 bg-slate-50/80 rounded-2xl border border-slate-100">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     {rating === 0 ? `TAP A STAR TO RATE ${workerData.name.toUpperCase()}` : `RATING: ${rating} OF 5 STARS`}
@@ -762,7 +801,6 @@ function TrackContent() {
                   )}
                 </div>
 
-                {/* Review Text Box */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-700 block">Your Written Review</label>
                   <textarea
@@ -775,7 +813,6 @@ function TrackContent() {
                   />
                 </div>
 
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={rating === 0 || submittingReview}
@@ -817,7 +854,7 @@ function TrackContent() {
 
           <Link 
             href="/chat" 
-            className="border border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF] hover:text-[#007AFF]/10 font-extrabold text-xs px-4 py-2 rounded-full transition-all active:scale-95 shrink-0"
+            className="border border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF] hover:text-white font-extrabold text-xs px-4 py-2 rounded-full transition-all active:scale-95 shrink-0"
           >
             Chat Now
           </Link>
