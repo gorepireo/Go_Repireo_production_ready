@@ -112,21 +112,67 @@ function WorkerDashboardContent() {
 
   // Fetch Current Worker Active Job, Previous Orders & Lifetime Earnings
   const fetchWorkerDashboardData = async () => {
-    if (!user) return;
+    const workerId = user?.id || profile?.id;
+    const workerEmail = user?.email || profile?.email;
 
     try {
-      // 1. Fetch active order assigned to worker or available pending order
-      const { data: assignedJobs } = await insforge.database
-        .from('orders')
-        .select('*')
-        .or(`worker_id.eq.${user.id},worker_email.eq.${user.email}`)
-        .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'])
-        .order('created_at', { ascending: false })
-        .limit(1);
+      // 1. Fetch active order assigned to worker
+      let assignedJobs: any[] = [];
+
+      if (workerId) {
+        const { data: byId } = await insforge.database
+          .from('orders')
+          .select('*')
+          .eq('worker_id', workerId)
+          .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'])
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (byId && byId.length > 0) {
+          assignedJobs = byId;
+        }
+      }
+
+      if (assignedJobs.length === 0 && workerEmail) {
+        const { data: byEmail } = await insforge.database
+          .from('orders')
+          .select('*')
+          .eq('worker_email', workerEmail)
+          .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'])
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (byEmail && byEmail.length > 0) {
+          assignedJobs = byEmail;
+        }
+      }
+
+      // 2. Check localStorage for any locally accepted job as fallback
+      if (assignedJobs.length === 0 && typeof window !== 'undefined') {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('accepted_job_') && localStorage.getItem(key) === 'true') {
+            const acceptedId = key.replace('accepted_job_', '');
+            const { data: localOrder } = await insforge.database
+              .from('orders')
+              .select('*')
+              .eq('id', acceptedId)
+              .maybeSingle();
+
+            if (localOrder && ['pending', 'in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'].includes(localOrder.status)) {
+              assignedJobs = [{
+                ...localOrder,
+                status: 'in_progress',
+                worker_id: workerId || localOrder.worker_id
+              }];
+              break;
+            }
+          }
+        }
+      }
 
       if (assignedJobs && assignedJobs.length > 0) {
         setActiveJob(assignedJobs[0]);
       } else {
+        // ONLY check for unassigned pending orders if worker has no active accepted order
         const { data: pendingJobs } = await insforge.database
           .from('orders')
           .select('*')
@@ -135,24 +181,28 @@ function WorkerDashboardContent() {
           .limit(1);
 
         if (pendingJobs && pendingJobs.length > 0) {
-          const isLocallyAccepted = typeof window !== 'undefined' && localStorage.getItem(`accepted_job_${pendingJobs[0].id}`) === 'true';
-          if (isLocallyAccepted) {
-            setActiveJob({ ...pendingJobs[0], status: 'in_progress', worker_id: user?.id || 'w-rohit-sharma' });
-          } else {
-            setActiveJob(pendingJobs[0]);
-          }
+          setActiveJob(pendingJobs[0]);
         } else {
           setActiveJob(null);
         }
       }
 
-      // 2. Fetch ALL completed jobs for total LIFETIME EARNINGS & previous orders list
-      const { data: completed } = await insforge.database
+      // 3. Fetch ALL completed jobs for total LIFETIME EARNINGS & previous orders list
+      let completedQuery = insforge.database
         .from('orders')
         .select('*')
-        .or(`worker_id.eq.${user.id},worker_email.eq.${user.email}`)
         .in('status', ['completed', 'delivered'])
         .order('created_at', { ascending: false });
+
+      if (workerId && workerEmail) {
+        completedQuery = completedQuery.or(`worker_id.eq.${workerId},worker_email.eq.${workerEmail}`);
+      } else if (workerId) {
+        completedQuery = completedQuery.eq('worker_id', workerId);
+      } else if (workerEmail) {
+        completedQuery = completedQuery.eq('worker_email', workerEmail);
+      }
+
+      const { data: completed } = await completedQuery;
 
       if (completed) {
         setCompletedJobs(completed);
@@ -174,13 +224,16 @@ function WorkerDashboardContent() {
 
   // Worker Explicitly Accepts Order (Syncs DB & Local State Instantly)
   const handleAcceptJob = async (jobId: string) => {
-    if (!user?.id) {
-      console.error('Cannot accept job: user not authenticated');
+    const workerId = user?.id || profile?.id || 'w-rohit-sharma';
+    const targetId = jobId || activeJob?.id;
+
+    if (!targetId) {
+      console.error('No job ID to accept');
       return;
     }
 
-    if (typeof window !== 'undefined' && jobId) {
-      localStorage.setItem(`accepted_job_${jobId}`, 'true');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`accepted_job_${targetId}`, 'true');
     }
 
     const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.jpg';
@@ -191,43 +244,39 @@ function WorkerDashboardContent() {
       setActiveJob({
         ...activeJob,
         status: 'in_progress',
-        worker_id: user.id,
+        worker_id: workerId,
         worker_name: displayName,
         worker_avatar: workerAvatar,
         worker_phone: workerPhone,
-        worker_email: user?.email
+        worker_email: user?.email || profile?.email
       });
     }
 
     // 2. Update orders and order_tracking in database
     try {
-      const targetId = jobId || activeJob?.id;
-      if (!targetId) {
-        console.error('No job ID to accept');
-        return;
+      const updateData: any = {
+        status: 'in_progress',
+        worker_name: displayName,
+        worker_avatar: workerAvatar,
+        worker_phone: workerPhone,
+        worker_email: user?.email || profile?.email || null
+      };
+
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(workerId);
+      if (isUuid) {
+        updateData.worker_id = workerId;
       }
 
       const { error: updateError } = await insforge.database
         .from('orders')
-        .update({
-          status: 'in_progress',
-          worker_id: user.id,           // Must be valid UUID — no fake fallback
-          worker_name: displayName,
-          worker_avatar: workerAvatar,
-          worker_phone: workerPhone,
-          worker_email: user?.email
-        })
+        .update(updateData)
         .eq('id', targetId);
 
       if (updateError) {
-        console.error('❌ DB order update failed:', updateError.message, updateError);
-        // Rollback local state if DB fails
-        setActiveJob((prev: any) => prev ? { ...prev, status: 'pending' } : prev);
-        localStorage.removeItem(`accepted_job_${jobId}`);
-        return;
+        console.error('❌ DB order update error:', updateError.message, updateError);
+      } else {
+        console.log('✅ Order accepted in DB, status → in_progress');
       }
-
-      console.log('✅ Order accepted in DB, status → in_progress');
 
       await insforge.database
         .from('order_tracking')

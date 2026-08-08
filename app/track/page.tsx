@@ -99,13 +99,22 @@ function TrackContent() {
       }
 
       if (!currentOrder) {
-        const { data: activeOrders } = await insforge.database
+        let activeQuery = insforge.database
           .from('orders')
           .select('*')
-          .or(`customer_id.eq.${user.id},user_email.eq.${user.email}`)
           .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way', 'pending'])
           .order('created_at', { ascending: false })
           .limit(1);
+
+        if (user?.id && user?.email) {
+          activeQuery = activeQuery.or(`customer_id.eq.${user.id},user_email.eq.${user.email}`);
+        } else if (user?.id) {
+          activeQuery = activeQuery.eq('customer_id', user.id);
+        } else if (user?.email) {
+          activeQuery = activeQuery.eq('user_email', user.email);
+        }
+
+        const { data: activeOrders } = await activeQuery;
 
         if (activeOrders && activeOrders.length > 0) {
           currentOrder = activeOrders[0];
@@ -113,12 +122,21 @@ function TrackContent() {
       }
 
       if (!currentOrder) {
-        const { data: recentOrders } = await insforge.database
+        let recentQuery = insforge.database
           .from('orders')
           .select('*')
-          .or(`customer_id.eq.${user.id},user_email.eq.${user.email}`)
           .order('created_at', { ascending: false })
           .limit(1);
+
+        if (user?.id && user?.email) {
+          recentQuery = recentQuery.or(`customer_id.eq.${user.id},user_email.eq.${user.email}`);
+        } else if (user?.id) {
+          recentQuery = recentQuery.eq('customer_id', user.id);
+        } else if (user?.email) {
+          recentQuery = recentQuery.eq('user_email', user.email);
+        }
+
+        const { data: recentOrders } = await recentQuery;
 
         if (recentOrders && recentOrders.length > 0) {
           currentOrder = recentOrders[0];
