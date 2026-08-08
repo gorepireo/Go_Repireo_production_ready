@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, ChevronDown, Bell } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import NotificationDrawer from '@/components/NotificationDrawer';
+import NotificationToastBanner from '@/components/NotificationToastBanner';
 import LocationMapSelector from '@/components/LocationMapSelector';
 
 interface HeaderProps {
@@ -23,20 +24,54 @@ export default function Header({
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [currentLocation, setCurrentLocation] = useState('Etawah, UP');
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Dynamic calculation of unread notification count
+  useEffect(() => {
+    const updateUnreadBadge = () => {
+      if (typeof window !== 'undefined') {
+        const activeRole = profile?.role || localStorage.getItem('repireo_cached_role') || 'user';
+        const isWorker = activeRole === 'worker';
+        const storageKey = isWorker ? 'repireo_notifications_worker' : 'repireo_notifications_customer';
+        const saved = localStorage.getItem(storageKey);
+        
+        if (saved) {
+          try {
+            const list = JSON.parse(saved);
+            if (Array.isArray(list)) {
+              const unread = list.filter((n: any) => !n.read).length;
+              setUnreadCount(unread);
+            } else {
+              setUnreadCount(0);
+            }
+          } catch {
+            setUnreadCount(0);
+          }
+        } else {
+          setUnreadCount(0);
+        }
+      }
+    };
+
+    updateUnreadBadge();
+    const interval = setInterval(updateUnreadBadge, 1000);
+    window.addEventListener('storage', updateUnreadBadge);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', updateUnreadBadge);
+    };
+  }, [profile]);
 
   // Extract user's actual account full name
   const getDisplayName = () => {
-    // 1. Check database profile table fields
     const dbName = (profile as any)?.full_name || (profile as any)?.name || profile?.display_name;
     if (dbName && typeof dbName === 'string' && dbName.trim()) {
       return dbName.trim().split(' ')[0];
     }
-    // 2. Check auth user metadata fields
     const metaName = user?.user_metadata?.full_name || user?.user_metadata?.name;
     if (metaName && typeof metaName === 'string' && metaName.trim()) {
       return metaName.trim().split(' ')[0];
     }
-    // 3. Check email prefix if no name is available
     if (user?.email) {
       const prefix = user.email.split('@')[0];
       return prefix.charAt(0).toUpperCase() + prefix.slice(1);
@@ -48,6 +83,8 @@ export default function Header({
 
   return (
     <div className="relative z-40">
+      <NotificationToastBanner />
+
       <header className="bg-white border-b border-slate-100 px-4 py-2.5 sticky top-0 z-40 flex items-center justify-between shadow-xs">
         
         {/* Left: Location Dropdown */}
@@ -83,7 +120,7 @@ export default function Header({
           ) : null}
         </div>
 
-        {/* Right: Notification Bell */}
+        {/* Right: Notification Bell (DYNAMIC BADGE) */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsNotifOpen(true)}
@@ -91,9 +128,11 @@ export default function Header({
             aria-label="Open notifications"
           >
             <Bell size={20} />
-            <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white shadow-2xs">
-              3
-            </span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white shadow-2xs">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
         </div>
 
