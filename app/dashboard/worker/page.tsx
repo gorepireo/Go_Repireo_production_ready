@@ -59,6 +59,9 @@ function WorkerDashboardContent() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [lifetimeEarnings, setLifetimeEarnings] = useState(0);
 
+  // Live Device GPS Location State
+  const [liveDeviceGps, setLiveDeviceGps] = useState<{ lat: number; lng: number } | null>(null);
+
   // Pagination for previous completed orders
   const [visibleCompletedCount, setVisibleCompletedCount] = useState(5);
 
@@ -73,6 +76,23 @@ function WorkerDashboardContent() {
   const [cashCollected, setCashCollected] = useState(false);
 
   const displayName = (profile as any)?.full_name || (profile as any)?.name || profile?.display_name || user?.email?.split('@')[0] || 'Prithibi Mandi';
+
+  // Watch Worker's Real Device GPS Location continuously
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          setLiveDeviceGps({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          });
+        },
+        (err) => console.warn('GPS watch error:', err),
+        { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+      );
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, []);
 
   // Toggle Online / Offline Status
   const handleToggleOnline = async () => {
@@ -152,7 +172,7 @@ function WorkerDashboardContent() {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Worker Explicitly Accepts Order
+  // Worker Explicitly Accepts Order (Syncs DB & Local State Instantly)
   const handleAcceptJob = async (jobId: string) => {
     if (typeof window !== 'undefined' && jobId) {
       localStorage.setItem(`accepted_job_${jobId}`, 'true');
@@ -174,9 +194,10 @@ function WorkerDashboardContent() {
       });
     }
 
-    // 2. Perform DB update in background
+    // 2. Update orders and order_tracking in database
     try {
-      if (jobId) {
+      const targetId = jobId || activeJob?.id;
+      if (targetId) {
         await insforge.database
           .from('orders')
           .update({
@@ -187,57 +208,106 @@ function WorkerDashboardContent() {
             worker_phone: workerPhone,
             worker_email: user?.email
           })
-          .eq('id', jobId);
+          .eq('id', targetId);
+
+        await insforge.database
+          .from('order_tracking')
+          .insert([{
+            order_id: targetId,
+            status: 'in_progress',
+            note: `Order accepted by expert ${displayName}. En route to customer.`
+          }]);
       }
     } catch (err) {
       console.error('Accept job error:', err);
     }
   };
 
-  // Open Native Google Maps App using Worker's REAL LIVE GPS LOCATION
-  const handleGetRoute = () => {
+  // Open Native Google Maps App via Native Intent / Deep Link URIs
+  const openNativeGoogleMapsApp = (originLat: number, originLng: number, destLat: number, destLng: number) => {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isAndroid) {
+      // Android Native Google Maps App Intent URL
+      const androidAppIntent = `intent://maps.google.com/maps?saddr=${originLat},${originLng}&daddr=${destLat},${destLng}&directionsmode=driving#Intent;scheme=https;package=com.google.android.apps.maps;end;`;
+      window.location.href = androidAppIntent;
+    } else if (isIOS) {
+      // iOS Google Maps App URL Scheme with Web Fallback
+      const iosAppScheme = `comgooglemaps://?saddr=${originLat},${originLng}&daddr=${destLat},${destLng}&directionsmode=driving`;
+      const webFallback = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=driving`;
+      
+      const now = Date.now();
+      window.location.href = iosAppScheme;
+      setTimeout(() => {
+        if (Date.now() - now < 1500) {
+          window.open(webFallback, '_blank');
+        }
+      }, 1000);
+    } else {
+      // Desktop Web Browser Fallback
+      const webUrl = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=driving`;
+      window.open(webUrl, '_blank');
+    }
+  };
+
+  // Trigger Get Route with Worker's Live Device GPS Coordinates
+  const handleGetRoute = async () => {
     const cLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
     const cLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
 
-    if (typeof window !== 'undefined' && navigator.geolocation) {
+    if (liveDeviceGps) {
+      // Save live worker GPS coordinates to DB
+      if (activeJob?.id) {
+        try {
+          await insforge.database.from('order_live_location').upsert([{
+            order_id: activeJob.id,
+            lat: liveDeviceGps.lat,
+            lng: liveDeviceGps.lng,
+            worker_name: displayName,
+            updated_at: new Date().toISOString()
+          }]);
+        } catch (e) {
+          console.warn('Upsert location error:', e);
+        }
+      }
+
+      openNativeGoogleMapsApp(liveDeviceGps.lat, liveDeviceGps.lng, cLat, cLng);
+    } else if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const actualLat = pos.coords.latitude;
           const actualLng = pos.coords.longitude;
+          setLiveDeviceGps({ lat: actualLat, lng: actualLng });
 
           if (activeJob?.id) {
             try {
-              await insforge.database
-                .from('order_live_location')
-                .upsert([{
-                  order_id: activeJob.id,
-                  lat: actualLat,
-                  lng: actualLng,
-                  worker_name: displayName,
-                  updated_at: new Date().toISOString()
-                }]);
+              await insforge.database.from('order_live_location').upsert([{
+                order_id: activeJob.id,
+                lat: actualLat,
+                lng: actualLng,
+                worker_name: displayName,
+                updated_at: new Date().toISOString()
+              }]);
             } catch (e) {
-              console.warn('Upsert live location warning:', e);
+              console.warn('Upsert location error:', e);
             }
           }
 
-          const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${actualLat},${actualLng}&destination=${cLat},${cLng}&travelmode=driving`;
-          window.open(mapsUrl, '_blank');
+          openNativeGoogleMapsApp(actualLat, actualLng, cLat, cLng);
         },
         (err) => {
-          console.warn('GPS position error:', err);
+          console.warn('GPS error fallback:', err);
           const fallbackLat = profile?.lat ? Number(profile.lat) : 26.7620;
           const fallbackLng = profile?.lng ? Number(profile.lng) : 79.0320;
-          const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${fallbackLat},${fallbackLng}&destination=${cLat},${cLng}&travelmode=driving`;
-          window.open(mapsUrl, '_blank');
+          openNativeGoogleMapsApp(fallbackLat, fallbackLng, cLat, cLng);
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
       const fallbackLat = profile?.lat ? Number(profile.lat) : 26.7620;
       const fallbackLng = profile?.lng ? Number(profile.lng) : 79.0320;
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${fallbackLat},${fallbackLng}&destination=${cLat},${cLng}&travelmode=driving`;
-      window.open(mapsUrl, '_blank');
+      openNativeGoogleMapsApp(fallbackLat, fallbackLng, cLat, cLng);
     }
   };
 
@@ -330,9 +400,9 @@ function WorkerDashboardContent() {
 
   if (loading) return <WorkerDashboardSkeleton />;
 
-  // Coordinate Defaults for Tracking Map
-  const workerLat = profile?.lat ? Number(profile.lat) : 26.7620;
-  const workerLng = profile?.lng ? Number(profile.lng) : 79.0320;
+  // Worker Live Device Coordinates for Tracking Map
+  const workerLat = liveDeviceGps?.lat ? liveDeviceGps.lat : (profile?.lat ? Number(profile.lat) : 26.7620);
+  const workerLng = liveDeviceGps?.lng ? liveDeviceGps.lng : (profile?.lng ? Number(profile.lng) : 79.0320);
   const customerLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
   const customerLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
   const activeOrderIdText = activeJob?.id ? `#GR-${activeJob.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
@@ -343,7 +413,7 @@ function WorkerDashboardContent() {
   const isCompletedJob = ['completed', 'delivered'].includes(currentStatus);
   const isPaid = activeJob?.payment_status === 'paid' || cashCollected;
 
-  // Extract Client Problem Description & Customer Uploaded Media Attachments
+  // Extract Client Problem Description & Customer Uploaded Media Attachments (NO DUMMY FALLBACKS)
   const problemDescription = activeJob?.details?.description || activeJob?.description || 'Service requested as per customer order details.';
   const rawAttachments = activeJob?.details?.attachments || activeJob?.attachments;
   const mediaAttachments: string[] = Array.isArray(rawAttachments) ? rawAttachments.filter((url: any) => typeof url === 'string' && url.length > 0) : [];
@@ -459,7 +529,7 @@ function WorkerDashboardContent() {
             </span>
           </div>
 
-          {/* SCENARIO A: UNACCEPTED PENDING ORDER (SHOWS CLIENT DESCRIPTION & ATTACHED MEDIA) */}
+          {/* SCENARIO A: UNACCEPTED PENDING ORDER */}
           {activeJob && isPendingJob ? (
             <div className="bg-amber-50/90 rounded-2xl p-5 border border-amber-200 shadow-sm space-y-3.5">
               
