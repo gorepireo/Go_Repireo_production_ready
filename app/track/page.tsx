@@ -12,7 +12,8 @@ import {
   Navigation, 
   Activity, 
   Snowflake,
-  ShieldCheck
+  ShieldCheck,
+  Target
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -207,25 +208,33 @@ export default function TrackPage() {
 
             <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-center">
               <div className="space-y-0.5">
-                <div className="w-7 h-7 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center text-xs">🛵</div>
+                <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
+                  <Navigation size={15} />
+                </div>
                 <span className="text-[10px] font-black text-slate-900 block pt-0.5">2.4 km</span>
                 <span className="text-[8px] text-slate-400 font-medium block">Distance</span>
               </div>
 
               <div className="space-y-0.5">
-                <div className="w-7 h-7 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center text-xs">🕒</div>
+                <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
+                  <Clock size={15} />
+                </div>
                 <span className="text-[10px] font-black text-slate-900 block pt-0.5">18 mins</span>
                 <span className="text-[8px] text-slate-400 font-medium block">ETA</span>
               </div>
 
               <div className="space-y-0.5">
-                <div className="w-7 h-7 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center text-xs">🎯</div>
+                <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
+                  <Target size={15} />
+                </div>
                 <span className="text-[10px] font-black text-slate-900 block pt-0.5">28 km/h</span>
                 <span className="text-[8px] text-slate-400 font-medium block">Speed</span>
               </div>
 
               <div className="space-y-0.5">
-                <div className="w-7 h-7 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center text-xs">📊</div>
+                <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
+                  <Activity size={15} />
+                </div>
                 <span className="text-[10px] font-black text-slate-900 block pt-0.5">85%</span>
                 <span className="text-[8px] text-slate-400 font-medium block">Complete</span>
               </div>
@@ -244,8 +253,8 @@ export default function TrackPage() {
             
             {/* Step 1: Order Confirmed */}
             <div className="relative flex items-center justify-between">
-              <div className="absolute -left-6 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs shadow-xs border-2 border-white">
-                ✓
+              <div className="absolute -left-6 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-xs border-2 border-white">
+                <CheckCircle2 size={12} />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-slate-900">Order Confirmed</h4>
@@ -255,8 +264,8 @@ export default function TrackPage() {
 
             {/* Step 2: Expert Assigned */}
             <div className="relative flex items-center justify-between">
-              <div className="absolute -left-6 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs shadow-xs border-2 border-white">
-                ✓
+              <div className="absolute -left-6 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-xs border-2 border-white">
+                <CheckCircle2 size={12} />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-slate-900">Expert Assigned</h4>
