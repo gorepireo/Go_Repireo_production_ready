@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { 
   Home,
-  LayoutGrid,
   Calendar,
+  ShoppingBag,
   MapPin, 
   User,
-  MessageCircle
+  MessageCircle,
+  LayoutGrid
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -38,8 +39,8 @@ export default function BottomNav() {
     { name: 'Profile', path: '/dashboard/worker/settings', icon: User },
   ] : [
     { name: 'Home', path: '/', icon: Home },
-    { name: 'Services', path: '/services', icon: LayoutGrid },
     { name: 'Bookings', path: '/services/service', icon: Calendar },
+    { name: 'Shop', path: '/shop', icon: ShoppingBag },
     { name: 'Track', path: '/track', icon: MapPin },
     { name: 'Profile', path: '/dashboard/user', icon: User },
   ];

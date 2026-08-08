@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { 
   ShoppingCart, 
   ShieldCheck, 
@@ -9,309 +9,266 @@ import {
   LayoutGrid, 
   Activity,
   Wrench,
+  Sparkles,
+  Bell,
   CheckCircle2,
-  Heart,
-  Minus,
-  Plus,
   ArrowRight,
+  Truck,
   Headphones,
-  Truck
+  Store
 } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
-import { insforge } from '@/lib/insforge';
 import Link from 'next/link';
 
 const categories = [
-  { name: 'All', icon: LayoutGrid },
-  { name: 'Equipment', icon: Package },
-  { name: 'Part', icon: Wrench },
-  { name: 'Tool', icon: Activity },
+  { name: 'Spare Parts', icon: Wrench, count: '120+ Items' },
+  { name: 'Hardware', icon: Package, count: '80+ Items' },
+  { name: 'Professional Tools', icon: Activity, count: '45+ Items' },
+  { name: 'Smart Appliances', icon: LayoutGrid, count: '30+ Items' },
 ];
 
-const fallbackImages = [
-  'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&q=80&w=400', // drill
-  'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&q=80&w=400', // speaker
-  'https://images.unsplash.com/photo-1522338140262-f46f5913618a?auto=format&fit=crop&q=80&w=400', // flashlight
+const upcomingProducts = [
+  {
+    id: 'p1',
+    name: 'Heavy Duty Copper AC Pipe (1/4" + 1/2")',
+    category: 'Spare Parts',
+    price: '₹1,850',
+    tag: 'Popular',
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'p2',
+    name: 'Universal Submersible Pump 1.0 HP',
+    category: 'Hardware',
+    price: '₹3,499',
+    tag: 'Best Seller',
+    image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'p3',
+    name: 'Professional Digital Multimeter Tester',
+    category: 'Professional Tools',
+    price: '₹890',
+    tag: 'Essential',
+    image: 'https://images.unsplash.com/photo-1522338140262-f46f5913618a?auto=format&fit=crop&q=80&w=400'
+  }
 ];
 
 export default function ShopPage() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const { addItem } = useCart();
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [notified, setNotified] = useState(false);
+  const [email, setEmail] = useState('');
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await insforge.database.from('products').select('*');
-        if (!error && data) {
-          setProducts(data);
-          // Initialize quantities to 1
-          const initialQ: Record<string, number> = {};
-          data.forEach(p => { initialQ[p.id] = 1; });
-          setQuantities(initialQ);
-        } else if (error) console.error('Fetch error:', error);
-      } catch (err) {
-        console.error('Failed to fetch products:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
-
-  const handleUpdateQuantity = (id: string, delta: number) => {
-    setQuantities(prev => {
-      const newQ = (prev[id] || 1) + delta;
-      return { ...prev, [id]: newQ < 1 ? 1 : newQ };
-    });
+  const handleNotifySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) {
+      setNotified(true);
+    }
   };
 
-  const filtered = selectedCategory === 'All'
-    ? products
-    : products.filter(p => p.category?.toLowerCase() === selectedCategory.toLowerCase());
-
-  if (loading) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-6">
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-4 text-[#0F172A]">
       
-      {/* Coming Soon Overlay */}
-      <div className="fixed inset-0 z-40 bg-white/70 backdrop-blur-md flex items-center justify-center pointer-events-auto overflow-hidden">
-        <div className="bg-[#FF9500] text-white px-8 sm:px-24 py-3 sm:py-4 -rotate-12 shadow-2xl border-y-[4px] sm:border-y-[6px] border-dashed border-[#CC7700] transform scale-110 sm:scale-125 w-[150vw] text-center flex items-center justify-center">
-          <span className="text-2xl sm:text-4xl font-black uppercase tracking-widest sm:tracking-[0.3em] drop-shadow-md whitespace-nowrap opacity-90">Coming Soon</span>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="px-4">
-        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[320px] flex items-center justify-between shadow-sm">
-          <div className="relative z-10 space-y-3.5 max-w-[58%] sm:max-w-[62%]">
-            <div className="inline-flex items-center gap-1.5 bg-blue-100/50 backdrop-blur-sm px-3 py-1 rounded-full text-[#007AFF] border border-blue-200">
-              <ShieldCheck size={12} className="fill-current text-[#007AFF]" />
-              <span className="text-[9px] font-bold uppercase tracking-widest">Verified Merchant</span>
-            </div>
-            
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629]">
-              ASSET<br />
-              <span className="text-[#007AFF]">SUPPLY.</span>
+      {/* 1. Header Bar */}
+      <header className="px-4 mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 bg-[#007AFF] text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+            <Store size={20} />
+          </div>
+          <div>
+            <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
+              GoRepireo Store
             </h1>
-
-            <p className="text-[11px] text-slate-600 leading-relaxed max-w-[190px]">
-              Deployment-ready hardware and digital tools for your repair needs.
-            </p>
-
-            <div className="flex items-center gap-3 pt-1 flex-wrap">
-               <div className="flex items-center gap-1">
-                 <ShieldCheck size={12} className="text-[#007AFF]" />
-                 <span className="text-[8px] font-bold text-slate-600">Genuine Products</span>
-               </div>
-               <div className="flex items-center gap-1">
-                 <Truck size={12} className="text-[#007AFF]" />
-                 <span className="text-[8px] font-bold text-slate-600">Fast Delivery</span>
-               </div>
-            </div>
-          </div>
-
-          {/* Hero Image - Properly Positioned */}
-          <div className="absolute right-0 bottom-0 w-[42%] max-w-[240px] sm:max-w-[320px] h-[85%] z-0 pointer-events-none flex items-end justify-end">
-            <img src="/shop_hero_3d.png" alt="Hardware Supply" className="w-full h-full object-contain object-bottom" />
+            <p className="text-[10px] text-slate-400 font-medium">Genuine Spare Parts & Hardware Equipment</p>
           </div>
         </div>
-      </section>
 
-      {/* Categories Bar */}
-      <section className="mt-6 px-4">
-        <div className="flex items-center gap-3 overflow-x-auto pb-4 hide-scrollbar">
-          {categories.map(cat => {
-            const isActive = selectedCategory === cat.name;
-            return (
-              <button
-                key={cat.name}
-                onClick={() => setSelectedCategory(cat.name)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-full transition-all active:scale-95 shrink-0 ${
-                  isActive 
-                    ? 'bg-[#007AFF] text-white shadow-md shadow-blue-500/20' 
-                    : 'bg-white text-slate-600 border border-slate-100 shadow-sm hover:bg-slate-50'
-                }`}
-              >
-                <cat.icon size={16} className={isActive ? "text-white" : "text-slate-400"} />
-                <span className="text-xs font-bold">{cat.name}</span>
-              </button>
-            )
-          })}
+        <div className="bg-amber-50 border border-amber-200/80 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider">Coming Soon</span>
         </div>
-      </section>
+      </header>
 
-      {/* Asset Matrix */}
-      <section className="mt-4 px-4 space-y-4">
-        <div className="flex items-end justify-between px-1 mb-2">
-          <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">ASSET MATRIX</h2>
-          <button className="text-[10px] font-bold text-[#007AFF] flex items-center gap-1 active:opacity-70">
-             <LayoutGrid size={12} /> Grid view
-          </button>
-        </div>
-
-        {filtered.length === 0 ? (
-           <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 flex flex-col items-center">
-             <Package className="w-12 h-12 text-slate-200 mb-4" />
-             <h3 className="text-lg font-black text-slate-400 uppercase">No Products Found</h3>
-           </div>
-        ) : (
-          <div className="space-y-4">
-            <AnimatePresence>
-              {filtered.map((prod, i) => {
-                const q = quantities[prod.id] || 1;
-                // Use a fallback image based on index if the DB doesn't have an image_url
-                const imageUrl = prod.image_url || fallbackImages[i % fallbackImages.length];
-                
-                return (
-                  <motion.div
-                    key={prod.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white rounded-[2rem] p-4 flex gap-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.03)] border border-slate-100"
-                  >
-                    {/* Image Column */}
-                    <div className="w-32 h-36 bg-slate-50 rounded-2xl relative overflow-hidden shrink-0 flex items-center justify-center p-2">
-                       <button className="absolute top-2 right-2 w-6 h-6 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm z-10 active:scale-90 transition-transform">
-                          <Heart size={12} className="text-slate-400" />
-                       </button>
-                       <img src={imageUrl} alt={prod.name} className="w-full h-full object-contain mix-blend-multiply" />
-                    </div>
-
-                    {/* Details Column */}
-                    <div className="flex-1 min-w-0 flex flex-col py-1">
-                      <div className="flex justify-between items-start gap-2">
-                        <h3 className="text-xs font-black uppercase text-slate-900 leading-tight tracking-tight mt-1">
-                          {prod.name}
-                        </h3>
-                        <div className="flex flex-col items-end shrink-0">
-                          <span className="text-sm font-black text-slate-900">₹{Number(prod.price).toLocaleString()}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-end mt-0.5">
-                         <span className="text-[7px] text-slate-400 leading-none">Inclusive of all taxes</span>
-                      </div>
-
-                      <p className="text-[9px] text-slate-500 leading-snug mt-2 line-clamp-2 pr-4">
-                        {prod.description || `High performance ${prod.category?.toLowerCase() || 'item'} ready for immediate deployment and rugged use.`}
-                      </p>
-
-                      <div className="flex items-center gap-2 mt-3">
-                        <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md">
-                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                          <span className="text-[7px] font-bold text-slate-600 tracking-wider">IN STOCK</span>
-                        </div>
-                        <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md">
-                          <ShieldCheck size={8} className="text-slate-400" />
-                          <span className="text-[7px] font-bold text-slate-600 tracking-wider">1 YEAR WARRANTY</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-auto pt-4 flex items-center justify-between">
-                         <div className="flex items-center bg-slate-50 rounded-full border border-slate-100 p-0.5">
-                            <button onClick={() => handleUpdateQuantity(prod.id, -1)} className="w-7 h-7 flex items-center justify-center text-slate-500 active:bg-slate-200 rounded-full transition-colors">
-                               <Minus size={12} />
-                            </button>
-                            <span className="text-[10px] font-bold w-4 text-center">{q}</span>
-                            <button onClick={() => handleUpdateQuantity(prod.id, 1)} className="w-7 h-7 flex items-center justify-center text-slate-500 active:bg-slate-200 rounded-full transition-colors">
-                               <Plus size={12} />
-                            </button>
-                         </div>
-                         
-                         <button 
-                            onClick={() => {
-                              // Add multiple items if quantity > 1 (mocking logic for context)
-                              for(let k=0; k<q; k++) addItem(prod);
-                            }}
-                            className="w-10 h-10 bg-[#007AFF] text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 active:scale-90 transition-transform"
-                          >
-                            <ShoppingCart size={16} className="fill-current" />
-                         </button>
-                      </div>
-
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </div>
-        )}
-      </section>
-
-      {/* Blue Features Strip */}
-      <section className="mt-8 px-4">
-         <div className="bg-[#007AFF] rounded-2xl p-4 flex justify-between items-center shadow-md shadow-blue-500/20 divide-x divide-blue-400/50 overflow-x-auto hide-scrollbar">
-            <div className="flex items-center gap-2 px-3 min-w-fit">
-               <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shrink-0">
-                 <ShieldCheck size={16} className="text-[#007AFF] fill-current opacity-20" />
-                 <ShieldCheck size={16} className="text-[#007AFF] absolute" />
-               </div>
-               <div className="flex flex-col">
-                 <span className="text-[8px] font-bold text-white">Secure</span>
-                 <span className="text-[8px] text-blue-100">Payments</span>
-               </div>
-            </div>
-            
-            <div className="flex items-center gap-2 px-3 min-w-fit">
-               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0">
-                 <Package size={16} className="text-white fill-white" />
-               </div>
-               <div className="flex flex-col">
-                 <span className="text-[8px] font-bold text-white">Verified</span>
-                 <span className="text-[8px] text-blue-100">Products</span>
-               </div>
-            </div>
-
-            <div className="flex items-center gap-2 px-3 min-w-fit">
-               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0">
-                 <Truck size={16} className="text-white" />
-               </div>
-               <div className="flex flex-col">
-                 <span className="text-[8px] font-bold text-white">Fast</span>
-                 <span className="text-[8px] text-blue-100">Delivery</span>
-               </div>
-            </div>
-
-            <div className="flex items-center gap-2 px-3 min-w-fit">
-               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0">
-                 <Headphones size={16} className="text-white" />
-               </div>
-               <div className="flex flex-col">
-                 <span className="text-[8px] font-bold text-white">24/7</span>
-                 <span className="text-[8px] text-blue-100">Support</span>
-               </div>
-            </div>
-         </div>
-      </section>
-
-      {/* Custom Supply Plan CTA */}
-      <section className="mt-8 px-4 mb-8">
-        <div className="bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 relative overflow-hidden min-h-[160px] flex items-center shadow-sm">
-          <div className="absolute -left-6 -bottom-0 w-44 h-52 z-10 pointer-events-none">
-             <img src="/custom_service_mechanic_3d.png" alt="Expert" className="w-full h-full object-contain object-bottom drop-shadow-xl" />
+      {/* 2. Top "COMING SOON" Hero Banner Card */}
+      <section className="px-4 mb-6">
+        <div className="relative bg-gradient-to-br from-[#0B409C] via-[#0052D4] to-[#4364F7] rounded-3xl p-6 sm:p-8 text-white overflow-hidden shadow-xl min-h-[220px] flex flex-col justify-between">
+          
+          {/* Diagonal Orange Ribbon */}
+          <div className="absolute -right-8 top-7 rotate-45 bg-gradient-to-r from-[#FF9900] to-[#FF5500] text-white font-black text-[10px] uppercase tracking-widest px-10 py-1.5 shadow-xl z-20 pointer-events-none">
+            COMING SOON
           </div>
 
-          <div className="relative z-10 space-y-2 max-w-[55%] ml-auto text-right flex flex-col items-end">
-            <h2 className="text-lg font-black text-slate-900 leading-[1.1] tracking-tight">
-              Need a Custom Supply Plan?
+          <div className="relative z-10 max-w-[65%] sm:max-w-[70%] space-y-2">
+            <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white text-[9px] font-extrabold uppercase tracking-widest border border-white/30">
+              <Sparkles size={12} className="text-amber-300 fill-amber-300" />
+              <span>Official Hardware Store</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-none pt-1">
+              Store Is Opening Soon!
             </h2>
-            <p className="text-[9px] text-slate-600 leading-relaxed">
-              Talk to our experts and get the right equipment for your mission.
+
+            <p className="text-[10px] sm:text-xs text-blue-100 font-medium leading-relaxed max-w-[260px] pt-1">
+              Direct factory pricing on genuine spare parts, electrical items, plumbing tools, and repair equipment.
             </p>
-            <Link href="/services" className="bg-white text-slate-900 px-4 py-2.5 rounded-full text-[8px] font-bold uppercase tracking-wider mt-2 flex items-center gap-2 hover:bg-slate-50 active:scale-95 transition-all shadow-sm border border-slate-100">
-              TALK TO AN EXPERT <ArrowRight size={12} className="text-slate-900" />
-            </Link>
+
+            {/* Notification Email Form */}
+            <div className="pt-3">
+              {notified ? (
+                <div className="bg-white/20 backdrop-blur-md border border-white/40 p-2.5 rounded-2xl inline-flex items-center gap-2 text-white text-xs font-bold shadow-md">
+                  <CheckCircle2 size={16} className="text-emerald-300" />
+                  <span>You're on the early access launch list!</span>
+                </div>
+              ) : (
+                <form onSubmit={handleNotifySubmit} className="flex items-center gap-2 max-w-sm">
+                  <input 
+                    type="email" 
+                    placeholder="Enter email for launch notification"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="bg-white/15 border border-white/30 text-white placeholder-blue-200 text-xs px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-white/50 flex-1 min-w-0 backdrop-blur-md"
+                  />
+                  <button 
+                    type="submit"
+                    className="bg-white text-[#007AFF] hover:bg-blue-50 text-xs font-black px-4 py-2.5 rounded-full shadow-md active:scale-95 transition-all shrink-0 flex items-center gap-1"
+                  >
+                    <span>Notify Me</span>
+                    <Bell size={13} />
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
+
+          {/* 3D Storefront Graphic on Right */}
+          <div className="absolute right-0 -bottom-2 w-40 sm:w-56 h-40 sm:h-56 pointer-events-none drop-shadow-2xl z-10 flex items-end justify-end">
+            <img src="/merchant_storefront_3d.png" alt="Hardware Store" className="w-full h-full object-contain" />
+          </div>
+
+        </div>
+      </section>
+
+      {/* 3. Featured Categories Grid */}
+      <section className="px-4 mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">FEATURED CATEGORIES</h3>
+          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">Launch Preview</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {categories.map((cat) => (
+            <div 
+              key={cat.name}
+              className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs flex flex-col justify-between min-h-[100px] relative overflow-hidden group hover:border-blue-200 transition-all"
+            >
+              <div className="w-9 h-9 bg-blue-50 text-[#007AFF] rounded-xl flex items-center justify-center shrink-0 mb-2">
+                <cat.icon size={18} />
+              </div>
+              <div>
+                <h4 className="text-xs font-black text-slate-900 tracking-tight">{cat.name}</h4>
+                <p className="text-[9px] text-slate-400 font-medium mt-0.5">{cat.count}</p>
+              </div>
+
+              <span className="absolute top-2 right-2 text-[7px] font-extrabold uppercase bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                SOON
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. Upcoming Products Showcase */}
+      <section className="px-4 mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">HARDWARE PREVIEW</h3>
+          <span className="text-[10px] sm:text-xs font-bold text-slate-400">Direct From Manufacturers</span>
+        </div>
+
+        <div className="space-y-3">
+          {upcomingProducts.map((prod) => (
+            <div 
+              key={prod.id}
+              className="bg-white rounded-3xl p-4 border border-slate-100 shadow-xs flex items-center justify-between gap-4"
+            >
+              <div className="w-20 h-20 bg-slate-50 rounded-2xl overflow-hidden shrink-0 border border-slate-100 p-1">
+                <img src={prod.image} alt={prod.name} className="w-full h-full object-cover rounded-xl" />
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="bg-blue-50 text-[#007AFF] text-[8px] font-black uppercase px-2 py-0.5 rounded-full">
+                    {prod.tag}
+                  </span>
+                  <span className="text-[9px] text-slate-400 font-medium truncate">{prod.category}</span>
+                </div>
+                <h4 className="text-xs font-black text-slate-900 tracking-tight line-clamp-1">
+                  {prod.name}
+                </h4>
+                <p className="text-sm font-black text-[#007AFF]">{prod.price}</p>
+              </div>
+
+              <button 
+                disabled
+                className="bg-slate-100 text-slate-400 text-[10px] font-extrabold px-3.5 py-2 rounded-full cursor-not-allowed uppercase tracking-wider shrink-0"
+              >
+                Notify
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 5. Store Benefits Bar */}
+      <section className="px-4 mb-6">
+        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div className="space-y-1 flex flex-col items-center">
+            <div className="w-9 h-9 bg-blue-50 text-[#007AFF] rounded-2xl flex items-center justify-center">
+              <ShieldCheck size={18} />
+            </div>
+            <h5 className="text-[9px] font-black text-slate-900 uppercase">100% Genuine</h5>
+            <p className="text-[8px] text-slate-400">Direct factory warranty</p>
+          </div>
+
+          <div className="space-y-1 flex flex-col items-center">
+            <div className="w-9 h-9 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
+              <Truck size={18} />
+            </div>
+            <h5 className="text-[9px] font-black text-slate-900 uppercase">Same-Day Delivery</h5>
+            <p className="text-[8px] text-slate-400">Delivered within 60 mins</p>
+          </div>
+
+          <div className="space-y-1 flex flex-col items-center">
+            <div className="w-9 h-9 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center">
+              <ShoppingCart size={18} />
+            </div>
+            <h5 className="text-[9px] font-black text-slate-900 uppercase">Wholesale Prices</h5>
+            <p className="text-[8px] text-slate-400">Up to 30% savings</p>
+          </div>
+
+          <div className="space-y-1 flex flex-col items-center">
+            <div className="w-9 h-9 bg-orange-50 text-amber-500 rounded-2xl flex items-center justify-center">
+              <Headphones size={18} />
+            </div>
+            <h5 className="text-[9px] font-black text-slate-900 uppercase">Expert Assistance</h5>
+            <p className="text-[8px] text-slate-400">Tool recommendations</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Back to Services CTA */}
+      <section className="px-4 mb-4">
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl p-5 text-white flex items-center justify-between gap-4 shadow-lg">
+          <div className="space-y-1 max-w-[65%]">
+            <h4 className="text-sm font-black tracking-tight">Need Urgent Maintenance Service?</h4>
+            <p className="text-[10px] text-slate-300 font-medium">Book certified technicians for immediate on-site repair.</p>
+          </div>
+
+          <Link 
+            href="/services/service" 
+            className="bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-full shadow-md flex items-center gap-1 active:scale-95 transition-all shrink-0"
+          >
+            <span>Book Service</span>
+            <ArrowRight size={13} />
+          </Link>
         </div>
       </section>
 
