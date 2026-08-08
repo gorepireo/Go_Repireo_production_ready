@@ -117,29 +117,42 @@ export default function ServiceBooking() {
     const startOtp = Math.floor(1000 + Math.random() * 9000).toString();
     const completionOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    const { data, error } = await insforge.database
+    let insertPayload: any = {
+      user_email: user?.email,
+      service_name: formData.category,
+      status: 'pending',
+      payment_status: payStatus,
+      payment_method: payMethod,
+      payment_id: payId || null,
+      total_price: estimatedPrice,
+      details: { 
+        ...formData, 
+        payment_method: payMethod, 
+        items: [{ type: 'service', name: formData.category }], 
+        estimation,
+        start_otp: startOtp,
+        completion_otp: payMethod === 'cash' ? null : completionOtp
+      },
+      lat: formData.lat || (12.9716 + (Math.random() - 0.5) * 0.1),
+      lng: formData.lng || (77.5946 + (Math.random() - 0.5) * 0.1),
+      order_type: 'direct_service'
+    };
+
+    let { data, error } = await insforge.database
       .from('orders')
-      .insert([{
-        user_email: user?.email,
-        service_name: formData.category,
-        status: 'pending',
-        payment_status: payStatus,
-        payment_method: payMethod,
-        payment_id: payId || null,
-        total_price: estimatedPrice,
-        details: { 
-          ...formData, 
-          payment_method: payMethod, 
-          items: [{ type: 'service', name: formData.category }], 
-          estimation,
-          start_otp: startOtp,
-          completion_otp: payMethod === 'cash' ? null : completionOtp
-        },
-        lat: formData.lat || (12.9716 + (Math.random() - 0.5) * 0.1),
-        lng: formData.lng || (77.5946 + (Math.random() - 0.5) * 0.1),
-        order_type: 'direct_service'
-      }])
+      .insert([insertPayload])
       .select();
+
+    if (error && (error.message?.includes('payment_method') || error.message?.includes('schema cache'))) {
+      delete insertPayload.payment_method;
+      delete insertPayload.payment_status;
+      const res = await insforge.database
+        .from('orders')
+        .insert([insertPayload])
+        .select();
+      data = res.data;
+      error = res.error;
+    }
 
     if (error) {
       throw error;
