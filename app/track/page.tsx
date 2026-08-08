@@ -15,9 +15,19 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
 import SkeletonLoader from '@/components/SkeletonLoader';
+
+const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoogleMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-slate-100 animate-pulse rounded-2xl flex items-center justify-center text-slate-400 text-xs font-bold">
+      Loading Real Google Maps Tile...
+    </div>
+  )
+});
 
 export default function TrackPage() {
   const { user } = useAuth();
@@ -165,50 +175,16 @@ export default function TrackPage() {
             </span>
           </div>
 
-          {/* Interactive Map Visual */}
-          <div className="relative w-full h-44 sm:h-52 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60 shadow-inner">
-            <img 
-              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800" 
-              alt="Map Route" 
-              className="w-full h-full object-cover opacity-85" 
+          {/* Interactive Map Visual using Real Google Map Tiles */}
+          <div className="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60 shadow-inner">
+            <LiveTrackingGoogleMap 
+              technicianLat={order?.lat ? Number(order.lat) - 0.015 : 26.7620}
+              technicianLng={order?.lng ? Number(order.lng) + 0.018 : 79.0320}
+              userLat={order?.lat ? Number(order.lat) : 26.7810}
+              userLng={order?.lng ? Number(order.lng) : 79.0120}
+              technicianName="Rohit Sharma"
+              distanceKm="2.4"
             />
-
-            {/* Route Overlay Line SVG */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 200">
-              <path 
-                d="M 90 140 L 175 75 L 310 35" 
-                fill="none" 
-                stroke="#007AFF" 
-                strokeWidth="4" 
-                strokeLinecap="round" 
-                strokeDasharray="6 4"
-                className="animate-pulse"
-              />
-            </svg>
-
-            {/* Destination House Pin */}
-            <div className="absolute top-6 right-16 flex flex-col items-center">
-              <div className="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                🏠
-              </div>
-            </div>
-
-            {/* Moving Technician Pin */}
-            <div className="absolute top-14 left-40 flex flex-col items-center">
-              <div className="w-9 h-9 bg-[#007AFF] text-white rounded-full p-0.5 shadow-lg border-2 border-white flex items-center justify-center overflow-hidden">
-                <img src="/hero_technician_banner.jpg" className="w-full h-full object-cover rounded-full" />
-              </div>
-              <span className="bg-slate-900/90 text-white text-[8px] font-bold px-2 py-0.5 rounded-full mt-1 backdrop-blur-xs">
-                Rohit • 2.4 km away
-              </span>
-            </div>
-
-            {/* User Start Pin */}
-            <div className="absolute bottom-10 left-16 flex flex-col items-center">
-              <div className="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md border-2 border-white">
-                📍
-              </div>
-            </div>
           </div>
 
           {/* Telemetry Metrics Row */}
