@@ -97,65 +97,74 @@ export default function TrackPage() {
         </button>
       </header>
 
-      {/* 2. Top Order Card (Light Blue Gradient) */}
+      {/* 2. Top Order Card (Light Blue Gradient matching Mockup) */}
       <section className="px-4 mb-5">
-        <div className="relative bg-gradient-to-br from-[#EEF5FF] via-[#E2EEFF] to-[#D5E5FF] rounded-3xl p-5 sm:p-6 border border-blue-100/70 shadow-xs overflow-hidden">
+        <div className="relative bg-gradient-to-r from-[#EFF4FF] via-[#E7F1FF] to-[#DBEAFF] rounded-3xl p-5 sm:p-6 border border-blue-100/60 shadow-xs overflow-hidden min-h-[180px] sm:min-h-[200px]">
           
-          {/* Order Data Left */}
-          <div className="space-y-3 max-w-[62%] sm:max-w-[65%]">
+          {/* Background AC Repair Image Fade on Right */}
+          <div className="absolute right-0 top-0 bottom-0 w-[55%] pointer-events-none flex items-center justify-end overflow-hidden">
+            <img 
+              src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=600" 
+              alt="AC Service Background" 
+              className="w-full h-full object-cover opacity-35 mix-blend-multiply rounded-r-3xl"
+            />
+          </div>
+
+          {/* Order Info Left */}
+          <div className="relative z-10 space-y-3 max-w-[60%] sm:max-w-[62%]">
             <div>
-              <span className="text-[9px] font-medium text-slate-500 block">Order ID</span>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+              <span className="text-[10px] font-medium text-slate-400 block">Order ID</span>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
                 {orderIdText}
               </h2>
-              <span className="bg-[#007AFF]/20 text-[#007AFF] text-[9px] font-extrabold px-2.5 py-0.5 rounded-full inline-block mt-1">
+              <span className="bg-[#DCEBFF] text-[#007AFF] text-[10px] font-extrabold px-3 py-1 rounded-full inline-flex items-center gap-1.5 mt-1.5 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-[#007AFF] animate-pulse"></span>
                 In Progress
               </span>
             </div>
 
-            <div>
-              <span className="text-[9px] font-medium text-slate-500 block">Service</span>
-              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
-                <Snowflake size={14} className="text-[#007AFF]" />
+            <div className="space-y-2 pt-1">
+              <div className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Snowflake size={16} className="text-[#007AFF] shrink-0" />
                 <span>{serviceName}</span>
               </div>
-            </div>
 
-            <div>
-              <span className="text-[9px] font-medium text-slate-500 block">Scheduled Time</span>
-              <p className="text-xs font-black text-slate-900 mt-0.5">
-                Today, 3:00 PM - 5:00 PM
-              </p>
+              <div className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Clock size={16} className="text-[#007AFF] shrink-0" />
+                <span>Today, 3:00 PM - 5:00 PM</span>
+              </div>
             </div>
           </div>
 
-          {/* Technician Image & Floating Card Right */}
-          <div className="absolute right-0 bottom-0 top-0 w-[42%] max-w-[190px] sm:max-w-[240px] pointer-events-none flex items-end justify-end">
-            <img 
-              src="/hero_technician_banner.jpg" 
-              alt="Rohit Sharma" 
-              className="w-full h-full object-cover object-top rounded-r-3xl"
-            />
-          </div>
+          {/* Floating White Expert Card (Bottom Right) */}
+          <div className="absolute bottom-3 right-3 sm:right-4 z-20 bg-white p-3 sm:p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-xl flex items-center gap-3 min-w-[210px] sm:min-w-[240px]">
+            {/* Circular Expert Avatar */}
+            <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-2xs">
+              <img 
+                src="/hero_technician_banner.jpg" 
+                alt="Rohit Sharma" 
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
 
-          {/* Floating White Card for Technician Info */}
-          <div className="absolute bottom-3 right-3 z-10 bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white text-slate-900 shadow-md flex items-center justify-between gap-3 min-w-[150px]">
-            <div className="space-y-0.5">
-              <span className="text-[8px] font-semibold text-slate-400 block">Your Expert</span>
-              <h3 className="text-xs font-black text-slate-900 block leading-tight">Rohit Sharma</h3>
-              <div className="flex items-center gap-1 text-[9px] font-bold text-slate-700 pt-0.5">
-                <Star size={10} className="fill-amber-400 text-amber-400" />
+            {/* Expert Details */}
+            <div className="space-y-0.5 flex-1 min-w-0">
+              <span className="text-[9px] font-medium text-slate-400 block">Your Expert</span>
+              <h3 className="text-xs sm:text-sm font-black text-slate-900 block leading-tight truncate">Rohit Sharma</h3>
+              <div className="flex items-center gap-1 text-[10px] font-bold text-slate-700 pt-0.5">
+                <Star size={11} className="fill-amber-400 text-amber-400" />
                 <span>4.8</span>
                 <span className="text-slate-400 font-normal">(230 reviews)</span>
               </div>
             </div>
 
+            {/* Phone Button */}
             <a 
               href="tel:+918679245568" 
-              className="w-8 h-8 bg-[#007AFF] hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
+              className="w-10 h-10 bg-[#007AFF] hover:bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
               aria-label="Call Expert"
             >
-              <Phone size={14} className="fill-current" />
+              <Phone size={16} className="fill-current" />
             </a>
           </div>
 
