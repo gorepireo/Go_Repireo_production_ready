@@ -118,6 +118,7 @@ export default function ServiceBooking() {
     const completionOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
     let insertPayload: any = {
+      customer_id: user?.id || null,
       user_email: user?.email,
       service_name: formData.category,
       status: 'pending',
