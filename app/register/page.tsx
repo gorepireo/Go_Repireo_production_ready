@@ -4,10 +4,39 @@ import { useState, useEffect, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Navigation, Lock, ShieldCheck, ArrowRight, Eye, EyeOff, ArrowLeft, Bell, ChevronRight, Check, User, Mail, Phone, Flag, Building2, MapPin, Send } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  Navigation, 
+  Lock, 
+  ShieldCheck, 
+  ArrowRight, 
+  Eye, 
+  EyeOff, 
+  ArrowLeft, 
+  Bell, 
+  ChevronRight, 
+  Check, 
+  User, 
+  Mail, 
+  Phone, 
+  Flag, 
+  Building2, 
+  MapPin, 
+  Send,
+  Wrench,
+  Sparkles
+} from 'lucide-react';
 import Link from 'next/link';
+import { classifyWorkerCategories } from '@/lib/workerCategoryClassifier';
 
 type Role = 'user' | 'worker' | 'shopkeeper';
+
+const CATEGORIES_LIST = [
+  { id: 'Plumbing', label: 'Plumbing' },
+  { id: 'Electrician', label: 'Electrician' },
+  { id: 'Cleaning', label: 'Cleaning' },
+  { id: 'Repair & Services', label: 'Repair & Services' }
+];
 
 function RegisterForm() {
   const router = useRouter();
@@ -16,6 +45,7 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Form State
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,11 +58,14 @@ function RegisterForm() {
     lat: null as number | null,
     lng: null as number | null,
     otp: '',
-    category: '',
     experience: '',
     skills: '',
     shopName: '',
   });
+
+  // Multi-select categories for workers
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [repairDescription, setRepairDescription] = useState('');
 
   const [detecting, setDetecting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -105,35 +138,35 @@ function RegisterForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Toggle Category Multi-select
+  const toggleCategory = (catId: string) => {
+    if (selectedCategories.includes(catId)) {
+      setSelectedCategories(selectedCategories.filter(c => c !== catId));
+    } else {
+      setSelectedCategories([...selectedCategories, catId]);
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    try {
-      if (role === 'shopkeeper') {
-        const { error: shopError } = await insforge.database.from('shop_applications').insert({
-          shop_name: formData.shopName,
-          owner_name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.area,
-          password: formData.password,
-          status: 'pending',
-          pincode: formData.pincode,
-          state: formData.state,
-          district: formData.district,
-          area: formData.area,
-          lat: formData.lat,
-          lng: formData.lng
-        });
-        if (shopError) throw shopError;
-        
-        alert('Shop application submitted successfully! We will contact you soon.');
-        router.push('/login');
+    // Validation for Worker role
+    if (role === 'worker') {
+      if (selectedCategories.length === 0) {
+        setError('Please select at least one service category.');
+        setLoading(false);
         return;
       }
+      if (selectedCategories.includes('Repair & Services') && !repairDescription.trim()) {
+        setError('Please describe your repair skills in the description box.');
+        setLoading(false);
+        return;
+      }
+    }
 
+    try {
       const { data, error: signUpError } = await insforge.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -178,6 +211,9 @@ function RegisterForm() {
         const finalRole = isAdmin ? 'admin' : role;
         const finalStatus = isAdmin ? 'active' : (role === 'user' ? 'active' : 'pending_approval');
 
+        // AI Categorization & Token Extraction
+        const classification = classifyWorkerCategories(selectedCategories, repairDescription);
+
         const { error: userTableError } = await insforge.database.from('users').insert({
           id: userId,
           email: formData.email,
@@ -191,76 +227,37 @@ function RegisterForm() {
           lat: formData.lat,
           lng: formData.lng,
           status: finalStatus,
-          email_verified: true
+          email_verified: true,
+          specializations: role === 'worker' ? selectedCategories : null,
+          repair_description: role === 'worker' ? repairDescription : null,
+          category_tokens: role === 'worker' ? classification.categoryTokens : null
         });
 
         if (userTableError) throw userTableError;
 
-        if (isAdmin) {
-            // Skip further worker/shop application logic for admin
-        } else if (role === 'worker') {
-          const { error: workerError } = await insforge.database.from('worker_applications').insert({
+        if (role === 'worker') {
+          await insforge.database.from('worker_applications').insert({
             app_id: userId, 
             from_name: formData.name,
             email: formData.email,
             mobile: formData.phone,
-            service: formData.category,
+            service: selectedCategories.join(', '),
             experience: parseInt(formData.experience) || 0,
-            other_skills: formData.skills,
+            other_skills: repairDescription,
+            specializations: selectedCategories,
+            category_tokens: classification.categoryTokens,
             state: formData.state,
             district: formData.district,
             pincode: formData.pincode,
             address: formData.area,
             password: formData.password
           });
-          if (workerError) throw workerError;
-        } else if (role === 'shopkeeper') {
-          const { error: shopError } = await insforge.database.from('shop_applications').insert({
-            shop_name: formData.shopName,
-            owner_name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            address: formData.area,
-            password: formData.password,
-            status: 'pending'
-          });
-          if (shopError) throw shopError;
         }
 
-        const profileData: any = {
-          role,
-          status: role === 'user' ? 'active' : 'pending_approval',
-          phone: formData.phone,
-          address: {
-            state: formData.state,
-            district: formData.district,
-            area: formData.area,
-            pincode: formData.pincode,
-            lat: formData.lat,
-            lng: formData.lng
-          }
-        };
-
-        if (role === 'worker') {
-          profileData.worker_data = {
-            category: formData.category,
-            experience: formData.experience,
-            skills: formData.skills,
-          };
-        } else if (role === 'shopkeeper') {
-          profileData.shop_data = {
-            shop_name: formData.shopName,
-            category: formData.category,
-          };
-        }
-
-        const { error: profileError } = await insforge.auth.setProfile(profileData);
-        if (profileError) throw profileError;
-
-        router.push('/login?registered=true');
+        router.push('/login');
       }
     } catch (err: any) {
-      setError(err.message || 'Verification failed. Please try again.');
+      setError(err.message || 'Verification failed. Please check OTP.');
     } finally {
       setLoading(false);
     }
@@ -268,35 +265,26 @@ function RegisterForm() {
 
   const handleResendOtp = async () => {
     setLoading(true);
-    setError('');
     try {
-      const { error: resendError } = await insforge.auth.resendVerificationEmail({
-        email: formData.email
+      await insforge.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name
       });
-      if (resendError) throw resendError;
-      alert('Verification code resent to your email.');
+      alert('Verification OTP resent to ' + formData.email);
     } catch (err: any) {
-      setError(err.message || 'Failed to resend code. Please try again.');
+      setError('Resend failed: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F5FA] pb-24 relative overflow-hidden">
-      {/* Background soft gradients */}
-      <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-[#E6F0FA] to-[#F0F5FA] z-0 pointer-events-none">
-         <div className="absolute top-40 -left-20 w-96 h-96 bg-white/40 rounded-full blur-3xl"></div>
-         <div className="absolute top-20 -right-20 w-80 h-80 bg-blue-100/50 rounded-full blur-3xl"></div>
-      </div>
-
-      {/* Navbar Area */}
-      <div className="relative z-10 px-4 pt-6 flex justify-between items-center mb-6">
-         <Link href="/login" className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm hover:bg-slate-50 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-slate-700" />
-         </Link>
-         
-         <div className="flex flex-col items-center">
+    <div className="min-h-screen bg-[#F0F5FA] text-[#0F172A] py-8 relative overflow-hidden font-sans">
+      
+      {/* Top Bar Header */}
+      <div className="relative z-10 max-w-4xl mx-auto px-4 flex items-center justify-between mb-8">
+         <div className="flex items-center gap-2">
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md p-1.5 mb-1">
                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
@@ -309,29 +297,25 @@ function RegisterForm() {
          <div className="flex items-center gap-2">
             <div className="relative w-10 h-10 flex items-center justify-center">
                <Bell className="w-5 h-5 text-slate-700" />
-               <div className="absolute top-1 right-2 w-3.5 h-3.5 bg-[#FF9500] border-2 border-[#F0F5FA] rounded-full flex items-center justify-center">
-                 <span className="text-[6px] text-white font-bold">3</span>
-               </div>
             </div>
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-slate-200">
-               {/* Dummy Avatar */}
                <img src="https://i.pravatar.cc/150?img=11" alt="Avatar" className="w-full h-full object-cover" />
             </div>
          </div>
       </div>
 
-      {/* Hero Content */}
-      <div className="relative z-10 text-center mb-10 px-4">
-         <h1 className="text-4xl md:text-5xl font-black leading-none tracking-tight text-[#0A1629] uppercase">
+      {/* Hero Header */}
+      <div className="relative z-10 text-center mb-8 px-4">
+         <h1 className="text-3xl md:text-5xl font-black leading-none tracking-tight text-[#0A1629] uppercase">
             CREATE<br />
             <span className="text-[#007AFF]">ACCOUNT.</span>
          </h1>
          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-3">JOIN REPIREO TODAY</p>
       </div>
 
-      {/* Main Registration Card */}
-      <div className="relative z-10 px-4 max-w-2xl mx-auto">
-         <div className="bg-white rounded-[2rem] p-6 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] border border-slate-100/50">
+      {/* Form Container */}
+      <div className="relative z-10 px-4 max-w-xl mx-auto">
+         <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100/60">
             
             {/* Step Indicators */}
             <div className="flex items-center justify-center gap-2 mb-6">
@@ -345,14 +329,11 @@ function RegisterForm() {
               ))}
             </div>
 
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
                <p className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest mb-1">STEP {step} OF 3</p>
-               <h2 className="text-lg font-black uppercase tracking-tight text-[#0A1629]">
+               <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-[#0A1629]">
                  {step === 1 ? 'CHOOSE ACCOUNT TYPE' : step === 2 ? 'YOUR DETAILS' : 'VERIFY EMAIL'}
                </h2>
-               {step === 2 && (
-                 <p className="text-[9px] text-slate-500 mt-1">Please fill in your details to continue</p>
-               )}
             </div>
 
             {/* Step 1: Role Selection */}
@@ -361,75 +342,78 @@ function RegisterForm() {
                  
                  {/* Customer Card */}
                  <button 
+                   type="button"
                    onClick={() => setRole('user')}
                    className={`w-full text-left p-4 rounded-[1.5rem] flex items-center gap-4 transition-all ${
                      role === 'user' 
-                     ? 'bg-blue-50/50 border border-[#007AFF]/20 shadow-sm' 
-                     : 'bg-white border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] hover:border-slate-200'
+                     ? 'bg-blue-50/50 border-2 border-[#007AFF] shadow-sm' 
+                     : 'bg-white border border-slate-100 hover:border-slate-200'
                    }`}
                  >
-                   <div className="w-20 h-20 shrink-0 bg-[#E6F0FA] rounded-2xl overflow-hidden flex items-end justify-center pt-2 px-1 relative">
-                      <img src="/customer_3d.png" alt="Customer" className="w-[120%] h-[120%] object-cover object-bottom translate-y-1" />
+                   <div className="w-16 h-16 shrink-0 bg-[#E6F0FA] rounded-2xl overflow-hidden flex items-end justify-center p-1 relative">
+                      <img src="/customer_3d.png" alt="Customer" className="w-full h-full object-contain" />
                    </div>
                    <div className="flex-1 py-1">
-                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">CUSTOMER</h3>
-                      <p className="text-[10px] text-slate-500 leading-tight mb-2 pr-2">Book services for your home and manage your orders</p>
-                      {role === 'user' && (
-                         <div className="inline-flex items-center gap-1 bg-blue-100 text-[#007AFF] px-2 py-0.5 rounded-full">
-                           <CheckCircle2 className="w-3 h-3 fill-current text-blue-100" />
-                           <span className="text-[8px] font-bold">Recommended</span>
-                         </div>
-                      )}
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight mb-0.5">CUSTOMER</h3>
+                      <p className="text-[10px] text-slate-500 leading-tight">Book services for your home and manage orders</p>
                    </div>
-                   <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-50">
+                   <div className="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center shrink-0 border border-slate-100">
                       <ChevronRight className={`w-4 h-4 ${role === 'user' ? 'text-[#007AFF]' : 'text-slate-300'}`} />
                    </div>
                  </button>
 
                  {/* Specialist Card */}
                  <button 
+                   type="button"
                    onClick={() => setRole('worker')}
                    className={`w-full text-left p-4 rounded-[1.5rem] flex items-center gap-4 transition-all ${
                      role === 'worker' 
-                     ? 'bg-blue-50/50 border border-[#007AFF]/20 shadow-sm' 
-                     : 'bg-white border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] hover:border-slate-200'
+                     ? 'bg-blue-50/50 border-2 border-[#007AFF] shadow-sm' 
+                     : 'bg-white border border-slate-100 hover:border-slate-200'
                    }`}
                  >
-                   <div className="w-20 h-20 shrink-0 bg-slate-50 rounded-2xl flex items-center justify-center p-2">
+                   <div className="w-16 h-16 shrink-0 bg-slate-50 rounded-2xl flex items-center justify-center p-2">
                       <img src="/specialist_toolbox_3d.png" alt="Specialist" className="w-full h-full object-contain" />
                    </div>
                    <div className="flex-1 py-1">
-                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">SPECIALIST</h3>
-                      <p className="text-[10px] text-slate-500 leading-tight pr-2">Offer your services and connect with customers</p>
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight mb-0.5">SPECIALIST / WORKER</h3>
+                      <p className="text-[10px] text-slate-500 leading-tight">Offer your repair, electrical, plumbing & cleaning services</p>
                    </div>
-                   <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-50">
+                   <div className="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center shrink-0 border border-slate-100">
                       <ChevronRight className={`w-4 h-4 ${role === 'worker' ? 'text-[#007AFF]' : 'text-slate-300'}`} />
                    </div>
                  </button>
 
-                 {/* Merchant Card */}
-                 <button 
-                   disabled
-                   className="w-full text-left p-4 rounded-[1.5rem] flex items-center gap-4 transition-all bg-white border border-slate-100 opacity-60 cursor-not-allowed"
-                 >
-                   <div className="w-20 h-20 shrink-0 bg-slate-50 rounded-2xl flex items-center justify-center p-1 grayscale">
-                      <img src="/merchant_storefront_3d.png" alt="Merchant" className="w-full h-full object-contain" />
+                 {/* Shop / Merchant Card (BLURRED & UNCLICKABLE WITH COMING SOON BADGE) */}
+                 <div className="relative w-full p-4 rounded-[1.5rem] flex items-center gap-4 bg-slate-50/70 border border-slate-200/80 pointer-events-none overflow-hidden select-none">
+                   
+                   {/* Diagonal Caution Ribbon Banner */}
+                   <div className="absolute -right-7 top-4 rotate-45 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-[8px] uppercase tracking-widest px-8 py-0.5 shadow-xs z-20">
+                     COMING SOON
                    </div>
-                   <div className="flex-1 py-1">
-                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">MERCHANT</h3>
-                      <p className="text-[10px] text-slate-500 leading-tight pr-2 mb-2">Sell products and equipment on Go_Repireo platform</p>
-                      <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
-                        <span className="text-[8px] font-bold uppercase tracking-widest">Coming Soon</span>
-                      </div>
+
+                   <div className="w-16 h-16 shrink-0 bg-slate-100 rounded-2xl flex items-center justify-center p-1 filter blur-[1.5px] opacity-60">
+                      <img src="/merchant_storefront_3d.png" alt="Shopkeeper" className="w-full h-full object-contain" />
                    </div>
-                   <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-50">
-                      <Lock className="w-3 h-3 text-slate-300" />
+                   
+                   <div className="flex-1 py-1 filter blur-[0.8px] opacity-70">
+                      <h3 className="text-xs sm:text-sm font-black text-slate-700 uppercase tracking-tight mb-0.5">
+                        SHOPKEEPER / HARDWARE SUPPLY STORE
+                      </h3>
+                      <p className="text-[9.5px] text-slate-400 leading-tight">
+                        Sell hardware, spare parts, and tools on Go_Repireo
+                      </p>
                    </div>
-                 </button>
+
+                   <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 text-slate-400">
+                      <Lock size={12} />
+                   </div>
+                 </div>
 
                  <button 
+                   type="button"
                    onClick={() => setStep(2)} 
-                   className="w-full h-14 bg-[#0A1629] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors active:scale-95 mt-6"
+                   className="w-full h-12 bg-[#0A1629] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors active:scale-95 mt-6"
                  >
                    CONTINUE <ArrowRight size={14} />
                  </button>
@@ -440,153 +424,156 @@ function RegisterForm() {
             {step === 2 && (
               <motion.form initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} onSubmit={handleRegister} className="space-y-4">
                  
-                 <div className="flex items-start gap-3">
-                   <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                      <User className="w-5 h-5 text-[#007AFF]" />
-                   </div>
-                   <div className="flex-1 space-y-1">
-                     <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
-                     <input required name="name" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="Your full name" />
-                   </div>
+                 {/* Full Name */}
+                 <div className="space-y-1">
+                   <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Full Name</label>
+                   <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Your full name" />
                  </div>
                  
-                 <div className="flex items-start gap-3">
-                   <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                      <Mail className="w-5 h-5 text-[#007AFF]" />
+                 {/* Email & Phone Grid */}
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Email Address</label>
+                     <input required type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="you@example.com" />
                    </div>
-                   <div className="flex-1 space-y-1">
-                     <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
-                     <input required type="email" name="email" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="you@example.com" />
+
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Phone Number</label>
+                     <input required type="text" name="phone" value={formData.phone} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="10 digit mobile number" />
                    </div>
                  </div>
 
-                 <div className="flex items-start gap-3">
-                   <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                      <Phone className="w-5 h-5 text-[#007AFF]" />
-                   </div>
-                   <div className="flex-1 space-y-1">
-                     <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
-                     <input required type="text" name="phone" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="Enter 10 digit mobile number" />
+                 {/* Password */}
+                 <div className="space-y-1">
+                   <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Password</label>
+                   <div className="relative">
+                     <input required type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 pl-3 pr-10 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Create password" />
+                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                       {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                     </button>
                    </div>
                  </div>
 
-                 <div className="flex items-start gap-3">
-                   <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                      <Lock className="w-5 h-5 text-[#007AFF]" />
+                 {/* Location Details Grid */}
+                 <div className="grid grid-cols-2 gap-3 pt-1">
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">State</label>
+                     <input required name="state" value={formData.state} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Uttar Pradesh" />
                    </div>
-                   <div className="flex-1 space-y-1">
-                     <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password</label>
+
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">City / District</label>
+                     <input required name="district" value={formData.district} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Etawah" />
+                   </div>
+
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Pincode</label>
+                     <input required name="pincode" value={formData.pincode} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="206001" maxLength={6} />
+                   </div>
+
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Area / Landmark</label>
                      <div className="relative">
-                       <input required type={showPassword ? 'text' : 'password'} name="password" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 pl-3 pr-10 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="Create a strong password" />
-                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                         {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                       <input required name="area" value={formData.area} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 pl-3 pr-8 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Lalpura, Etawah" />
+                       <button type="button" onClick={detectLocation} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#007AFF]">
+                         <Navigation size={12} />
                        </button>
                      </div>
                    </div>
                  </div>
 
-                 {/* Location Details Grid */}
-                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-2">
-                   
-                   {/* State */}
-                   <div className="flex items-start gap-2">
-                     <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                        <Flag className="w-4 h-4 text-[#007AFF]" />
-                     </div>
-                     <div className="flex-1 min-w-0 space-y-1">
-                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">State</label>
-                       <input required name="state" value={formData.state} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="Select state" />
-                     </div>
-                   </div>
-
-                   {/* District / City */}
-                   <div className="flex items-start gap-2">
-                     <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                        <Building2 className="w-4 h-4 text-[#007AFF]" />
-                     </div>
-                     <div className="flex-1 min-w-0 space-y-1">
-                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">City</label>
-                       <input required name="district" value={formData.district} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="Select city" />
-                     </div>
-                   </div>
-
-                   {/* Pincode */}
-                   <div className="flex items-start gap-2">
-                     <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                        <MapPin className="w-4 h-4 text-[#007AFF]" />
-                     </div>
-                     <div className="flex-1 min-w-0 space-y-1">
-                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pincode</label>
-                       <input required name="pincode" value={formData.pincode} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="6 digit pincode" maxLength={6} />
-                     </div>
-                   </div>
-
-                   {/* Area */}
-                   <div className="flex items-start gap-2">
-                     <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                        <Send className="w-4 h-4 text-[#007AFF]" />
-                     </div>
-                     <div className="flex-1 min-w-0 space-y-1">
-                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Area</label>
-                       <div className="relative">
-                         <input required name="area" value={formData.area} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 pl-3 pr-8 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="Enter your area" />
-                         <button type="button" onClick={detectLocation} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#007AFF]">
-                           <Navigation size={12} />
-                         </button>
-                       </div>
-                     </div>
-                   </div>
-
-                 </div>
-
-                 {/* Conditional Fields based on role */}
-                 {role === 'shopkeeper' && (
-                   <div className="flex items-start gap-3 pt-2">
-                     <div className="w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                        <Building2 className="w-5 h-5 text-[#007AFF]" />
-                     </div>
-                     <div className="flex-1 space-y-1">
-                       <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Shop Name</label>
-                       <input required type="text" name="shopName" onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-sm font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 placeholder:text-xs shadow-sm" placeholder="Your shop name" />
-                     </div>
-                   </div>
-                 )}
-
+                 {/* WORKER MULTI-SELECT CATEGORIES & MANDATORY REPAIR DESCRIPTION BOX */}
                  {role === 'worker' && (
-                   <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-2">
-                     <div className="flex items-start gap-2">
-                       <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                          <CheckCircle2 className="w-4 h-4 text-[#007AFF]" />
-                       </div>
-                       <div className="flex-1 min-w-0 space-y-1">
-                         <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Category</label>
-                         <select name="category" onChange={handleInputChange} required className="w-full h-10 bg-white border border-slate-100 px-2 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none shadow-sm">
-                           <option value="">Select</option>
-                           <option value="Plumbing">Plumbing</option>
-                           <option value="Electrical">Electrical</option>
-                           <option value="HVAC">HVAC / AC</option>
-                         </select>
+                   <div className="space-y-4 pt-3 border-t border-slate-100">
+                     
+                     {/* Category Selection Header */}
+                     <div className="space-y-1">
+                       <label className="text-[10px] font-black text-slate-900 uppercase tracking-wider block flex items-center justify-between">
+                         <span>Select Specialization Categories (Multi-Select)</span>
+                         <span className="text-[8.5px] font-bold text-[#007AFF] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                           {selectedCategories.length} Selected
+                         </span>
+                       </label>
+
+                       {/* Multi-Select Category Pill Buttons with Modern High-contrast Typography */}
+                       <div className="grid grid-cols-2 gap-2 pt-1">
+                         {CATEGORIES_LIST.map((cat) => {
+                           const isSelected = selectedCategories.includes(cat.id);
+                           return (
+                             <button
+                               key={cat.id}
+                               type="button"
+                               onClick={() => toggleCategory(cat.id)}
+                               className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all active:scale-95 ${
+                                 isSelected
+                                   ? 'bg-blue-50/90 border-[#007AFF] text-[#007AFF] shadow-xs font-black'
+                                   : 'bg-white border-slate-200 text-slate-800 font-bold hover:border-slate-300'
+                               }`}
+                             >
+                               <span className="text-xs tracking-tight">{cat.label}</span>
+                               <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${
+                                 isSelected ? 'bg-[#007AFF] border-[#007AFF] text-white' : 'border-slate-300 bg-white'
+                               }`}>
+                                 {isSelected && <Check size={10} strokeWidth={3} />}
+                               </div>
+                             </button>
+                           );
+                         })}
                        </div>
                      </div>
-                     <div className="flex items-start gap-2">
-                       <div className="w-8 h-8 bg-blue-50/80 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                          <ShieldCheck className="w-4 h-4 text-[#007AFF]" />
-                       </div>
-                       <div className="flex-1 min-w-0 space-y-1">
-                         <label className="text-[8px] font-bold text-slate-500 uppercase tracking-widest ml-1">Experience</label>
-                         <input type="number" name="experience" onChange={handleInputChange} required className="w-full h-10 bg-white border border-slate-100 px-3 rounded-xl text-xs font-medium text-slate-900 focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400 shadow-sm" placeholder="Years" />
-                       </div>
+
+                     {/* Experience Field */}
+                     <div className="space-y-1">
+                       <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Years of Experience</label>
+                       <input 
+                         type="number" 
+                         name="experience" 
+                         value={formData.experience} 
+                         onChange={handleInputChange} 
+                         required 
+                         className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" 
+                         placeholder="e.g. 5 Years" 
+                       />
                      </div>
+
+                     {/* MANDATORY REPAIR & MAINTENANCE SKILLS DESCRIPTION BOX */}
+                     {selectedCategories.includes('Repair & Services') && (
+                       <div className="space-y-1.5 p-3.5 bg-blue-50/60 rounded-2xl border border-blue-100">
+                         <div className="flex items-center justify-between">
+                           <label className="text-[10px] font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                             <Wrench size={13} className="text-[#007AFF]" />
+                             <span>Describe Repair Skills (Mandatory)</span>
+                           </label>
+                           <span className="text-[8px] font-black text-red-500 uppercase bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                             Required
+                           </span>
+                         </div>
+
+                         <textarea
+                           rows={3}
+                           required
+                           value={repairDescription}
+                           onChange={(e) => setRepairDescription(e.target.value)}
+                           placeholder="Describe your repair skills (e.g. I can repair Split AC, Inverter PCB, Washing Machine motor, Water Purifier, Geyser coil)..."
+                           className="w-full bg-white border border-slate-200 text-slate-900 text-xs p-3 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 outline-none resize-none font-medium leading-relaxed shadow-2xs"
+                         />
+
+                         <p className="text-[9px] text-blue-700 font-medium">
+                           💡 Our AI model will analyze your repair description and automatically tag your account to receive matching customer notifications.
+                         </p>
+                       </div>
+                     )}
+
                    </div>
                  )}
 
                  {error && <p className="text-[#FF3B30] text-[10px] font-bold uppercase tracking-widest p-3 bg-red-50 rounded-xl border border-red-100 mt-2">{error}</p>}
 
-                 <div className="flex gap-4 pt-6">
-                   <button type="button" onClick={() => setStep(1)} className="flex-1 h-12 bg-blue-50 text-[#007AFF] rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-100 transition-colors">
+                 <div className="flex gap-3 pt-4">
+                   <button type="button" onClick={() => setStep(1)} className="flex-1 h-11 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-colors">
                      <ArrowLeft size={14} /> BACK
                    </button>
-                   <button disabled={loading} type="submit" className="flex-[2] h-12 bg-[#007AFF] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-colors active:scale-95 shadow-md shadow-blue-500/20">
+                   <button disabled={loading} type="submit" className="flex-[2] h-11 bg-[#007AFF] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-colors active:scale-95 shadow-md shadow-blue-500/20">
                      {loading ? 'CREATING...' : 'CONTINUE'} <ArrowRight size={14} />
                    </button>
                  </div>
@@ -611,7 +598,7 @@ function RegisterForm() {
                      name="otp" 
                      value={formData.otp} 
                      onChange={handleInputChange} 
-                     className="w-full text-center text-4xl font-black tracking-[0.2em] h-20 bg-[#F8FAFC] border border-slate-100 rounded-2xl outline-none text-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20" 
+                     className="w-full text-center text-4xl font-black tracking-[0.2em] h-20 bg-[#F8FAFC] border border-slate-200 rounded-2xl outline-none text-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20" 
                      placeholder="000000" 
                      maxLength={6} 
                    />

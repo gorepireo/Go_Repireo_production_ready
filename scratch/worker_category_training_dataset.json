@@ -1,0 +1,7102 @@
+[
+  {
+    "id": 1,
+    "description": "I can repair ac and hvac with 1 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 2,
+    "description": "Expert in split ac and gas charging repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 3,
+    "description": "Trained technician for window ac and compressor, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 4,
+    "description": "Specialized in hvac and cooling coil troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 5,
+    "description": "Professional service provider for gas charging and inverter ac in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 6,
+    "description": "Main expertise: compressor and ac service, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 7,
+    "description": "Providing quick 30-minute doorstep service for cooling coil and ac installation.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 8,
+    "description": "I can repair inverter ac and ac with 8 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 9,
+    "description": "Expert in ac service and split ac repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 10,
+    "description": "Trained technician for ac installation and window ac, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 11,
+    "description": "Specialized in ac and hvac troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 12,
+    "description": "Professional service provider for split ac and gas charging in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 13,
+    "description": "Main expertise: window ac and compressor, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 14,
+    "description": "Providing quick 30-minute doorstep service for hvac and cooling coil.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 15,
+    "description": "I can repair gas charging and inverter ac with 15 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 16,
+    "description": "Expert in compressor and ac service repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 17,
+    "description": "Trained technician for cooling coil and ac installation, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 18,
+    "description": "Specialized in inverter ac and ac troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 19,
+    "description": "Professional service provider for ac service and split ac in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 20,
+    "description": "Main expertise: ac installation and window ac, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 21,
+    "description": "Providing quick 30-minute doorstep service for ac and hvac.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 22,
+    "description": "I can repair split ac and gas charging with 7 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 23,
+    "description": "Expert in window ac and compressor repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 24,
+    "description": "Trained technician for hvac and cooling coil, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 25,
+    "description": "Specialized in gas charging and inverter ac troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 26,
+    "description": "Professional service provider for compressor and ac service in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 27,
+    "description": "Main expertise: cooling coil and ac installation, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 28,
+    "description": "Providing quick 30-minute doorstep service for inverter ac and ac.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 29,
+    "description": "I can repair ac service and split ac with 14 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 30,
+    "description": "Expert in ac installation and window ac repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 31,
+    "description": "Trained technician for ac and hvac, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 32,
+    "description": "Specialized in split ac and gas charging troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 33,
+    "description": "Professional service provider for window ac and compressor in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 34,
+    "description": "Main expertise: hvac and cooling coil, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 35,
+    "description": "Providing quick 30-minute doorstep service for gas charging and inverter ac.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 36,
+    "description": "I can repair compressor and ac service with 6 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 37,
+    "description": "Expert in cooling coil and ac installation repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 38,
+    "description": "Trained technician for inverter ac and ac, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 39,
+    "description": "Specialized in ac service and split ac troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 40,
+    "description": "Professional service provider for ac installation and window ac in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 41,
+    "description": "Main expertise: ac and hvac, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 42,
+    "description": "Providing quick 30-minute doorstep service for split ac and gas charging.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 43,
+    "description": "I can repair window ac and compressor with 13 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 44,
+    "description": "Expert in hvac and cooling coil repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 45,
+    "description": "Trained technician for gas charging and inverter ac, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 46,
+    "description": "Specialized in compressor and ac service troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 47,
+    "description": "Professional service provider for cooling coil and ac installation in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 48,
+    "description": "Main expertise: inverter ac and ac, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 49,
+    "description": "Providing quick 30-minute doorstep service for ac service and split ac.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 50,
+    "description": "I can repair ac installation and window ac with 5 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 51,
+    "description": "Expert in ac and hvac repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 52,
+    "description": "Trained technician for split ac and gas charging, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 53,
+    "description": "Specialized in window ac and compressor troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 54,
+    "description": "Professional service provider for hvac and cooling coil in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 55,
+    "description": "Main expertise: gas charging and inverter ac, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 56,
+    "description": "Providing quick 30-minute doorstep service for compressor and ac service.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 57,
+    "description": "I can repair cooling coil and ac installation with 12 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 58,
+    "description": "Expert in inverter ac and ac repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 59,
+    "description": "Trained technician for ac service and split ac, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 60,
+    "description": "Specialized in ac installation and window ac troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 61,
+    "description": "Professional service provider for ac and hvac in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 62,
+    "description": "Main expertise: split ac and gas charging, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 63,
+    "description": "Providing quick 30-minute doorstep service for window ac and compressor.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 64,
+    "description": "I can repair hvac and cooling coil with 4 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 65,
+    "description": "Expert in gas charging and inverter ac repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 66,
+    "description": "Trained technician for compressor and ac service, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 67,
+    "description": "Specialized in cooling coil and ac installation troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 68,
+    "description": "Professional service provider for inverter ac and ac in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 69,
+    "description": "Main expertise: ac service and split ac, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 70,
+    "description": "Providing quick 30-minute doorstep service for ac installation and window ac.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 71,
+    "description": "I can repair ac and hvac with 11 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 72,
+    "description": "Expert in split ac and gas charging repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 73,
+    "description": "Trained technician for window ac and compressor, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 74,
+    "description": "Specialized in hvac and cooling coil troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 75,
+    "description": "Professional service provider for gas charging and inverter ac in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 76,
+    "description": "Main expertise: compressor and ac service, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 77,
+    "description": "Providing quick 30-minute doorstep service for cooling coil and ac installation.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 78,
+    "description": "I can repair inverter ac and ac with 3 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 79,
+    "description": "Expert in ac service and split ac repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 80,
+    "description": "Trained technician for ac installation and window ac, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 81,
+    "description": "Specialized in ac and hvac troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 82,
+    "description": "Professional service provider for split ac and gas charging in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 83,
+    "description": "Main expertise: window ac and compressor, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 84,
+    "description": "Providing quick 30-minute doorstep service for hvac and cooling coil.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 85,
+    "description": "I can repair gas charging and inverter ac with 10 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 86,
+    "description": "Expert in compressor and ac service repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 87,
+    "description": "Trained technician for cooling coil and ac installation, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 88,
+    "description": "Specialized in inverter ac and ac troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 89,
+    "description": "Professional service provider for ac service and split ac in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 90,
+    "description": "Main expertise: ac installation and window ac, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 91,
+    "description": "Providing quick 30-minute doorstep service for ac and hvac.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac",
+      "hvac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 92,
+    "description": "I can repair split ac and gas charging with 2 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "split ac",
+      "gas charging",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 93,
+    "description": "Expert in window ac and compressor repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "window ac",
+      "compressor",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 94,
+    "description": "Trained technician for hvac and cooling coil, installation, and component replacement.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "hvac",
+      "cooling coil",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 95,
+    "description": "Specialized in gas charging and inverter ac troubleshooting and fixing complex issues.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "gas charging",
+      "inverter ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 96,
+    "description": "Professional service provider for compressor and ac service in residential and commercial buildings.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "compressor",
+      "ac service",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 97,
+    "description": "Main expertise: cooling coil and ac installation, along with general appliance overhaul.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "cooling coil",
+      "ac installation",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 98,
+    "description": "Providing quick 30-minute doorstep service for inverter ac and ac.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "inverter ac",
+      "ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 99,
+    "description": "I can repair ac service and split ac with 9 years of experience in Etawah.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac service",
+      "split ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 100,
+    "description": "Expert in ac installation and window ac repair and emergency maintenance services.",
+    "categoryKey": "ac_repair",
+    "primaryCategories": [
+      "ac_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ac installation",
+      "window ac",
+      "ac_repair"
+    ]
+  },
+  {
+    "id": 101,
+    "description": "I can repair electrician and fuse with 1 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 102,
+    "description": "Expert in wiring and inverter repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 103,
+    "description": "Trained technician for mcb and short circuit, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 104,
+    "description": "Specialized in fuse and fan troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 105,
+    "description": "Professional service provider for inverter and tube light in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 106,
+    "description": "Main expertise: short circuit and switchboard, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 107,
+    "description": "Providing quick 30-minute doorstep service for fan and geyser wiring.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 108,
+    "description": "I can repair tube light and electrician with 8 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 109,
+    "description": "Expert in switchboard and wiring repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 110,
+    "description": "Trained technician for geyser wiring and mcb, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 111,
+    "description": "Specialized in electrician and fuse troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 112,
+    "description": "Professional service provider for wiring and inverter in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 113,
+    "description": "Main expertise: mcb and short circuit, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 114,
+    "description": "Providing quick 30-minute doorstep service for fuse and fan.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 115,
+    "description": "I can repair inverter and tube light with 15 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 116,
+    "description": "Expert in short circuit and switchboard repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 117,
+    "description": "Trained technician for fan and geyser wiring, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 118,
+    "description": "Specialized in tube light and electrician troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 119,
+    "description": "Professional service provider for switchboard and wiring in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 120,
+    "description": "Main expertise: geyser wiring and mcb, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 121,
+    "description": "Providing quick 30-minute doorstep service for electrician and fuse.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 122,
+    "description": "I can repair wiring and inverter with 7 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 123,
+    "description": "Expert in mcb and short circuit repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 124,
+    "description": "Trained technician for fuse and fan, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 125,
+    "description": "Specialized in inverter and tube light troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 126,
+    "description": "Professional service provider for short circuit and switchboard in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 127,
+    "description": "Main expertise: fan and geyser wiring, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 128,
+    "description": "Providing quick 30-minute doorstep service for tube light and electrician.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 129,
+    "description": "I can repair switchboard and wiring with 14 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 130,
+    "description": "Expert in geyser wiring and mcb repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 131,
+    "description": "Trained technician for electrician and fuse, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 132,
+    "description": "Specialized in wiring and inverter troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 133,
+    "description": "Professional service provider for mcb and short circuit in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 134,
+    "description": "Main expertise: fuse and fan, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 135,
+    "description": "Providing quick 30-minute doorstep service for inverter and tube light.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 136,
+    "description": "I can repair short circuit and switchboard with 6 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 137,
+    "description": "Expert in fan and geyser wiring repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 138,
+    "description": "Trained technician for tube light and electrician, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 139,
+    "description": "Specialized in switchboard and wiring troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 140,
+    "description": "Professional service provider for geyser wiring and mcb in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 141,
+    "description": "Main expertise: electrician and fuse, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 142,
+    "description": "Providing quick 30-minute doorstep service for wiring and inverter.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 143,
+    "description": "I can repair mcb and short circuit with 13 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 144,
+    "description": "Expert in fuse and fan repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 145,
+    "description": "Trained technician for inverter and tube light, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 146,
+    "description": "Specialized in short circuit and switchboard troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 147,
+    "description": "Professional service provider for fan and geyser wiring in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 148,
+    "description": "Main expertise: tube light and electrician, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 149,
+    "description": "Providing quick 30-minute doorstep service for switchboard and wiring.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 150,
+    "description": "I can repair geyser wiring and mcb with 5 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 151,
+    "description": "Expert in electrician and fuse repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 152,
+    "description": "Trained technician for wiring and inverter, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 153,
+    "description": "Specialized in mcb and short circuit troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 154,
+    "description": "Professional service provider for fuse and fan in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 155,
+    "description": "Main expertise: inverter and tube light, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 156,
+    "description": "Providing quick 30-minute doorstep service for short circuit and switchboard.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 157,
+    "description": "I can repair fan and geyser wiring with 12 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 158,
+    "description": "Expert in tube light and electrician repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 159,
+    "description": "Trained technician for switchboard and wiring, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 160,
+    "description": "Specialized in geyser wiring and mcb troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 161,
+    "description": "Professional service provider for electrician and fuse in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 162,
+    "description": "Main expertise: wiring and inverter, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 163,
+    "description": "Providing quick 30-minute doorstep service for mcb and short circuit.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 164,
+    "description": "I can repair fuse and fan with 4 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 165,
+    "description": "Expert in inverter and tube light repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 166,
+    "description": "Trained technician for short circuit and switchboard, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 167,
+    "description": "Specialized in fan and geyser wiring troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 168,
+    "description": "Professional service provider for tube light and electrician in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 169,
+    "description": "Main expertise: switchboard and wiring, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 170,
+    "description": "Providing quick 30-minute doorstep service for geyser wiring and mcb.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 171,
+    "description": "I can repair electrician and fuse with 11 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 172,
+    "description": "Expert in wiring and inverter repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 173,
+    "description": "Trained technician for mcb and short circuit, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 174,
+    "description": "Specialized in fuse and fan troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 175,
+    "description": "Professional service provider for inverter and tube light in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 176,
+    "description": "Main expertise: short circuit and switchboard, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 177,
+    "description": "Providing quick 30-minute doorstep service for fan and geyser wiring.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 178,
+    "description": "I can repair tube light and electrician with 3 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 179,
+    "description": "Expert in switchboard and wiring repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 180,
+    "description": "Trained technician for geyser wiring and mcb, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 181,
+    "description": "Specialized in electrician and fuse troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 182,
+    "description": "Professional service provider for wiring and inverter in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 183,
+    "description": "Main expertise: mcb and short circuit, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 184,
+    "description": "Providing quick 30-minute doorstep service for fuse and fan.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 185,
+    "description": "I can repair inverter and tube light with 10 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 186,
+    "description": "Expert in short circuit and switchboard repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 187,
+    "description": "Trained technician for fan and geyser wiring, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 188,
+    "description": "Specialized in tube light and electrician troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 189,
+    "description": "Professional service provider for switchboard and wiring in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 190,
+    "description": "Main expertise: geyser wiring and mcb, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 191,
+    "description": "Providing quick 30-minute doorstep service for electrician and fuse.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "electrician",
+      "fuse",
+      "electrical"
+    ]
+  },
+  {
+    "id": 192,
+    "description": "I can repair wiring and inverter with 2 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "wiring",
+      "inverter",
+      "electrical"
+    ]
+  },
+  {
+    "id": 193,
+    "description": "Expert in mcb and short circuit repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "mcb",
+      "short circuit",
+      "electrical"
+    ]
+  },
+  {
+    "id": 194,
+    "description": "Trained technician for fuse and fan, installation, and component replacement.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fuse",
+      "fan",
+      "electrical"
+    ]
+  },
+  {
+    "id": 195,
+    "description": "Specialized in inverter and tube light troubleshooting and fixing complex issues.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "inverter",
+      "tube light",
+      "electrical"
+    ]
+  },
+  {
+    "id": 196,
+    "description": "Professional service provider for short circuit and switchboard in residential and commercial buildings.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "short circuit",
+      "switchboard",
+      "electrical"
+    ]
+  },
+  {
+    "id": 197,
+    "description": "Main expertise: fan and geyser wiring, along with general appliance overhaul.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "fan",
+      "geyser wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 198,
+    "description": "Providing quick 30-minute doorstep service for tube light and electrician.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "tube light",
+      "electrician",
+      "electrical"
+    ]
+  },
+  {
+    "id": 199,
+    "description": "I can repair switchboard and wiring with 9 years of experience in Etawah.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "switchboard",
+      "wiring",
+      "electrical"
+    ]
+  },
+  {
+    "id": 200,
+    "description": "Expert in geyser wiring and mcb repair and emergency maintenance services.",
+    "categoryKey": "electrical",
+    "primaryCategories": [
+      "electrical",
+      "Repair & Services",
+      "Electrician"
+    ],
+    "extractedTokens": [
+      "geyser wiring",
+      "mcb",
+      "electrical"
+    ]
+  },
+  {
+    "id": 201,
+    "description": "I can repair plumber and tap with 1 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 202,
+    "description": "Expert in pipe and basin repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 203,
+    "description": "Trained technician for leakage and drainage, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 204,
+    "description": "Specialized in tap and water tank troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 205,
+    "description": "Professional service provider for basin and sanitary in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 206,
+    "description": "Main expertise: drainage and shower, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 207,
+    "description": "Providing quick 30-minute doorstep service for water tank and flush tank.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 208,
+    "description": "I can repair sanitary and plumber with 8 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 209,
+    "description": "Expert in shower and pipe repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 210,
+    "description": "Trained technician for flush tank and leakage, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 211,
+    "description": "Specialized in plumber and tap troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 212,
+    "description": "Professional service provider for pipe and basin in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 213,
+    "description": "Main expertise: leakage and drainage, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 214,
+    "description": "Providing quick 30-minute doorstep service for tap and water tank.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 215,
+    "description": "I can repair basin and sanitary with 15 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 216,
+    "description": "Expert in drainage and shower repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 217,
+    "description": "Trained technician for water tank and flush tank, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 218,
+    "description": "Specialized in sanitary and plumber troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 219,
+    "description": "Professional service provider for shower and pipe in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 220,
+    "description": "Main expertise: flush tank and leakage, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 221,
+    "description": "Providing quick 30-minute doorstep service for plumber and tap.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 222,
+    "description": "I can repair pipe and basin with 7 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 223,
+    "description": "Expert in leakage and drainage repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 224,
+    "description": "Trained technician for tap and water tank, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 225,
+    "description": "Specialized in basin and sanitary troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 226,
+    "description": "Professional service provider for drainage and shower in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 227,
+    "description": "Main expertise: water tank and flush tank, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 228,
+    "description": "Providing quick 30-minute doorstep service for sanitary and plumber.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 229,
+    "description": "I can repair shower and pipe with 14 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 230,
+    "description": "Expert in flush tank and leakage repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 231,
+    "description": "Trained technician for plumber and tap, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 232,
+    "description": "Specialized in pipe and basin troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 233,
+    "description": "Professional service provider for leakage and drainage in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 234,
+    "description": "Main expertise: tap and water tank, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 235,
+    "description": "Providing quick 30-minute doorstep service for basin and sanitary.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 236,
+    "description": "I can repair drainage and shower with 6 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 237,
+    "description": "Expert in water tank and flush tank repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 238,
+    "description": "Trained technician for sanitary and plumber, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 239,
+    "description": "Specialized in shower and pipe troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 240,
+    "description": "Professional service provider for flush tank and leakage in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 241,
+    "description": "Main expertise: plumber and tap, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 242,
+    "description": "Providing quick 30-minute doorstep service for pipe and basin.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 243,
+    "description": "I can repair leakage and drainage with 13 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 244,
+    "description": "Expert in tap and water tank repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 245,
+    "description": "Trained technician for basin and sanitary, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 246,
+    "description": "Specialized in drainage and shower troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 247,
+    "description": "Professional service provider for water tank and flush tank in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 248,
+    "description": "Main expertise: sanitary and plumber, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 249,
+    "description": "Providing quick 30-minute doorstep service for shower and pipe.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 250,
+    "description": "I can repair flush tank and leakage with 5 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 251,
+    "description": "Expert in plumber and tap repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 252,
+    "description": "Trained technician for pipe and basin, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 253,
+    "description": "Specialized in leakage and drainage troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 254,
+    "description": "Professional service provider for tap and water tank in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 255,
+    "description": "Main expertise: basin and sanitary, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 256,
+    "description": "Providing quick 30-minute doorstep service for drainage and shower.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 257,
+    "description": "I can repair water tank and flush tank with 12 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 258,
+    "description": "Expert in sanitary and plumber repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 259,
+    "description": "Trained technician for shower and pipe, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 260,
+    "description": "Specialized in flush tank and leakage troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 261,
+    "description": "Professional service provider for plumber and tap in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 262,
+    "description": "Main expertise: pipe and basin, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 263,
+    "description": "Providing quick 30-minute doorstep service for leakage and drainage.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 264,
+    "description": "I can repair tap and water tank with 4 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 265,
+    "description": "Expert in basin and sanitary repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 266,
+    "description": "Trained technician for drainage and shower, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 267,
+    "description": "Specialized in water tank and flush tank troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 268,
+    "description": "Professional service provider for sanitary and plumber in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 269,
+    "description": "Main expertise: shower and pipe, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 270,
+    "description": "Providing quick 30-minute doorstep service for flush tank and leakage.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 271,
+    "description": "I can repair plumber and tap with 11 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 272,
+    "description": "Expert in pipe and basin repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 273,
+    "description": "Trained technician for leakage and drainage, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 274,
+    "description": "Specialized in tap and water tank troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 275,
+    "description": "Professional service provider for basin and sanitary in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 276,
+    "description": "Main expertise: drainage and shower, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 277,
+    "description": "Providing quick 30-minute doorstep service for water tank and flush tank.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 278,
+    "description": "I can repair sanitary and plumber with 3 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 279,
+    "description": "Expert in shower and pipe repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 280,
+    "description": "Trained technician for flush tank and leakage, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 281,
+    "description": "Specialized in plumber and tap troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 282,
+    "description": "Professional service provider for pipe and basin in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 283,
+    "description": "Main expertise: leakage and drainage, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 284,
+    "description": "Providing quick 30-minute doorstep service for tap and water tank.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 285,
+    "description": "I can repair basin and sanitary with 10 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 286,
+    "description": "Expert in drainage and shower repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 287,
+    "description": "Trained technician for water tank and flush tank, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 288,
+    "description": "Specialized in sanitary and plumber troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 289,
+    "description": "Professional service provider for shower and pipe in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 290,
+    "description": "Main expertise: flush tank and leakage, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 291,
+    "description": "Providing quick 30-minute doorstep service for plumber and tap.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "plumber",
+      "tap",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 292,
+    "description": "I can repair pipe and basin with 2 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "pipe",
+      "basin",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 293,
+    "description": "Expert in leakage and drainage repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "leakage",
+      "drainage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 294,
+    "description": "Trained technician for tap and water tank, installation, and component replacement.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "tap",
+      "water tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 295,
+    "description": "Specialized in basin and sanitary troubleshooting and fixing complex issues.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "basin",
+      "sanitary",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 296,
+    "description": "Professional service provider for drainage and shower in residential and commercial buildings.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "drainage",
+      "shower",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 297,
+    "description": "Main expertise: water tank and flush tank, along with general appliance overhaul.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "water tank",
+      "flush tank",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 298,
+    "description": "Providing quick 30-minute doorstep service for sanitary and plumber.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "sanitary",
+      "plumber",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 299,
+    "description": "I can repair shower and pipe with 9 years of experience in Etawah.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "shower",
+      "pipe",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 300,
+    "description": "Expert in flush tank and leakage repair and emergency maintenance services.",
+    "categoryKey": "plumbing",
+    "primaryCategories": [
+      "plumbing",
+      "Plumbing"
+    ],
+    "extractedTokens": [
+      "flush tank",
+      "leakage",
+      "plumbing"
+    ]
+  },
+  {
+    "id": 301,
+    "description": "I can repair cleaning and kitchen clean with 1 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 302,
+    "description": "Expert in deep clean and bathroom clean repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 303,
+    "description": "Trained technician for sofa clean and water tank clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 304,
+    "description": "Specialized in kitchen clean and home sanitization troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 305,
+    "description": "Professional service provider for bathroom clean and pest control in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 306,
+    "description": "Main expertise: water tank clean and cleaning, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 307,
+    "description": "Providing quick 30-minute doorstep service for home sanitization and deep clean.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 308,
+    "description": "I can repair pest control and sofa clean with 8 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 309,
+    "description": "Expert in cleaning and kitchen clean repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 310,
+    "description": "Trained technician for deep clean and bathroom clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 311,
+    "description": "Specialized in sofa clean and water tank clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 312,
+    "description": "Professional service provider for kitchen clean and home sanitization in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 313,
+    "description": "Main expertise: bathroom clean and pest control, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 314,
+    "description": "Providing quick 30-minute doorstep service for water tank clean and cleaning.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 315,
+    "description": "I can repair home sanitization and deep clean with 15 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 316,
+    "description": "Expert in pest control and sofa clean repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 317,
+    "description": "Trained technician for cleaning and kitchen clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 318,
+    "description": "Specialized in deep clean and bathroom clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 319,
+    "description": "Professional service provider for sofa clean and water tank clean in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 320,
+    "description": "Main expertise: kitchen clean and home sanitization, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 321,
+    "description": "Providing quick 30-minute doorstep service for bathroom clean and pest control.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 322,
+    "description": "I can repair water tank clean and cleaning with 7 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 323,
+    "description": "Expert in home sanitization and deep clean repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 324,
+    "description": "Trained technician for pest control and sofa clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 325,
+    "description": "Specialized in cleaning and kitchen clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 326,
+    "description": "Professional service provider for deep clean and bathroom clean in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 327,
+    "description": "Main expertise: sofa clean and water tank clean, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 328,
+    "description": "Providing quick 30-minute doorstep service for kitchen clean and home sanitization.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 329,
+    "description": "I can repair bathroom clean and pest control with 14 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 330,
+    "description": "Expert in water tank clean and cleaning repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 331,
+    "description": "Trained technician for home sanitization and deep clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 332,
+    "description": "Specialized in pest control and sofa clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 333,
+    "description": "Professional service provider for cleaning and kitchen clean in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 334,
+    "description": "Main expertise: deep clean and bathroom clean, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 335,
+    "description": "Providing quick 30-minute doorstep service for sofa clean and water tank clean.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 336,
+    "description": "I can repair kitchen clean and home sanitization with 6 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 337,
+    "description": "Expert in bathroom clean and pest control repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 338,
+    "description": "Trained technician for water tank clean and cleaning, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 339,
+    "description": "Specialized in home sanitization and deep clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 340,
+    "description": "Professional service provider for pest control and sofa clean in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 341,
+    "description": "Main expertise: cleaning and kitchen clean, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 342,
+    "description": "Providing quick 30-minute doorstep service for deep clean and bathroom clean.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 343,
+    "description": "I can repair sofa clean and water tank clean with 13 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 344,
+    "description": "Expert in kitchen clean and home sanitization repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 345,
+    "description": "Trained technician for bathroom clean and pest control, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 346,
+    "description": "Specialized in water tank clean and cleaning troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 347,
+    "description": "Professional service provider for home sanitization and deep clean in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 348,
+    "description": "Main expertise: pest control and sofa clean, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 349,
+    "description": "Providing quick 30-minute doorstep service for cleaning and kitchen clean.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 350,
+    "description": "I can repair deep clean and bathroom clean with 5 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 351,
+    "description": "Expert in sofa clean and water tank clean repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 352,
+    "description": "Trained technician for kitchen clean and home sanitization, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 353,
+    "description": "Specialized in bathroom clean and pest control troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 354,
+    "description": "Professional service provider for water tank clean and cleaning in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 355,
+    "description": "Main expertise: home sanitization and deep clean, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 356,
+    "description": "Providing quick 30-minute doorstep service for pest control and sofa clean.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 357,
+    "description": "I can repair cleaning and kitchen clean with 12 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 358,
+    "description": "Expert in deep clean and bathroom clean repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 359,
+    "description": "Trained technician for sofa clean and water tank clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 360,
+    "description": "Specialized in kitchen clean and home sanitization troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 361,
+    "description": "Professional service provider for bathroom clean and pest control in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 362,
+    "description": "Main expertise: water tank clean and cleaning, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 363,
+    "description": "Providing quick 30-minute doorstep service for home sanitization and deep clean.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 364,
+    "description": "I can repair pest control and sofa clean with 4 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 365,
+    "description": "Expert in cleaning and kitchen clean repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 366,
+    "description": "Trained technician for deep clean and bathroom clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 367,
+    "description": "Specialized in sofa clean and water tank clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 368,
+    "description": "Professional service provider for kitchen clean and home sanitization in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 369,
+    "description": "Main expertise: bathroom clean and pest control, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 370,
+    "description": "Providing quick 30-minute doorstep service for water tank clean and cleaning.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 371,
+    "description": "I can repair home sanitization and deep clean with 11 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 372,
+    "description": "Expert in pest control and sofa clean repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 373,
+    "description": "Trained technician for cleaning and kitchen clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 374,
+    "description": "Specialized in deep clean and bathroom clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 375,
+    "description": "Professional service provider for sofa clean and water tank clean in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 376,
+    "description": "Main expertise: kitchen clean and home sanitization, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 377,
+    "description": "Providing quick 30-minute doorstep service for bathroom clean and pest control.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 378,
+    "description": "I can repair water tank clean and cleaning with 3 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 379,
+    "description": "Expert in home sanitization and deep clean repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 380,
+    "description": "Trained technician for pest control and sofa clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 381,
+    "description": "Specialized in cleaning and kitchen clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 382,
+    "description": "Professional service provider for deep clean and bathroom clean in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 383,
+    "description": "Main expertise: sofa clean and water tank clean, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 384,
+    "description": "Providing quick 30-minute doorstep service for kitchen clean and home sanitization.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 385,
+    "description": "I can repair bathroom clean and pest control with 10 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 386,
+    "description": "Expert in water tank clean and cleaning repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 387,
+    "description": "Trained technician for home sanitization and deep clean, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 388,
+    "description": "Specialized in pest control and sofa clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 389,
+    "description": "Professional service provider for cleaning and kitchen clean in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 390,
+    "description": "Main expertise: deep clean and bathroom clean, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 391,
+    "description": "Providing quick 30-minute doorstep service for sofa clean and water tank clean.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 392,
+    "description": "I can repair kitchen clean and home sanitization with 2 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 393,
+    "description": "Expert in bathroom clean and pest control repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "bathroom clean",
+      "pest control",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 394,
+    "description": "Trained technician for water tank clean and cleaning, installation, and component replacement.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "water tank clean",
+      "cleaning",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 395,
+    "description": "Specialized in home sanitization and deep clean troubleshooting and fixing complex issues.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "home sanitization",
+      "deep clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 396,
+    "description": "Professional service provider for pest control and sofa clean in residential and commercial buildings.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "pest control",
+      "sofa clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 397,
+    "description": "Main expertise: cleaning and kitchen clean, along with general appliance overhaul.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "cleaning",
+      "kitchen clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 398,
+    "description": "Providing quick 30-minute doorstep service for deep clean and bathroom clean.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "deep clean",
+      "bathroom clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 399,
+    "description": "I can repair sofa clean and water tank clean with 9 years of experience in Etawah.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "sofa clean",
+      "water tank clean",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 400,
+    "description": "Expert in kitchen clean and home sanitization repair and emergency maintenance services.",
+    "categoryKey": "cleaning",
+    "primaryCategories": [
+      "cleaning",
+      "Cleaning"
+    ],
+    "extractedTokens": [
+      "kitchen clean",
+      "home sanitization",
+      "cleaning"
+    ]
+  },
+  {
+    "id": 401,
+    "description": "I can repair fridge and microwave with 1 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 402,
+    "description": "Expert in refrigerator and ro purifier repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 403,
+    "description": "Trained technician for washing machine and water purifier, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 404,
+    "description": "Specialized in microwave and tv troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 405,
+    "description": "Professional service provider for ro purifier and led tv in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 406,
+    "description": "Main expertise: water purifier and chimney, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 407,
+    "description": "Providing quick 30-minute doorstep service for tv and induction.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 408,
+    "description": "I can repair led tv and fridge with 8 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 409,
+    "description": "Expert in chimney and refrigerator repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 410,
+    "description": "Trained technician for induction and washing machine, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 411,
+    "description": "Specialized in fridge and microwave troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 412,
+    "description": "Professional service provider for refrigerator and ro purifier in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 413,
+    "description": "Main expertise: washing machine and water purifier, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 414,
+    "description": "Providing quick 30-minute doorstep service for microwave and tv.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 415,
+    "description": "I can repair ro purifier and led tv with 15 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 416,
+    "description": "Expert in water purifier and chimney repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 417,
+    "description": "Trained technician for tv and induction, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 418,
+    "description": "Specialized in led tv and fridge troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 419,
+    "description": "Professional service provider for chimney and refrigerator in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 420,
+    "description": "Main expertise: induction and washing machine, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 421,
+    "description": "Providing quick 30-minute doorstep service for fridge and microwave.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 422,
+    "description": "I can repair refrigerator and ro purifier with 7 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 423,
+    "description": "Expert in washing machine and water purifier repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 424,
+    "description": "Trained technician for microwave and tv, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 425,
+    "description": "Specialized in ro purifier and led tv troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 426,
+    "description": "Professional service provider for water purifier and chimney in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 427,
+    "description": "Main expertise: tv and induction, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 428,
+    "description": "Providing quick 30-minute doorstep service for led tv and fridge.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 429,
+    "description": "I can repair chimney and refrigerator with 14 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 430,
+    "description": "Expert in induction and washing machine repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 431,
+    "description": "Trained technician for fridge and microwave, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 432,
+    "description": "Specialized in refrigerator and ro purifier troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 433,
+    "description": "Professional service provider for washing machine and water purifier in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 434,
+    "description": "Main expertise: microwave and tv, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 435,
+    "description": "Providing quick 30-minute doorstep service for ro purifier and led tv.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 436,
+    "description": "I can repair water purifier and chimney with 6 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 437,
+    "description": "Expert in tv and induction repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 438,
+    "description": "Trained technician for led tv and fridge, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 439,
+    "description": "Specialized in chimney and refrigerator troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 440,
+    "description": "Professional service provider for induction and washing machine in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 441,
+    "description": "Main expertise: fridge and microwave, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 442,
+    "description": "Providing quick 30-minute doorstep service for refrigerator and ro purifier.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 443,
+    "description": "I can repair washing machine and water purifier with 13 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 444,
+    "description": "Expert in microwave and tv repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 445,
+    "description": "Trained technician for ro purifier and led tv, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 446,
+    "description": "Specialized in water purifier and chimney troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 447,
+    "description": "Professional service provider for tv and induction in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 448,
+    "description": "Main expertise: led tv and fridge, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 449,
+    "description": "Providing quick 30-minute doorstep service for chimney and refrigerator.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 450,
+    "description": "I can repair induction and washing machine with 5 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 451,
+    "description": "Expert in fridge and microwave repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 452,
+    "description": "Trained technician for refrigerator and ro purifier, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 453,
+    "description": "Specialized in washing machine and water purifier troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 454,
+    "description": "Professional service provider for microwave and tv in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 455,
+    "description": "Main expertise: ro purifier and led tv, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 456,
+    "description": "Providing quick 30-minute doorstep service for water purifier and chimney.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 457,
+    "description": "I can repair tv and induction with 12 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 458,
+    "description": "Expert in led tv and fridge repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 459,
+    "description": "Trained technician for chimney and refrigerator, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 460,
+    "description": "Specialized in induction and washing machine troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 461,
+    "description": "Professional service provider for fridge and microwave in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 462,
+    "description": "Main expertise: refrigerator and ro purifier, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 463,
+    "description": "Providing quick 30-minute doorstep service for washing machine and water purifier.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 464,
+    "description": "I can repair microwave and tv with 4 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 465,
+    "description": "Expert in ro purifier and led tv repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 466,
+    "description": "Trained technician for water purifier and chimney, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 467,
+    "description": "Specialized in tv and induction troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 468,
+    "description": "Professional service provider for led tv and fridge in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 469,
+    "description": "Main expertise: chimney and refrigerator, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 470,
+    "description": "Providing quick 30-minute doorstep service for induction and washing machine.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 471,
+    "description": "I can repair fridge and microwave with 11 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 472,
+    "description": "Expert in refrigerator and ro purifier repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 473,
+    "description": "Trained technician for washing machine and water purifier, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 474,
+    "description": "Specialized in microwave and tv troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 475,
+    "description": "Professional service provider for ro purifier and led tv in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 476,
+    "description": "Main expertise: water purifier and chimney, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 477,
+    "description": "Providing quick 30-minute doorstep service for tv and induction.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 478,
+    "description": "I can repair led tv and fridge with 3 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 479,
+    "description": "Expert in chimney and refrigerator repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 480,
+    "description": "Trained technician for induction and washing machine, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 481,
+    "description": "Specialized in fridge and microwave troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 482,
+    "description": "Professional service provider for refrigerator and ro purifier in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 483,
+    "description": "Main expertise: washing machine and water purifier, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 484,
+    "description": "Providing quick 30-minute doorstep service for microwave and tv.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 485,
+    "description": "I can repair ro purifier and led tv with 10 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 486,
+    "description": "Expert in water purifier and chimney repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 487,
+    "description": "Trained technician for tv and induction, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 488,
+    "description": "Specialized in led tv and fridge troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 489,
+    "description": "Professional service provider for chimney and refrigerator in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 490,
+    "description": "Main expertise: induction and washing machine, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 491,
+    "description": "Providing quick 30-minute doorstep service for fridge and microwave.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "fridge",
+      "microwave",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 492,
+    "description": "I can repair refrigerator and ro purifier with 2 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "refrigerator",
+      "ro purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 493,
+    "description": "Expert in washing machine and water purifier repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "washing machine",
+      "water purifier",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 494,
+    "description": "Trained technician for microwave and tv, installation, and component replacement.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "microwave",
+      "tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 495,
+    "description": "Specialized in ro purifier and led tv troubleshooting and fixing complex issues.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "ro purifier",
+      "led tv",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 496,
+    "description": "Professional service provider for water purifier and chimney in residential and commercial buildings.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "water purifier",
+      "chimney",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 497,
+    "description": "Main expertise: tv and induction, along with general appliance overhaul.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "tv",
+      "induction",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 498,
+    "description": "Providing quick 30-minute doorstep service for led tv and fridge.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "led tv",
+      "fridge",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 499,
+    "description": "I can repair chimney and refrigerator with 9 years of experience in Etawah.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "chimney",
+      "refrigerator",
+      "appliance_repair"
+    ]
+  },
+  {
+    "id": 500,
+    "description": "Expert in induction and washing machine repair and emergency maintenance services.",
+    "categoryKey": "appliance_repair",
+    "primaryCategories": [
+      "appliance_repair",
+      "Repair & Services"
+    ],
+    "extractedTokens": [
+      "induction",
+      "washing machine",
+      "appliance_repair"
+    ]
+  }
+]
