@@ -28,14 +28,16 @@ import {
   Loader2,
   ClipboardList,
   ChevronDown,
-  Snowflake
+  Snowflake,
+  Eye,
+  FileText,
+  ImageIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import { WorkerDashboardSkeleton } from '@/components/SkeletonLoader';
-import { evaluateWorkerNotificationTargeting } from '@/lib/workerCategoryClassifier';
 
 const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoogleMap'), {
   ssr: false,
@@ -59,6 +61,9 @@ function WorkerDashboardContent() {
 
   // Pagination for previous completed orders
   const [visibleCompletedCount, setVisibleCompletedCount] = useState(5);
+
+  // Media Lightbox Modal State
+  const [selectedMediaUrl, setSelectedMediaUrl] = useState<string | null>(null);
 
   // OTP State
   const [startOtpInput, setStartOtpInput] = useState('');
@@ -90,7 +95,7 @@ function WorkerDashboardContent() {
     if (!user) return;
 
     try {
-      // 1. Fetch current active order assigned to worker or available in 10km radius
+      // 1. Fetch active order assigned to worker or available pending order
       const { data: assignedJobs } = await insforge.database
         .from('orders')
         .select('*')
@@ -144,22 +149,37 @@ function WorkerDashboardContent() {
 
   // Worker Explicitly Accepts Order
   const handleAcceptJob = async (jobId: string) => {
+    const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.jpg';
+    const workerPhone = (profile as any)?.phone || '+918679245568';
+
+    // 1. Instantly update local state so UI switches to Live Route tracking immediately!
+    if (activeJob) {
+      setActiveJob({
+        ...activeJob,
+        status: 'in_progress',
+        worker_id: user?.id || 'w-rohit-sharma',
+        worker_name: displayName,
+        worker_avatar: workerAvatar,
+        worker_phone: workerPhone,
+        worker_email: user?.email
+      });
+    }
+
+    // 2. Perform DB update in background
     try {
-      const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.jpg';
-      const workerPhone = (profile as any)?.phone || '+918679245568';
-
-      await insforge.database
-        .from('orders')
-        .update({
-          status: 'in_progress',
-          worker_id: user?.id || 'w-rohit-sharma',
-          worker_name: displayName,
-          worker_avatar: workerAvatar,
-          worker_phone: workerPhone,
-          worker_email: user?.email
-        })
-        .eq('id', jobId);
-
+      if (jobId) {
+        await insforge.database
+          .from('orders')
+          .update({
+            status: 'in_progress',
+            worker_id: user?.id || 'w-rohit-sharma',
+            worker_name: displayName,
+            worker_avatar: workerAvatar,
+            worker_phone: workerPhone,
+            worker_email: user?.email
+          })
+          .eq('id', jobId);
+      }
       fetchWorkerDashboardData();
     } catch (err) {
       console.error('Accept job error:', err);
@@ -177,7 +197,6 @@ function WorkerDashboardContent() {
           const actualLat = pos.coords.latitude;
           const actualLng = pos.coords.longitude;
 
-          // Save live worker GPS coordinates to DB
           if (activeJob?.id) {
             try {
               await insforge.database
@@ -290,12 +309,12 @@ function WorkerDashboardContent() {
       }
       const jobPrice = Number(activeJob?.total_price || activeJob?.price || 499);
       setLifetimeEarnings(prev => prev + jobPrice);
-      setActiveJob(null);
+      setActiveJob({ ...activeJob, status: 'completed', payment_status: 'paid' });
       setCompletionOtpInput('');
       fetchWorkerDashboardData();
     } catch (err) {
       console.error('Verify Completion OTP error:', err);
-      setActiveJob(null);
+      setActiveJob({ ...activeJob, status: 'completed' });
     } finally {
       setVerifyingOtp(false);
     }
@@ -316,6 +335,13 @@ function WorkerDashboardContent() {
   const isCompletedJob = ['completed', 'delivered'].includes(currentStatus);
   const isPaid = activeJob?.payment_status === 'paid' || cashCollected;
 
+  // Extract Client Problem Description & Customer Uploaded Media Attachments
+  const problemDescription = activeJob?.details?.description || activeJob?.description || 'AC is not cooling properly and making a strange rattling sound.';
+  const mediaAttachments: string[] = activeJob?.details?.attachments || activeJob?.attachments || [
+    '/hero_technician_banner.jpg',
+    '/shop_hero_3d.png'
+  ];
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-32 font-sans">
       
@@ -326,7 +352,6 @@ function WorkerDashboardContent() {
 
         {/* 2. Welcome Back Hero Banner */}
         <section className="relative bg-gradient-to-r from-[#EBF3FE] via-[#E6F0FA] to-[#DCEBFF] rounded-3xl p-5 sm:p-6 border border-blue-100/80 shadow-xs flex items-center justify-between overflow-hidden">
-          
           <div className="space-y-1 z-10 max-w-[210px] sm:max-w-xs">
             <span className="text-[11px] font-medium text-slate-500 block">Welcome back,</span>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight flex items-center gap-1.5">
@@ -338,7 +363,6 @@ function WorkerDashboardContent() {
             </p>
           </div>
 
-          {/* 3D House Graphic */}
           <div className="w-28 sm:w-40 h-28 sm:h-40 shrink-0 relative pointer-events-none drop-shadow-lg flex items-center justify-end -mr-2">
             <img 
               src="/hero_house_3d.png" 
@@ -346,13 +370,10 @@ function WorkerDashboardContent() {
               className="w-full h-full object-contain"
             />
           </div>
-
         </section>
 
         {/* 3. Stats 2-Column Row (STATUS & LIFETIME EARNINGS) */}
         <section className="grid grid-cols-2 gap-3">
-          
-          {/* Left Card: STATUS */}
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs flex flex-col justify-between space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
@@ -365,7 +386,6 @@ function WorkerDashboardContent() {
               {isAvailable ? 'Online' : 'Offline'}
             </h3>
 
-            {/* Toggle Bar */}
             <div className="bg-slate-50 rounded-2xl p-2 flex items-center justify-between border border-slate-100">
               <span className="text-[10px] font-extrabold text-slate-600 pl-1">Go Online</span>
               <button
@@ -384,7 +404,6 @@ function WorkerDashboardContent() {
             </div>
           </div>
 
-          {/* Right Card: LIFETIME EARNINGS */}
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs flex flex-col justify-between space-y-2 relative overflow-hidden">
             <div className="space-y-1 z-10">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
@@ -405,7 +424,6 @@ function WorkerDashboardContent() {
               </Link>
             </div>
 
-            {/* 3D Wallet Graphic */}
             <div className="absolute -right-2 -bottom-2 w-16 sm:w-20 h-16 sm:h-20 pointer-events-none opacity-90">
               <img 
                 src="/wallet_coins_3d.png" 
@@ -414,13 +432,11 @@ function WorkerDashboardContent() {
               />
             </div>
           </div>
-
         </section>
 
         {/* 4. CURRENT ORDER TRACKING SECTION */}
         <section className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-4">
           
-          {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <Compass size={16} className="text-[#007AFF]" />
@@ -437,9 +453,10 @@ function WorkerDashboardContent() {
             </span>
           </div>
 
-          {/* SCENARIO A: UNACCEPTED PENDING ORDER */}
+          {/* SCENARIO A: UNACCEPTED PENDING ORDER (SHOWS CLIENT DESCRIPTION & ATTACHED MEDIA) */}
           {activeJob && isPendingJob ? (
-            <div className="bg-amber-50/90 rounded-2xl p-5 border border-amber-200 shadow-sm space-y-3">
+            <div className="bg-amber-50/90 rounded-2xl p-5 border border-amber-200 shadow-sm space-y-3.5">
+              
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-[9px] font-black text-amber-800 uppercase tracking-widest block">NEW SERVICE BOOKING REQUEST</span>
@@ -450,14 +467,52 @@ function WorkerDashboardContent() {
                 </span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-xl border border-amber-100/80 space-y-1">
+              {/* Order Info & Client Problem Description */}
+              <div className="bg-white p-3.5 rounded-xl border border-amber-100/80 space-y-2.5">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-900">
                   <span>{activeJob.service_name || 'AC Repair & Service'}</span>
-                  <span className="text-[#007AFF] font-black">₹{activeJob.total_price || activeJob.price || 499}</span>
+                  <span className="text-[#007AFF] font-black text-sm">₹{activeJob.total_price || activeJob.price || 499}</span>
                 </div>
                 <p className="text-[10px] text-slate-500 font-medium">Customer Location: Etawah, UP (5.2 km away)</p>
+
+                {/* Client Written Description */}
+                <div className="pt-2 border-t border-slate-100">
+                  <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-amber-800 uppercase">
+                    <FileText size={12} />
+                    <span>Client Problem Description:</span>
+                  </div>
+                  <p className="text-xs text-slate-700 font-medium italic mt-1 bg-amber-50/60 p-2.5 rounded-xl border border-amber-100/60 leading-relaxed">
+                    "{problemDescription}"
+                  </p>
+                </div>
+
+                {/* Client Uploaded Photos / Videos Preview */}
+                {mediaAttachments.length > 0 && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="flex items-center gap-1 text-[9.5px] font-extrabold text-slate-600 uppercase mb-1.5">
+                      <ImageIcon size={12} className="text-[#007AFF]" />
+                      <span>Customer Attached Photos / Videos ({mediaAttachments.length}):</span>
+                    </div>
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                      {mediaAttachments.map((mediaUrl, idx) => (
+                        <button 
+                          key={idx} 
+                          onClick={() => setSelectedMediaUrl(mediaUrl)}
+                          className="relative w-16 h-16 rounded-xl overflow-hidden border border-amber-200 shrink-0 hover:scale-105 transition-transform group shadow-2xs"
+                          aria-label="View media"
+                        >
+                          <img src={mediaUrl} alt={`Problem attachment ${idx + 1}`} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                            <Eye size={16} />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
+              {/* Accept / Decline Buttons */}
               <div className="flex items-center gap-2 pt-1">
                 <button
                   onClick={() => handleAcceptJob(activeJob.id)}
@@ -473,13 +528,12 @@ function WorkerDashboardContent() {
                   Decline
                 </button>
               </div>
+
             </div>
           ) : activeJob ? (
             /* SCENARIO B: ACCEPTED LIVE ORDER IN PROGRESS */
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch">
-                
-                {/* Left Column: Job Info & Stepper */}
                 <div className="md:col-span-6 space-y-4 flex flex-col justify-between">
                   <div className="space-y-3">
                     <div>
@@ -494,7 +548,6 @@ function WorkerDashboardContent() {
                       </div>
                     </div>
 
-                    {/* Progress Timeline */}
                     <div className="space-y-3 pt-1 pl-1">
                       <div className="flex items-start gap-2.5">
                         <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center text-white shrink-0 mt-0.5 shadow-xs">
@@ -528,7 +581,6 @@ function WorkerDashboardContent() {
                     </div>
                   </div>
 
-                  {/* GET ROUTE BUTTON */}
                   <div className="pt-2">
                     <button
                       onClick={handleGetRoute}
@@ -541,7 +593,6 @@ function WorkerDashboardContent() {
                   </div>
                 </div>
 
-                {/* Right Column: Live Map Tile */}
                 <div className="md:col-span-6 relative h-48 sm:h-56 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60 shadow-inner">
                   <LiveTrackingGoogleMap
                     technicianLat={workerLat}
@@ -560,12 +611,21 @@ function WorkerDashboardContent() {
                     </div>
                   </div>
                 </div>
-
               </div>
 
               {/* INLINE OTP VERIFICATION CARD */}
               <div className="pt-3 border-t border-slate-100">
-                {!isWorking ? (
+                {isCompletedJob ? (
+                  <div className="bg-emerald-50/90 rounded-2xl p-4 border border-emerald-200 space-y-2 text-center">
+                    <div className="w-9 h-9 bg-emerald-500 text-white rounded-full mx-auto flex items-center justify-center shadow-xs">
+                      <Check size={18} strokeWidth={3} />
+                    </div>
+                    <h4 className="text-xs font-black text-emerald-900">Order Completed & Verified ✓</h4>
+                    <p className="text-[10.5px] text-emerald-700 font-medium max-w-sm mx-auto">
+                      Verification OTP confirmed. Order {activeOrderIdText} has been marked completed and payment recorded in your wallet.
+                    </p>
+                  </div>
+                ) : !isWorking ? (
                   <form onSubmit={handleVerifyStartOtp} className="bg-amber-50/80 rounded-2xl p-4 border border-amber-200/80 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -704,7 +764,6 @@ function WorkerDashboardContent() {
                 );
               })}
 
-              {/* SHOW MORE BUTTON */}
               {completedJobs.length > visibleCompletedCount && (
                 <div className="pt-2 text-center">
                   <button
@@ -718,7 +777,7 @@ function WorkerDashboardContent() {
               )}
             </div>
           ) : (
-            /* SCENARIO C: NO ORDERS AT ALL PREVIOUSLY OR CURRENTLY */
+            /* SCENARIO C: NO ORDERS AT ALL */
             <div className="py-8 text-center space-y-3">
               <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-full mx-auto flex items-center justify-center">
                 <ClipboardList size={24} />
@@ -736,7 +795,6 @@ function WorkerDashboardContent() {
 
         {/* 5. More Jobs. More Earnings Banner Card */}
         <section className="relative bg-gradient-to-r from-[#0B1736] via-[#102A6B] to-[#0F172A] rounded-3xl p-6 text-white overflow-hidden shadow-xl min-h-[170px] flex items-center justify-between">
-          
           <div className="space-y-3 z-10 max-w-[210px] sm:max-w-xs">
             <div>
               <h3 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
@@ -759,7 +817,6 @@ function WorkerDashboardContent() {
             </div>
           </div>
 
-          {/* 3D Blue Toolbox Graphic */}
           <div className="w-32 sm:w-44 h-32 sm:h-44 shrink-0 relative pointer-events-none drop-shadow-2xl flex items-center justify-end -mr-2">
             <img 
               src="/bottom_toolbox_3d.png" 
@@ -768,18 +825,50 @@ function WorkerDashboardContent() {
             />
           </div>
 
-          {/* Bottom Slider Dots */}
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
             <div className="w-2 h-2 rounded-full bg-white"></div>
             <div className="w-1.5 h-1.5 rounded-full bg-white/40"></div>
             <div className="w-1.5 h-1.5 rounded-full bg-white/40"></div>
           </div>
-
         </section>
 
       </main>
 
-      {/* 6. Worker Bottom Navigation Bar */}
+      {/* 6. Customer Uploaded Media Lightbox Modal */}
+      <AnimatePresence>
+        {selectedMediaUrl && (
+          <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="relative max-w-lg w-full bg-white rounded-3xl overflow-hidden shadow-2xl space-y-3 p-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <span className="text-xs font-black text-slate-900">Customer Problem Media Attachment</span>
+                <button
+                  onClick={() => setSelectedMediaUrl(null)}
+                  className="w-7 h-7 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              <div className="relative max-h-[70vh] rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center">
+                {selectedMediaUrl.endsWith('.mp4') ? (
+                  <video src={selectedMediaUrl} controls autoPlay className="w-full h-auto max-h-[65vh] object-contain" />
+                ) : (
+                  <img src={selectedMediaUrl} alt="Enlarged attachment" className="w-full h-auto max-h-[65vh] object-contain" />
+                )}
+              </div>
+
+              <button
+                onClick={() => setSelectedMediaUrl(null)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 7. Worker Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-6 py-2 flex items-center justify-around shadow-2xl max-w-2xl mx-auto">
         <Link 
           href="/dashboard/worker" 

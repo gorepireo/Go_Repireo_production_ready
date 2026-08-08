@@ -90,7 +90,7 @@ const workerDefaults: NotificationItem[] = [
     id: 'w1',
     type: 'worker_new_order',
     title: '⚡ New Service Booking Alert!',
-    message: 'New AC Repair & Service booked in Etawah (2.4 km away). Earn ₹499.',
+    message: 'New AC Repair & Service booked in Etawah (2.4 km away). Tap Accept to take this job.',
     time: 'Just now',
     read: false,
     actionUrl: '/dashboard/worker',
@@ -240,13 +240,13 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Transparent Backdrop to close when clicking outside */}
+          {/* Transparent Backdrop */}
           <div 
             onClick={onClose}
             className="fixed inset-0 z-40 bg-slate-900/10 backdrop-blur-2xs"
           />
 
-          {/* Compact Dropdown Popover Card (Anchored top right under Bell icon) */}
+          {/* Compact Dropdown Popover Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -270,118 +270,94 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
                 {notifications.length > 0 && (
                   <button
                     onClick={handleClearAll}
-                    className="text-[9px] font-bold text-red-500 hover:text-red-600 flex items-center gap-1 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 active:scale-95 transition-all"
+                    className="text-[10px] font-bold text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-full border border-red-100 transition-colors flex items-center gap-1"
                   >
-                    <Trash2 size={10} />
+                    <Trash2 size={11} />
                     <span>Clear All</span>
                   </button>
                 )}
                 <button
                   onClick={onClose}
-                  className="w-6 h-6 bg-white border border-slate-200 text-slate-500 rounded-full flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all"
+                  className="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full flex items-center justify-center transition-colors"
                 >
-                  <X size={13} />
+                  <X size={14} />
                 </button>
               </div>
             </div>
 
-            {/* Notifications Scrollable Body */}
-            <div className="p-3 overflow-y-auto space-y-2 max-h-[300px] divide-y divide-slate-100/60">
+            {/* Notification List */}
+            <div className="p-3 overflow-y-auto space-y-2 flex-1 scrollbar-thin">
               {notifications.length === 0 ? (
-                <div className="py-8 text-center space-y-1.5">
-                  <div className="w-10 h-10 bg-slate-50 text-slate-300 rounded-full mx-auto flex items-center justify-center">
+                <div className="py-8 text-center space-y-2">
+                  <div className="w-10 h-10 bg-slate-100 text-slate-400 rounded-full mx-auto flex items-center justify-center">
                     <Bell size={18} />
                   </div>
-                  <h4 className="text-xs font-black text-slate-400">No new notifications</h4>
-                  <p className="text-[9.5px] text-slate-400">You're all caught up!</p>
+                  <p className="text-xs font-bold text-slate-700">No New Notifications</p>
+                  <p className="text-[10px] text-slate-400 max-w-[200px] mx-auto">
+                    Alerts for service updates and status changes will appear here.
+                  </p>
                 </div>
               ) : (
-                notifications.map((notif) => (
+                notifications.map((n) => (
                   <div
-                    key={notif.id}
-                    onClick={() => handleNotificationClick(notif)}
-                    className={`pt-2.5 first:pt-0 p-2.5 rounded-2xl transition-all cursor-pointer hover:bg-slate-50 ${
-                      !notif.read ? 'bg-blue-50/30 border border-blue-100/40' : ''
+                    key={n.id}
+                    className={`p-3 rounded-2xl border transition-all text-left space-y-2 ${
+                      n.read ? 'bg-slate-50/70 border-slate-100' : 'bg-blue-50/50 border-blue-100/80 shadow-2xs'
                     }`}
                   >
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-white shadow-2xs border border-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                        {getIcon(notif.type)}
+                    <div 
+                      onClick={() => handleNotificationClick(n)}
+                      className="cursor-pointer flex items-start gap-2.5"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-white border border-slate-100 flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+                        {getIcon(n.type)}
                       </div>
 
-                      <div className="flex-1 min-w-0 space-y-0.5">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
-                          <h4 className="text-[11px] font-black text-slate-900 tracking-tight truncate">
-                            {notif.title}
+                          <h4 className="text-xs font-black text-slate-900 truncate leading-tight">
+                            {n.title}
                           </h4>
-                          <span className="text-[8.5px] text-slate-400 font-medium shrink-0">
-                            {notif.time}
+                          <span className="text-[8.5px] font-medium text-slate-400 shrink-0">
+                            {n.time}
                           </span>
                         </div>
 
-                        <p className="text-[9.5px] text-slate-600 font-medium leading-snug line-clamp-2">
-                          {notif.message}
+                        <p className="text-[10px] text-slate-600 font-medium leading-relaxed mt-0.5">
+                          {n.message}
                         </p>
-
-                        {/* Customer Review Button */}
-                        {notif.type === 'review' && (
-                          <div className="pt-1.5">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleNotificationClick(notif);
-                              }}
-                              className="w-full bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-[9px] py-1.5 px-3 rounded-full shadow-xs flex items-center justify-center gap-1 active:scale-95 transition-all"
-                            >
-                              <Star size={11} className="fill-amber-300 text-amber-300" />
-                              <span>Give Review</span>
-                              <ChevronRight size={11} />
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Worker Action Buttons (Accept / Decline) */}
-                        {isWorker && notif.type === 'worker_new_order' && (
-                          <div className="pt-1.5 flex items-center gap-2">
-                            {notif.workerAccepted ? (
-                              <span className="text-[9px] font-extrabold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                                <Check size={10} /> Order Accepted
-                              </span>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleWorkerAccept(notif.id);
-                                  }}
-                                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[9px] py-1.5 px-2 rounded-full shadow-xs flex items-center justify-center gap-1 active:scale-95 transition-all"
-                                >
-                                  <Check size={10} />
-                                  <span>Accept</span>
-                                </button>
-
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleWorkerDecline(notif.id);
-                                  }}
-                                  className="bg-slate-100 text-slate-500 hover:bg-slate-200 font-extrabold text-[9px] py-1.5 px-2.5 rounded-full flex items-center justify-center gap-1 active:scale-95 transition-all"
-                                >
-                                  <Ban size={10} />
-                                  <span>Decline</span>
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
-
                       </div>
                     </div>
+
+                    {/* Quick Accept/Decline for Worker New Order Alerts */}
+                    {isWorker && n.type === 'worker_new_order' && !n.workerAccepted && (
+                      <div className="flex items-center gap-2 pt-1 border-t border-blue-100/60">
+                        <button
+                          onClick={() => handleWorkerAccept(n.id)}
+                          className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[10px] py-1.5 rounded-xl shadow-2xs active:scale-95 transition-all flex items-center justify-center gap-1"
+                        >
+                          <Check size={12} />
+                          <span>Accept Order</span>
+                        </button>
+                        <button
+                          onClick={() => handleWorkerDecline(n.id)}
+                          className="px-3 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold text-[10px] py-1.5 rounded-xl transition-colors"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
             </div>
 
+            {/* Footer */}
+            <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 text-center shrink-0">
+              <span className="text-[9px] font-bold text-slate-400">
+                GoRepireo Alert System • Etawah, UP
+              </span>
+            </div>
           </motion.div>
         </>
       )}
