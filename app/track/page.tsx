@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   ArrowLeft, 
   Bell, 
@@ -30,20 +30,47 @@ const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoo
   )
 });
 
+// Haversine Formula for exact geographical distance calculation in KM
+function calculateHaversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Calculate Completion Percentage based on Order Status & Remaining Distance
+function calculateCompletionPercentage(status: string, remainingDistanceKm: number, initialDistanceKm: number = 5.0): number {
+  const normalizedStatus = (status || '').toLowerCase();
+  
+  if (normalizedStatus === 'completed' || normalizedStatus === 'delivered') return 100;
+  if (normalizedStatus === 'working' || normalizedStatus === 'work_in_progress') return 90;
+  if (normalizedStatus === 'pending' || normalizedStatus === 'created') return 20;
+  if (normalizedStatus === 'assigned' || normalizedStatus === 'confirmed') return 40;
+  
+  // For 'on_the_way' / 'shipping' / 'in_progress':
+  // Progress scales from 50% up to 85% as worker approaches destination!
+  const progressRatio = Math.max(0, Math.min(1, 1 - remainingDistanceKm / initialDistanceKm));
+  return Math.round(50 + progressRatio * 35);
+}
+
 export default function TrackPage() {
   const { user } = useAuth();
   const [order, setOrder] = useState<any>(null);
+  const [liveLocation, setLiveLocation] = useState<any>(null);
+  const [prevLocation, setPrevLocation] = useState<any>(null);
+  const [calculatedSpeed, setCalculatedSpeed] = useState<number>(28); // default city speed in km/h
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchLatestOrder();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const fetchLatestOrder = async () => {
+  // Fetch Latest Order
+  const fetchLatestOrder = useCallback(async () => {
+    if (!user) return;
     try {
       const { data } = await insforge.database
         .from('orders')
@@ -53,18 +80,68 @@ export default function TrackPage() {
         .limit(1);
       
       if (data && data.length > 0) {
-        setOrder(data[0]);
+        const currentOrder = data[0];
+        setOrder(currentOrder);
+
+        // Fetch live worker tracking data for this order
+        const { data: trackData } = await insforge.database
+          .from('order_live_location')
+          .select('*')
+          .eq('order_id', currentOrder.id)
+          .maybeSingle();
+
+        if (trackData) {
+          if (liveLocation && (liveLocation.lat !== trackData.lat || liveLocation.lng !== trackData.lng)) {
+            // Calculate live speed based on position change over time delta
+            const distDeltaKm = calculateHaversineDistanceKm(liveLocation.lat, liveLocation.lng, trackData.lat, trackData.lng);
+            const timeDeltaHours = (Date.now() - (liveLocation.timestamp || Date.now() - 5000)) / (1000 * 3600);
+            if (timeDeltaHours > 0 && distDeltaKm > 0) {
+              const liveKmh = Math.min(60, Math.max(15, Math.round(distDeltaKm / timeDeltaHours)));
+              setCalculatedSpeed(liveKmh);
+            }
+            setPrevLocation(liveLocation);
+          }
+          setLiveLocation({ ...trackData, timestamp: Date.now() });
+        }
       }
     } catch (err) {
-      console.error('Fetch latest order error:', err);
+      console.error('Fetch tracking order error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, liveLocation]);
+
+  useEffect(() => {
+    fetchLatestOrder();
+    const interval = setInterval(fetchLatestOrder, 5000);
+    return () => clearInterval(interval);
+  }, [fetchLatestOrder]);
 
   if (loading) {
     return <SkeletonLoader />;
   }
+
+  // Destination Coordinates (User address or default Etawah)
+  const userLat = order?.lat ? Number(order.lat) : 26.7810;
+  const userLng = order?.lng ? Number(order.lng) : 79.0120;
+
+  // Worker Current Coordinates
+  const workerLat = liveLocation?.lat ? Number(liveLocation.lat) : userLat - 0.015;
+  const workerLng = liveLocation?.lng ? Number(liveLocation.lng) : userLng + 0.018;
+
+  // Dynamic Telemetry Calculations
+  const distanceKmNum = calculateHaversineDistanceKm(workerLat, workerLng, userLat, userLng);
+  const distanceKmText = distanceKmNum.toFixed(1);
+
+  // Speed (km/h)
+  const currentSpeed = liveLocation?.speed ? Math.round(Number(liveLocation.speed)) : calculatedSpeed;
+
+  // ETA (minutes) = (distance / speed) * 60
+  const etaMinutesNum = Math.max(1, Math.round((distanceKmNum / Math.max(15, currentSpeed)) * 60));
+  const etaText = `${etaMinutesNum} mins`;
+
+  // Completion Rate (%) according to order stage and distance left
+  const completionPercentage = calculateCompletionPercentage(order?.status || 'in_progress', distanceKmNum);
 
   const orderIdText = order?.id ? `#GR-${order.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
   const serviceName = order?.service_name || 'AC Repair & Service';
@@ -188,56 +265,63 @@ export default function TrackPage() {
           {/* Interactive Map Visual using Real Google Map Tiles */}
           <div className="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60 shadow-inner">
             <LiveTrackingGoogleMap 
-              technicianLat={order?.lat ? Number(order.lat) - 0.015 : 26.7620}
-              technicianLng={order?.lng ? Number(order.lng) + 0.018 : 79.0320}
-              userLat={order?.lat ? Number(order.lat) : 26.7810}
-              userLng={order?.lng ? Number(order.lng) : 79.0120}
+              technicianLat={workerLat}
+              technicianLng={workerLng}
+              userLat={userLat}
+              userLng={userLng}
               technicianName="Rohit Sharma"
-              distanceKm="2.4"
+              distanceKm={distanceKmText}
             />
           </div>
 
-          {/* Telemetry Metrics Row */}
+          {/* Dynamic Telemetry Metrics Row */}
           <div className="pt-1">
             <div className="flex justify-between items-center mb-3">
               <div>
                 <h4 className="text-xs font-bold text-slate-900">Expert is on the way</h4>
-                <p className="text-[10px] text-slate-400 font-medium">Arriving in <strong className="text-[#007AFF] font-black text-sm">18 mins</strong></p>
+                <p className="text-[10px] text-slate-400 font-medium">Arriving in <strong className="text-[#007AFF] font-black text-sm">{etaText}</strong></p>
               </div>
             </div>
 
+            {/* 4 Dynamic Calculated Metrics Grid */}
             <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-center">
+              
+              {/* 1. Calculated Destination Distance */}
               <div className="space-y-0.5">
                 <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
                   <Navigation size={15} />
                 </div>
-                <span className="text-[10px] font-black text-slate-900 block pt-0.5">2.4 km</span>
+                <span className="text-[10px] font-black text-slate-900 block pt-0.5">{distanceKmText} km</span>
                 <span className="text-[8px] text-slate-400 font-medium block">Distance</span>
               </div>
 
+              {/* 2. Calculated ETA from Speed & Distance */}
               <div className="space-y-0.5">
                 <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
                   <Clock size={15} />
                 </div>
-                <span className="text-[10px] font-black text-slate-900 block pt-0.5">18 mins</span>
+                <span className="text-[10px] font-black text-slate-900 block pt-0.5">{etaText}</span>
                 <span className="text-[8px] text-slate-400 font-medium block">ETA</span>
               </div>
 
+              {/* 3. Live Worker Movement Speed */}
               <div className="space-y-0.5">
                 <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
                   <Target size={15} />
                 </div>
-                <span className="text-[10px] font-black text-slate-900 block pt-0.5">28 km/h</span>
+                <span className="text-[10px] font-black text-slate-900 block pt-0.5">{currentSpeed} km/h</span>
                 <span className="text-[8px] text-slate-400 font-medium block">Speed</span>
               </div>
 
+              {/* 4. Completion Rate (%) based on Order Status & Progress */}
               <div className="space-y-0.5">
                 <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
                   <Activity size={15} />
                 </div>
-                <span className="text-[10px] font-black text-slate-900 block pt-0.5">85%</span>
+                <span className="text-[10px] font-black text-slate-900 block pt-0.5">{completionPercentage}%</span>
                 <span className="text-[8px] text-slate-400 font-medium block">Complete</span>
               </div>
+
             </div>
           </div>
 
