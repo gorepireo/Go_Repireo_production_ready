@@ -217,6 +217,20 @@ function WorkerDashboardContent() {
             status: 'in_progress',
             note: `Order accepted by expert ${displayName}. En route to customer.`
           }]);
+
+        const wLat = liveDeviceGps?.lat || (profile?.lat ? Number(profile.lat) : 26.7620);
+        const wLng = liveDeviceGps?.lng || (profile?.lng ? Number(profile.lng) : 79.0320);
+
+        await insforge.database
+          .from('order_live_location')
+          .upsert([{
+            order_id: targetId,
+            lat: wLat,
+            lng: wLng,
+            worker_name: displayName,
+            is_moving: true,
+            updated_at: new Date().toISOString()
+          }]);
       }
     } catch (err) {
       console.error('Accept job error:', err);

@@ -210,7 +210,7 @@ function TrackContent() {
 
   useEffect(() => {
     fetchOrderData();
-    const interval = setInterval(fetchOrderData, 4000);
+    const interval = setInterval(fetchOrderData, 1500);
     return () => clearInterval(interval);
   }, [fetchOrderData]);
 
