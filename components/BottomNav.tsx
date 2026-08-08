@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { 
   Home,
   LayoutGrid,
-  ShoppingBag, 
-  ClipboardList, 
+  Calendar,
+  MapPin, 
   User,
   MessageCircle
 } from 'lucide-react';
@@ -39,9 +39,8 @@ export default function BottomNav() {
   ] : [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Services', path: '/services', icon: LayoutGrid },
-    { name: 'Shop', path: '/shop', icon: ShoppingBag },
-    { name: 'Chats', path: '/chat', icon: MessageCircle },
-    { name: 'Orders', path: '/track', icon: ClipboardList },
+    { name: 'Bookings', path: '/services/service', icon: Calendar },
+    { name: 'Track', path: '/track', icon: MapPin },
     { name: 'Profile', path: '/dashboard/user', icon: User },
   ];
 

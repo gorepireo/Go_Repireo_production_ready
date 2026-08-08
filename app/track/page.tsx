@@ -1,162 +1,339 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import SkeletonLoader from '@/components/SkeletonLoader';
 import { 
-  ShieldCheck, 
-  Activity,
-  Bell,
-  ChevronDown,
-  RefreshCw,
-  ChevronUp
+  ArrowLeft, 
+  Bell, 
+  Phone, 
+  Star, 
+  Headphones, 
+  CheckCircle2, 
+  Clock, 
+  Navigation, 
+  Activity, 
+  Snowflake,
+  ShieldCheck
 } from 'lucide-react';
+import Link from 'next/link';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function TrackPage() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchOrders();
+      fetchLatestOrder();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
-  const fetchOrders = async () => {
+  const fetchLatestOrder = async () => {
     try {
       const { data } = await insforge.database
         .from('orders')
         .select('*')
         .eq('user_email', user.email)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(1);
       
-      if (data) {
-        setOrders(data);
+      if (data && data.length > 0) {
+        setOrder(data[0]);
       }
     } catch (err) {
-      console.error('Fetch orders error:', err);
+      console.error('Fetch latest order error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Currently we want to show the "No Active Detection" state as per the mockup.
-  // In a real scenario, this would be conditional on orders.length === 0.
-  // We'll build the empty state layout perfectly.
-
   if (loading) {
     return <SkeletonLoader />;
   }
 
+  const orderIdText = order?.id ? `#GR-${order.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
+  const serviceName = order?.service_name || 'AC Repair & Service';
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24 pt-6">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-28 pt-4">
       
-      {/* Hero Section */}
-      <section className="px-4 mb-6">
-        <div className="relative flex items-center justify-between min-h-[160px] overflow-hidden">
-          <div className="relative z-10 max-w-[58%] sm:max-w-[65%] pt-2">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629]">
-              SIGNAL<br />
-              <span className="text-[#007AFF]">TRACK.</span>
+      {/* 1. Header Bar */}
+      <header className="px-4 mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link 
+            href="/" 
+            className="w-10 h-10 bg-white border border-slate-100 rounded-full flex items-center justify-center text-slate-700 shadow-xs hover:bg-slate-50 active:scale-95 transition-all shrink-0"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+
+          <div>
+            <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
+              Track Order
             </h1>
-            <p className="text-[11px] text-slate-500 leading-relaxed max-w-[180px] mt-3">
-              Track, analyze and monitor your assets with real-time signal data.
-            </p>
-          </div>
-
-          {/* Hero Image - Properly Positioned */}
-          <div className="absolute right-0 top-0 bottom-0 w-[42%] max-w-[220px] h-full z-0 pointer-events-none flex items-center justify-end">
-            <img src="/track_satellite_3d.png" alt="Satellite" className="w-full h-full object-contain object-right drop-shadow-xl" />
+            <p className="text-[10px] text-slate-400 font-medium">Stay updated with your service in real time</p>
           </div>
         </div>
-      </section>
 
-      {/* Dropdown */}
-      <section className="px-4 mb-4 relative z-20">
-        <button className="w-full bg-white rounded-full h-16 flex items-center justify-between px-6 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.03)] border border-slate-100 active:scale-[0.98] transition-transform">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-              <Activity className="w-5 h-5 text-[#007AFF]" />
-            </div>
-            <div className="text-left">
-              <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-widest">Select Asset Group</span>
-              <span className="block text-sm font-black text-slate-900 tracking-tight">All Active Signals</span>
-            </div>
-          </div>
-          <ChevronDown className="w-5 h-5 text-[#007AFF]" />
+        <button className="relative p-2 text-slate-700 bg-white border border-slate-100 hover:bg-slate-50 rounded-full shadow-xs transition-colors">
+          <Bell size={18} />
+          <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white">
+            3
+          </span>
         </button>
-      </section>
+      </header>
 
-      {/* Main Empty State Card */}
-      <section className="px-4 mb-6">
-        <div className="bg-gradient-to-b from-white to-blue-50/50 rounded-3xl p-6 relative overflow-hidden shadow-sm border border-slate-100 min-h-[360px] flex flex-col items-center justify-center text-center">
+      {/* 2. Top Order Card (Light Blue Gradient) */}
+      <section className="px-4 mb-5">
+        <div className="relative bg-gradient-to-br from-[#EEF5FF] via-[#E2EEFF] to-[#D5E5FF] rounded-3xl p-5 sm:p-6 border border-blue-100/70 shadow-xs overflow-hidden">
           
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-6 z-10">
-            <Activity className="w-8 h-8 text-[#007AFF]" />
+          {/* Order Data Left */}
+          <div className="space-y-3 max-w-[62%] sm:max-w-[65%]">
+            <div>
+              <span className="text-[9px] font-medium text-slate-500 block">Order ID</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                {orderIdText}
+              </h2>
+              <span className="bg-[#007AFF]/20 text-[#007AFF] text-[9px] font-extrabold px-2.5 py-0.5 rounded-full inline-block mt-1">
+                In Progress
+              </span>
+            </div>
+
+            <div>
+              <span className="text-[9px] font-medium text-slate-500 block">Service</span>
+              <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
+                <Snowflake size={14} className="text-[#007AFF]" />
+                <span>{serviceName}</span>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-[9px] font-medium text-slate-500 block">Scheduled Time</span>
+              <p className="text-xs font-black text-slate-900 mt-0.5">
+                Today, 3:00 PM - 5:00 PM
+              </p>
+            </div>
           </div>
 
-          <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight z-10">
-            NO ACTIVE DETECTION
-          </h2>
-          <p className="text-[10px] text-slate-500 max-w-[180px] mt-2 mb-8 z-10">
-            No signal activity detected. Your assets are currently stable.
-          </p>
+          {/* Technician Image & Floating Card Right */}
+          <div className="absolute right-0 bottom-0 top-0 w-[42%] max-w-[190px] sm:max-w-[240px] pointer-events-none flex items-end justify-end">
+            <img 
+              src="/hero_technician_banner.jpg" 
+              alt="Rohit Sharma" 
+              className="w-full h-full object-cover object-top rounded-r-3xl"
+            />
+          </div>
 
-          <button className="w-full bg-[#0A1629] text-white h-12 rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-transform z-10">
-            REFRESH SIGNAL <RefreshCw size={14} />
-          </button>
+          {/* Floating White Card for Technician Info */}
+          <div className="absolute bottom-3 right-3 z-10 bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white text-slate-900 shadow-md flex items-center justify-between gap-3 min-w-[150px]">
+            <div className="space-y-0.5">
+              <span className="text-[8px] font-semibold text-slate-400 block">Your Expert</span>
+              <h3 className="text-xs font-black text-slate-900 block leading-tight">Rohit Sharma</h3>
+              <div className="flex items-center gap-1 text-[9px] font-bold text-slate-700 pt-0.5">
+                <Star size={10} className="fill-amber-400 text-amber-400" />
+                <span>4.8</span>
+                <span className="text-slate-400 font-normal">(230 reviews)</span>
+              </div>
+            </div>
 
-          {/* Radar Background Image */}
-          <div className="absolute bottom-16 left-0 right-0 h-48 z-0 pointer-events-none opacity-90 flex justify-center items-end">
-            <img src="/track_radar_3d.png" alt="Radar" className="w-[120%] max-w-[400px] h-full object-contain object-bottom" />
+            <a 
+              href="tel:+918679245568" 
+              className="w-8 h-8 bg-[#007AFF] hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
+              aria-label="Call Expert"
+            >
+              <Phone size={14} className="fill-current" />
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 3. Live Tracking Card */}
+      <section className="px-4 mb-5">
+        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-4">
+          
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">Live Tracking</h3>
+            <span className="text-xs font-bold text-emerald-500 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live
+            </span>
+          </div>
+
+          {/* Interactive Map Visual */}
+          <div className="relative w-full h-44 sm:h-52 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60 shadow-inner">
+            <img 
+              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800" 
+              alt="Map Route" 
+              className="w-full h-full object-cover opacity-85" 
+            />
+
+            {/* Route Overlay Line SVG */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 200">
+              <path 
+                d="M 90 140 L 175 75 L 310 35" 
+                fill="none" 
+                stroke="#007AFF" 
+                strokeWidth="4" 
+                strokeLinecap="round" 
+                strokeDasharray="6 4"
+                className="animate-pulse"
+              />
+            </svg>
+
+            {/* Destination House Pin */}
+            <div className="absolute top-6 right-16 flex flex-col items-center">
+              <div className="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                🏠
+              </div>
+            </div>
+
+            {/* Moving Technician Pin */}
+            <div className="absolute top-14 left-40 flex flex-col items-center">
+              <div className="w-9 h-9 bg-[#007AFF] text-white rounded-full p-0.5 shadow-lg border-2 border-white flex items-center justify-center overflow-hidden">
+                <img src="/hero_technician_banner.jpg" className="w-full h-full object-cover rounded-full" />
+              </div>
+              <span className="bg-slate-900/90 text-white text-[8px] font-bold px-2 py-0.5 rounded-full mt-1 backdrop-blur-xs">
+                Rohit • 2.4 km away
+              </span>
+            </div>
+
+            {/* User Start Pin */}
+            <div className="absolute bottom-10 left-16 flex flex-col items-center">
+              <div className="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md border-2 border-white">
+                📍
+              </div>
+            </div>
+          </div>
+
+          {/* Telemetry Metrics Row */}
+          <div className="pt-1">
+            <div className="flex justify-between items-center mb-3">
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Expert is on the way</h4>
+                <p className="text-[10px] text-slate-400 font-medium">Arriving in <strong className="text-[#007AFF] font-black text-sm">18 mins</strong></p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-center">
+              <div className="space-y-0.5">
+                <div className="w-7 h-7 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center text-xs">🛵</div>
+                <span className="text-[10px] font-black text-slate-900 block pt-0.5">2.4 km</span>
+                <span className="text-[8px] text-slate-400 font-medium block">Distance</span>
+              </div>
+
+              <div className="space-y-0.5">
+                <div className="w-7 h-7 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center text-xs">🕒</div>
+                <span className="text-[10px] font-black text-slate-900 block pt-0.5">18 mins</span>
+                <span className="text-[8px] text-slate-400 font-medium block">ETA</span>
+              </div>
+
+              <div className="space-y-0.5">
+                <div className="w-7 h-7 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center text-xs">🎯</div>
+                <span className="text-[10px] font-black text-slate-900 block pt-0.5">28 km/h</span>
+                <span className="text-[8px] text-slate-400 font-medium block">Speed</span>
+              </div>
+
+              <div className="space-y-0.5">
+                <div className="w-7 h-7 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center text-xs">📊</div>
+                <span className="text-[10px] font-black text-slate-900 block pt-0.5">85%</span>
+                <span className="text-[8px] text-slate-400 font-medium block">Complete</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 4. Order Status Timeline Stepper (5 Steps) */}
+      <section className="px-4 mb-5">
+        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4">
+          <h3 className="text-xs font-black text-slate-900 tracking-tight mb-2">Order Progress</h3>
+
+          <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2.5 before:bottom-2.5 before:w-0.5 before:bg-slate-200">
+            
+            {/* Step 1: Order Confirmed */}
+            <div className="relative flex items-center justify-between">
+              <div className="absolute -left-6 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs shadow-xs border-2 border-white">
+                ✓
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Order Confirmed</h4>
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium">Today, 2:30 PM</span>
+            </div>
+
+            {/* Step 2: Expert Assigned */}
+            <div className="relative flex items-center justify-between">
+              <div className="absolute -left-6 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs shadow-xs border-2 border-white">
+                ✓
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Expert Assigned</h4>
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium">Today, 2:32 PM</span>
+            </div>
+
+            {/* Step 3: Expert On The Way (Active) */}
+            <div className="relative flex items-center justify-between">
+              <div className="absolute -left-6 w-5 h-5 bg-[#007AFF] text-white rounded-full flex items-center justify-center text-[9px] shadow-md border-2 border-white ring-4 ring-blue-100">
+                ●
+              </div>
+              <div>
+                <h4 className="text-xs font-extrabold text-[#007AFF]">Expert On The Way</h4>
+              </div>
+              <span className="text-[10px] font-bold text-[#007AFF]">Live</span>
+            </div>
+
+            {/* Step 4: Work In Progress */}
+            <div className="relative flex items-center justify-between opacity-60">
+              <div className="absolute -left-6 w-5 h-5 bg-white border-2 border-slate-300 rounded-full"></div>
+              <div>
+                <h4 className="text-xs font-medium text-slate-600">Work In Progress</h4>
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium">Upcoming</span>
+            </div>
+
+            {/* Step 5: Completed */}
+            <div className="relative flex items-center justify-between opacity-60">
+              <div className="absolute -left-6 w-5 h-5 bg-white border-2 border-slate-300 rounded-full"></div>
+              <div>
+                <h4 className="text-xs font-medium text-slate-600">Completed</h4>
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium">Upcoming</span>
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* Features Bar */}
-      <section className="px-4 mb-10">
-        <div className="bg-gradient-to-b from-white to-blue-50/30 rounded-3xl p-6 flex justify-between items-start border border-slate-100 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.02)] divide-x divide-slate-100">
-          
-          <div className="flex flex-col items-center text-center px-2 flex-1">
-            <div className="w-8 h-8 bg-[#007AFF] rounded-full flex items-center justify-center text-white mb-3 shadow-md shadow-blue-500/20">
-              <ShieldCheck size={16} />
+      {/* 5. Need Help? Card */}
+      <section className="px-4 mb-4">
+        <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100 shadow-2xs flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-50 text-[#007AFF] rounded-2xl flex items-center justify-center shrink-0">
+              <Headphones size={20} />
             </div>
-            <h4 className="text-[8px] font-black text-slate-900 uppercase tracking-tight mb-1">SECURE & ENCRYPTED</h4>
-            <p className="text-[7px] text-slate-500 leading-tight px-1">Your data is safe with us</p>
+            <div>
+              <h4 className="text-xs font-black text-slate-900">Need Help?</h4>
+              <p className="text-[10px] text-slate-400 font-medium">Our support team is available 24/7</p>
+            </div>
           </div>
 
-          <div className="flex flex-col items-center text-center px-2 flex-1">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[#007AFF] mb-3">
-              <Activity size={24} strokeWidth={2.5} />
-            </div>
-            <h4 className="text-[8px] font-black text-slate-900 uppercase tracking-tight mb-1">REAL-TIME UPDATES</h4>
-            <p className="text-[7px] text-slate-500 leading-tight px-1">Live signal monitoring 24/7</p>
-          </div>
-
-          <div className="flex flex-col items-center text-center px-2 flex-1">
-            <div className="w-8 h-8 bg-[#007AFF] rounded-full flex items-center justify-center text-white mb-3 shadow-md shadow-blue-500/20">
-              <Bell size={16} className="fill-current" />
-            </div>
-            <h4 className="text-[8px] font-black text-slate-900 uppercase tracking-tight mb-1">SMART ALERTS</h4>
-            <p className="text-[7px] text-slate-500 leading-tight px-1">Get notified on signal changes</p>
-          </div>
-
+          <Link 
+            href="/chat" 
+            className="border border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF] hover:text-white font-extrabold text-xs px-4 py-2 rounded-full transition-all active:scale-95 shrink-0"
+          >
+            Chat Now
+          </Link>
         </div>
       </section>
 
-      {/* Back to Top */}
-      <section className="flex flex-col items-center justify-center mb-8">
-        <button onClick={scrollToTop} className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md shadow-slate-200/50 text-slate-400 active:scale-90 transition-transform mb-2">
-          <ChevronUp size={20} />
-        </button>
-        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">BACK TO TOP</span>
-      </section>
     </div>
   );
 }
