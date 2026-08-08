@@ -836,6 +836,7 @@ function WorkerDashboardContent() {
                     userLat={customerLat}
                     userLng={customerLng}
                     technicianName={displayName}
+                    technicianAvatar={(profile as any)?.avatar_url || (profile as any)?.avatar || activeJob?.worker_avatar}
                     distanceKm="5.2 km"
                   />
 

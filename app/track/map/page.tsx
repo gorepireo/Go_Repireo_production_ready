@@ -116,12 +116,20 @@ function StandardMapContent() {
                 mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
                 getPixelPositionOffset={(width, height) => ({ x: -(width / 2), y: -(height / 2) })}
               >
-                <div className="relative w-10 h-10 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-[#007AFF]/20 rounded-full animate-ping"></div>
-                  <div className="w-6 h-6 bg-[#007AFF] rounded-full border-4 border-white shadow-xl flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                <div className="relative flex flex-col items-center">
+                  <div className="absolute inset-0 bg-[#007AFF]/30 rounded-full animate-ping"></div>
+                  <div className="w-11 h-11 bg-[#007AFF] rounded-full border-2 border-white shadow-2xl overflow-hidden flex items-center justify-center relative z-10">
+                    {order?.worker_avatar && !order.worker_avatar.includes('hero_technician') ? (
+                      <img src={order.worker_avatar} alt={order.worker_name || 'Worker'} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-[#007AFF] text-white font-black text-sm flex items-center justify-center">
+                        {(order?.worker_name || tracking?.worker_name || 'E').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] font-black px-2 py-1 rounded-md whitespace-nowrap shadow-xl">LIVE PARTNER</div>
+                  <div className="bg-[#007AFF] text-white text-[9px] font-black px-2.5 py-1 rounded-xl shadow-lg mt-1 whitespace-nowrap flex items-center gap-1.5 z-10">
+                    <span>{order?.worker_name || tracking?.worker_name || 'Expert Partner'}</span>
+                  </div>
                 </div>
               </OverlayView>
             )}

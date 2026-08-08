@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Clock, Navigation } from 'lucide-react';
 
 interface LiveTrackingProps {
   technicianLat: number;
@@ -8,7 +9,7 @@ interface LiveTrackingProps {
   userLat: number;
   userLng: number;
   technicianName?: string;
-  technicianAvatar?: string;
+  technicianAvatar?: string | null;
   distanceKm?: string;
 }
 
@@ -18,11 +19,13 @@ export default function LiveTrackingGoogleMap({
   userLat,
   userLng,
   technicianName = 'Rohit Sharma',
-  technicianAvatar = '/hero_technician_banner.jpg',
+  technicianAvatar = null,
   distanceKm = '2.4 km'
 }: LiveTrackingProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
+  const [etaText, setEtaText] = useState<string>('');
+  const [distText, setDistText] = useState<string>(distanceKm);
 
   useEffect(() => {
     let isMounted = true;
@@ -56,15 +59,26 @@ export default function LiveTrackingGoogleMap({
         attribution: '&copy; Google Maps'
       }).addTo(map);
 
-      // Fetch Real Road Geometry via OSRM Routing API
+      // Fetch Real Road Geometry & ETA via OSRM Routing API
       let routePoints: [number, number][] = [];
       try {
         const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${technicianLng},${technicianLat};${userLng},${userLat}?overview=full&geometries=geojson`;
         const res = await fetch(osrmUrl);
         const data = await res.json();
         
-        if (data && data.routes && data.routes.length > 0 && data.routes[0].geometry) {
-          routePoints = data.routes[0].geometry.coordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
+        if (data && data.routes && data.routes.length > 0) {
+          const r = data.routes[0];
+          if (r.geometry) {
+            routePoints = r.geometry.coordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
+          }
+          if (r.distance) {
+            const calculatedDist = (r.distance / 1000).toFixed(1) + ' km';
+            setDistText(calculatedDist);
+          }
+          if (r.duration) {
+            const mins = Math.max(1, Math.round(r.duration / 60));
+            setEtaText(`${mins} mins`);
+          }
         }
       } catch (err) {
         console.warn("OSRM road route fetch fallback:", err);
@@ -74,8 +88,6 @@ export default function LiveTrackingGoogleMap({
       if (routePoints.length === 0) {
         routePoints = [
           [technicianLat, technicianLng],
-          [technicianLat + 0.006, technicianLng - 0.008],
-          [technicianLat + 0.012, technicianLng - 0.014],
           [userLat, userLng]
         ];
       }
@@ -98,7 +110,7 @@ export default function LiveTrackingGoogleMap({
         lineJoin: 'round'
       }).addTo(map);
 
-      // 1. Clean SVG Destination Home Marker (No Emojis)
+      // 1. Clean SVG Destination Home Marker
       const homeSvgIcon = `
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -114,7 +126,7 @@ export default function LiveTrackingGoogleMap({
               ${homeSvgIcon}
             </div>
             <div style="background: rgba(15, 23, 42, 0.95); color: white; font-size: 9px; font-weight: 800; padding: 2.5px 8px; border-radius: 10px; margin-top: 4px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.2); letter-spacing: 0.5px;">
-              DESTINATION LOCATION
+              STOP POINT
             </div>
           </div>
         `,
@@ -123,9 +135,19 @@ export default function LiveTrackingGoogleMap({
       });
       L.marker([userLat, userLng], { icon: houseIcon }).addTo(map);
 
-      // 2. Clean SVG Live Technician Marker (No Emojis)
+      // 2. Clean Live Technician Marker (Avatar photo or Initial Badge fallback)
+      const initialChar = (technicianName || 'Expert').charAt(0).toUpperCase();
+      const hasValidAvatarUrl = technicianAvatar && typeof technicianAvatar === 'string' && technicianAvatar.trim().length > 0 && !technicianAvatar.includes('hero_technician');
+
+      const avatarHtml = hasValidAvatarUrl ? `
+        <img src="${technicianAvatar}" alt="${technicianName}" style="width: 100%; height: 100%; object-fit: cover;" onError="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+        <div style="display: none; width: 100%; height: 100%; background: linear-gradient(135deg, #007AFF, #3B82F6); color: white; font-weight: 900; font-size: 16px; align-items: center; justify-content: center;">${initialChar}</div>
+      ` : `
+        <div style="display: flex; width: 100%; height: 100%; background: linear-gradient(135deg, #007AFF, #3B82F6); color: white; font-weight: 900; font-size: 16px; align-items: center; justify-content: center;">${initialChar}</div>
+      `;
+
       const navArrowSvg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
           <polygon points="3 11 22 2 13 21 11 13 3 11"/>
         </svg>
       `;
@@ -135,13 +157,13 @@ export default function LiveTrackingGoogleMap({
         html: `
           <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
             <div style="position: absolute; inset: -4px; background: rgba(0, 122, 255, 0.3); border-radius: 50%; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-            <div style="background-color: #007AFF; width: 42px; height: 42px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 14px rgba(0,122,255,0.4); overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 10;">
-              <img src="${technicianAvatar}" style="width: 100%; height: 100%; object-fit: cover;" />
+            <div style="background-color: #007AFF; width: 44px; height: 44px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 14px rgba(0,122,255,0.4); overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 10;">
+              ${avatarHtml}
             </div>
             <div style="background: #007AFF; color: white; font-size: 9px; font-weight: 800; padding: 3px 9px; border-radius: 12px; margin-top: 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,122,255,0.4); display: flex; align-items: center; gap: 5px;">
               <span>${navArrowSvg}</span>
-              <span>${technicianName.split(' ')[0]}</span>
-              <span style="opacity: 0.85; font-weight: 600;">• ${(distanceKm || '').replace(/\s*km\s*$/i, '')} km</span>
+              <span>${(technicianName || 'Expert').split(' ')[0]}</span>
+              <span style="opacity: 0.85; font-weight: 600;">• ${(distText || distanceKm || '').replace(/\s*km\s*$/i, '')} km</span>
             </div>
           </div>
         `,
@@ -176,7 +198,20 @@ export default function LiveTrackingGoogleMap({
       {/* Direction Pill Badge */}
       <div className="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-100 text-slate-900 text-[10px] font-extrabold shadow-md flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-[#007AFF] animate-pulse"></span>
-        <span>Real-Time Road Navigation</span>
+        <span>Real-Time Navigation</span>
+      </div>
+
+      {/* ETA & Distance Pill Badge */}
+      <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-slate-100 text-slate-900 shadow-md flex items-center gap-2">
+        <Clock size={14} className="text-[#007AFF]" />
+        <div>
+          <span className="text-xs font-black text-slate-900 block leading-tight">
+            {etaText || '12 mins'}
+          </span>
+          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block">
+            {distText || distanceKm || '2.4 km'}
+          </span>
+        </div>
       </div>
     </div>
   );
