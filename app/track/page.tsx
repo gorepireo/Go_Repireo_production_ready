@@ -168,7 +168,7 @@ function TrackContent() {
         // Fetch Worker Data & Real Profile Picture
         const assignedWorkerId = currentOrder.worker_id || 'w-rohit-sharma';
         let assignedWorkerName = currentOrder.worker_name || 'Rohit Sharma';
-        let assignedWorkerAvatar = (currentOrder.worker_avatar && !currentOrder.worker_avatar.includes('hero_technician')) ? currentOrder.worker_avatar : null;
+        let assignedWorkerAvatar = currentOrder.worker_avatar || null;
         let assignedWorkerPhone = currentOrder.worker_phone || '+918679245568';
 
         // Query users/workers table to get real profile picture
@@ -204,6 +204,10 @@ function TrackContent() {
           } catch (wErr) {
             console.warn('Worker avatar lookup error:', wErr);
           }
+        }
+
+        if (!assignedWorkerAvatar) {
+          assignedWorkerAvatar = '/technician_hero.jpg';
         }
 
         const { data: reviewsData } = await insforge.database

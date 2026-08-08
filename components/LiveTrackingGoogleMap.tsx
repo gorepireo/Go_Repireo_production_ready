@@ -135,15 +135,11 @@ export default function LiveTrackingGoogleMap({
       });
       L.marker([userLat, userLng], { icon: houseIcon }).addTo(map);
 
-      // 2. Clean Live Technician Marker (Avatar photo or Initial Badge fallback)
-      const initialChar = (technicianName || 'Expert').charAt(0).toUpperCase();
-      const hasValidAvatarUrl = technicianAvatar && typeof technicianAvatar === 'string' && technicianAvatar.trim().length > 0 && !technicianAvatar.includes('hero_technician');
+      // 2. Clean Live Technician Marker with Profile Photo
+      const photoSrc = (technicianAvatar && typeof technicianAvatar === 'string' && technicianAvatar.trim().length > 0) ? technicianAvatar : '/technician_hero.jpg';
 
-      const avatarHtml = hasValidAvatarUrl ? `
-        <img src="${technicianAvatar}" alt="${technicianName}" style="width: 100%; height: 100%; object-fit: cover;" onError="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-        <div style="display: none; width: 100%; height: 100%; background: linear-gradient(135deg, #007AFF, #3B82F6); color: white; font-weight: 900; font-size: 16px; align-items: center; justify-content: center;">${initialChar}</div>
-      ` : `
-        <div style="display: flex; width: 100%; height: 100%; background: linear-gradient(135deg, #007AFF, #3B82F6); color: white; font-weight: 900; font-size: 16px; align-items: center; justify-content: center;">${initialChar}</div>
+      const avatarHtml = `
+        <img src="${photoSrc}" alt="${technicianName}" style="width: 100%; height: 100%; object-fit: cover;" onError="this.src='/technician_hero.jpg';" />
       `;
 
       const navArrowSvg = `
