@@ -222,7 +222,7 @@ function WorkerDashboardContent() {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Worker Explicitly Accepts Order (Syncs DB & Local State Instantly)
+  // Worker Explicitly Accepts Order (Syncs DB & Local State Instantly - First-Come-First-Served)
   const handleAcceptJob = async (jobId: string) => {
     const workerId = user?.id || profile?.id || 'w-rohit-sharma';
     const targetId = jobId || activeJob?.id;
@@ -232,30 +232,16 @@ function WorkerDashboardContent() {
       return;
     }
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`accepted_job_${targetId}`, 'true');
-    }
-
     const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.jpg';
     const workerPhone = (profile as any)?.phone || '+918679245568';
+    const nowIso = new Date().toISOString();
 
-    // 1. Instantly update local state so UI switches to Live Route tracking immediately!
-    if (activeJob) {
-      setActiveJob({
-        ...activeJob,
-        status: 'in_progress',
-        worker_id: workerId,
-        worker_name: displayName,
-        worker_avatar: workerAvatar,
-        worker_phone: workerPhone,
-        worker_email: user?.email || profile?.email
-      });
-    }
-
-    // 2. Update orders and order_tracking in database
+    // 1. Update orders and order_tracking in database FIRST to verify atomic first-come-first-served assignment
     try {
       const updateData: any = {
         status: 'in_progress',
+        accepted: true,
+        accepted_at: nowIso,
         worker_name: displayName,
         worker_avatar: workerAvatar,
         worker_phone: workerPhone,
@@ -267,23 +253,61 @@ function WorkerDashboardContent() {
         updateData.worker_id = workerId;
       }
 
-      const { error: updateError } = await insforge.database
+      // Atomic Update: Only update if the order is still pending OR currently assigned to this worker
+      const { data: updatedRows, error: updateError } = await insforge.database
         .from('orders')
         .update(updateData)
-        .eq('id', targetId);
+        .eq('id', targetId)
+        .eq('status', 'pending')
+        .select();
 
-      if (updateError) {
-        console.error('❌ DB order update error:', updateError.message, updateError);
-      } else {
-        console.log('✅ Order accepted in DB, status → in_progress');
+      if (updateError || !updatedRows || updatedRows.length === 0) {
+        // Someone else already accepted this order!
+        console.warn('⚠️ Order was already accepted by another expert');
+
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(`accepted_job_${targetId}`);
+          window.dispatchEvent(new CustomEvent('repireo_toast', {
+            detail: {
+              id: `toast-${Date.now()}`,
+              type: 'info',
+              title: 'Order Already Accepted',
+              message: 'Another expert accepted this order first. It has been removed from your dashboard.'
+            }
+          }));
+        }
+
+        setActiveJob(null);
+        fetchWorkerDashboardData();
+        return;
       }
+
+      // 2. Successful first acceptance! Mark in localStorage & update active state
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`accepted_job_${targetId}`, 'true');
+      }
+
+      const assignedOrder = updatedRows[0];
+      setActiveJob({
+        ...assignedOrder,
+        status: 'in_progress',
+        accepted: true,
+        accepted_at: nowIso,
+        worker_id: workerId,
+        worker_name: displayName,
+        worker_avatar: workerAvatar,
+        worker_phone: workerPhone,
+        worker_email: user?.email || profile?.email
+      });
+
+      console.log('✅ Order accepted & activated in DB for worker:', displayName);
 
       await insforge.database
         .from('order_tracking')
         .insert([{
           order_id: targetId,
           status: 'in_progress',
-          note: `Order accepted by expert ${displayName}. En route to customer.`
+          note: `Order accepted by expert ${displayName} at ${new Date().toLocaleTimeString()}. En route to customer.`
         }]);
 
       const wLat = liveDeviceGps?.lat || (profile?.lat ? Number(profile.lat) : 26.7620);
@@ -297,7 +321,7 @@ function WorkerDashboardContent() {
           lng: wLng,
           worker_name: displayName,
           is_moving: true,
-          updated_at: new Date().toISOString()
+          updated_at: nowIso
         }]);
 
     } catch (err) {
