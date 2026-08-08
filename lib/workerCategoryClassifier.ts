@@ -85,3 +85,81 @@ export function isWorkerEligibleForNotification(
     return t === orderTag;
   });
 }
+
+/**
+ * Haversine formula to compute spherical distance between two GPS coordinates in km
+ */
+export function calculateHaversineDistanceKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  if (!lat1 || !lng1 || !lat2 || !lng2) return 0;
+  const R = 6371; // Earth's mean radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLng = (lng2 - lng1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
+/**
+ * Filter Worker Notification Eligibility by 7km - 10km Perimeter Radius & Skill Category Match
+ * Ignores static profile address and evaluates live current GPS coordinates!
+ */
+export function evaluateWorkerNotificationTargeting(params: {
+  workerCurrentLat: number;
+  workerCurrentLng: number;
+  customerOrderLat: number;
+  customerOrderLng: number;
+  workerCategoryTokens?: string[];
+  orderCategoryName?: string;
+  maxRadiusKm?: number; // Strict 7km to 10km perimeter limit
+}): {
+  isEligible: boolean;
+  distanceKm: number;
+  categoryMatched: boolean;
+  proximityMatched: boolean;
+  reason: string;
+} {
+  const maxKm = params.maxRadiusKm || 10.0; // Strict 10.0 km radius
+
+  const distanceKm = calculateHaversineDistanceKm(
+    params.workerCurrentLat,
+    params.workerCurrentLng,
+    params.customerOrderLat,
+    params.customerOrderLng
+  );
+
+  const categoryMatched = isWorkerEligibleForNotification(
+    params.workerCategoryTokens || [],
+    params.orderCategoryName || ''
+  );
+
+  const proximityMatched = distanceKm <= maxKm;
+
+  const isEligible = categoryMatched && proximityMatched;
+
+  let reason = '';
+  if (isEligible) {
+    reason = `Eligible! Worker is within ${distanceKm} km radius (max ${maxKm} km) and category matches.`;
+  } else if (!proximityMatched) {
+    reason = `Out of range! Worker is ${distanceKm} km away (outside ${maxKm} km perimeter).`;
+  } else {
+    reason = `Category mismatch! Worker skills do not match ${params.orderCategoryName}.`;
+  }
+
+  return {
+    isEligible,
+    distanceKm,
+    categoryMatched,
+    proximityMatched,
+    reason
+  };
+}

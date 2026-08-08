@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Activity, Shield, ChevronRight, Navigation, Zap, Map, MessageCircle, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { isServiceMatching } from '@/lib/serviceMatcher';
+import { evaluateWorkerNotificationTargeting } from '@/lib/workerCategoryClassifier';
 
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
@@ -166,22 +167,31 @@ function WorkerDashboardContent() {
         .eq('status', 'pending');
 
       if (pending) {
-        const MAX_RADIUS_KM = 15; // 10-15 km radius limit
+        const MAX_RADIUS_KM = 10.0; // Strict 7km to 10km perimeter radius
         const suitable = pending.filter(job => {
           const matchesService = isServiceMatching(trade, job.service_name, job.details?.category);
           if (!matchesService) return false;
 
-          const jobLat = Number(job.lat || job.details?.lat || job.details?.selectedLocation?.lat);
-          const jobLng = Number(job.lng || job.details?.lng || job.details?.selectedLocation?.lng);
+          const jobLat = Number(job.lat || job.details?.lat || job.details?.selectedLocation?.lat || 26.7810);
+          const jobLng = Number(job.lng || job.details?.lng || job.details?.selectedLocation?.lng || 79.0120);
 
-          if (currentWorkerLat && currentWorkerLng && jobLat && jobLng) {
-            const dist = calculateDistanceKm(currentWorkerLat, currentWorkerLng, jobLat, jobLng);
-            job.distanceKm = dist;
-            // Exclude job requests outside the 15 km radius
-            return dist <= MAX_RADIUS_KM;
-          }
+          const workerLat = currentWorkerLat || Number(profile?.lat || 26.7620);
+          const workerLng = currentWorkerLng || Number(profile?.lng || 79.0320);
 
-          return true;
+          const targeting = evaluateWorkerNotificationTargeting({
+            workerCurrentLat: workerLat,
+            workerCurrentLng: workerLng,
+            customerOrderLat: jobLat,
+            customerOrderLng: jobLng,
+            workerCategoryTokens: profile?.category_tokens || (trade ? [trade] : []),
+            orderCategoryName: job.service_name || job.details?.category || '',
+            maxRadiusKm: MAX_RADIUS_KM
+          });
+
+          job.distanceKm = targeting.distanceKm;
+
+          // Only dispatch notification alert if within 7-10 km radius AND category matches
+          return targeting.isEligible;
         });
         setActiveJobs(suitable);
       }
