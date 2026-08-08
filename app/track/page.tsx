@@ -100,19 +100,19 @@ export default function TrackPage() {
 
       {/* 2. Top Order Card (Light Blue Gradient matching Mockup) */}
       <section className="px-4 mb-5">
-        <div className="relative bg-gradient-to-r from-[#EFF4FF] via-[#E7F1FF] to-[#DBEAFF] rounded-3xl p-5 sm:p-6 border border-blue-100/60 shadow-xs overflow-hidden min-h-[180px] sm:min-h-[200px]">
+        <div className="relative bg-gradient-to-r from-[#EFF4FF] via-[#E7F1FF] to-[#DBEAFF] rounded-3xl p-5 sm:p-6 border border-blue-100/60 shadow-xs overflow-hidden flex flex-col sm:block justify-between gap-4">
           
           {/* Background AC Repair Image Fade on Right */}
           <div className="absolute right-0 top-0 bottom-0 w-[55%] pointer-events-none flex items-center justify-end overflow-hidden">
             <img 
               src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=600" 
               alt="AC Service Background" 
-              className="w-full h-full object-cover opacity-35 mix-blend-multiply rounded-r-3xl"
+              className="w-full h-full object-cover opacity-20 mix-blend-multiply rounded-r-3xl"
             />
           </div>
 
           {/* Order Info Left */}
-          <div className="relative z-10 space-y-3 max-w-[60%] sm:max-w-[62%]">
+          <div className="relative z-10 space-y-3.5 sm:max-w-[58%] pb-1 sm:pb-0">
             <div>
               <span className="text-[10px] font-medium text-slate-400 block">Order ID</span>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
@@ -127,18 +127,18 @@ export default function TrackPage() {
             <div className="space-y-2 pt-1">
               <div className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
                 <Snowflake size={16} className="text-[#007AFF] shrink-0" />
-                <span>{serviceName}</span>
+                <span className="truncate">{serviceName}</span>
               </div>
 
               <div className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
                 <Clock size={16} className="text-[#007AFF] shrink-0" />
-                <span>Today, 3:00 PM - 5:00 PM</span>
+                <span className="truncate">Today, 3:00 PM - 5:00 PM</span>
               </div>
             </div>
           </div>
 
-          {/* Floating White Expert Card (Bottom Right) */}
-          <div className="absolute bottom-3 right-3 sm:right-4 z-20 bg-white p-3 sm:p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-xl flex items-center gap-3 min-w-[210px] sm:min-w-[240px]">
+          {/* Floating White Expert Card (Responsive Placement to Avoid Text Overlap) */}
+          <div className="relative sm:absolute sm:bottom-4 sm:right-4 z-20 bg-white p-3 sm:p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-xl flex items-center justify-between gap-3 w-full sm:w-auto sm:min-w-[240px]">
             {/* Circular Expert Avatar */}
             <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-2xs">
               <img 
