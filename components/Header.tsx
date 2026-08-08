@@ -47,7 +47,7 @@ export default function Header({
   const displayName = getDisplayName();
 
   return (
-    <>
+    <div className="relative z-40">
       <header className="bg-white border-b border-slate-100 px-4 py-2.5 sticky top-0 z-40 flex items-center justify-between shadow-xs">
         
         {/* Left: Location Dropdown */}
@@ -99,7 +99,7 @@ export default function Header({
 
       </header>
 
-      {/* Collapsible Notification Panel */}
+      {/* Collapsible Compact Popover Notification Panel */}
       <NotificationDrawer
         isOpen={isNotifOpen}
         onClose={() => setIsNotifOpen(false)}
@@ -115,6 +115,6 @@ export default function Header({
           }}
         />
       )}
-    </>
+    </div>
   );
 }
