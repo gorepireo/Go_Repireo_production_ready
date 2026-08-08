@@ -30,6 +30,7 @@ import {
   Headphones
 } from 'lucide-react';
 import Link from 'next/link';
+import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 const categories = [
@@ -90,32 +91,8 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
       
-      {/* 1. Header Bar */}
-      <header className="bg-white border-b border-slate-100 px-4 py-2.5 sticky top-0 z-40 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-1 bg-slate-50 hover:bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-slate-200/60 transition-colors">
-            <MapPin size={13} className="text-[#007AFF]" />
-            <span>Etawah</span>
-            <ChevronDown size={12} className="text-slate-400" />
-          </button>
-        </div>
-
-        <div className="text-center">
-          <h1 className="text-sm font-bold text-slate-900 flex items-center justify-center gap-1">
-            Hi, Priithibi <span className="text-base">👋</span>
-          </h1>
-          <p className="text-[10px] text-slate-400">What can we help you with today?</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button className="relative p-1.5 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors">
-            <Bell size={20} />
-            <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
-              3
-            </span>
-          </button>
-        </div>
-      </header>
+      {/* 1. Universal Global Header */}
+      <Header />
 
       {/* 2. Royal Blue Hero Banner (Carousel) */}
       <section className="px-4 mt-3">

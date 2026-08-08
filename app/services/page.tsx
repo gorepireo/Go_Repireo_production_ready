@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import Header from '@/components/Header';
 
 const avatars = [
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150',
@@ -29,10 +30,11 @@ const features = [
 
 export default function ServicesPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-6 text-[#0F172A]">
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 text-[#0F172A]">
+      <Header />
       
       {/* 1. Hero Banner */}
-      <section className="px-4">
+      <section className="px-4 pt-4">
         <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[300px] flex items-center justify-between shadow-sm">
           <div className="relative z-10 space-y-3.5 max-w-[58%] sm:max-w-[62%]">
             <div className="inline-flex items-center gap-1.5 bg-blue-100/50 backdrop-blur-sm px-3 py-1 rounded-full text-[#007AFF] border border-blue-200">
