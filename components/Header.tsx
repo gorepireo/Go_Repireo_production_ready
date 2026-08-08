@@ -19,17 +19,25 @@ export default function Header({
   customTitle,
   customSubtitle
 }: HeaderProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [currentLocation, setCurrentLocation] = useState('Etawah, UP');
 
-  // Extract user's display name or email prefix
+  // Extract user's actual account full name
   const getDisplayName = () => {
-    if (!user) return 'Priithibi';
-    if (user.user_metadata?.full_name) return user.user_metadata.full_name.split(' ')[0];
-    if (user.user_metadata?.name) return user.user_metadata.name.split(' ')[0];
-    if (user.email) {
+    // 1. Check database profile table fields
+    const dbName = (profile as any)?.full_name || (profile as any)?.name || profile?.display_name;
+    if (dbName && typeof dbName === 'string' && dbName.trim()) {
+      return dbName.trim().split(' ')[0];
+    }
+    // 2. Check auth user metadata fields
+    const metaName = user?.user_metadata?.full_name || user?.user_metadata?.name;
+    if (metaName && typeof metaName === 'string' && metaName.trim()) {
+      return metaName.trim().split(' ')[0];
+    }
+    // 3. Check email prefix if no name is available
+    if (user?.email) {
       const prefix = user.email.split('@')[0];
       return prefix.charAt(0).toUpperCase() + prefix.slice(1);
     }
