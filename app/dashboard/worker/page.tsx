@@ -177,11 +177,22 @@ function WorkerDashboardContent() {
           .from('orders')
           .select('*')
           .eq('status', 'pending')
+          .or('accepted.is.null,accepted.eq.false')
           .order('created_at', { ascending: false })
           .limit(1);
 
         if (pendingJobs && pendingJobs.length > 0) {
-          setActiveJob(pendingJobs[0]);
+          const isLocallyAccepted = typeof window !== 'undefined' && localStorage.getItem(`accepted_job_${pendingJobs[0].id}`) === 'true';
+          if (isLocallyAccepted) {
+            setActiveJob({
+              ...pendingJobs[0],
+              status: 'in_progress',
+              accepted: true,
+              worker_id: workerId
+            });
+          } else {
+            setActiveJob(pendingJobs[0]);
+          }
         } else {
           setActiveJob(null);
         }
@@ -236,8 +247,42 @@ function WorkerDashboardContent() {
     const workerPhone = (profile as any)?.phone || '+918679245568';
     const nowIso = new Date().toISOString();
 
-    // 1. Update orders and order_tracking in database FIRST to verify atomic first-come-first-served assignment
     try {
+      // 1. Fetch current order state from DB to check if it's already accepted by someone else
+      const { data: existingOrder } = await insforge.database
+        .from('orders')
+        .select('*')
+        .eq('id', targetId)
+        .maybeSingle();
+
+      // If order exists and is ALREADY accepted by ANOTHER worker
+      if (existingOrder && (existingOrder.accepted === true || existingOrder.status !== 'pending')) {
+        const isCurrentWorker = existingOrder.worker_id === workerId || (user?.email && existingOrder.worker_email === user.email);
+        
+        if (!isCurrentWorker) {
+          // Another worker accepted it first!
+          const otherWorkerName = existingOrder.worker_name || 'another technician';
+          console.warn(`⚠️ Order was already accepted by ${otherWorkerName}`);
+
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(`accepted_job_${targetId}`);
+            window.dispatchEvent(new CustomEvent('repireo_toast', {
+              detail: {
+                id: `toast-${Date.now()}`,
+                type: 'info',
+                title: 'Order Already Accepted',
+                message: `Order was accepted by ${otherWorkerName}. It has been removed from your workspace.`
+              }
+            }));
+          }
+
+          setActiveJob(null);
+          fetchWorkerDashboardData();
+          return;
+        }
+      }
+
+      // 2. Perform DB update for THIS worker
       const updateData: any = {
         status: 'in_progress',
         accepted: true,
@@ -253,43 +298,35 @@ function WorkerDashboardContent() {
         updateData.worker_id = workerId;
       }
 
-      // Atomic Update: Only update if the order is still pending OR currently assigned to this worker
-      const { data: updatedRows, error: updateError } = await insforge.database
+      const { error: updateError } = await insforge.database
         .from('orders')
         .update(updateData)
-        .eq('id', targetId)
-        .eq('status', 'pending')
-        .select();
+        .eq('id', targetId);
 
-      if (updateError || !updatedRows || updatedRows.length === 0) {
-        // Someone else already accepted this order!
-        console.warn('⚠️ Order was already accepted by another expert');
-
+      if (updateError) {
+        console.error('❌ DB order update error:', updateError.message, updateError);
         if (typeof window !== 'undefined') {
-          localStorage.removeItem(`accepted_job_${targetId}`);
           window.dispatchEvent(new CustomEvent('repireo_toast', {
             detail: {
               id: `toast-${Date.now()}`,
               type: 'info',
-              title: 'Order Already Accepted',
-              message: 'Another expert accepted this order first. It has been removed from your dashboard.'
+              title: 'Acceptance Error',
+              message: `Could not update order status: ${updateError.message}`
             }
           }));
         }
-
-        setActiveJob(null);
-        fetchWorkerDashboardData();
         return;
       }
 
-      // 2. Successful first acceptance! Mark in localStorage & update active state
+      // 3. Mark in localStorage & update local activeJob state
       if (typeof window !== 'undefined') {
         localStorage.setItem(`accepted_job_${targetId}`, 'true');
       }
 
-      const assignedOrder = updatedRows[0];
-      setActiveJob({
-        ...assignedOrder,
+      setActiveJob((prev: any) => ({
+        ...(prev || {}),
+        ...existingOrder,
+        id: targetId,
         status: 'in_progress',
         accepted: true,
         accepted_at: nowIso,
@@ -298,9 +335,20 @@ function WorkerDashboardContent() {
         worker_avatar: workerAvatar,
         worker_phone: workerPhone,
         worker_email: user?.email || profile?.email
-      });
+      }));
 
       console.log('✅ Order accepted & activated in DB for worker:', displayName);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('repireo_toast', {
+          detail: {
+            id: `toast-${Date.now()}`,
+            type: 'completed',
+            title: 'Order Accepted ✓',
+            message: 'You have accepted the order. Live route active!'
+          }
+        }));
+      }
 
       await insforge.database
         .from('order_tracking')
