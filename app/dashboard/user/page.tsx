@@ -4,15 +4,16 @@ import { useState, useEffect, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
 import { 
-  ShoppingBag, 
   CheckCircle2, 
   CalendarDays, 
   User as UserIcon, 
   ChevronRight, 
   ArrowRight, 
-  Plus, 
   Settings,
-  MessageCircle
+  Clock,
+  Wrench,
+  Snowflake,
+  ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -28,28 +29,33 @@ function UserDashboardContent() {
     const fetchOrders = async () => {
       if (!user) return;
       
-      const { data, error } = await insforge.database
-        .from('orders')
-        .select('*')
-        .eq('customer_id', user.id)
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await insforge.database
+          .from('orders')
+          .select('*')
+          .or(`customer_id.eq.${user.id},user_email.eq.${user.email}`)
+          .order('created_at', { ascending: false });
 
-      if (data) {
-        setOrders(data);
-        const total = data.reduce((sum, order) => sum + (Number(order.total_price) || 0), 0);
-        setTotalSpent(total);
+        if (data) {
+          setOrders(data);
+          const total = data.reduce((sum, order) => sum + (Number(order.total_price || order.price) || 0), 0);
+          setTotalSpent(total);
+        }
+        if (error) console.error('Fetch error:', error);
+      } catch (err) {
+        console.error('Fetch orders error:', err);
+      } finally {
+        setLoading(false);
       }
-      if (error) console.error('Fetch error:', error);
-      setLoading(false);
     };
 
     fetchOrders();
   }, [user]);
 
-  const completedOrdersCount = orders.filter(o => o.status === 'delivered' || o.status === 'completed').length;
+  const completedOrdersCount = orders.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase())).length;
   const completionPercentage = orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0;
   const clientId = user?.id ? user.id.slice(0, 4).toUpperCase() : 'B8DC';
-  const userName = profile?.display_name || user?.email?.split('@')[0] || 'Prithibi Mandi';
+  const userName = (profile as any)?.full_name || (profile as any)?.name || profile?.display_name || user?.email?.split('@')[0] || 'Prithibi Mandi';
   const avatarUrl = profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
 
   if (loading && !user) return <UserDashboardSkeleton />;
@@ -118,55 +124,59 @@ function UserDashboardContent() {
                 className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md text-white border border-white/30 text-[10px] font-extrabold px-4 py-1.5 rounded-full cursor-not-allowed opacity-90"
               >
                 <span>Add Money</span>
-                <Plus size={13} />
               </button>
             </div>
           </div>
 
-          {/* 3D Wallet Graphic on Right */}
-          <div className="absolute right-1 -bottom-2 w-36 sm:w-44 h-36 sm:h-44 pointer-events-none drop-shadow-xl z-10 flex items-end justify-end">
-            <img src="/wallet_coins_3d.png" alt="Wallet" className="w-full h-full object-contain" />
+          {/* 3D Wallet Graphic */}
+          <div className="absolute right-2 -bottom-2 w-32 sm:w-40 h-32 sm:h-40 pointer-events-none z-10 opacity-90 flex items-end justify-end">
+            <img 
+              src="/wallet_coins_3d.png" 
+              alt="Wallet Coins" 
+              className="w-full h-full object-contain"
+            />
           </div>
+
         </div>
       </section>
 
-      {/* 3. Quick Stats Grid (2x2 Grid) */}
-      <section className="px-4 mb-6">
+      {/* 3. Stats 2x2 Grid */}
+      <section className="px-4 mb-5">
         <div className="grid grid-cols-2 gap-3">
           
           {/* Total Orders */}
-          <Link href="/track" className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-100 flex items-center justify-between hover:border-blue-200 transition-all group">
+          <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-50 text-[#007AFF] rounded-2xl flex items-center justify-center shrink-0">
-                <ShoppingBag size={20} />
+                <CalendarDays size={20} />
               </div>
               <div>
                 <span className="block text-[8px] font-black uppercase tracking-wider text-slate-400">TOTAL ORDERS</span>
                 <span className="block text-base sm:text-lg font-black text-slate-900 leading-none">{orders.length}</span>
               </div>
             </div>
-            <ChevronRight size={14} className="text-slate-300 group-hover:text-[#007AFF] transition-colors" />
-          </Link>
+            <ChevronRight size={14} className="text-slate-300" />
+          </div>
 
-          {/* Completed Orders */}
-          <Link href="/track" className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-100 flex items-center justify-between hover:border-emerald-200 transition-all group">
+          {/* Completed Rate */}
+          <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center shrink-0">
                 <CheckCircle2 size={20} />
               </div>
               <div>
-                <span className="block text-[8px] font-black uppercase tracking-wider text-slate-400">COMPLETED ORDERS</span>
-                <span className="block text-base sm:text-lg font-black text-emerald-600 leading-none">{completionPercentage}%</span>
+                <span className="block text-[8px] font-black uppercase tracking-wider text-slate-400">COMPLETED</span>
+                <span className="block text-base sm:text-lg font-black text-slate-900 leading-none">{completionPercentage}%</span>
               </div>
             </div>
-            <ChevronRight size={14} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
-          </Link>
+            <ChevronRight size={14} className="text-slate-300" />
+          </div>
 
-          {/* Member Since */}
+          {/* Member Status */}
           <div className="bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center shrink-0">
-                <CalendarDays size={20} />
+                <ShieldCheck size={20} />
               </div>
               <div>
                 <span className="block text-[8px] font-black uppercase tracking-wider text-slate-400">MEMBER SINCE</span>
@@ -193,44 +203,90 @@ function UserDashboardContent() {
         </div>
       </section>
 
-      {/* 4. Service Requests Section */}
+      {/* 4. Service Requests Section (SHOWS HISTORY IF ORDERS EXIST, OTHERWISE SHOWS EMPTY STATE) */}
       <section className="px-4 mb-8">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">SERVICE REQUESTS</h3>
           <Link href="/track" className="text-[10px] font-bold text-[#007AFF] flex items-center gap-0.5 hover:underline">
-            View All <ChevronRight size={12} />
+            Track Latest <ChevronRight size={12} />
           </Link>
         </div>
 
-        {/* Empty State Card matching Reference Image */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-          
-          {/* 3D Clipboard Graphic */}
-          <div className="w-24 sm:w-28 h-24 sm:h-28 shrink-0 flex items-center justify-center drop-shadow-md">
-            <img src="/clipboard_3d.png" alt="Service Requests" className="w-full h-full object-contain" />
-          </div>
+        {orders.length === 0 ? (
+          /* Empty State: No Service Request Has Been Done */
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+            <div className="w-24 sm:w-28 h-24 sm:h-28 shrink-0 flex items-center justify-center drop-shadow-md">
+              <img src="/clipboard_3d.png" alt="Service Requests" className="w-full h-full object-contain" />
+            </div>
 
-          {/* Text Content & CTA */}
-          <div className="space-y-1.5 flex-1">
-            <h4 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-              No Active Service Requests
-            </h4>
-            <p className="text-[10px] sm:text-xs text-slate-400 font-medium leading-relaxed max-w-[240px]">
-              You don't have any active service requests right now.
-            </p>
+            <div className="space-y-1.5 flex-1">
+              <h4 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+                No Service Request Has Been Done
+              </h4>
+              <p className="text-[10px] sm:text-xs text-slate-400 font-medium leading-relaxed max-w-[240px]">
+                You have not requested any repair or maintenance service yet.
+              </p>
 
-            <div className="pt-2">
-              <Link 
-                href="/services" 
-                className="inline-flex items-center gap-2 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-full shadow-md shadow-blue-500/20 active:scale-95 transition-all"
-              >
-                <span>Book a Service</span>
-                <ArrowRight size={14} />
-              </Link>
+              <div className="pt-2">
+                <Link 
+                  href="/services/service" 
+                  className="inline-flex items-center gap-2 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-full shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+                >
+                  <span>Book a Service</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
             </div>
           </div>
+        ) : (
+          /* List of All Previous & Active Service Orders */
+          <div className="space-y-3">
+            {orders.map((ord) => {
+              const statusLower = (ord.status || 'in_progress').toLowerCase();
+              const isComp = ['completed', 'delivered'].includes(statusLower);
+              const isWork = ['working', 'work_in_progress'].includes(statusLower);
+              const orderIdStr = `#GR-${(ord.id || '7821').slice(0, 4).toUpperCase()}`;
 
-        </div>
+              return (
+                <Link 
+                  key={ord.id} 
+                  href={`/track?order_id=${ord.id}`}
+                  className="block bg-white rounded-3xl p-4 border border-slate-100 shadow-xs hover:border-blue-200 transition-all group"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                        isComp ? 'bg-emerald-50 text-emerald-600' : isWork ? 'bg-blue-50 text-[#007AFF]' : 'bg-amber-50 text-amber-600'
+                      }`}>
+                        {isComp ? <CheckCircle2 size={20} /> : <Snowflake size={20} />}
+                      </div>
+
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-slate-900">{orderIdStr}</span>
+                          <span className={`text-[8px] font-extrabold px-2.5 py-0.5 rounded-full uppercase ${
+                            isComp ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : isWork ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-amber-50 text-amber-700 border border-amber-100'
+                          }`}>
+                            {isComp ? 'Completed' : isWork ? 'Work In Progress' : 'In Progress'}
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-700 truncate">{ord.service_name || 'AC Repair & Service'}</h4>
+                        <p className="text-[9.5px] text-slate-400 font-medium">
+                          {ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Today'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-black text-slate-900">₹{ord.total_price || ord.price || 499}</span>
+                      <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </section>
 
     </div>
@@ -239,11 +295,7 @@ function UserDashboardContent() {
 
 export default function UserDashboard() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
+    <Suspense fallback={<UserDashboardSkeleton />}>
       <UserDashboardContent />
     </Suspense>
   );

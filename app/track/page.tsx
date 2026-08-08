@@ -18,8 +18,8 @@ import {
   Check,
   Wrench,
   UserCheck,
-  Sparkles,
-  Lock
+  ArrowRight,
+  ClipboardList
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -41,12 +41,14 @@ const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoo
 function TrackContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
+  const paramOrderId = searchParams.get('order_id');
   const isReviewParam = searchParams.get('review') === 'true';
 
   const [order, setOrder] = useState<any>(null);
   const [liveLocation, setLiveLocation] = useState<any>(null);
   const [prevLocation, setPrevLocation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [noOrdersExist, setNoOrdersExist] = useState(false);
 
   // Real Worker Assignment & Review Metrics
   const [workerData, setWorkerData] = useState<{
@@ -75,20 +77,54 @@ function TrackContent() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [isReviewSubmitted, setIsReviewSubmitted] = useState(false);
 
-  // Fetch Latest Order & Real Worker Data
-  const fetchLatestOrder = useCallback(async () => {
+  // Fetch Targeted or Latest Order & Real Worker Data
+  const fetchOrderData = useCallback(async () => {
     if (!user) return;
     try {
-      const { data } = await insforge.database
-        .from('orders')
-        .select('*')
-        .eq('user_email', user.email)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (data && data.length > 0) {
-        const currentOrder = data[0];
+      let currentOrder: any = null;
+
+      // 1. If explicit order_id passed in URL -> fetch that order
+      if (paramOrderId) {
+        const { data } = await insforge.database
+          .from('orders')
+          .select('*')
+          .eq('id', paramOrderId)
+          .maybeSingle();
+        currentOrder = data;
+      }
+
+      // 2. If no explicit order_id or not found -> check for active orders first
+      if (!currentOrder) {
+        const { data: activeOrders } = await insforge.database
+          .from('orders')
+          .select('*')
+          .or(`customer_id.eq.${user.id},user_email.eq.${user.email}`)
+          .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way', 'pending'])
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (activeOrders && activeOrders.length > 0) {
+          currentOrder = activeOrders[0];
+        }
+      }
+
+      // 3. If no active order -> fetch most recent completed order
+      if (!currentOrder) {
+        const { data: recentOrders } = await insforge.database
+          .from('orders')
+          .select('*')
+          .or(`customer_id.eq.${user.id},user_email.eq.${user.email}`)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (recentOrders && recentOrders.length > 0) {
+          currentOrder = recentOrders[0];
+        }
+      }
+
+      if (currentOrder) {
         setOrder(currentOrder);
+        setNoOrdersExist(false);
 
         const currentStatus = (currentOrder.status || '').toLowerCase();
         
@@ -107,7 +143,7 @@ function TrackContent() {
           setOrderStage('pending_assignment');
         }
 
-        // Fetch Assigned Worker Details & Real Ratings from Database
+        // Fetch Assigned Worker Details & Real Ratings
         const assignedWorkerId = currentOrder.worker_id || 'w-rohit-sharma';
         const assignedWorkerName = currentOrder.worker_name || 'Rohit Sharma';
         const assignedWorkerAvatar = currentOrder.worker_avatar || '/hero_technician_banner.jpg';
@@ -121,13 +157,11 @@ function TrackContent() {
 
         let calculatedAvg: number | null = null;
         let count = 0;
-        let isNew = true;
 
         if (reviewsData && reviewsData.length > 0) {
           count = reviewsData.length;
           const totalStars = reviewsData.reduce((acc: number, r: any) => acc + Number(r.rating || 0), 0);
           calculatedAvg = Math.round((totalStars / count) * 10) / 10;
-          isNew = false;
         }
 
         setWorkerData({
@@ -165,22 +199,20 @@ function TrackContent() {
           setLiveLocation({ ...trackData, timestamp: Date.now() });
         }
       } else {
-        if (isReviewParam) {
-          setOrderStage('completed');
-        }
+        setNoOrdersExist(true);
       }
     } catch (err) {
       console.error('Fetch tracking order error:', err);
     } finally {
       setLoading(false);
     }
-  }, [user, liveLocation, isReviewParam]);
+  }, [user, liveLocation, isReviewParam, paramOrderId]);
 
   useEffect(() => {
-    fetchLatestOrder();
-    const interval = setInterval(fetchLatestOrder, 4000);
+    fetchOrderData();
+    const interval = setInterval(fetchOrderData, 4000);
     return () => clearInterval(interval);
-  }, [fetchLatestOrder]);
+  }, [fetchOrderData]);
 
   // Phase 1 -> Phase 2 Transition (Start OTP verified)
   const handleGiveStartOtp = async () => {
@@ -219,7 +251,6 @@ function TrackContent() {
 
     setSubmittingReview(true);
     try {
-      // 1. Record rating in orders table
       if (order?.id) {
         await insforge.database
           .from('orders')
@@ -231,7 +262,6 @@ function TrackContent() {
           .eq('id', order.id);
       }
 
-      // 2. Insert into reviews table
       await insforge.database
         .from('reviews')
         .insert([{
@@ -255,6 +285,40 @@ function TrackContent() {
 
   if (loading) {
     return <SkeletonLoader />;
+  }
+
+  // If NO ORDERS EXIST at all on this account -> Render Empty State
+  if (noOrdersExist) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-28">
+        <Header />
+        
+        <div className="px-4 mt-8">
+          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm text-center space-y-4 max-w-md mx-auto">
+            <div className="w-20 h-20 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
+              <ClipboardList size={36} />
+            </div>
+            
+            <div className="space-y-1">
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">No Active Orders Found</h3>
+              <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                You have not booked any repair or maintenance service yet. Book a service now to track live progress!
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <Link 
+                href="/services/service" 
+                className="inline-flex items-center gap-2 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs px-6 py-3 rounded-full shadow-lg shadow-blue-500/25 active:scale-95 transition-all"
+              >
+                <span>Book a Service Now</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Derived state shortcuts
@@ -411,7 +475,6 @@ function TrackContent() {
               </div>
             ) : (
               <div className="bg-white p-3 sm:p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-xl flex items-center justify-between gap-3">
-                {/* Dynamic Worker Avatar */}
                 <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-2xs">
                   <img 
                     src={workerData.avatar} 
@@ -420,14 +483,12 @@ function TrackContent() {
                   />
                 </div>
 
-                {/* Dynamic Worker Details & Real Model Calculated Rating */}
                 <div className="space-y-0.5 flex-1 min-w-0">
                   <span className="text-[9px] font-medium text-slate-400 block">Your Expert</span>
                   <h3 className="text-xs sm:text-sm font-black text-slate-900 block leading-tight truncate">
                     {workerData.name}
                   </h3>
                   
-                  {/* Real Average Rating vs New Expert Badge */}
                   <div className="flex items-center gap-1 text-[10px] font-bold text-slate-700 pt-0.5">
                     {workerData.isNewWorker ? (
                       <span className="bg-blue-50 text-[#007AFF] text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-blue-100">
@@ -443,7 +504,6 @@ function TrackContent() {
                   </div>
                 </div>
 
-                {/* Phone Button */}
                 <a 
                   href={`tel:${workerData.phone}`} 
                   className="w-10 h-10 bg-[#007AFF] hover:bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
@@ -459,7 +519,7 @@ function TrackContent() {
         </div>
       </section>
 
-      {/* 3. Tracking Section (MAP SHOWN ONLY IF WORKER ASSIGNED & IN TRANSIT! HIDDEN IF PENDING, WORKING, OR COMPLETED) */}
+      {/* 3. Tracking Section (MAP SHOWN ONLY IF WORKER ASSIGNED & IN TRANSIT) */}
       <section className="px-4 mb-5">
         <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-4">
           
