@@ -243,7 +243,12 @@ function WorkerDashboardContent() {
       return;
     }
 
-    const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.jpg';
+    const workerAvatar = 
+      (profile as any)?.avatar_url || 
+      (profile as any)?.avatar || 
+      user?.user_metadata?.avatar_url || 
+      (typeof window !== 'undefined' ? localStorage.getItem('repireo_cached_avatar') : null) || 
+      null;
     const workerPhone = (profile as any)?.phone || '+918679245568';
     const nowIso = new Date().toISOString();
 

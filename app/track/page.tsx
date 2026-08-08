@@ -31,6 +31,7 @@ import { useAuth } from '@/context/AuthContext';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { predictTelemetry } from '@/lib/telemetryModel';
 import Header from '@/components/Header';
+import Avatar from '@/components/Avatar';
 
 const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoogleMap'), {
   ssr: false,
@@ -164,49 +165,45 @@ function TrackContent() {
           setOrderStage('pending_assignment');
         }
 
-        // Fetch Worker Data & Profile Picture
+        // Fetch Worker Data & Real Profile Picture
         const assignedWorkerId = currentOrder.worker_id || 'w-rohit-sharma';
         let assignedWorkerName = currentOrder.worker_name || 'Rohit Sharma';
-        let assignedWorkerAvatar = currentOrder.worker_avatar || null;
+        let assignedWorkerAvatar = (currentOrder.worker_avatar && !currentOrder.worker_avatar.includes('hero_technician')) ? currentOrder.worker_avatar : null;
         let assignedWorkerPhone = currentOrder.worker_phone || '+918679245568';
 
-        // Query workers/users table to get real profile picture if missing or placeholder
+        // Query users/workers table to get real profile picture
         if (assignedWorkerId && assignedWorkerId !== 'w-rohit-sharma') {
           try {
-            const { data: wRow } = await insforge.database
-              .from('workers')
-              .select('avatar_url, image, name, mobile')
-              .or(`id.eq.${assignedWorkerId},user_id.eq.${assignedWorkerId}`)
+            // 1. Check users table by id
+            const { data: uRow } = await insforge.database
+              .from('users')
+              .select('avatar_url, name, display_name, phone')
+              .eq('id', assignedWorkerId)
               .maybeSingle();
 
-            if (wRow) {
-              if (wRow.avatar_url || wRow.image) {
-                assignedWorkerAvatar = wRow.avatar_url || wRow.image;
-              }
-              if (wRow.name) assignedWorkerName = wRow.name;
-              if (wRow.mobile) assignedWorkerPhone = wRow.mobile;
+            if (uRow) {
+              if (uRow.avatar_url) assignedWorkerAvatar = uRow.avatar_url;
+              if (uRow.name || uRow.display_name) assignedWorkerName = uRow.name || uRow.display_name;
+              if (uRow.phone) assignedWorkerPhone = uRow.phone;
             }
 
+            // 2. Check workers table if users avatar is null
             if (!assignedWorkerAvatar) {
-              const { data: uRow } = await insforge.database
-                .from('users')
-                .select('avatar_url, name, display_name, phone')
-                .eq('id', assignedWorkerId)
+              const { data: wRow } = await insforge.database
+                .from('workers')
+                .select('avatar_url, image, name, mobile')
+                .or(`id.eq.${assignedWorkerId},user_id.eq.${assignedWorkerId}`)
                 .maybeSingle();
 
-              if (uRow) {
-                if (uRow.avatar_url) assignedWorkerAvatar = uRow.avatar_url;
-                if (uRow.name || uRow.display_name) assignedWorkerName = uRow.name || uRow.display_name;
-                if (uRow.phone) assignedWorkerPhone = uRow.phone;
+              if (wRow) {
+                if (wRow.avatar_url || wRow.image) assignedWorkerAvatar = wRow.avatar_url || wRow.image;
+                if (wRow.name) assignedWorkerName = wRow.name;
+                if (wRow.mobile) assignedWorkerPhone = wRow.mobile;
               }
             }
           } catch (wErr) {
             console.warn('Worker avatar lookup error:', wErr);
           }
-        }
-
-        if (!assignedWorkerAvatar) {
-          assignedWorkerAvatar = '/hero_technician_banner.jpg';
         }
 
         const { data: reviewsData } = await insforge.database
@@ -690,13 +687,12 @@ function TrackContent() {
               </div>
             ) : (
               <div className="bg-white p-3 sm:p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-xl flex items-center justify-between gap-3">
-                <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-2xs">
-                  <img 
-                    src={workerData.avatar} 
-                    alt={workerData.name} 
-                    className="w-full h-full object-cover object-top"
-                  />
-                </div>
+                <Avatar 
+                  src={workerData.avatar} 
+                  name={workerData.name} 
+                  size={48} 
+                  className="shadow-md border-2 border-slate-100 shrink-0" 
+                />
 
                 <div className="space-y-0.5 flex-1 min-w-0">
                   <span className="text-[9px] font-medium text-slate-400 block">Your Expert</span>
