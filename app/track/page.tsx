@@ -91,15 +91,19 @@ export default function TrackPage() {
           .maybeSingle();
 
         if (trackData) {
-          if (liveLocation && (liveLocation.lat !== trackData.lat || liveLocation.lng !== trackData.lng)) {
-            // Calculate live speed based on position change over time delta
-            const distDeltaKm = calculateHaversineDistanceKm(liveLocation.lat, liveLocation.lng, trackData.lat, trackData.lng);
+          // Determine if worker is moving by comparing coordinates over time
+          const distDeltaKm = liveLocation ? calculateHaversineDistanceKm(liveLocation.lat, liveLocation.lng, trackData.lat, trackData.lng) : 0;
+          const isMoving = trackData.is_moving !== undefined ? Boolean(trackData.is_moving) : (distDeltaKm > 0.003); // >3 meters movement threshold
+
+          if (isMoving && liveLocation) {
             const timeDeltaHours = (Date.now() - (liveLocation.timestamp || Date.now() - 5000)) / (1000 * 3600);
             if (timeDeltaHours > 0 && distDeltaKm > 0) {
-              const liveKmh = Math.min(60, Math.max(15, Math.round(distDeltaKm / timeDeltaHours)));
+              const liveKmh = Math.min(65, Math.max(10, Math.round(distDeltaKm / timeDeltaHours)));
               setCalculatedSpeed(liveKmh);
             }
-            setPrevLocation(liveLocation);
+          } else {
+            // Worker is stationary / not moving -> Speed is ZERO!
+            setCalculatedSpeed(0);
           }
           setLiveLocation({ ...trackData, timestamp: Date.now() });
         }
@@ -133,11 +137,12 @@ export default function TrackPage() {
   const distanceKmNum = calculateHaversineDistanceKm(workerLat, workerLng, userLat, userLng);
   const distanceKmText = distanceKmNum.toFixed(1);
 
-  // Speed (km/h)
-  const currentSpeed = liveLocation?.speed ? Math.round(Number(liveLocation.speed)) : calculatedSpeed;
+  // Live Movement Speed (0 km/h if worker is not moving)
+  const currentSpeed = liveLocation?.speed !== undefined ? Math.round(Number(liveLocation.speed)) : calculatedSpeed;
 
-  // ETA (minutes) = (distance / speed) * 60
-  const etaMinutesNum = Math.max(1, Math.round((distanceKmNum / Math.max(15, currentSpeed)) * 60));
+  // ETA (minutes) = (distance / speed) * 60 (or calculated from city transit speed if paused)
+  const effectiveTransitSpeed = currentSpeed > 0 ? currentSpeed : 25;
+  const etaMinutesNum = Math.max(1, Math.round((distanceKmNum / effectiveTransitSpeed) * 60));
   const etaText = `${etaMinutesNum} mins`;
 
   // Completion Rate (%) according to order stage and distance left
