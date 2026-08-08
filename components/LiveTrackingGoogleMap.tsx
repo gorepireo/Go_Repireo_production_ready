@@ -163,7 +163,7 @@ export default function LiveTrackingGoogleMap({
         leafletMapRef.current = null;
       }
     };
-  }, [technicianLat, technicianLng, userLat, userLng, technicianName, distanceKm]);
+  }, [technicianLat, technicianLng, userLat, userLng, technicianName, technicianAvatar, distanceKm]);
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-inner">

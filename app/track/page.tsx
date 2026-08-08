@@ -164,11 +164,50 @@ function TrackContent() {
           setOrderStage('pending_assignment');
         }
 
-        // Fetch Worker Data
+        // Fetch Worker Data & Profile Picture
         const assignedWorkerId = currentOrder.worker_id || 'w-rohit-sharma';
-        const assignedWorkerName = currentOrder.worker_name || 'Rohit Sharma';
-        const assignedWorkerAvatar = currentOrder.worker_avatar || '/hero_technician_banner.jpg';
-        const assignedWorkerPhone = currentOrder.worker_phone || '+918679245568';
+        let assignedWorkerName = currentOrder.worker_name || 'Rohit Sharma';
+        let assignedWorkerAvatar = currentOrder.worker_avatar || null;
+        let assignedWorkerPhone = currentOrder.worker_phone || '+918679245568';
+
+        // Query workers/users table to get real profile picture if missing or placeholder
+        if (assignedWorkerId && assignedWorkerId !== 'w-rohit-sharma') {
+          try {
+            const { data: wRow } = await insforge.database
+              .from('workers')
+              .select('avatar_url, image, name, mobile')
+              .or(`id.eq.${assignedWorkerId},user_id.eq.${assignedWorkerId}`)
+              .maybeSingle();
+
+            if (wRow) {
+              if (wRow.avatar_url || wRow.image) {
+                assignedWorkerAvatar = wRow.avatar_url || wRow.image;
+              }
+              if (wRow.name) assignedWorkerName = wRow.name;
+              if (wRow.mobile) assignedWorkerPhone = wRow.mobile;
+            }
+
+            if (!assignedWorkerAvatar) {
+              const { data: uRow } = await insforge.database
+                .from('users')
+                .select('avatar_url, name, display_name, phone')
+                .eq('id', assignedWorkerId)
+                .maybeSingle();
+
+              if (uRow) {
+                if (uRow.avatar_url) assignedWorkerAvatar = uRow.avatar_url;
+                if (uRow.name || uRow.display_name) assignedWorkerName = uRow.name || uRow.display_name;
+                if (uRow.phone) assignedWorkerPhone = uRow.phone;
+              }
+            }
+          } catch (wErr) {
+            console.warn('Worker avatar lookup error:', wErr);
+          }
+        }
+
+        if (!assignedWorkerAvatar) {
+          assignedWorkerAvatar = '/hero_technician_banner.jpg';
+        }
 
         const { data: reviewsData } = await insforge.database
           .from('reviews')
@@ -237,23 +276,105 @@ function TrackContent() {
     return () => clearInterval(interval);
   }, [fetchOrderData]);
 
-  // Launch Online Payment (Razorpay API)
+  // Helper to load Razorpay Checkout Script
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (typeof window !== 'undefined' && (window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  // Launch Real Online Payment Gateway (Razorpay API)
   const handleOnlinePayment = async () => {
     setIsPayingOnline(true);
     try {
-      if (order?.id) {
-        await insforge.database
-          .from('orders')
-          .update({ 
-            payment_status: 'paid',
-            payment_method: 'online'
-          })
-          .eq('id', order.id);
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        alert('Razorpay Payment Gateway failed to load. Please check your internet connection.');
+        setIsPayingOnline(false);
+        return;
       }
-      setOrder({ ...order, payment_status: 'paid', payment_method: 'online' });
-    } catch (err) {
+
+      const amountToPay = Number(order?.total_price || order?.details?.estimation?.total || 499);
+
+      // Create Razorpay payment order
+      const res = await fetch('/api/razorpay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amountToPay })
+      });
+      const orderResData = await res.json();
+
+      if (!res.ok) throw new Error(orderResData.error || 'Failed to create Razorpay payment order');
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TMY7lcMkI2vpQ1',
+        amount: Math.round(amountToPay * 100),
+        currency: 'INR',
+        name: 'Go_Repireo',
+        description: `Payment for ${order?.service_name || 'Service'} (Order #${order?.id?.slice(0, 8)})`,
+        image: 'https://xipxmg4q.insforge.site/icon.png',
+        order_id: orderResData.orderId,
+        handler: async function (response: any) {
+          try {
+            if (order?.id) {
+              await insforge.database
+                .from('orders')
+                .update({ 
+                  payment_status: 'paid',
+                  payment_method: 'online',
+                  payment_id: response.razorpay_payment_id
+                })
+                .eq('id', order.id);
+            }
+            setOrder((prev: any) => ({ ...prev, payment_status: 'paid', payment_method: 'online', payment_id: response.razorpay_payment_id }));
+
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('repireo_toast', {
+                detail: {
+                  id: `toast-${Date.now()}`,
+                  type: 'completed',
+                  title: 'Payment Successful ✓',
+                  message: 'Online payment received. Completion OTP unlocked!'
+                }
+              }));
+            }
+          } catch (err) {
+            console.error('Online payment update error:', err);
+          } finally {
+            setIsPayingOnline(false);
+          }
+        },
+        modal: {
+          handleback: true,
+          backdropclose: true,
+          ondismiss: function() {
+            setIsPayingOnline(false);
+          }
+        },
+        prefill: {
+          name: user?.email?.split('@')[0] || 'Customer',
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#007AFF',
+          backdrop_color: 'rgba(15, 23, 42, 0.7)'
+        }
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+
+    } catch (err: any) {
       console.error('Online payment error:', err);
-    } finally {
+      alert(err.message || 'Error initializing Razorpay payment gateway');
       setIsPayingOnline(false);
     }
   };
