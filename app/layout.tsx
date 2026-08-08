@@ -170,9 +170,12 @@ export const metadata: Metadata = {
     canonical: "https://gorepireo.in",
   },
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    icon: [
+      { url: "/logo.png?v=2", type: "image/png" },
+      { url: "/favicon.ico?v=2" }
+    ],
+    shortcut: "/logo.png?v=2",
+    apple: "/logo.png?v=2",
   },
   robots: {
     index: true,
@@ -198,6 +201,9 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light" style={{ colorScheme: 'light' }}>
       <head>
+        <link rel="icon" type="image/png" href="/logo.png?v=2" />
+        <link rel="shortcut icon" href="/logo.png?v=2" />
+        <link rel="apple-touch-icon" href="/logo.png?v=2" />
         <meta name="color-scheme" content="light" />
         <meta name="theme-color" content="#FFFFFF" />
         <style dangerouslySetInnerHTML={{
