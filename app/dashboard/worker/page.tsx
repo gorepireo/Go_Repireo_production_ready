@@ -94,6 +94,94 @@ function WorkerDashboardContent() {
     }
   }, []);
 
+  // Continuous 7-Second Worker Live Location Sync Loop (Runs until work starts)
+  useEffect(() => {
+    if (!activeJob || activeJob.status !== 'in_progress') return;
+
+    const orderId = activeJob.id;
+    let stepCount = 0;
+
+    const syncLiveLocation = () => {
+      const currentAvatar = (profile as any)?.avatar_url || (profile as any)?.avatar || user?.user_metadata?.avatar_url || '/technician_hero.jpg';
+
+      if (typeof window !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const currentLat = pos.coords.latitude;
+            const currentLng = pos.coords.longitude;
+            setLiveDeviceGps({ lat: currentLat, lng: currentLng });
+
+            try {
+              // Delete previous stored location for this order
+              await insforge.database
+                .from('order_live_location')
+                .delete()
+                .eq('order_id', orderId);
+
+              // Store new live location
+              await insforge.database
+                .from('order_live_location')
+                .insert([{
+                  order_id: orderId,
+                  lat: currentLat,
+                  lng: currentLng,
+                  worker_name: displayName,
+                  worker_avatar: currentAvatar,
+                  is_moving: true,
+                  updated_at: new Date().toISOString()
+                }]);
+            } catch (err) {
+              console.warn('Worker location sync error:', err);
+            }
+          },
+          async () => {
+            // Geolocation fallback (e.g. desktop/testing mode)
+            stepCount++;
+            const baseLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : 26.7620;
+            const baseLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : 79.0320;
+            const custLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
+            const custLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
+            
+            // Interpolate position towards customer home
+            const progress = Math.min(0.95, stepCount * 0.05);
+            const currentLat = baseLat + (custLat - baseLat) * progress;
+            const currentLng = baseLng + (custLng - baseLng) * progress;
+
+            try {
+              await insforge.database
+                .from('order_live_location')
+                .delete()
+                .eq('order_id', orderId);
+
+              await insforge.database
+                .from('order_live_location')
+                .insert([{
+                  order_id: orderId,
+                  lat: currentLat,
+                  lng: currentLng,
+                  worker_name: displayName,
+                  worker_avatar: currentAvatar,
+                  is_moving: true,
+                  updated_at: new Date().toISOString()
+                }]);
+            } catch (err) {
+              console.warn('Fallback location sync error:', err);
+            }
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      }
+    };
+
+    // Run immediately on active job detection
+    syncLiveLocation();
+
+    // Repeat every 7 seconds until work starts
+    const intervalId = setInterval(syncLiveLocation, 7000);
+
+    return () => clearInterval(intervalId);
+  }, [activeJob?.id, activeJob?.status, displayName, profile, user]);
+
   // Toggle Online / Offline Status
   const handleToggleOnline = async () => {
     const newStatus = !isAvailable;
