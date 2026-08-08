@@ -255,10 +255,36 @@ function TrackContent() {
     setOrderStage('completed');
     if (order?.id) {
       try {
+        // 1. Mark order completed
         await insforge.database
           .from('orders')
           .update({ status: 'completed' })
           .eq('id', order.id);
+
+        // 2. Clear OTPs from details so they can be reused for future orders
+        const updatedDetails = { ...(order.details || {}) };
+        delete updatedDetails.start_otp;
+        delete updatedDetails.completion_otp;
+        await insforge.database
+          .from('orders')
+          .update({ details: updatedDetails })
+          .eq('id', order.id);
+
+        // 3. Send push notification to worker that service is complete
+        if (workerData?.id) {
+          try {
+            await fetch('/api/push/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: 'Service Completed ✓',
+                message: 'Customer verified completion OTP. Payment will be credited to your wallet.',
+                url: '/dashboard/worker',
+                targetUserId: workerData.id
+              })
+            });
+          } catch {}
+        }
       } catch (err) {
         console.error('Update status error:', err);
       }

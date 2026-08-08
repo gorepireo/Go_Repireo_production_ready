@@ -114,8 +114,20 @@ export default function ServiceBooking() {
   }, [user, loading, router]);
 
   const createOrderRecord = async (payStatus: string, payMethod: string, payId?: string) => {
-    const startOtp = Math.floor(1000 + Math.random() * 9000).toString();
-    const completionOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    // Fetch unique OTPs from server (ensures no collision with active orders)
+    let startOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    let completionOtp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    try {
+      const otpRes = await fetch('/api/generate-otp', { method: 'POST' });
+      if (otpRes.ok) {
+        const otpData = await otpRes.json();
+        startOtp = otpData.start_otp || startOtp;
+        completionOtp = otpData.completion_otp || completionOtp;
+      }
+    } catch (otpErr) {
+      console.warn('OTP API error, using fallback:', otpErr);
+    }
 
     let insertPayload: any = {
       customer_id: user?.id || null,
@@ -132,7 +144,7 @@ export default function ServiceBooking() {
         items: [{ type: 'service', name: formData.category }], 
         estimation,
         start_otp: startOtp,
-        completion_otp: payMethod === 'cash' ? null : completionOtp
+        completion_otp: completionOtp  // Always set for both cash and online orders
       },
       lat: formData.lat || (12.9716 + (Math.random() - 0.5) * 0.1),
       lng: formData.lng || (77.5946 + (Math.random() - 0.5) * 0.1),
@@ -211,6 +223,25 @@ export default function ServiceBooking() {
             }));
 
             await insforge.database.from('notifications').insert(workerNotifications);
+
+            // Also send REAL device push notifications to matching workers
+            const timingTextPush = formData.bookingType === 'immediately' ? 'Immediate service' : `Scheduled: ${formData.preferredDate}`;
+            for (const w of matchingWorkers) {
+              try {
+                await fetch('/api/push/send', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    title: `⚡ New ${formData.category} Request!`,
+                    message: `${timingTextPush} — ₹${estimatedPrice}. Tap to accept.`,
+                    url: '/dashboard/worker',
+                    targetUserId: w.user_id,
+                    orderId: data[0].id,
+                    actions: [{ action: 'accept', title: 'Accept' }]
+                  })
+                });
+              } catch {}
+            }
           }
         }
       } catch (notifyErr) {
