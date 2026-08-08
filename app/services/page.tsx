@@ -8,7 +8,8 @@ import {
   Wrench,
   Clock,
   Headphones,
-  UserCheck
+  UserCheck,
+  Lock
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -28,11 +29,11 @@ const features = [
 
 export default function ServicesPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-6">
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pb-32 pt-6 text-[#0F172A]">
       
-      {/* Hero Section */}
+      {/* 1. Hero Banner */}
       <section className="px-4">
-        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[340px] flex items-center justify-between shadow-sm">
+        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[300px] flex items-center justify-between shadow-sm">
           <div className="relative z-10 space-y-3.5 max-w-[58%] sm:max-w-[62%]">
             <div className="inline-flex items-center gap-1.5 bg-blue-100/50 backdrop-blur-sm px-3 py-1 rounded-full text-[#007AFF] border border-blue-200">
               <ShieldCheck size={12} className="fill-current text-[#007AFF]" />
@@ -45,7 +46,7 @@ export default function ServicesPage() {
             </h1>
 
             <p className="text-[11px] text-slate-600 leading-relaxed max-w-[190px]">
-              Tell us what you need and we'll connect you with the right verified expert.
+              Select a service category below to connect with verified doorstep technicians.
             </p>
 
             <div className="flex items-center gap-2 pt-1 flex-wrap">
@@ -63,38 +64,77 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          {/* Hero Image - Properly Positioned */}
+          {/* Hero Image */}
           <div className="absolute right-0 bottom-0 w-[42%] max-w-[240px] sm:max-w-[320px] h-[85%] z-0 pointer-events-none flex items-end justify-end">
             <img src="/hero_house_3d.png" alt="House Services" className="w-full h-full object-contain object-bottom" />
           </div>
         </div>
       </section>
 
-      {/* Popular Services Header */}
+      {/* 2. Service Options Selection Header */}
       <section className="mt-8 px-4">
-        <div className="flex justify-between items-end mb-4">
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">Popular Services</h2>
-            <p className="text-[10px] text-slate-500">Choose the service you need</p>
-          </div>
-          <Link href="/services" className="text-[10px] font-bold text-[#007AFF] flex items-center gap-1">
-            View all <ChevronRight size={12} />
-          </Link>
+        <div className="mb-4">
+          <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">Select Service Category</h2>
+          <p className="text-[10px] text-slate-500">Choose between Installation or Repair & Maintenance</p>
         </div>
 
         <div className="space-y-4">
-          {/* Repair & Maintenance Card */}
-          <Link href="/services/service" className="block">
-            <motion.div whileTap={{ scale: 0.98 }} className="bg-white rounded-3xl p-5 flex gap-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group">
+          
+          {/* OPTION 1: Installation (COMING SOON TAPE + BLURRED + 100% UNCLICKABLE) */}
+          <div className="relative bg-white rounded-3xl p-5 border border-slate-100 shadow-sm overflow-hidden select-none">
+            
+            {/* 3D Diagonal Caution Tape Overlay */}
+            <div className="absolute inset-0 z-30 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center pointer-events-auto overflow-hidden rounded-3xl">
+              <div className="bg-gradient-to-r from-[#FF9500] via-[#FF5500] to-[#FF9500] text-white px-10 py-2 -rotate-[10deg] shadow-xl border-y-2 border-slate-950/20 transform scale-110 w-[140%] text-center flex items-center justify-center gap-2">
+                <Lock size={12} />
+                <span className="text-xs font-black uppercase tracking-widest drop-shadow-sm whitespace-nowrap">
+                  Installation Service • Coming Soon
+                </span>
+              </div>
+            </div>
+
+            {/* Blurred Unclickable Card Content */}
+            <div className="flex gap-4 filter blur-[2px] opacity-60 pointer-events-none">
+              <div className="w-20 h-20 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0">
+                <Zap className="w-10 h-10 text-orange-400 drop-shadow-md fill-current" />
+              </div>
+              
+              <div className="flex-1 space-y-1.5 min-w-0 pr-12">
+                <span className="text-[8px] font-bold text-orange-500 uppercase tracking-widest">New Setup</span>
+                <h3 className="text-sm font-black text-slate-900 uppercase leading-none tracking-tight">Installation Service</h3>
+                <p className="text-[9px] text-slate-500 leading-snug line-clamp-2">
+                  Plan and install new split ACs, geysers, TV wall mounts, or water purifiers with trained installation specialists.
+                </p>
+                <div className="flex flex-col gap-0.5 pt-1">
+                  <span className="text-[8px] text-slate-400">Starting from</span>
+                  <span className="text-sm font-black text-slate-900">₹799</span>
+                </div>
+              </div>
+
+              <div className="absolute top-5 right-5 flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full">
+                <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Coming Soon</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* OPTION 2: Repair & Maintenance / Repair & Services (ACTIVE & CLICKABLE -> LEADS TO BOOKING PAGE) */}
+          <Link href="/services/service" className="block group">
+            <motion.div 
+              whileTap={{ scale: 0.98 }} 
+              className="bg-white rounded-3xl p-5 flex gap-4 shadow-md shadow-blue-500/5 border-2 border-[#007AFF]/30 hover:border-[#007AFF] relative overflow-hidden transition-all"
+            >
               <div className="w-20 h-20 rounded-2xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
                 <Wrench className="w-10 h-10 text-[#007AFF] drop-shadow-md" />
               </div>
               
               <div className="flex-1 space-y-1.5 min-w-0 pr-12">
-                <span className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest">Fast Support</span>
-                <h3 className="text-sm font-black text-slate-900 uppercase leading-none tracking-tight">Repair & Maintenance</h3>
+                <span className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest">Available Now</span>
+                <h3 className="text-sm font-black text-slate-900 uppercase leading-none tracking-tight">
+                  Repair & Maintenance
+                </h3>
                 <p className="text-[9px] text-slate-500 leading-snug line-clamp-2">
-                  Get fast diagnostics, expert repairs and ongoing care for systems you already use.
+                  Fast diagnostics, expert repairs and maintenance for plumbing, electrical, cleaning, and appliances.
                 </p>
                 <div className="flex flex-col gap-0.5 pt-1">
                   <span className="text-[8px] text-slate-400">Starting from</span>
@@ -102,49 +142,21 @@ export default function ServicesPage() {
                 </div>
               </div>
 
-              <div className="absolute top-5 right-5 flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-full">
-                 <Clock size={10} className="text-slate-400" />
-                 <span className="text-[8px] font-medium text-slate-600">45-90 mins</span>
+              <div className="absolute top-5 right-5 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[8px] font-extrabold uppercase text-emerald-700">Active</span>
               </div>
 
-              <div className="absolute bottom-5 right-5 w-8 h-8 bg-[#007AFF] text-white rounded-full flex items-center justify-center group-hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30">
-                <ArrowRight size={16} />
+              <div className="absolute bottom-5 right-5 w-9 h-9 bg-[#007AFF] text-white rounded-full flex items-center justify-center group-hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30">
+                <ArrowRight size={18} />
               </div>
             </motion.div>
           </Link>
 
-          {/* New Installation Card */}
-          <div className="block cursor-not-allowed opacity-90">
-            <div className="bg-white rounded-3xl p-5 flex gap-4 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
-              <div className="w-20 h-20 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0">
-                <Zap className="w-10 h-10 text-orange-400 drop-shadow-md fill-current" />
-              </div>
-              
-              <div className="flex-1 space-y-1.5 min-w-0 pr-12">
-                <span className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest">Setup</span>
-                <h3 className="text-sm font-black text-slate-900 uppercase leading-none tracking-tight">New Installation</h3>
-                <p className="text-[9px] text-slate-500 leading-snug line-clamp-2">
-                  Plan and install new equipment with trained specialists and end-to-end coordination.
-                </p>
-                <div className="flex flex-col gap-0.5 pt-1">
-                  <span className="text-[8px] text-slate-400">Starting from</span>
-                  <span className="text-sm font-black text-[#007AFF]">₹799</span>
-                </div>
-              </div>
-
-              <div className="absolute top-5 right-5 flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full">
-                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Coming Soon</span>
-              </div>
-
-              <div className="absolute bottom-5 right-5 w-8 h-8 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center">
-                <ArrowRight size={16} />
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Custom Service Plan CTA */}
+      {/* 3. Custom Service Plan CTA */}
       <section className="mt-8 px-4">
         <div className="bg-[#0A1629] rounded-3xl p-6 relative overflow-hidden min-h-[180px] flex items-center shadow-xl">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-900/50 to-transparent opacity-80 pointer-events-none"></div>
@@ -154,11 +166,12 @@ export default function ServicesPage() {
               NEED A CUSTOM<br/>SERVICE PLAN?
             </h2>
             <p className="text-[10px] text-slate-300 leading-relaxed max-w-[150px]">
-              Talk to our experts and get a personalized solution.
+              Talk to our experts and get a personalized doorstep solution.
             </p>
-            <button className="bg-white text-slate-900 px-4 py-2.5 rounded-full text-[9px] font-bold uppercase tracking-wider mt-2 flex items-center gap-2 hover:bg-slate-100 active:scale-95 transition-all">
-              TALK TO AN EXPERT <ArrowRight size={12} className="text-[#007AFF]" />
-            </button>
+            <Link href="/services/service" className="bg-white text-slate-900 px-4 py-2.5 rounded-full text-[9px] font-bold uppercase tracking-wider mt-2 inline-flex items-center gap-2 hover:bg-slate-100 active:scale-95 transition-all">
+              <span>TALK TO AN EXPERT</span>
+              <ArrowRight size={12} className="text-[#007AFF]" />
+            </Link>
           </div>
 
           <div className="absolute -right-6 -bottom-0 w-48 h-56 z-0 pointer-events-none">
@@ -167,7 +180,7 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* 4. Features Grid */}
       <section className="mt-8 px-4 mb-8">
         <div className="grid grid-cols-4 gap-2">
           {features.map((feature, idx) => (

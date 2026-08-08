@@ -39,7 +39,7 @@ export default function BottomNav() {
     { name: 'Profile', path: '/dashboard/worker/settings', icon: User },
   ] : [
     { name: 'Home', path: '/', icon: Home },
-    { name: 'Bookings', path: '/services/service', icon: Calendar },
+    { name: 'Bookings', path: '/services', icon: Calendar },
     { name: 'Shop', path: '/shop', icon: ShoppingBag },
     { name: 'Track', path: '/track', icon: MapPin },
     { name: 'Profile', path: '/dashboard/user', icon: User },
