@@ -67,7 +67,7 @@ function UserDashboardContent() {
               <img 
                 src={avatarUrl} 
                 alt={userName}
-                className="w-13 h-13 rounded-full object-cover border-2 border-emerald-500 shadow-sm"
+                className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500 shadow-sm"
               />
               <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
             </div>
@@ -232,15 +232,6 @@ function UserDashboardContent() {
 
         </div>
       </section>
-
-      {/* Floating WhatsApp Button */}
-      <Link
-        href="/whatsapp"
-        className="fixed bottom-20 right-4 z-40 bg-[#25D366] hover:bg-[#20ba5a] text-white w-12 h-12 rounded-full shadow-xl shadow-emerald-500/30 flex items-center justify-center active:scale-90 transition-all border-2 border-white"
-        aria-label="WhatsApp Support"
-      >
-        <MessageCircle size={24} className="fill-white stroke-none" />
-      </Link>
 
     </div>
   );
