@@ -2,23 +2,25 @@
 
 import React, { useEffect, useRef } from 'react';
 
-interface LiveTrackingGoogleMapProps {
-  technicianLat?: number;
-  technicianLng?: number;
-  userLat?: number;
-  userLng?: number;
+interface LiveTrackingProps {
+  technicianLat: number;
+  technicianLng: number;
+  userLat: number;
+  userLng: number;
   technicianName?: string;
+  technicianAvatar?: string;
   distanceKm?: string;
 }
 
 export default function LiveTrackingGoogleMap({
-  technicianLat = 26.7620,
-  technicianLng = 79.0320,
-  userLat = 26.7810,
-  userLng = 79.0120,
-  technicianName = "Rohit Sharma",
-  distanceKm = "2.4"
-}: LiveTrackingGoogleMapProps) {
+  technicianLat,
+  technicianLng,
+  userLat,
+  userLng,
+  technicianName = 'Rohit Sharma',
+  technicianAvatar = '/hero_technician_banner.jpg',
+  distanceKm = '2.4 km'
+}: LiveTrackingProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
 
@@ -134,12 +136,12 @@ export default function LiveTrackingGoogleMap({
           <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
             <div style="position: absolute; inset: -4px; background: rgba(0, 122, 255, 0.3); border-radius: 50%; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
             <div style="background-color: #007AFF; width: 42px; height: 42px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 14px rgba(0,122,255,0.4); overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 10;">
-              <img src="/hero_technician_banner.jpg" style="width: 100%; height: 100%; object-fit: cover;" />
+              <img src="${technicianAvatar}" style="width: 100%; height: 100%; object-fit: cover;" />
             </div>
             <div style="background: #007AFF; color: white; font-size: 9px; font-weight: 800; padding: 3px 9px; border-radius: 12px; margin-top: 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,122,255,0.4); display: flex; align-items: center; gap: 5px;">
               <span>${navArrowSvg}</span>
               <span>${technicianName.split(' ')[0]}</span>
-              <span style="opacity: 0.85; font-weight: 600;">• ${distanceKm} km</span>
+              <span style="opacity: 0.85; font-weight: 600;">• ${(distanceKm || '').replace(/\s*km\s*$/i, '')} km</span>
             </div>
           </div>
         `,
