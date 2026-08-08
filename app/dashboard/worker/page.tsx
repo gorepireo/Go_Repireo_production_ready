@@ -142,15 +142,76 @@ function WorkerDashboardContent() {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Open Native Google Maps App / Directions Website
+  // Worker Explicitly Accepts Order
+  const handleAcceptJob = async (jobId: string) => {
+    try {
+      const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.jpg';
+      const workerPhone = (profile as any)?.phone || '+918679245568';
+
+      await insforge.database
+        .from('orders')
+        .update({
+          status: 'in_progress',
+          worker_id: user?.id || 'w-rohit-sharma',
+          worker_name: displayName,
+          worker_avatar: workerAvatar,
+          worker_phone: workerPhone,
+          worker_email: user?.email
+        })
+        .eq('id', jobId);
+
+      fetchWorkerDashboardData();
+    } catch (err) {
+      console.error('Accept job error:', err);
+    }
+  };
+
+  // Open Native Google Maps App using Worker's REAL LIVE GPS LOCATION
   const handleGetRoute = () => {
-    const wLat = profile?.lat ? Number(profile.lat) : 26.7620;
-    const wLng = profile?.lng ? Number(profile.lng) : 79.0320;
     const cLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
     const cLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
 
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${wLat},${wLng}&destination=${cLat},${cLng}&travelmode=driving`;
-    window.open(mapsUrl, '_blank');
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const actualLat = pos.coords.latitude;
+          const actualLng = pos.coords.longitude;
+
+          // Save live worker GPS coordinates to DB
+          if (activeJob?.id) {
+            try {
+              await insforge.database
+                .from('order_live_location')
+                .upsert([{
+                  order_id: activeJob.id,
+                  lat: actualLat,
+                  lng: actualLng,
+                  worker_name: displayName,
+                  updated_at: new Date().toISOString()
+                }]);
+            } catch (e) {
+              console.warn('Upsert live location warning:', e);
+            }
+          }
+
+          const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${actualLat},${actualLng}&destination=${cLat},${cLng}&travelmode=driving`;
+          window.open(mapsUrl, '_blank');
+        },
+        (err) => {
+          console.warn('GPS position error:', err);
+          const fallbackLat = profile?.lat ? Number(profile.lat) : 26.7620;
+          const fallbackLng = profile?.lng ? Number(profile.lng) : 79.0320;
+          const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${fallbackLat},${fallbackLng}&destination=${cLat},${cLng}&travelmode=driving`;
+          window.open(mapsUrl, '_blank');
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      const fallbackLat = profile?.lat ? Number(profile.lat) : 26.7620;
+      const fallbackLng = profile?.lng ? Number(profile.lng) : 79.0320;
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${fallbackLat},${fallbackLng}&destination=${cLat},${cLng}&travelmode=driving`;
+      window.open(mapsUrl, '_blank');
+    }
   };
 
   // Verify Start Work OTP
@@ -249,7 +310,8 @@ function WorkerDashboardContent() {
   const customerLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
   const activeOrderIdText = activeJob?.id ? `#GR-${activeJob.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
   
-  const currentStatus = (activeJob?.status || 'in_progress').toLowerCase();
+  const currentStatus = (activeJob?.status || '').toLowerCase();
+  const isPendingJob = currentStatus === 'pending';
   const isWorking = ['working', 'work_in_progress'].includes(currentStatus);
   const isCompletedJob = ['completed', 'delivered'].includes(currentStatus);
   const isPaid = activeJob?.payment_status === 'paid' || cashCollected;
@@ -355,7 +417,7 @@ function WorkerDashboardContent() {
 
         </section>
 
-        {/* 4. CURRENT ORDER TRACKING SECTION (HANDLES ACTIVE, COMPLETED PREVIOUS, AND EMPTY STATES) */}
+        {/* 4. CURRENT ORDER TRACKING SECTION */}
         <section className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-4">
           
           {/* Header */}
@@ -371,12 +433,49 @@ function WorkerDashboardContent() {
               activeJob ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-200'
             }`}>
               <span className={`w-2 h-2 rounded-full ${activeJob ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
-              {activeJob ? 'Live Tracking' : `${completedJobs.length} Orders Completed`}
+              {activeJob ? (isPendingJob ? 'Awaiting Acceptance' : 'Live Tracking') : `${completedJobs.length} Orders Completed`}
             </span>
           </div>
 
-          {/* SCENARIO A: ACTIVE LIVE ORDER IN PROGRESS */}
-          {activeJob ? (
+          {/* SCENARIO A: UNACCEPTED PENDING ORDER */}
+          {activeJob && isPendingJob ? (
+            <div className="bg-amber-50/90 rounded-2xl p-5 border border-amber-200 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] font-black text-amber-800 uppercase tracking-widest block">NEW SERVICE BOOKING REQUEST</span>
+                  <h4 className="text-lg font-black text-slate-900">{activeOrderIdText}</h4>
+                </div>
+                <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-3 py-1 rounded-full border border-amber-200">
+                  Awaiting Acceptance
+                </span>
+              </div>
+
+              <div className="bg-white p-3.5 rounded-xl border border-amber-100/80 space-y-1">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-900">
+                  <span>{activeJob.service_name || 'AC Repair & Service'}</span>
+                  <span className="text-[#007AFF] font-black">₹{activeJob.total_price || activeJob.price || 499}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium">Customer Location: Etawah, UP (5.2 km away)</p>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => handleAcceptJob(activeJob.id)}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs py-3 rounded-xl shadow-md shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Check size={16} />
+                  <span>Accept Order</span>
+                </button>
+                <button
+                  onClick={() => setActiveJob(null)}
+                  className="px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs py-3 rounded-xl transition-all"
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+          ) : activeJob ? (
+            /* SCENARIO B: ACCEPTED LIVE ORDER IN PROGRESS */
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch">
                 

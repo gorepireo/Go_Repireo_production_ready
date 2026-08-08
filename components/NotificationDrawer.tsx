@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { insforge } from '@/lib/insforge';
 
 export interface NotificationItem {
   id: string;
@@ -97,18 +98,9 @@ const workerDefaults: NotificationItem[] = [
   },
   {
     id: 'w2',
-    type: 'started',
-    title: 'Start Work OTP Verified',
-    message: 'Customer verified Start OTP 4812. You may now perform service.',
-    time: '30m ago',
-    read: true,
-    actionUrl: '/dashboard/worker'
-  },
-  {
-    id: 'w3',
     type: 'worker_payment',
     title: 'Payment Credited ₹499',
-    message: 'Work completion OTP verified. ₹499 credited to your wallet balance.',
+    message: 'Work completion verified. ₹499 credited to your wallet balance.',
     time: '2h ago',
     read: true,
     actionUrl: '/dashboard/worker'
@@ -117,7 +109,7 @@ const workerDefaults: NotificationItem[] = [
 
 export default function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps) {
   const router = useRouter();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [cachedRole, setCachedRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -167,7 +159,37 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
   };
 
   // Worker Accept Order
-  const handleWorkerAccept = (id: string) => {
+  const handleWorkerAccept = async (id: string) => {
+    const workerName = (profile as any)?.full_name || (profile as any)?.name || user?.email?.split('@')[0] || 'Rohit Sharma';
+    const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.jpg';
+    const workerPhone = (profile as any)?.phone || '+918679245568';
+
+    // Assign pending order in InsForge DB
+    try {
+      const { data: pendingOrders } = await insforge.database
+        .from('orders')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (pendingOrders && pendingOrders.length > 0) {
+        await insforge.database
+          .from('orders')
+          .update({
+            status: 'in_progress',
+            worker_id: user?.id || 'w-rohit-sharma',
+            worker_name: workerName,
+            worker_avatar: workerAvatar,
+            worker_phone: workerPhone,
+            worker_email: user?.email
+          })
+          .eq('id', pendingOrders[0].id);
+      }
+    } catch (err) {
+      console.error('Accept order error:', err);
+    }
+
     const updated = notifications.map(n => 
       n.id === id ? { ...n, workerAccepted: true, title: 'Order Accepted ✓', message: 'You accepted order #GR-7821. Navigate to customer location.' } : n
     );
