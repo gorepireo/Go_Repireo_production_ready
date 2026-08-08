@@ -221,12 +221,12 @@ function WorkerDashboardContent() {
       // Add job price to lifetime earnings
       const jobPrice = Number(activeJob?.total_price || activeJob?.price || 499);
       setLifetimeEarnings(prev => prev + jobPrice);
-      setActiveJob(null);
+      setActiveJob({ ...activeJob, status: 'completed', payment_status: 'paid' });
       setCompletionOtpInput('');
       fetchWorkerDashboardData();
     } catch (err) {
       console.error('Verify Completion OTP error:', err);
-      setActiveJob(null);
+      setActiveJob({ ...activeJob, status: 'completed' });
     } finally {
       setVerifyingOtp(false);
     }
@@ -243,6 +243,7 @@ function WorkerDashboardContent() {
   
   const currentStatus = (activeJob?.status || 'in_progress').toLowerCase();
   const isWorking = ['working', 'work_in_progress'].includes(currentStatus);
+  const isCompletedJob = ['completed', 'delivered'].includes(currentStatus);
   const isPaid = activeJob?.payment_status === 'paid' || cashCollected;
 
   return (
@@ -424,7 +425,7 @@ function WorkerDashboardContent() {
                   className="w-full bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs py-3 px-4 rounded-2xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
                 >
                   <Navigation size={15} />
-                  <span>Get Route 🗺️</span>
+                  <span>Get Route</span>
                   <ExternalLink size={13} className="opacity-80" />
                 </button>
               </div>
@@ -454,10 +455,21 @@ function WorkerDashboardContent() {
 
           </div>
 
-          {/* 5. INLINE OTP VERIFICATION & CASH PAYMENT CARD (DIRECTORY BENEATH MAP) */}
+          {/* 5. INLINE OTP VERIFICATION & CASH PAYMENT CARD */}
           <div className="pt-3 border-t border-slate-100">
             
-            {!isWorking ? (
+            {isCompletedJob ? (
+              /* Completed Order State */
+              <div className="bg-emerald-50/90 rounded-2xl p-4 border border-emerald-200 space-y-2 text-center">
+                <div className="w-9 h-9 bg-emerald-500 text-white rounded-full mx-auto flex items-center justify-center shadow-xs">
+                  <Check size={18} strokeWidth={3} />
+                </div>
+                <h4 className="text-xs font-black text-emerald-900">Order Completed & Verified ✓</h4>
+                <p className="text-[10.5px] text-emerald-700 font-medium max-w-sm mx-auto">
+                  Verification OTP confirmed. Order {activeOrderIdText} has been marked completed and payment recorded in your wallet.
+                </p>
+              </div>
+            ) : !isWorking ? (
               /* Phase 1: Verify Start Work OTP */
               <form onSubmit={handleVerifyStartOtp} className="bg-amber-50/80 rounded-2xl p-4 border border-amber-200/80 space-y-3">
                 <div className="flex items-center justify-between">
@@ -468,24 +480,24 @@ function WorkerDashboardContent() {
                   <span className="text-[8.5px] font-extrabold bg-amber-200/60 text-amber-800 px-2.5 py-0.5 rounded-full">Phase 1</span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <input
                     type="text"
                     maxLength={4}
                     value={startOtpInput}
                     onChange={(e) => setStartOtpInput(e.target.value)}
-                    placeholder="Enter 4-digit OTP from Customer (e.g. 4812)"
+                    placeholder="Enter 4-digit Start OTP"
                     className="flex-1 bg-white border border-amber-200 text-slate-900 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/40 text-center tracking-[0.2em]"
                     required
                   />
                   <button
                     type="submit"
                     disabled={verifyingOtp || startOtpInput.length < 4}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition-all shrink-0 ${
+                    className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition-all whitespace-nowrap ${
                       startOtpInput.length === 4 ? 'bg-amber-500 hover:bg-amber-600 text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
                   >
-                    {verifyingOtp ? <Loader2 size={14} className="animate-spin" /> : 'Verify Start OTP'}
+                    {verifyingOtp ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Verify Start OTP'}
                   </button>
                 </div>
 
@@ -505,9 +517,9 @@ function WorkerDashboardContent() {
 
                 {/* Cash Payment Trigger if not yet paid */}
                 {!isPaid && (
-                  <div className="bg-white p-3 rounded-xl border border-blue-100 flex items-center justify-between gap-2 shadow-2xs">
+                  <div className="bg-white p-3 rounded-xl border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs">
                     <div className="flex items-center gap-2">
-                      <Banknote size={18} className="text-emerald-600" />
+                      <Banknote size={18} className="text-emerald-600 shrink-0" />
                       <div>
                         <span className="text-xs font-black text-slate-900 block">Cash Payment Required</span>
                         <span className="text-[9.5px] text-slate-500">Collect ₹499 cash from customer upon service completion</span>
@@ -517,7 +529,7 @@ function WorkerDashboardContent() {
                     <button
                       type="button"
                       onClick={handleConfirmCashPaid}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[9.5px] px-3 py-2 rounded-xl shadow-sm active:scale-95 transition-all shrink-0"
+                      className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[9.5px] px-3 py-2 rounded-xl shadow-sm active:scale-95 transition-all shrink-0 whitespace-nowrap"
                     >
                       Customer Paid Cash (₹499) 💵
                     </button>
@@ -537,24 +549,24 @@ function WorkerDashboardContent() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <input
                       type="text"
                       maxLength={4}
                       value={completionOtpInput}
                       onChange={(e) => setCompletionOtpInput(e.target.value)}
-                      placeholder="Enter 4-digit Completion OTP (e.g. 7924)"
+                      placeholder="Enter 4-digit Completion OTP"
                       className="flex-1 bg-white border border-blue-200 text-slate-900 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/40 text-center tracking-[0.2em]"
                       required
                     />
                     <button
                       type="submit"
                       disabled={verifyingOtp || completionOtpInput.length < 4}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition-all shrink-0 ${
+                      className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition-all whitespace-nowrap ${
                         completionOtpInput.length === 4 ? 'bg-[#007AFF] hover:bg-blue-600 text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                       }`}
                     >
-                      {verifyingOtp ? <Loader2 size={14} className="animate-spin" /> : 'Verify Completion'}
+                      {verifyingOtp ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Verify Completion'}
                     </button>
                   </div>
 
