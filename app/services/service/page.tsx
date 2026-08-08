@@ -574,6 +574,66 @@ export default function ServiceBooking() {
             </label>
           </div>
 
+          {/* STEP 5: Select Payment Method */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-100 text-[#007AFF] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full">
+                STEP 5
+              </span>
+              <h2 className="text-xs font-bold text-slate-900">Select Payment Method</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              
+              {/* Cash on Service Option */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('cash')}
+                className={`p-4 rounded-2xl text-left transition-all flex items-center gap-3 border ${
+                  paymentMethod === 'cash'
+                    ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20'
+                    : 'bg-white text-slate-900 border-slate-200/80 hover:border-slate-300'
+                }`}
+              >
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  paymentMethod === 'cash' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'
+                }`}>
+                  <Banknote size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-tight">CASH ON SERVICE 💵</h4>
+                  <p className={`text-[9.5px] ${paymentMethod === 'cash' ? 'text-emerald-100' : 'text-slate-400'}`}>
+                    Pay cash directly to technician upon completion
+                  </p>
+                </div>
+              </button>
+
+              {/* Online Payment Option */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('online')}
+                className={`p-4 rounded-2xl text-left transition-all flex items-center gap-3 border ${
+                  paymentMethod === 'online'
+                    ? 'bg-[#007AFF] text-white border-[#007AFF] shadow-md shadow-blue-500/20'
+                    : 'bg-white text-slate-900 border-slate-200/80 hover:border-slate-300'
+                }`}
+              >
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  paymentMethod === 'online' ? 'bg-white/20 text-white' : 'bg-blue-50 text-[#007AFF]'
+                }`}>
+                  <CreditCard size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-tight">ONLINE PAYMENT 💳</h4>
+                  <p className={`text-[9.5px] ${paymentMethod === 'online' ? 'text-blue-100' : 'text-slate-400'}`}>
+                    Pay online via UPI, Credit/Debit Card, Netbanking
+                  </p>
+                </div>
+              </button>
+
+            </div>
+          </div>
+
           {/* CTA Button */}
           <div className="pt-2">
             {!estimation ? (
@@ -600,7 +660,9 @@ export default function ServiceBooking() {
               >
                 <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">Estimated Total</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">
+                      Estimated Total ({paymentMethod === 'cash' ? 'Cash on Service 💵' : 'Online Payment 💳'})
+                    </span>
                     <p className="text-2xl font-black text-[#007AFF]">₹{estimation.totalMin}</p>
                   </div>
                   <span className="text-[10px] text-slate-500">{estimation.reasoning}</span>
@@ -609,9 +671,11 @@ export default function ServiceBooking() {
                 <button 
                   type="submit" 
                   disabled={loading}
-                  className="w-full py-4 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs tracking-wider uppercase rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                  className={`w-full py-4 text-white font-extrabold text-xs tracking-wider uppercase rounded-full shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all ${
+                    paymentMethod === 'cash' ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/25' : 'bg-[#007AFF] hover:bg-blue-600 shadow-blue-500/30'
+                  }`}
                 >
-                  {loading ? 'PROCESSING...' : 'CONFIRM & PLACE ORDER'}
+                  {loading ? 'PROCESSING...' : `CONFIRM & PLACE ORDER (${paymentMethod === 'cash' ? 'CASH ON SERVICE' : 'ONLINE PAY'})`}
                 </button>
               </motion.div>
             )}
