@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
   Phone, 
@@ -50,6 +50,8 @@ function TrackContent() {
   const [order, setOrder] = useState<any>(null);
   const [liveLocation, setLiveLocation] = useState<any>(null);
   const [prevLocation, setPrevLocation] = useState<any>(null);
+  // Ref to hold latest liveLocation without causing useCallback to re-create on every GPS update
+  const liveLocationRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [noOrdersExist, setNoOrdersExist] = useState(false);
   const [isPayingOnline, setIsPayingOnline] = useState(false);
@@ -195,8 +197,10 @@ function TrackContent() {
           .maybeSingle();
 
         if (trackData) {
-          setPrevLocation(liveLocation);
-          setLiveLocation({ ...trackData, timestamp: Date.now() });
+          setPrevLocation(liveLocationRef.current);
+          const newLoc = { ...trackData, timestamp: Date.now() };
+          liveLocationRef.current = newLoc;
+          setLiveLocation(newLoc);
         }
       } else {
         setNoOrdersExist(true);
@@ -206,7 +210,8 @@ function TrackContent() {
     } finally {
       setLoading(false);
     }
-  }, [user, liveLocation, isReviewParam, paramOrderId]);
+  // NOTE: liveLocation removed from deps — use liveLocationRef to avoid infinite re-render loop
+  }, [user, isReviewParam, paramOrderId]);
 
   useEffect(() => {
     fetchOrderData();

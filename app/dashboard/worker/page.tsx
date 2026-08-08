@@ -174,6 +174,11 @@ function WorkerDashboardContent() {
 
   // Worker Explicitly Accepts Order (Syncs DB & Local State Instantly)
   const handleAcceptJob = async (jobId: string) => {
+    if (!user?.id) {
+      console.error('Cannot accept job: user not authenticated');
+      return;
+    }
+
     if (typeof window !== 'undefined' && jobId) {
       localStorage.setItem(`accepted_job_${jobId}`, 'true');
     }
@@ -186,7 +191,7 @@ function WorkerDashboardContent() {
       setActiveJob({
         ...activeJob,
         status: 'in_progress',
-        worker_id: user?.id || 'w-rohit-sharma',
+        worker_id: user.id,
         worker_name: displayName,
         worker_avatar: workerAvatar,
         worker_phone: workerPhone,
@@ -197,45 +202,60 @@ function WorkerDashboardContent() {
     // 2. Update orders and order_tracking in database
     try {
       const targetId = jobId || activeJob?.id;
-      if (targetId) {
-        await insforge.database
-          .from('orders')
-          .update({
-            status: 'in_progress',
-            worker_id: user?.id || 'w-rohit-sharma',
-            worker_name: displayName,
-            worker_avatar: workerAvatar,
-            worker_phone: workerPhone,
-            worker_email: user?.email
-          })
-          .eq('id', targetId);
-
-        await insforge.database
-          .from('order_tracking')
-          .insert([{
-            order_id: targetId,
-            status: 'in_progress',
-            note: `Order accepted by expert ${displayName}. En route to customer.`
-          }]);
-
-        const wLat = liveDeviceGps?.lat || (profile?.lat ? Number(profile.lat) : 26.7620);
-        const wLng = liveDeviceGps?.lng || (profile?.lng ? Number(profile.lng) : 79.0320);
-
-        await insforge.database
-          .from('order_live_location')
-          .upsert([{
-            order_id: targetId,
-            lat: wLat,
-            lng: wLng,
-            worker_name: displayName,
-            is_moving: true,
-            updated_at: new Date().toISOString()
-          }]);
+      if (!targetId) {
+        console.error('No job ID to accept');
+        return;
       }
+
+      const { error: updateError } = await insforge.database
+        .from('orders')
+        .update({
+          status: 'in_progress',
+          worker_id: user.id,           // Must be valid UUID — no fake fallback
+          worker_name: displayName,
+          worker_avatar: workerAvatar,
+          worker_phone: workerPhone,
+          worker_email: user?.email
+        })
+        .eq('id', targetId);
+
+      if (updateError) {
+        console.error('❌ DB order update failed:', updateError.message, updateError);
+        // Rollback local state if DB fails
+        setActiveJob((prev: any) => prev ? { ...prev, status: 'pending' } : prev);
+        localStorage.removeItem(`accepted_job_${jobId}`);
+        return;
+      }
+
+      console.log('✅ Order accepted in DB, status → in_progress');
+
+      await insforge.database
+        .from('order_tracking')
+        .insert([{
+          order_id: targetId,
+          status: 'in_progress',
+          note: `Order accepted by expert ${displayName}. En route to customer.`
+        }]);
+
+      const wLat = liveDeviceGps?.lat || (profile?.lat ? Number(profile.lat) : 26.7620);
+      const wLng = liveDeviceGps?.lng || (profile?.lng ? Number(profile.lng) : 79.0320);
+
+      await insforge.database
+        .from('order_live_location')
+        .upsert([{
+          order_id: targetId,
+          lat: wLat,
+          lng: wLng,
+          worker_name: displayName,
+          is_moving: true,
+          updated_at: new Date().toISOString()
+        }]);
+
     } catch (err) {
       console.error('Accept job error:', err);
     }
   };
+
 
   // Open Native Google Maps App via Native Intent / Deep Link URIs
   const openNativeGoogleMapsApp = (originLat: number, originLng: number, destLat: number, destLng: number) => {
