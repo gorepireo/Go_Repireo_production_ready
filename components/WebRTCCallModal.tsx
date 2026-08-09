@@ -9,9 +9,8 @@ import {
   Mic, 
   MicOff, 
   Volume2, 
-  ShieldCheck, 
+  VolumeX,
   AlertTriangle, 
-  X,
   Lock
 } from 'lucide-react';
 
@@ -21,11 +20,14 @@ export default function WebRTCCallModal() {
     callData,
     durationSeconds,
     isMuted,
+    isSpeakerOn,
     micPermissionError,
+    remoteAudioRef,
     acceptCall,
     declineCall,
     endCall,
     toggleMute,
+    toggleSpeaker,
     dismissError
   } = useCall();
 
@@ -45,6 +47,14 @@ export default function WebRTCCallModal() {
 
   return (
     <AnimatePresence>
+      {/* HTML5 Remote Audio Element for 2-Way Voice & Loudspeaker Playback */}
+      <audio
+        ref={remoteAudioRef}
+        autoPlay
+        playsInline
+        className="hidden"
+      />
+
       {/* 1. Microphone Permission Error Banner / Alert */}
       {micPermissionError && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -134,7 +144,7 @@ export default function WebRTCCallModal() {
                     {formatTimer(durationSeconds)}
                   </div>
                   <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest block">
-                    ● Encrypted Voice Connected
+                    ● Encrypted 2-Way Voice Connected
                   </span>
                 </div>
               )}
@@ -190,6 +200,7 @@ export default function WebRTCCallModal() {
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                     aria-label={isMuted ? 'Unmute' : 'Mute'}
+                    title={isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
                   >
                     {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
                   </button>
@@ -198,16 +209,23 @@ export default function WebRTCCallModal() {
                     onClick={endCall}
                     className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30 active:scale-95 transition-all"
                     aria-label="End Call"
+                    title="End Call"
                   >
                     <PhoneOff size={24} />
                   </button>
 
-                  <div 
-                    className="w-14 h-14 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center"
-                    title="Audio Output Active"
+                  <button
+                    onClick={toggleSpeaker}
+                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all ${
+                      isSpeakerOn 
+                        ? 'bg-blue-600 text-white shadow-blue-500/30' 
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                    aria-label={isSpeakerOn ? 'Loudspeaker On' : 'Loudspeaker Off'}
+                    title={isSpeakerOn ? 'Loudspeaker On' : 'Earpiece / Soft Mode'}
                   >
-                    <Volume2 size={20} />
-                  </div>
+                    {isSpeakerOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                  </button>
                 </>
               )}
             </div>

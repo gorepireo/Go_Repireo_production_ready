@@ -4,7 +4,7 @@ import { insforge } from '@/lib/insforge';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { order_id, caller_id, caller_role } = body;
+    const { order_id, caller_id, caller_role, sdp_offer } = body;
 
     if (!order_id) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     const roomId = `ROOM_${Math.random().toString(36).substring(2, 10)}_${Date.now()}`;
 
     // 5. Insert Call Session Record
-    const callSession = {
+    const callSession: any = {
       id: sessionId,
       order_id: order.id,
       customer_id: customerId,
@@ -51,6 +51,10 @@ export async function POST(req: Request) {
       created_at: new Date().toISOString(),
       ringing_at: new Date().toISOString()
     };
+
+    if (sdp_offer) {
+      callSession.sdp_offer = sdp_offer;
+    }
 
     const { error: insertErr } = await insforge.database
       .from('call_sessions')
@@ -120,7 +124,7 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { call_id, status, ended_by } = body;
+    const { call_id, status, ended_by, sdp_offer, sdp_answer } = body;
 
     if (!call_id || !status) {
       return NextResponse.json({ error: 'call_id and status are required' }, { status: 400 });
@@ -128,6 +132,8 @@ export async function PATCH(req: Request) {
 
     const now = new Date().toISOString();
     const updateData: any = { status };
+    if (sdp_offer) updateData.sdp_offer = sdp_offer;
+    if (sdp_answer) updateData.sdp_answer = sdp_answer;
 
     if (status === 'accepted') {
       updateData.accepted_at = now;

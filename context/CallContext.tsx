@@ -27,12 +27,15 @@ interface CallContextType {
   callData: CallData | null;
   durationSeconds: number;
   isMuted: boolean;
+  isSpeakerOn: boolean;
   micPermissionError: string | null;
+  remoteAudioRef: React.RefObject<HTMLAudioElement | null>;
   startCall: (orderId: string, callerRole?: 'customer' | 'worker', participantOverride?: CallParticipant) => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => Promise<void>;
   endCall: () => Promise<void>;
   toggleMute: () => void;
+  toggleSpeaker: () => void;
   dismissError: () => void;
 }
 
@@ -44,6 +47,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [callData, setCallData] = useState<CallData | null>(null);
   const [durationSeconds, setDurationSeconds] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [micPermissionError, setMicPermissionError] = useState<string | null>(null);
 
   // WebRTC & Audio Refs
@@ -176,7 +180,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (callStatus === 'outgoing' && callData?.sessionId) {
           const { data: session } = await insforge.database
             .from('call_sessions')
-            .select('status')
+            .select('status, sdp_answer')
             .eq('id', callData.sessionId)
             .single();
 
@@ -184,6 +188,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (session.status === 'accepted') {
               stopRingtoneLoop();
               setCallStatus('connected');
+
+              if (session.sdp_answer && peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'stable') {
+                try {
+                  await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(session.sdp_answer));
+                } catch (e) {
+                  console.warn('Set remote sdp_answer error:', e);
+                }
+              }
             } else if (['declined', 'ended', 'missed', 'cancelled'].includes(session.status)) {
               stopRingtoneLoop();
               setCallStatus('ended');
@@ -274,11 +286,18 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [callStatus]);
 
-  // Request Microphone Stream safely
+  // Request Microphone Stream safely with Echo Cancellation & Noise Suppression
   const getMicrophoneStream = async (): Promise<MediaStream | null> => {
     try {
       setMicPermissionError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        },
+        video: false
+      });
       localStreamRef.current = stream;
       return stream;
     } catch (err: any) {
@@ -306,14 +325,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Handle remote audio stream
     pc.ontrack = (event) => {
       if (event.streams && event.streams[0]) {
-        if (!remoteAudioRef.current) {
-          const audioEl = document.createElement('audio');
-          audioEl.autoplay = true;
-          audioEl.style.display = 'none';
-          document.body.appendChild(audioEl);
-          remoteAudioRef.current = audioEl;
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+          remoteAudioRef.current.play().catch(err => console.warn('Remote audio play error:', err));
         }
-        remoteAudioRef.current.srcObject = event.streams[0];
       }
     };
 
@@ -331,6 +346,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (pc.connectionState === 'connected') {
         stopRingtoneLoop();
         setCallStatus('connected');
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.play().catch(console.warn);
+        }
       } else if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
         cleanupCall();
         setCallStatus('ended');
@@ -353,13 +371,30 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!stream) return;
 
     try {
+      // Create local PeerConnection & SDP Offer BEFORE creating API session
+      const tempPc = new RTCPeerConnection(rtcConfig);
+      peerConnectionRef.current = tempPc;
+
+      stream.getTracks().forEach(track => tempPc.addTrack(track, stream));
+
+      tempPc.ontrack = (event) => {
+        if (event.streams && event.streams[0] && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+          remoteAudioRef.current.play().catch(console.warn);
+        }
+      };
+
+      const offer = await tempPc.createOffer();
+      await tempPc.setLocalDescription(offer);
+
       const res = await fetch('/api/calls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           order_id: orderId,
           caller_id: user?.id || user?.email,
-          caller_role: callerRole
+          caller_role: callerRole,
+          sdp_offer: offer
         })
       });
 
@@ -384,10 +419,30 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCallStatus('outgoing');
       startRingtoneLoop();
 
-      // Create Peer Connection & SDP Offer
-      const pc = createPeerConnection(session.id);
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
+      // Handle ICE Candidates for created tempPc
+      tempPc.onicecandidate = (event) => {
+        if (event.candidate) {
+          insforge.realtime.publish(`call_room_${session.id}`, 'ice_candidate', {
+            candidate: event.candidate,
+            userId: user?.id || user?.email
+          }).catch(console.warn);
+        }
+      };
+
+      tempPc.onconnectionstatechange = () => {
+        if (tempPc.connectionState === 'connected') {
+          stopRingtoneLoop();
+          setCallStatus('connected');
+          if (remoteAudioRef.current) remoteAudioRef.current.play().catch(console.warn);
+        } else if (['disconnected', 'failed', 'closed'].includes(tempPc.connectionState)) {
+          cleanupCall();
+          setCallStatus('ended');
+          setTimeout(() => {
+            setCallStatus('idle');
+            setCallData(null);
+          }, 1500);
+        }
+      };
 
       // Broadcast incoming call event to recipient via InsForge Realtime
       insforge.realtime.publish('global_voice_calls', 'incoming_call', {
@@ -409,17 +464,18 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       insforge.realtime.subscribe(roomTopic).catch(console.warn);
 
       const handleSdpAnswer = (msg: any) => {
-        if (msg?.channel === roomTopic && msg?.payload?.answer && pc.signalingState !== 'stable') {
-          pc.setRemoteDescription(new RTCSessionDescription(msg.payload.answer)).then(() => {
+        if (msg?.channel === roomTopic && msg?.payload?.answer && tempPc.signalingState !== 'stable') {
+          tempPc.setRemoteDescription(new RTCSessionDescription(msg.payload.answer)).then(() => {
             stopRingtoneLoop();
             setCallStatus('connected');
+            if (remoteAudioRef.current) remoteAudioRef.current.play().catch(console.warn);
           }).catch(console.warn);
         }
       };
 
       const handleIceCandidate = (msg: any) => {
         if (msg?.channel === roomTopic && msg?.payload?.candidate && msg.payload.userId !== (user?.id || user?.email)) {
-          pc.addIceCandidate(new RTCIceCandidate(msg.payload.candidate)).catch(console.warn);
+          tempPc.addIceCandidate(new RTCIceCandidate(msg.payload.candidate)).catch(console.warn);
         }
       };
 
@@ -475,27 +531,42 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      await fetch('/api/calls', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ call_id: callData.sessionId, status: 'accepted' })
-      });
+      // Unblock HTML5 Audio Playback in click gesture
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.play().catch(console.warn);
+      }
+
+      // Fetch sdp_offer from DB session
+      const { data: dbSession } = await insforge.database
+        .from('call_sessions')
+        .select('sdp_offer')
+        .eq('id', callData.sessionId)
+        .single();
 
       const pc = createPeerConnection(callData.sessionId);
       const roomTopic = `call_room_${callData.sessionId}`;
 
       insforge.realtime.subscribe(roomTopic).catch(console.warn);
 
-      const handleSdpOffer = async (msg: any) => {
-        if (msg?.channel === roomTopic && msg?.payload?.offer) {
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.payload.offer));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
+      if (dbSession?.sdp_offer) {
+        await pc.setRemoteDescription(new RTCSessionDescription(dbSession.sdp_offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
 
-          insforge.realtime.publish(roomTopic, 'sdp_answer', { answer }).catch(console.warn);
-          setCallStatus('connected');
-        }
-      };
+        await fetch('/api/calls', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ call_id: callData.sessionId, status: 'accepted', sdp_answer: answer })
+        });
+
+        insforge.realtime.publish(roomTopic, 'sdp_answer', { answer }).catch(console.warn);
+      } else {
+        await fetch('/api/calls', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ call_id: callData.sessionId, status: 'accepted' })
+        });
+      }
 
       const handleIceCandidate = (msg: any) => {
         if (msg?.channel === roomTopic && msg?.payload?.candidate && msg.payload.userId !== (user?.id || user?.email)) {
@@ -503,12 +574,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
-      insforge.realtime.on('sdp_offer', handleSdpOffer);
       insforge.realtime.on('ice_candidate', handleIceCandidate);
 
-      // Trigger caller to send SDP offer
-      insforge.realtime.publish(roomTopic, 'ready_for_offer', { userId: user?.id || user?.email }).catch(console.warn);
-
+      stopRingtoneLoop();
       setCallStatus('connected');
     } catch (err) {
       console.error('Accept call error:', err);
@@ -573,6 +641,31 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // 6. TOGGLE LOUDSPEAKER
+  const toggleSpeaker = async () => {
+    const nextState = !isSpeakerOn;
+    setIsSpeakerOn(nextState);
+
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = nextState ? 1.0 : 0.4;
+      try {
+        if ('setSinkId' in remoteAudioRef.current) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const outputs = devices.filter(d => d.kind === 'audiooutput');
+          const target = nextState 
+            ? (outputs.find(d => d.label.toLowerCase().includes('speaker') || d.label.toLowerCase().includes('loudspeaker')) || outputs[0])
+            : (outputs.find(d => d.label.toLowerCase().includes('earpiece') || d.label.toLowerCase().includes('headset')) || outputs[0]);
+
+          if (target) {
+            await (remoteAudioRef.current as any).setSinkId(target.deviceId);
+          }
+        }
+      } catch (e) {
+        console.warn('Toggle speaker error:', e);
+      }
+    }
+  };
+
   const dismissError = () => {
     setMicPermissionError(null);
   };
@@ -584,12 +677,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         callData,
         durationSeconds,
         isMuted,
+        isSpeakerOn,
         micPermissionError,
+        remoteAudioRef,
         startCall,
         acceptCall,
         declineCall,
         endCall,
         toggleMute,
+        toggleSpeaker,
         dismissError
       }}
     >
