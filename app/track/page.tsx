@@ -771,7 +771,7 @@ function TrackContent() {
           </div>
 
           {/* MAP VISIBILITY CONDITIONS */}
-          {isInTransit ? (
+          {isInTransit || isWorking ? (
             <div className="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60 shadow-inner">
               <LiveTrackingGoogleMap 
                 technicianLat={workerLat}

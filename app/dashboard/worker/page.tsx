@@ -96,9 +96,10 @@ function WorkerDashboardContent() {
     }
   }, []);
 
-  // Continuous 7-Second Worker Live Location Sync Loop (Runs until work starts)
+  // Continuous 7-Second Worker Live Location Sync Loop (Runs until order is completed or cancelled)
   useEffect(() => {
-    if (!activeJob || activeJob.status !== 'in_progress') return;
+    const activeStatuses = ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'];
+    if (!activeJob || !activeStatuses.includes(activeJob.status)) return;
 
     const orderId = activeJob.id;
     let stepCount = 0;
