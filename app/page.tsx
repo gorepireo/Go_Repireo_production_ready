@@ -213,7 +213,7 @@ export default function Home() {
 
       {/* 4. Category Icons */}
       <section className="px-4 mt-5">
-        <div className="flex overflow-x-auto hide-scrollbar justify-between items-center gap-2 pb-3 border-b border-slate-100">
+        <div className="flex overflow-x-auto hide-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden justify-between items-center gap-2 pb-1">
           {categories.map((cat, idx) => (
             <Link href="/services" key={idx} className="flex flex-col items-center gap-1.5 flex-1 min-w-[62px] group">
               <div className={`w-13 h-13 rounded-2xl flex items-center justify-center border transition-transform active:scale-95 ${cat.bg}`}>
