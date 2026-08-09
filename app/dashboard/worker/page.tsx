@@ -96,16 +96,14 @@ function WorkerDashboardContent() {
     }
   }, []);
 
-  // Continuous 7-Second Worker Live Location Sync Loop (Runs until order is completed or cancelled)
+  // 7-Second Worker Live Location Extraction & Deletion Cycle
   useEffect(() => {
     const activeStatuses = ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'];
-    if (!activeJob || !activeStatuses.includes(activeJob.status)) return;
+    if (!activeJob?.id || !activeStatuses.includes(activeJob.status)) return;
 
-    const orderId = activeJob.id;
+    const rawOrderId = activeJob.id;
 
     const syncLiveLocation = () => {
-      const currentAvatar = (profile as any)?.avatar_url || (profile as any)?.avatar || user?.user_metadata?.avatar_url || '/technician_hero.jpg';
-
       if (typeof window !== 'undefined' && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
@@ -114,63 +112,27 @@ function WorkerDashboardContent() {
             setLiveDeviceGps({ lat: currentLat, lng: currentLng });
 
             try {
-              const shortId = orderId ? `#GR-${orderId.slice(0, 4).toUpperCase()}` : '';
-              const rawShortId = orderId ? orderId.slice(0, 4) : '';
-
-              // Delete outdated location entries matching orderId or shortId
+              // 1. Delete previous location data for this order
               await insforge.database
                 .from('order_live_location')
                 .delete()
-                .or(`order_id.eq.${orderId},order_id.eq.${shortId},order_id.eq.${rawShortId}`);
+                .eq('order_id', rawOrderId);
 
-              // Insert exact updated worker GPS location
+              // 2. Insert extracted worker position data (order_id, lat, lng, updated_at)
               await insforge.database
                 .from('order_live_location')
                 .insert([{
-                  order_id: orderId,
+                  order_id: rawOrderId,
                   lat: currentLat,
                   lng: currentLng,
-                  worker_name: displayName,
-                  worker_avatar: currentAvatar,
-                  is_moving: true,
                   updated_at: new Date().toISOString()
                 }]);
-
-              // Update order record with exact worker GPS coordinates
-              await insforge.database
-                .from('orders')
-                .update({
-                  worker_lat: currentLat,
-                  worker_lng: currentLng
-                })
-                .eq('id', orderId);
             } catch (err) {
-              console.warn('Worker location sync error:', err);
+              console.warn('Worker 7-sec location sync error:', err);
             }
           },
-          async (err) => {
-            console.warn('Worker device GPS extraction warning:', err);
-            // If GPS fails, use existing stored worker_lat/lng if present
-            if (activeJob?.worker_lat && activeJob?.worker_lng) {
-              try {
-                await insforge.database
-                  .from('order_live_location')
-                  .delete()
-                  .eq('order_id', orderId);
-
-                await insforge.database
-                  .from('order_live_location')
-                  .insert([{
-                    order_id: orderId,
-                    lat: Number(activeJob.worker_lat),
-                    lng: Number(activeJob.worker_lng),
-                    worker_name: displayName,
-                    worker_avatar: currentAvatar,
-                    is_moving: false,
-                    updated_at: new Date().toISOString()
-                  }]);
-              } catch (e) {}
-            }
+          (err) => {
+            console.warn('Worker Geolocation position extraction warning:', err);
           },
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
@@ -184,7 +146,7 @@ function WorkerDashboardContent() {
     const intervalId = setInterval(syncLiveLocation, 7000);
 
     return () => clearInterval(intervalId);
-  }, [activeJob?.id, activeJob?.status, displayName, profile, user]);
+  }, [activeJob?.id, activeJob?.status]);
 
   // Toggle Online / Offline Status
   const handleToggleOnline = async () => {

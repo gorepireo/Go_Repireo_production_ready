@@ -251,22 +251,23 @@ function TrackContent() {
           setIsReviewSubmitted(true);
         }
 
-        // Live location telemetry
-        const shortId = currentOrder.id ? `#GR-${currentOrder.id.slice(0, 4).toUpperCase()}` : '';
-        const rawShortId = currentOrder.id ? currentOrder.id.slice(0, 4) : '';
-
+        // Live location telemetry extracted from order_live_location table
         const { data: trackDataArray } = await insforge.database
           .from('order_live_location')
-          .select('*')
-          .or(`order_id.eq.${currentOrder.id},order_id.eq.${shortId},order_id.eq.${rawShortId}`)
+          .select('lat, lng, updated_at')
+          .eq('order_id', currentOrder.id)
           .order('updated_at', { ascending: false })
           .limit(1);
 
         const trackData = trackDataArray && trackDataArray.length > 0 ? trackDataArray[0] : null;
 
-        if (trackData) {
+        if (trackData && trackData.lat && trackData.lng) {
           setPrevLocation(liveLocationRef.current);
-          const newLoc = { ...trackData, timestamp: Date.now() };
+          const newLoc = {
+            lat: Number(trackData.lat),
+            lng: Number(trackData.lng),
+            timestamp: Date.now()
+          };
           liveLocationRef.current = newLoc;
           setLiveLocation(newLoc);
         }
