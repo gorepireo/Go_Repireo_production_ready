@@ -49,22 +49,20 @@ export default function BottomNav() {
     <>
       {/* Floating WhatsApp button over bottom navigation bar */}
       {pathname !== '/whatsapp' && (
-        <div className="fixed bottom-[92px] left-0 right-0 z-[60] pointer-events-none">
-          <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 flex justify-end">
-            <Link 
-              href="/whatsapp"
-              className="pointer-events-auto bg-[#25D366] text-white w-12 h-12 rounded-full shadow-xl shadow-emerald-500/40 flex items-center justify-center active:scale-90 transition-all border-2 border-white hover:bg-[#20ba5a]"
-              aria-label="Book on WhatsApp"
-            >
-              <MessageCircle size={24} className="fill-white stroke-none" />
-            </Link>
-          </div>
+        <div className="fixed bottom-[92px] left-1/2 -translate-x-1/2 w-full max-w-4xl lg:max-w-5xl z-[60] pointer-events-none px-4 flex justify-end">
+          <Link 
+            href="/whatsapp"
+            className="pointer-events-auto bg-[#25D366] text-white w-12 h-12 rounded-full shadow-xl shadow-emerald-500/40 flex items-center justify-center active:scale-90 transition-all border-2 border-white hover:bg-[#20ba5a]"
+            aria-label="Book on WhatsApp"
+          >
+            <MessageCircle size={24} className="fill-white stroke-none" />
+          </Link>
         </div>
       )}
 
-      {/* Bottom Navigation Bar Centered for Desktop & Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-100 pb-safe pt-2 shadow-[0_-10px_25px_rgba(0,0,0,0.05)]">
-        <nav className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 flex items-center justify-between pb-2">
+      {/* Bottom Navigation Bar Constrained strictly to Desktop App Frame */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl lg:max-w-5xl z-50 bg-white/95 backdrop-blur-md border-t border-slate-100 border-x border-slate-200/50 pb-safe pt-2 shadow-[0_-10px_25px_rgba(0,0,0,0.05)]">
+        <nav className="w-full px-4 flex items-center justify-between pb-2">
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
             return (
