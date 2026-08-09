@@ -22,8 +22,8 @@ export async function POST(req: Request) {
     }
 
     const rawAmount = Number(body.amount);
-    // Convert Rupees to Paise (e.g., ₹306 -> 30600 paise). If already in paise (> 5000), keep as is.
-    const amountInPaise = rawAmount > 5000 ? Math.round(rawAmount) : Math.round(rawAmount * 100);
+    // Convert Rupees to Paise for Razorpay (e.g., ₹8418 -> 841800 paise)
+    const amountInPaise = Math.round(rawAmount * 100);
 
     const options = {
       amount: amountInPaise,
