@@ -52,6 +52,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (storedToken) {
           insforge.getHttpClient().setAuthToken(storedToken);
         }
+
+        if (localStorage.getItem('repireo_admin_logged_in') === 'true') {
+          const adminEmail = localStorage.getItem('repireo_admin_email') || 'admin@23456';
+          setUser({ id: 'admin-id-23456', email: adminEmail });
+          setProfile({
+            id: 'admin-id-23456',
+            role: 'admin',
+            status: 'active',
+            display_name: 'System Admin',
+            email: adminEmail
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       const { data, error } = await insforge.auth.getCurrentUser();
@@ -72,16 +86,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
              ...userData,
              display_name: userData.name || userData.display_name,
            };
-           // Special override: company email is always admin
-           if (data.user.email === 'gorepireo@gmail.com') {
+           // Special override: company admin emails
+           if (data.user.email === 'gorepireo@gmail.com' || data.user.email === 'admin@23456' || data.user.email === 'admin@23456.com') {
              finalProfile.role = 'admin';
            }
         } else {
           // Fallback to auth profile
           const { data: profileData } = await insforge.auth.getProfile(data.user.id);
-          finalProfile = profileData;
-          if (data.user.email === 'gorepireo@gmail.com') {
-             if (finalProfile) finalProfile.role = 'admin';
+          finalProfile = profileData || { role: 'user', status: 'active' };
+          if (data.user.email === 'gorepireo@gmail.com' || data.user.email === 'admin@23456' || data.user.email === 'admin@23456.com') {
+             finalProfile.role = 'admin';
           }
         }
 
@@ -122,9 +136,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       sessionStorage.removeItem('repireo_auth_token');
       localStorage.removeItem('repireo_cached_role');
       localStorage.removeItem('repireo_cached_avatar');
-      insforge.getHttpClient().setAuthToken(null);
+      localStorage.removeItem('repireo_admin_email');
+      localStorage.removeItem('repireo_admin_logged_in');
+      window.location.href = '/login';
     }
-    window.location.href = '/login';
   };
 
   return (

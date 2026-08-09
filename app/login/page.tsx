@@ -31,9 +31,29 @@ function LoginForm() {
     setLoading(true);
     setError('');
 
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check for explicit admin credentials requested by user
+    if ((cleanEmail === 'admin@23456' || cleanEmail === 'admin@23456.com' || cleanEmail === 'gorepireo@gmail.com') && password === 'admin@1234567890') {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('repireo_admin_logged_in', 'true');
+        localStorage.setItem('repireo_admin_email', cleanEmail);
+        localStorage.setItem('repireo_cached_role', 'admin');
+      }
+      try {
+        await insforge.auth.signInWithPassword({ email: cleanEmail, password });
+      } catch (err) {
+        // Backend auth fallback for admin override
+      }
+      await refresh();
+      router.push('/admin');
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error: loginError } = await insforge.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password,
       });
 
@@ -46,7 +66,7 @@ function LoginForm() {
         const { data: usersRow } = await insforge.database
           .from('users')
           .select('role, status')
-          .eq('email', email)
+          .eq('email', cleanEmail)
           .maybeSingle();
 
         if (usersRow) {
@@ -58,7 +78,7 @@ function LoginForm() {
           status = (profileData as any)?.status || 'active';
         }
 
-        if (email === 'gorepireo@gmail.com') {
+        if (cleanEmail === 'gorepireo@gmail.com' || cleanEmail === 'admin@23456' || cleanEmail === 'admin@23456.com') {
           role = 'admin';
           status = 'active';
         }
@@ -146,7 +166,7 @@ function LoginForm() {
                 </div>
                 <input 
                   required 
-                  type="email" 
+                  type="text" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-14 bg-[#F8FAFC] pl-14 pr-4 rounded-2xl text-sm font-medium text-slate-900 focus:bg-white focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400"
