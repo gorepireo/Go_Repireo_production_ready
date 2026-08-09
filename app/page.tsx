@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Menu,
   MapPin,
@@ -27,11 +27,15 @@ import {
   ChevronRight,
   ArrowRight,
   Quote,
-  Headphones
+  Headphones,
+  Wrench,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/context/AuthContext';
+import { insforge } from '@/lib/insforge';
 
 const categories = [
   { name: 'All Services', icon: LayoutGrid, color: 'text-[#007AFF]', bg: 'bg-[#EFF6FF] border-[#007AFF]/30', active: true },
@@ -49,38 +53,53 @@ const popularServices = [
   { name: 'House Cleaning', rating: '4.6', reviews: '1.6k', price: 'Starts at ₹249', image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=400' },
 ];
 
-const recentBookings = [
-  {
-    title: 'AC Servicing',
-    dateLoc: 'Today, 3:00 PM • Etawah',
-    status: 'Confirmed',
-    statusStyle: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    icon: CalendarDays,
-    iconBg: 'bg-emerald-50 text-emerald-600',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'
-  },
-  {
-    title: 'Electrical Repair',
-    dateLoc: 'Tomorrow, 11:00 AM • Etawah',
-    status: 'Pending',
-    statusStyle: 'bg-amber-50 text-amber-600 border-amber-100',
-    icon: Zap,
-    iconBg: 'bg-amber-50 text-amber-500',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80'
-  },
-  {
-    title: 'Plumbing Issue',
-    dateLoc: 'May 25, 2026 • Etawah',
-    status: 'Completed',
-    statusStyle: 'bg-blue-50 text-blue-600 border-blue-100',
-    icon: Droplet,
-    iconBg: 'bg-blue-50 text-blue-500',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80'
-  }
-];
-
 export default function Home() {
+  const { user, profile } = useAuth();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [realOrders, setRealOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchRecentUserOrders = async () => {
+      const userEmail = user?.email || profile?.email;
+      const userId = user?.id || profile?.id;
+
+      if (!userEmail && !userId) {
+        setRealOrders([]);
+        setLoadingOrders(false);
+        return;
+      }
+
+      try {
+        let query = insforge.database
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (userId && userEmail) {
+          query = query.or(`user_id.eq.${userId},user_email.eq.${userEmail}`);
+        } else if (userId) {
+          query = query.eq('user_id', userId);
+        } else if (userEmail) {
+          query = query.eq('user_email', userEmail);
+        }
+
+        const { data } = await query;
+        if (data && data.length > 0) {
+          setRealOrders(data);
+        } else {
+          setRealOrders([]);
+        }
+      } catch (err) {
+        console.warn('Fetch recent user orders error:', err);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+
+    fetchRecentUserOrders();
+  }, [user, profile]);
 
   const testimonials = [
     { text: "Great service! The expert arrived on time and fixed the issue quickly.", author: "- Neha S." },
@@ -127,15 +146,12 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Bottom Left 10K+ Happy Customers Avatars */}
+            {/* Bottom Left 10K+ Happy Customers Badge */}
             <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
-              <div className="flex -space-x-1.5">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
-                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#FFC700] text-slate-900 flex items-center justify-center font-black text-[10px] shadow-xs">
+                <Star size={11} className="fill-current text-slate-900" />
               </div>
-              <span className="text-[9px] sm:text-[10px] font-bold text-white tracking-tight">10K+ Happy Customers</span>
+              <span className="text-[9px] sm:text-[10px] font-bold text-white tracking-tight">10K+ Verified Services Delivered</span>
             </div>
           </div>
 
@@ -289,36 +305,73 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 8. Recent Bookings */}
+      {/* 8. Recent Bookings (Real Database Bookings according to Login) */}
       <section className="mt-7 px-4">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Recent Bookings</h3>
           <Link href="/track" className="text-[11px] font-bold text-[#007AFF] hover:underline">View all</Link>
         </div>
 
-        <div className="space-y-2.5">
-          {recentBookings.map((item, idx) => (
-            <Link href="/track" key={idx} className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between gap-3 hover:border-blue-100 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl ${item.iconBg} flex items-center justify-center shrink-0`}>
-                  <item.icon size={20} />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">{item.title}</h4>
-                  <p className="text-[10px] text-slate-400 font-medium">{item.dateLoc}</p>
-                </div>
-              </div>
+        {loadingOrders ? (
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-2 text-xs font-bold text-slate-400">
+            <Loader2 size={16} className="animate-spin text-[#007AFF]" />
+            <span>Loading your recent bookings...</span>
+          </div>
+        ) : realOrders.length > 0 ? (
+          <div className="space-y-2.5">
+            {realOrders.map((order, idx) => {
+              const isComp = order.status === 'completed';
+              const isInProgress = order.status === 'in_progress' || order.status === 'work_in_progress';
+              const statusLabel = isComp ? 'Completed' : isInProgress ? 'In Progress' : 'Confirmed';
+              const statusStyle = isComp 
+                ? 'bg-blue-50 text-blue-600 border-blue-100' 
+                : isInProgress 
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                : 'bg-amber-50 text-amber-600 border-amber-100';
 
-              <div className="flex items-center gap-2.5">
-                <span className={`${item.statusStyle} border text-[9px] font-extrabold px-3 py-1 rounded-full`}>
-                  {item.status}
-                </span>
-                <img src={item.avatar} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
-                <ChevronRight size={14} className="text-slate-300" />
-              </div>
-            </Link>
-          ))}
-        </div>
+              const formattedDate = order.created_at 
+                ? new Date(order.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) + ' • Etawah'
+                : 'Etawah, UP';
+
+              return (
+                <Link href={`/track?id=${order.id}`} key={order.id || idx} className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between gap-3 hover:border-blue-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl ${isComp ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'} flex items-center justify-center shrink-0`}>
+                      <Wrench size={18} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900">{order.service_name || 'Home Repair Service'}</h4>
+                      <p className="text-[10px] text-slate-400 font-medium">{formattedDate}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <span className={`${statusStyle} border text-[9px] font-extrabold px-3 py-1 rounded-full`}>
+                      {statusLabel}
+                    </span>
+                    <ChevronRight size={14} className="text-slate-300" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs text-center space-y-2">
+            <div className="w-10 h-10 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
+              <CalendarDays size={20} />
+            </div>
+            <h4 className="text-xs font-black text-slate-900">No Active Bookings</h4>
+            <p className="text-[10.5px] text-slate-400 font-medium max-w-xs mx-auto">
+              Book an instant repair service today and track your certified technician in real time!
+            </p>
+            <div className="pt-1">
+              <Link href="/services/service" className="inline-flex items-center gap-1.5 bg-[#007AFF] text-white text-[11px] font-extrabold px-4 py-2 rounded-full shadow-sm hover:bg-blue-600 transition-all">
+                <span>Book a Service Now</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 9. Testimonials & Social Proof Card */}
@@ -326,13 +379,11 @@ export default function Home() {
         <div className="bg-gradient-to-r from-[#EFF6FF] to-[#E0EDFF] rounded-3xl p-5 border border-blue-100/60 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
           
           <div className="space-y-2 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start -space-x-2">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
-              <span className="w-7 h-7 rounded-full bg-[#007AFF] text-white text-[9px] font-black flex items-center justify-center border-2 border-white">
-                10K+
-              </span>
+            <div className="flex items-center justify-center sm:justify-start gap-1.5">
+              <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center">
+                <ShieldCheck size={14} />
+              </div>
+              <span className="text-xs font-black text-slate-900">Verified Service Guarantee</span>
             </div>
             
             <h4 className="text-xs font-black text-slate-900">
