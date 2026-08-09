@@ -103,39 +103,49 @@ function WorkerDashboardContent() {
 
     const rawOrderId = activeJob.id;
 
+    const saveLocationToDb = async (lat: number, lng: number) => {
+      try {
+        // 1. Delete previous location data for this order
+        await insforge.database
+          .from('order_live_location')
+          .delete()
+          .eq('order_id', rawOrderId);
+
+        // 2. Insert extracted worker position data
+        await insforge.database
+          .from('order_live_location')
+          .insert([{
+            order_id: rawOrderId,
+            lat: lat,
+            lng: lng,
+            updated_at: new Date().toISOString()
+          }]);
+      } catch (err) {
+        console.warn('Worker 7-sec location sync error:', err);
+      }
+    };
+
     const syncLiveLocation = () => {
       if (typeof window !== 'undefined' && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          async (pos) => {
+          (pos) => {
             const currentLat = pos.coords.latitude;
             const currentLng = pos.coords.longitude;
             setLiveDeviceGps({ lat: currentLat, lng: currentLng });
-
-            try {
-              // 1. Delete previous location data for this order
-              await insforge.database
-                .from('order_live_location')
-                .delete()
-                .eq('order_id', rawOrderId);
-
-              // 2. Insert extracted worker position data (order_id, lat, lng, updated_at)
-              await insforge.database
-                .from('order_live_location')
-                .insert([{
-                  order_id: rawOrderId,
-                  lat: currentLat,
-                  lng: currentLng,
-                  updated_at: new Date().toISOString()
-                }]);
-            } catch (err) {
-              console.warn('Worker 7-sec location sync error:', err);
-            }
+            saveLocationToDb(currentLat, currentLng);
           },
           (err) => {
             console.warn('Worker Geolocation position extraction warning:', err);
+            const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : 26.7620;
+            const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : 79.0320;
+            saveLocationToDb(fallbackLat, fallbackLng);
           },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
         );
+      } else {
+        const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : 26.7620;
+        const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : 79.0320;
+        saveLocationToDb(fallbackLat, fallbackLng);
       }
     };
 
@@ -146,7 +156,7 @@ function WorkerDashboardContent() {
     const intervalId = setInterval(syncLiveLocation, 7000);
 
     return () => clearInterval(intervalId);
-  }, [activeJob?.id, activeJob?.status]);
+  }, [activeJob?.id, activeJob?.status, activeJob?.worker_lat, activeJob?.worker_lng]);
 
   // Toggle Online / Offline Status
   const handleToggleOnline = async () => {
