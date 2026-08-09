@@ -77,12 +77,47 @@ export default function ServicesPage() {
       <section className="mt-8 px-4">
         <div className="mb-4">
           <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">Select Service Category</h2>
-          <p className="text-[10px] text-slate-500">Choose between Installation or Repair & Maintenance</p>
+          <p className="text-[10px] text-slate-500">Choose between Repair & Maintenance or Installation</p>
         </div>
 
         <div className="space-y-4">
           
-          {/* OPTION 1: Installation (COMING SOON TAPE + BLURRED + 100% UNCLICKABLE) */}
+          {/* OPTION 1: Repair & Maintenance / Repair & Services (ACTIVE & CLICKABLE -> LEADS TO BOOKING PAGE) */}
+          <Link href="/services/service" className="block group">
+            <motion.div 
+              whileTap={{ scale: 0.98 }} 
+              className="bg-white rounded-3xl p-5 flex gap-4 shadow-md shadow-blue-500/5 border-2 border-[#007AFF]/30 hover:border-[#007AFF] relative overflow-hidden transition-all"
+            >
+              <div className="w-20 h-20 rounded-2xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
+                <Wrench className="w-10 h-10 text-[#007AFF] drop-shadow-md" />
+              </div>
+              
+              <div className="flex-1 space-y-1.5 min-w-0 pr-12">
+                <span className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest">Available Now</span>
+                <h3 className="text-sm font-black text-slate-900 uppercase leading-none tracking-tight">
+                  Repair & Maintenance
+                </h3>
+                <p className="text-[9px] text-slate-500 leading-snug line-clamp-2">
+                  Fast diagnostics, expert repairs and maintenance for plumbing, electrical, cleaning, and appliances.
+                </p>
+                <div className="flex flex-col gap-0.5 pt-1">
+                  <span className="text-[8px] text-slate-400">Starting from</span>
+                  <span className="text-sm font-black text-[#007AFF]">₹499</span>
+                </div>
+              </div>
+
+              <div className="absolute top-5 right-5 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[8px] font-extrabold uppercase text-emerald-700">Active</span>
+              </div>
+
+              <div className="absolute bottom-5 right-5 w-9 h-9 bg-[#007AFF] text-white rounded-full flex items-center justify-center group-hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30">
+                <ArrowRight size={18} />
+              </div>
+            </motion.div>
+          </Link>
+
+          {/* OPTION 2: Installation (COMING SOON TAPE + BLURRED + 100% UNCLICKABLE) */}
           <div className="relative bg-white rounded-3xl p-5 border border-slate-100 shadow-sm overflow-hidden select-none">
             
             {/* 3D Diagonal Caution Tape Overlay */}
@@ -119,41 +154,6 @@ export default function ServicesPage() {
             </div>
 
           </div>
-
-          {/* OPTION 2: Repair & Maintenance / Repair & Services (ACTIVE & CLICKABLE -> LEADS TO BOOKING PAGE) */}
-          <Link href="/services/service" className="block group">
-            <motion.div 
-              whileTap={{ scale: 0.98 }} 
-              className="bg-white rounded-3xl p-5 flex gap-4 shadow-md shadow-blue-500/5 border-2 border-[#007AFF]/30 hover:border-[#007AFF] relative overflow-hidden transition-all"
-            >
-              <div className="w-20 h-20 rounded-2xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
-                <Wrench className="w-10 h-10 text-[#007AFF] drop-shadow-md" />
-              </div>
-              
-              <div className="flex-1 space-y-1.5 min-w-0 pr-12">
-                <span className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest">Available Now</span>
-                <h3 className="text-sm font-black text-slate-900 uppercase leading-none tracking-tight">
-                  Repair & Maintenance
-                </h3>
-                <p className="text-[9px] text-slate-500 leading-snug line-clamp-2">
-                  Fast diagnostics, expert repairs and maintenance for plumbing, electrical, cleaning, and appliances.
-                </p>
-                <div className="flex flex-col gap-0.5 pt-1">
-                  <span className="text-[8px] text-slate-400">Starting from</span>
-                  <span className="text-sm font-black text-[#007AFF]">₹499</span>
-                </div>
-              </div>
-
-              <div className="absolute top-5 right-5 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[8px] font-extrabold uppercase text-emerald-700">Active</span>
-              </div>
-
-              <div className="absolute bottom-5 right-5 w-9 h-9 bg-[#007AFF] text-white rounded-full flex items-center justify-center group-hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30">
-                <ArrowRight size={18} />
-              </div>
-            </motion.div>
-          </Link>
 
         </div>
       </section>
