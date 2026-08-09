@@ -252,10 +252,13 @@ function TrackContent() {
         }
 
         // Live location telemetry
+        const shortId = currentOrder.id ? `#GR-${currentOrder.id.slice(0, 4).toUpperCase()}` : '';
+        const rawShortId = currentOrder.id ? currentOrder.id.slice(0, 4) : '';
+
         const { data: trackDataArray } = await insforge.database
           .from('order_live_location')
           .select('*')
-          .eq('order_id', currentOrder.id)
+          .or(`order_id.eq.${currentOrder.id},order_id.eq.${shortId},order_id.eq.${rawShortId}`)
           .order('updated_at', { ascending: false })
           .limit(1);
 
@@ -532,13 +535,13 @@ function TrackContent() {
     ? Number(liveLocation.lat) 
     : order?.worker_lat 
     ? Number(order.worker_lat) 
-    : userLat - 0.015;
+    : userLat;
 
   const workerLng = liveLocation?.lng 
     ? Number(liveLocation.lng) 
     : order?.worker_lng 
     ? Number(order.worker_lng) 
-    : userLng + 0.018;
+    : userLng;
 
   const prevWorkerLat = prevLocation?.lat ? Number(prevLocation.lat) : null;
   const prevWorkerLng = prevLocation?.lng ? Number(prevLocation.lng) : null;

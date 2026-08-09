@@ -114,11 +114,14 @@ function WorkerDashboardContent() {
             setLiveDeviceGps({ lat: currentLat, lng: currentLng });
 
             try {
-              // Delete outdated location entries for this order
+              const shortId = orderId ? `#GR-${orderId.slice(0, 4).toUpperCase()}` : '';
+              const rawShortId = orderId ? orderId.slice(0, 4) : '';
+
+              // Delete outdated location entries matching orderId or shortId
               await insforge.database
                 .from('order_live_location')
                 .delete()
-                .eq('order_id', orderId);
+                .or(`order_id.eq.${orderId},order_id.eq.${shortId},order_id.eq.${rawShortId}`);
 
               // Insert exact updated worker GPS location
               await insforge.database
