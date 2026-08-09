@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { 
   ShieldCheck, 
   MapPin, 
@@ -579,15 +580,14 @@ export async function generateMetadata({ params }: ServicePageProps): Promise<Me
   const item = serviceCatalog[service];
 
   if (!item) {
-    const name = service.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     return {
-      title: `${name} in Etawah | Book on Go_Repireo`,
-      description: `Book trusted ${name} in Etawah with Go_Repireo. Verified professionals, transparent pricing, same-day service.`,
+      title: 'Service Not Found',
+      robots: { index: false, follow: false },
     };
   }
 
   return {
-    title: `${item.nameEtawah} | Book Online | Go_Repireo`,
+    title: `${item.nameEtawah} | Book Online`,
     description: item.descriptionLong.slice(0, 165),
     keywords: item.keywords,
     alternates: {
@@ -605,24 +605,11 @@ export async function generateMetadata({ params }: ServicePageProps): Promise<Me
 
 export default async function NearMeServicePage({ params }: ServicePageProps) {
   const { service } = await params;
-  const item = serviceCatalog[service] || {
-    name: service.replace(/-/g, ' ').toUpperCase(),
-    category: 'service',
-    heroImg: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=600',
-    startingPrice: 199,
-    avgRating: 4.8,
-    reviewsCount: 1500,
-    description: `Book doorstep ${service.replace(/-/g, ' ')} with verified experts near you. Transparent pricing, fast service, and 30-day warranty.`,
-    features: [
-      'Background-verified professional technicians',
-      'Transparent pricing & zero hidden charges',
-      '30-day post-service guarantee',
-      'Fast doorstep response within 15km'
-    ],
-    faqs: [
-      { question: `How do I book ${service.replace(/-/g, ' ')}?`, answer: 'Select your service category, describe your issue, select your address, and choose cash or online payment.' }
-    ]
-  };
+  const item = serviceCatalog[service];
+
+  if (!item) {
+    notFound();
+  }
 
   const pageUrl = `https://gorepireo.in/near-me/${service}`;
 
@@ -635,8 +622,6 @@ export default async function NearMeServicePage({ params }: ServicePageProps) {
         category={item.category}
         minPrice={item.startingPrice}
         maxPrice={item.startingPrice * 5}
-        ratingValue={item.avgRating}
-        reviewCount={item.reviewsCount}
         faqs={item.faqs}
       />
 

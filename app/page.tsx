@@ -105,10 +105,10 @@ export default function Home() {
             </div>
 
             {/* Main Headline */}
-            <div role="heading" aria-level={2} className="text-lg sm:text-2xl lg:text-3xl font-black leading-tight tracking-tight uppercase">
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-black leading-tight tracking-tight uppercase">
               <span className="text-[#FFC700]">EXPERT REPAIRS,</span><br />
-              <span className="text-white">RIGHT ON TIME.</span>
-            </div>
+              <span className="text-white">HOME SERVICES IN ETAWAH.</span>
+            </h1>
 
             {/* Subtitle Bullets */}
             <div className="text-[9px] sm:text-xs text-blue-100/90 font-medium leading-tight space-y-0.5">

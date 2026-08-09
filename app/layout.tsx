@@ -10,10 +10,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://gorepireo.in"),
   title: {
-    default: "Go_Repireo - Etawah's Trusted Home Services | Plumber, Electrician, AC Repair",
+    default: "Home Repair Services in Etawah | Go_Repireo",
     template: "%s | Go_Repireo"
   },
-  description: "Go_Repireo is Etawah's trusted on-demand home services marketplace. Book verified plumbers, electricians, AC technicians, appliance repair experts, cleaners, painters, carpenters, RO technicians, and CCTV installers in Etawah, UP. Instant booking, live technician tracking, secure UPI & card payments, same-day service, and professional doorstep repairs.",
+  description: "Book plumbers, electricians, AC technicians and appliance repair professionals in Etawah. Get transparent pricing, doorstep service and live tracking.",
   keywords: [
     // ─── Brand: Correct & Primary ───
     "Go Repireo", "Go_Repireo", "GoRepireo", "Repireo", "GoRepireo.in",
@@ -144,7 +144,7 @@ export const metadata: Metadata = {
   classification: "Home Services Marketplace",
   applicationName: "Go_Repireo",
   openGraph: {
-    title: "Go_Repireo - Etawah's Trusted Home Services | Plumber, Electrician, AC Repair",
+    title: "Home Repair Services in Etawah | Go_Repireo",
     description: "Go_Repireo is Etawah's on-demand home services platform. Book verified plumbers, electricians, AC technicians, and appliance repair experts with live tracking and secure UPI payments.",
     url: "https://gorepireo.in",
     siteName: "Go_Repireo",
@@ -160,11 +160,10 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Go_Repireo - Etawah's Trusted Home Services",
     description: "Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah with live technician tracking and secure UPI payments.",
     images: ["https://gorepireo.in/icon.png"],
-    creator: "@gorepireo",
   },
   alternates: {
     canonical: "https://gorepireo.in",
@@ -187,9 +186,6 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
-  },
-  verification: {
-    google: 'gorepireo-google-site-verification',
   },
 };
 
@@ -251,10 +247,7 @@ export default function RootLayout({
                 'contactType': 'customer service',
                 'availableLanguage': ['English', 'Hindi']
               },
-              'sameAs': [
-                'https://gorepireo.in',
-                'https://xipxmg4q.insforge.site'
-              ]
+              'sameAs': []
             })
           }}
         />
@@ -273,14 +266,7 @@ export default function RootLayout({
               'publisher': {
                 '@id': 'https://gorepireo.in/#organization'
               },
-              'potentialAction': {
-                '@type': 'SearchAction',
-                'target': {
-                  '@type': 'EntryPoint',
-                  'urlTemplate': 'https://gorepireo.in/services?q={search_term_string}'
-                },
-                'query-input': 'required name=search_term_string'
-              }
+              'inLanguage': ['en-IN', 'hi-IN']
             })
           }}
         />

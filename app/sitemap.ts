@@ -2,22 +2,19 @@ import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://gorepireo.in';
+  const lastContentUpdate = new Date('2026-08-09');
 
-  // ─── Core Static Pages ───────────────────────────────────────────────
+  // Only list canonical public landing pages. Account, dashboard, and
+  // order-tracking routes are intentionally excluded because they are noindex.
   const staticPages: MetadataRoute.Sitemap = [
-    { url: baseUrl,                               lastModified: new Date(), changeFrequency: 'daily',   priority: 1.0 },
-    { url: `${baseUrl}/about`,                    lastModified: new Date(), changeFrequency: 'monthly', priority: 1.0 },
-    { url: `${baseUrl}/services`,                 lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.95 },
-    { url: `${baseUrl}/services/service`,         lastModified: new Date(), changeFrequency: 'daily',   priority: 0.9  },
-    { url: `${baseUrl}/services/installation`,    lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.85 },
-    { url: `${baseUrl}/shop`,                     lastModified: new Date(), changeFrequency: 'daily',   priority: 0.8  },
-    { url: `${baseUrl}/contact`,                  lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7  },
-    { url: `${baseUrl}/track`,                    lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6  },
-    { url: `${baseUrl}/login`,                    lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5  },
-    { url: `${baseUrl}/register`,                 lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6  },
-    { url: `${baseUrl}/privacy`,                  lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4  },
-    { url: `${baseUrl}/terms`,                    lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4  },
-    { url: `${baseUrl}/refund-policy`,            lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4  },
+    { url: baseUrl,                        lastModified: lastContentUpdate, changeFrequency: 'weekly',  priority: 1.0 },
+    { url: `${baseUrl}/services`,          lastModified: lastContentUpdate, changeFrequency: 'weekly',  priority: 0.9 },
+    { url: `${baseUrl}/services/service`,  lastModified: lastContentUpdate, changeFrequency: 'weekly',  priority: 0.9 },
+    { url: `${baseUrl}/about`,             lastModified: lastContentUpdate, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/contact`,           lastModified: lastContentUpdate, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/privacy`,           lastModified: lastContentUpdate, changeFrequency: 'yearly',  priority: 0.2 },
+    { url: `${baseUrl}/terms`,             lastModified: lastContentUpdate, changeFrequency: 'yearly',  priority: 0.2 },
+    { url: `${baseUrl}/refund-policy`,     lastModified: lastContentUpdate, changeFrequency: 'yearly',  priority: 0.2 },
   ];
 
   // ─── Near-Me Pages (high-intent local searches) ──────────────────────
@@ -45,7 +42,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const nearMePages: MetadataRoute.Sitemap = nearMeServices.map(service => ({
     url: `${baseUrl}/near-me/${service}`,
-    lastModified: new Date(),
+    lastModified: lastContentUpdate,
     changeFrequency: 'weekly',
     priority: 0.95,
   }));
@@ -59,7 +56,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     'electrical',
     'ac-repair',
     'cleaning',
-    'appliances',
+    'appliance',
     'carpentry',
     'painting',
     'pest-control',
@@ -74,7 +71,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     activeCities.forEach(city => {
       cityServicePages.push({
         url: `${baseUrl}/services/${cat}/${city}`,
-        lastModified: new Date(),
+        lastModified: lastContentUpdate,
         changeFrequency: 'weekly',
         priority: 0.9,
       });
