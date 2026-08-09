@@ -28,14 +28,14 @@ import {
   ArrowRight,
   Quote,
   Headphones,
-  Wrench,
-  Loader2
+  ClipboardList
 } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useAuth } from '@/context/AuthContext';
 import { insforge } from '@/lib/insforge';
+import { useAuth } from '@/context/AuthContext';
+import Avatar from '@/components/Avatar';
 
 const categories = [
   { name: 'All Services', icon: LayoutGrid, color: 'text-[#007AFF]', bg: 'bg-[#EFF6FF] border-[#007AFF]/30', active: true },
@@ -54,52 +54,68 @@ const popularServices = [
 ];
 
 export default function Home() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [realOrders, setRealOrders] = useState<any[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState<boolean>(true);
+  const [realBookings, setRealBookings] = useState<any[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
 
   useEffect(() => {
-    const fetchRecentUserOrders = async () => {
-      const userEmail = user?.email || profile?.email;
-      const userId = user?.id || profile?.id;
-
-      if (!userEmail && !userId) {
-        setRealOrders([]);
-        setLoadingOrders(false);
+    async function fetchUserBookings() {
+      if (!user?.email) {
+        setRealBookings([]);
+        setLoadingBookings(false);
         return;
       }
 
       try {
-        let query = insforge.database
+        const { data: userOrders } = await insforge.database
           .from('orders')
           .select('*')
+          .or(`user_email.eq.${user.email},customer_email.eq.${user.email}`)
           .order('created_at', { ascending: false })
           .limit(3);
 
-        if (userId && userEmail) {
-          query = query.or(`user_id.eq.${userId},user_email.eq.${userEmail}`);
-        } else if (userId) {
-          query = query.eq('user_id', userId);
-        } else if (userEmail) {
-          query = query.eq('user_email', userEmail);
-        }
-
-        const { data } = await query;
-        if (data && data.length > 0) {
-          setRealOrders(data);
-        } else {
-          setRealOrders([]);
+        if (userOrders) {
+          setRealBookings(userOrders);
         }
       } catch (err) {
-        console.warn('Fetch recent user orders error:', err);
+        console.error('Fetch user bookings error:', err);
       } finally {
-        setLoadingOrders(false);
+        setLoadingBookings(false);
       }
-    };
+    }
 
-    fetchRecentUserOrders();
-  }, [user, profile]);
+    fetchUserBookings();
+  }, [user]);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return { text: 'Pending', style: 'bg-amber-50 text-amber-600 border-amber-100' };
+      case 'in_progress':
+      case 'assigned':
+      case 'on_the_way':
+        return { text: 'Confirmed', style: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+      case 'work_in_progress':
+      case 'working':
+        return { text: 'In Progress', style: 'bg-blue-50 text-blue-600 border-blue-100' };
+      case 'completed':
+        return { text: 'Completed', style: 'bg-emerald-50 text-emerald-700 border-emerald-100' };
+      case 'cancelled':
+        return { text: 'Cancelled', style: 'bg-rose-50 text-rose-600 border-rose-100' };
+      default:
+        return { text: 'Confirmed', style: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+    }
+  };
+
+  const getServiceIcon = (name?: string) => {
+    const sName = (name || '').toLowerCase();
+    if (sName.includes('plumb')) return { icon: Droplet, bg: 'bg-blue-50 text-blue-500' };
+    if (sName.includes('electr')) return { icon: Zap, bg: 'bg-amber-50 text-amber-500' };
+    if (sName.includes('clean')) return { icon: Sparkles, bg: 'bg-emerald-50 text-emerald-500' };
+    if (sName.includes('carpent')) return { icon: Hammer, bg: 'bg-purple-50 text-purple-500' };
+    return { icon: CalendarDays, bg: 'bg-emerald-50 text-emerald-600' };
+  };
 
   const testimonials = [
     { text: "Great service! The expert arrived on time and fixed the issue quickly.", author: "- Neha S." },
@@ -146,12 +162,15 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Bottom Left 10K+ Happy Customers Badge */}
+            {/* Bottom Left 10K+ Happy Customers Avatars */}
             <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#FFC700] text-slate-900 flex items-center justify-center font-black text-[10px] shadow-xs">
-                <Star size={11} className="fill-current text-slate-900" />
+              <div className="flex -space-x-1.5">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
               </div>
-              <span className="text-[9px] sm:text-[10px] font-bold text-white tracking-tight">10K+ Verified Services Delivered</span>
+              <span className="text-[9px] sm:text-[10px] font-bold text-white tracking-tight">10K+ Happy Customers</span>
             </div>
           </div>
 
@@ -305,50 +324,52 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 8. Recent Bookings (Real Database Bookings according to Login) */}
+      {/* 8. Recent Bookings (Real User Orders - No Fake Faces) */}
       <section className="mt-7 px-4">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Recent Bookings</h3>
-          <Link href="/track" className="text-[11px] font-bold text-[#007AFF] hover:underline">View all</Link>
+          {user && realBookings.length > 0 && (
+            <Link href="/dashboard/user" className="text-[11px] font-bold text-[#007AFF] hover:underline">View all</Link>
+          )}
         </div>
 
-        {loadingOrders ? (
-          <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-2 text-xs font-bold text-slate-400">
-            <Loader2 size={16} className="animate-spin text-[#007AFF]" />
-            <span>Loading your recent bookings...</span>
+        {loadingBookings ? (
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs animate-pulse flex items-center justify-between">
+            <div className="h-4 w-32 bg-slate-100 rounded"></div>
+            <div className="h-4 w-16 bg-slate-100 rounded"></div>
           </div>
-        ) : realOrders.length > 0 ? (
+        ) : realBookings.length > 0 ? (
           <div className="space-y-2.5">
-            {realOrders.map((order, idx) => {
-              const isComp = order.status === 'completed';
-              const isInProgress = order.status === 'in_progress' || order.status === 'work_in_progress';
-              const statusLabel = isComp ? 'Completed' : isInProgress ? 'In Progress' : 'Confirmed';
-              const statusStyle = isComp 
-                ? 'bg-blue-50 text-blue-600 border-blue-100' 
-                : isInProgress 
-                ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                : 'bg-amber-50 text-amber-600 border-amber-100';
-
-              const formattedDate = order.created_at 
-                ? new Date(order.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) + ' • Etawah'
-                : 'Etawah, UP';
+            {realBookings.map((item, idx) => {
+              const badge = getStatusBadge(item.status);
+              const iconObj = getServiceIcon(item.service_name);
+              const IconComp = iconObj.icon;
+              const dateText = item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently';
+              const locationText = item.city || item.details?.city || 'Etawah';
 
               return (
-                <Link href={`/track?id=${order.id}`} key={order.id || idx} className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between gap-3 hover:border-blue-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl ${isComp ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'} flex items-center justify-center shrink-0`}>
-                      <Wrench size={18} />
+                <Link 
+                  href={`/track?id=${item.id}`} 
+                  key={item.id || idx} 
+                  className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between gap-3 hover:border-blue-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl ${iconObj.bg} flex items-center justify-center shrink-0`}>
+                      <IconComp size={20} />
                     </div>
-                    <div>
-                      <h4 className="text-xs font-black text-slate-900">{order.service_name || 'Home Repair Service'}</h4>
-                      <p className="text-[10px] text-slate-400 font-medium">{formattedDate}</p>
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-black text-slate-900 truncate">{item.service_name || 'Repair Service'}</h4>
+                      <p className="text-[10px] text-slate-400 font-medium truncate">{dateText} • {locationText}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5">
-                    <span className={`${statusStyle} border text-[9px] font-extrabold px-3 py-1 rounded-full`}>
-                      {statusLabel}
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className={`${badge.style} border text-[9px] font-extrabold px-3 py-1 rounded-full`}>
+                      {badge.text}
                     </span>
+                    {item.worker_avatar ? (
+                      <Avatar src={item.worker_avatar} name={item.worker_name || 'Worker'} size={32} />
+                    ) : null}
                     <ChevronRight size={14} className="text-slate-300" />
                   </div>
                 </Link>
@@ -356,20 +377,17 @@ export default function Home() {
             })}
           </div>
         ) : (
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs text-center space-y-2">
-            <div className="w-10 h-10 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
-              <CalendarDays size={20} />
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs text-center space-y-3">
+            <div className="w-12 h-12 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
+              <ClipboardList size={22} />
             </div>
-            <h4 className="text-xs font-black text-slate-900">No Active Bookings</h4>
-            <p className="text-[10.5px] text-slate-400 font-medium max-w-xs mx-auto">
-              Book an instant repair service today and track your certified technician in real time!
-            </p>
-            <div className="pt-1">
-              <Link href="/services/service" className="inline-flex items-center gap-1.5 bg-[#007AFF] text-white text-[11px] font-extrabold px-4 py-2 rounded-full shadow-sm hover:bg-blue-600 transition-all">
-                <span>Book a Service Now</span>
-                <ArrowRight size={13} />
-              </Link>
+            <div className="space-y-0.5">
+              <h4 className="text-xs font-black text-slate-900">No Recent Bookings</h4>
+              <p className="text-[10px] text-slate-400 font-medium">Book a service now to track real-time progress!</p>
             </div>
+            <Link href="/services/service" className="inline-block bg-[#007AFF] text-white text-[10px] font-black px-4 py-2 rounded-full shadow-xs active:scale-95 transition-all">
+              Book Service Now
+            </Link>
           </div>
         )}
       </section>
@@ -379,11 +397,13 @@ export default function Home() {
         <div className="bg-gradient-to-r from-[#EFF6FF] to-[#E0EDFF] rounded-3xl p-5 border border-blue-100/60 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
           
           <div className="space-y-2 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-1.5">
-              <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center">
-                <ShieldCheck size={14} />
-              </div>
-              <span className="text-xs font-black text-slate-900">Verified Service Guarantee</span>
+            <div className="flex items-center justify-center sm:justify-start -space-x-2">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+              <span className="w-7 h-7 rounded-full bg-[#007AFF] text-white text-[9px] font-black flex items-center justify-center border-2 border-white">
+                10K+
+              </span>
             </div>
             
             <h4 className="text-xs font-black text-slate-900">
