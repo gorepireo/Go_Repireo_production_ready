@@ -341,55 +341,55 @@ export default function AdminPanel() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-12 md:py-20 space-y-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-12 md:py-20 space-y-8 sm:space-y-12">
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 text-[#007AFF]">
-              <div className="w-8 h-[2px] bg-current" />
-              <span className="text-[10px] font-black uppercase tracking-[0.6em]">Go_Repireo Control Center</span>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 sm:gap-8">
+          <div className="space-y-2 sm:space-y-4 max-w-full">
+            <div className="flex items-center gap-2 sm:gap-3 text-[#007AFF]">
+              <div className="w-6 sm:w-8 h-[2px] bg-current" />
+              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.6em]">Go_Repireo Control Center</span>
             </div>
-            <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.85] skew-title">
+            <h1 className="text-3xl sm:text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] sm:leading-[0.85] skew-title">
               ADMIN <br />
               <span className="text-[#007AFF]">PANEL.</span>
             </h1>
-            <p className="tactile-label !text-slate-400">Signed in as {user?.email}</p>
+            <p className="tactile-label !text-slate-400 truncate max-w-[280px] sm:max-w-none">Signed in as {user?.email}</p>
           </div>
-          <div className="flex items-center gap-4">
-            <button onClick={fetchData} className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md hover:bg-black hover:text-white transition-all">
-              <RefreshCw size={18} />
+          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+            <button onClick={fetchData} className="w-11 h-11 sm:w-12 sm:h-12 bg-white rounded-2xl flex items-center justify-center border border-slate-200/60 hover:bg-black hover:text-white transition-all shrink-0">
+              <RefreshCw size={16} className="sm:w-[18px] sm:h-[18px]" />
             </button>
-            <button onClick={signOut} className="flex items-center gap-3 px-6 h-12 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#FF3B30] transition-all">
+            <button onClick={signOut} className="flex-1 sm:flex-initial flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 h-11 sm:h-12 bg-black text-white rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-[#FF3B30] transition-all">
               <LogOut size={14} /> Sign Out
             </button>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
           {[
             { label: 'Pending', count: currentPending.length, color: '#FFB800', Icon: Clock },
             { label: 'Approved', count: currentApproved.length, color: '#34C759', Icon: CheckCircle2 },
             { label: 'Rejected', count: currentRejected.length, color: '#FF3B30', Icon: XCircle },
           ].map(({ label, count, color, Icon }) => (
-            <div key={label} className="king-card bg-white !p-6 md:!p-10 flex flex-col gap-4">
-              <Icon size={24} style={{ color }} />
+            <div key={label} className="king-card bg-white !p-3.5 sm:!p-6 md:!p-10 flex flex-col gap-2 sm:gap-4 border border-slate-100">
+              <Icon size={20} className="sm:w-6 sm:h-6" style={{ color }} />
               <div>
-                <p className="text-3xl md:text-5xl font-black tracking-tighter">{count}</p>
-                <p className="tactile-label mt-1">{label}</p>
+                <p className="text-xl sm:text-3xl md:text-5xl font-black tracking-tighter">{count}</p>
+                <p className="tactile-label mt-0.5 sm:mt-1 text-[8px] sm:text-[10px] truncate">{label}</p>
               </div>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-3">
+        <div className="flex overflow-x-auto hide-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden gap-2 sm:gap-3 pb-1">
           {([['shops', 'Shop Applications'], ['workers', 'Worker Applications'], ['add', 'Add Shopkeeper']] as [Tab, string][]).map(([t, label]) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === t ? 'bg-black text-white' : 'bg-black/[0.04] text-slate-400 hover:bg-black/[0.08]'}`}
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest whitespace-nowrap shrink-0 transition-all ${tab === t ? 'bg-black text-white' : 'bg-black/[0.04] text-slate-400 hover:bg-black/[0.08]'}`}
             >
               {label}
             </button>
@@ -398,31 +398,31 @@ export default function AdminPanel() {
 
         {/* Shops Tab */}
         {tab === 'shops' && (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {loadingApps ? (
               <div className="flex justify-center py-20">
                 <div className="w-10 h-10 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : applications.length === 0 ? (
-              <div className="king-card py-24 text-center flex flex-col items-center">
-                <Store className="w-12 h-12 text-black/10 mb-4" />
-                <h3 className="text-2xl font-black uppercase tracking-tighter text-black/20">No Applications</h3>
-                <p className="tactile-label mt-2">No shopkeeper applications have been submitted yet.</p>
+              <div className="king-card py-16 sm:py-24 text-center flex flex-col items-center border border-slate-100">
+                <Store className="w-10 h-10 sm:w-12 sm:h-12 text-black/10 mb-4" />
+                <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-black/20">No Applications</h3>
+                <p className="tactile-label mt-2 text-[8px] sm:text-[10px]">No shopkeeper applications have been submitted yet.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3.5 sm:space-y-4">
                 {applications.map((app) => (
                   <motion.div
                     key={app.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="king-card bg-white !p-6 md:!p-8"
+                    className="king-card bg-white !p-4 sm:!p-6 md:!p-8 border border-slate-100"
                   >
-                    <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between">
+                    <div className="flex flex-col md:flex-row gap-5 md:items-center justify-between">
                       <div className="space-y-3 flex-1">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <h3 className="text-xl font-black uppercase tracking-tight">{app.shop_name}</h3>
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        <div className="flex items-center justify-between sm:justify-start gap-3 flex-wrap">
+                          <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight text-slate-900">{app.shop_name}</h3>
+                          <span className={`px-3 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest ${
                             app.status === 'pending' ? 'bg-yellow-50 text-yellow-600' :
                             app.status === 'approved' ? 'bg-green-50 text-green-600' :
                             'bg-red-50 text-red-500'
@@ -430,45 +430,45 @@ export default function AdminPanel() {
                             {app.status}
                           </span>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                           <div>
-                            <p className="tactile-label mb-1">Owner</p>
-                            <p className="text-sm font-bold">{app.owner_name}</p>
+                            <p className="tactile-label mb-0.5 text-[8px] sm:text-[10px]">Owner</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800 break-words">{app.owner_name}</p>
                           </div>
                           <div>
-                            <p className="tactile-label mb-1">Email</p>
-                            <p className="text-sm font-bold truncate">{app.email}</p>
+                            <p className="tactile-label mb-0.5 text-[8px] sm:text-[10px]">Email</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800 break-all">{app.email}</p>
                           </div>
                           <div>
-                            <p className="tactile-label mb-1">Phone</p>
-                            <p className="text-sm font-bold">{app.phone || '—'}</p>
+                            <p className="tactile-label mb-0.5 text-[8px] sm:text-[10px]">Phone</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800">{app.phone || '—'}</p>
                           </div>
                           <div>
-                            <p className="tactile-label mb-1">Address</p>
-                            <p className="text-sm font-bold truncate">{app.address || '—'}</p>
+                            <p className="tactile-label mb-0.5 text-[8px] sm:text-[10px]">Address</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800 break-words">{app.address || '—'}</p>
                           </div>
                         </div>
                       </div>
 
                       {app.status === 'pending' && (
-                        <div className="flex gap-3 shrink-0">
+                        <div className="flex flex-row md:flex-row gap-2.5 sm:gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                           <button
                             onClick={() => handleApprove(app)}
                             disabled={actionLoading === app.id}
-                            className="flex items-center gap-2 px-6 h-12 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#34C759] transition-all disabled:opacity-50"
+                            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 sm:px-6 h-10 sm:h-12 bg-black text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#34C759] transition-all disabled:opacity-50"
                           >
                             {actionLoading === app.id ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             ) : <CheckCircle2 size={14} />}
                             Approve
                           </button>
                           <button
                             onClick={() => handleReject(app)}
                             disabled={actionLoading === app.id + '_reject'}
-                            className="flex items-center gap-2 px-6 h-12 bg-black/[0.04] text-black/60 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#FF3B30] hover:text-white transition-all disabled:opacity-50"
+                            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 sm:px-6 h-10 sm:h-12 bg-black/[0.04] text-black/60 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#FF3B30] hover:text-white transition-all disabled:opacity-50"
                           >
                             {actionLoading === app.id + '_reject' ? (
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                             ) : <XCircle size={14} />}
                             Reject
                           </button>
@@ -484,31 +484,31 @@ export default function AdminPanel() {
 
         {/* Workers Tab */}
         {tab === 'workers' && (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {loadingApps ? (
               <div className="flex justify-center py-20">
                 <div className="w-10 h-10 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : workers.length === 0 ? (
-              <div className="king-card py-24 text-center flex flex-col items-center">
-                <Users className="w-12 h-12 text-black/10 mb-4" />
-                <h3 className="text-2xl font-black uppercase tracking-tighter text-black/20">No Applications</h3>
-                <p className="tactile-label mt-2">No worker applications have been submitted yet.</p>
+              <div className="king-card py-16 sm:py-24 text-center flex flex-col items-center border border-slate-100">
+                <Users className="w-10 h-10 sm:w-12 sm:h-12 text-black/10 mb-4" />
+                <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-black/20">No Applications</h3>
+                <p className="tactile-label mt-2 text-[8px] sm:text-[10px]">No worker applications have been submitted yet.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3.5 sm:space-y-4">
                 {workers.map((worker) => (
                   <motion.div
                     key={worker.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="king-card bg-white !p-6 md:!p-8"
+                    className="king-card bg-white !p-4 sm:!p-6 md:!p-8 border border-slate-100"
                   >
-                    <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between">
+                    <div className="flex flex-col md:flex-row gap-5 md:items-center justify-between">
                       <div className="space-y-3 flex-1">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <h3 className="text-xl font-black uppercase tracking-tight">{worker.from_name}</h3>
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        <div className="flex items-center justify-between sm:justify-start gap-3 flex-wrap">
+                          <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight text-slate-900">{worker.from_name}</h3>
+                          <span className={`px-3 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest ${
                             worker.user_status === 'pending_approval' ? 'bg-yellow-50 text-yellow-600' :
                             worker.user_status === 'active' ? 'bg-green-50 text-green-600' :
                             'bg-red-50 text-red-500'
@@ -516,45 +516,45 @@ export default function AdminPanel() {
                             {worker.user_status === 'pending_approval' ? 'pending' : worker.user_status}
                           </span>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                           <div>
-                            <p className="tactile-label mb-1">Service</p>
-                            <p className="text-sm font-bold">{worker.service}</p>
+                            <p className="tactile-label mb-0.5 text-[8px] sm:text-[10px]">Service</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800 break-words">{worker.service}</p>
                           </div>
                           <div>
-                            <p className="tactile-label mb-1">Experience</p>
-                            <p className="text-sm font-bold">{worker.experience} Years</p>
+                            <p className="tactile-label mb-0.5 text-[8px] sm:text-[10px]">Experience</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800">{worker.experience} Years</p>
                           </div>
                           <div>
-                            <p className="tactile-label mb-1">Mobile</p>
-                            <p className="text-sm font-bold">{worker.mobile || '—'}</p>
+                            <p className="tactile-label mb-0.5 text-[8px] sm:text-[10px]">Mobile</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800">{worker.mobile || '—'}</p>
                           </div>
                           <div>
-                            <p className="tactile-label mb-1">Email</p>
-                            <p className="text-sm font-bold truncate">{worker.email || '—'}</p>
+                            <p className="tactile-label mb-0.5 text-[8px] sm:text-[10px]">Email</p>
+                            <p className="text-xs sm:text-sm font-bold text-slate-800 break-all">{worker.email || '—'}</p>
                           </div>
                         </div>
                       </div>
 
                       {worker.user_status === 'pending_approval' && (
-                        <div className="flex gap-3 shrink-0">
+                        <div className="flex flex-row md:flex-row gap-2.5 sm:gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                           <button
                             onClick={() => handleApproveWorker(worker)}
                             disabled={actionLoading === worker.id}
-                            className="flex items-center gap-2 px-6 h-12 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#34C759] transition-all disabled:opacity-50"
+                            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 sm:px-6 h-10 sm:h-12 bg-black text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#34C759] transition-all disabled:opacity-50"
                           >
                             {actionLoading === worker.id ? (
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             ) : <CheckCircle2 size={14} />}
                             Approve
                           </button>
                           <button
                             onClick={() => handleRejectWorker(worker)}
                             disabled={actionLoading === worker.id + '_reject'}
-                            className="flex items-center gap-2 px-6 h-12 bg-black/[0.04] text-black/60 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#FF3B30] hover:text-white transition-all disabled:opacity-50"
+                            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 sm:px-6 h-10 sm:h-12 bg-black/[0.04] text-black/60 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#FF3B30] hover:text-white transition-all disabled:opacity-50"
                           >
                             {actionLoading === worker.id + '_reject' ? (
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                             ) : <XCircle size={14} />}
                             Reject
                           </button>
@@ -570,22 +570,22 @@ export default function AdminPanel() {
 
         {/* Add Shopkeeper Tab */}
         {tab === 'add' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="king-card bg-white !p-8 md:!p-12">
-            <div className="space-y-4 mb-10">
-              <div className="flex items-center gap-3 text-[#007AFF]">
-                <div className="w-6 h-[2px] bg-current" />
-                <span className="text-[10px] font-black uppercase tracking-[0.5em]">Manual Entry</span>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="king-card bg-white !p-5 sm:!p-8 md:!p-12 border border-slate-100">
+            <div className="space-y-2 sm:space-y-4 mb-6 sm:mb-10">
+              <div className="flex items-center gap-2 sm:gap-3 text-[#007AFF]">
+                <div className="w-5 sm:w-6 h-[2px] bg-current" />
+                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em]">Manual Entry</span>
               </div>
-              <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-[0.9] skew-title">
+              <h2 className="text-3xl sm:text-4xl md:text-6xl font-black uppercase tracking-tighter leading-[0.9] skew-title">
                 ADD <br />
                 <span className="text-[#007AFF]">SHOPKEEPER.</span>
               </h2>
-              <p className="tactile-label !text-slate-400 !tracking-normal !lowercase !font-medium">
+              <p className="tactile-label !text-slate-400 !tracking-normal !lowercase !font-medium text-xs">
                 Creates and immediately activates the shopkeeper account.
               </p>
             </div>
 
-            <form onSubmit={handleAddShopkeeper} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleAddShopkeeper} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {[
                 { label: 'Shop Name', name: 'shop_name', type: 'text', placeholder: 'My Repair Shop' },
                 { label: 'Owner Name', name: 'owner_name', type: 'text', placeholder: 'Full name' },
@@ -594,24 +594,24 @@ export default function AdminPanel() {
                 { label: 'Phone Number', name: 'phone', type: 'text', placeholder: '+91 00000 00000' },
                 { label: 'Address', name: 'address', type: 'text', placeholder: 'Area, City' },
               ].map((field) => (
-                <div key={field.name} className="space-y-2">
-                  <label className="tactile-label ml-1">{field.label}</label>
+                <div key={field.name} className="space-y-1.5 sm:space-y-2">
+                  <label className="tactile-label ml-1 text-[8px] sm:text-[10px]">{field.label}</label>
                   <input
                     required
                     type={field.type}
                     placeholder={field.placeholder}
                     value={(addForm as any)[field.name]}
                     onChange={(e) => setAddForm({ ...addForm, [field.name]: e.target.value })}
-                    className="w-full h-14 bg-black/[0.02] px-5 rounded-2xl text-sm font-medium focus:bg-white transition-all outline-none border border-transparent focus:border-[#007AFF]/20"
+                    className="w-full h-12 sm:h-14 bg-black/[0.02] px-4 sm:px-5 rounded-2xl text-xs sm:text-sm font-medium focus:bg-white transition-all outline-none border border-transparent focus:border-[#007AFF]/20"
                   />
                 </div>
               ))}
 
-              <div className="md:col-span-2 pt-4">
+              <div className="md:col-span-2 pt-2 sm:pt-4">
                 <button
                   type="submit"
                   disabled={addLoading}
-                  className="btn-primary w-full h-16 text-[10px]"
+                  className="btn-primary w-full h-14 sm:h-16 text-[9px] sm:text-[10px]"
                 >
                   {addLoading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
