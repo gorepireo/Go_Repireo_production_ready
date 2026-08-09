@@ -288,6 +288,33 @@ function TrackContent() {
     return () => clearInterval(interval);
   }, [fetchOrderData]);
 
+  // Realtime instant location updates from worker device
+  useEffect(() => {
+    if (!order?.id) return;
+    const channelName = 'live_location_channel';
+    insforge.realtime.subscribe(channelName).catch(console.warn);
+
+    const handleLocationUpdate = (msg: any) => {
+      if (msg?.channel === channelName && msg?.payload?.order_id === order.id) {
+        const payload = msg.payload;
+        if (payload.lat && payload.lng) {
+          setLiveLocation({
+            lat: Number(payload.lat),
+            lng: Number(payload.lng),
+            timestamp: Date.now()
+          });
+        }
+      }
+    };
+
+    insforge.realtime.on('location_update', handleLocationUpdate);
+
+    return () => {
+      insforge.realtime.off('location_update', handleLocationUpdate);
+      insforge.realtime.unsubscribe(channelName);
+    };
+  }, [order?.id]);
+
   // Helper to load Razorpay Checkout Script
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {

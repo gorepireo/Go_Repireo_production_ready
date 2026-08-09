@@ -120,6 +120,13 @@ function WorkerDashboardContent() {
             lng: lng,
             updated_at: new Date().toISOString()
           }]);
+
+        // 3. Publish Realtime instant location event to customer map
+        insforge.realtime.publish('live_location_channel', 'location_update', {
+          order_id: rawOrderId,
+          lat: lat,
+          lng: lng
+        }).catch(console.warn);
       } catch (err) {
         console.warn('Worker 7-sec location sync error:', err);
       }
