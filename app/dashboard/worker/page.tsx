@@ -96,78 +96,78 @@ function WorkerDashboardContent() {
     }
   }, []);
 
-  // 7-Second Worker Live Location Extraction & Deletion Cycle
+  // Continuous GPS watchPosition Worker Live Location Engine for Active Orders
   useEffect(() => {
     const activeStatuses = ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'];
     if (!activeJob?.id || !activeStatuses.includes(activeJob.status)) return;
 
     const rawOrderId = activeJob.id;
+    let lastSentTime = 0;
+    let watchId: number | null = null;
 
-    const saveLocationToDb = async (lat: number, lng: number) => {
+    const sendLocationPayload = async (lat: number, lng: number, accuracy?: number, heading?: number | null, speed?: number | null) => {
       try {
-        // 1. Delete previous location data for this order
-        await insforge.database
-          .from('order_live_location')
-          .delete()
-          .eq('order_id', rawOrderId);
-
-        // 2. Insert extracted worker position data
-        await insforge.database
-          .from('order_live_location')
-          .insert([{
+        await fetch('/api/location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             order_id: rawOrderId,
-            lat: lat,
-            lng: lng,
-            updated_at: new Date().toISOString()
-          }]);
-
-        // 3. Publish Realtime instant location event to customer map
-        insforge.realtime.publish('live_location_channel', 'location_update', {
-          order_id: rawOrderId,
-          lat: lat,
-          lng: lng
-        }).catch(console.warn);
+            worker_id: user?.id,
+            latitude: lat,
+            longitude: lng,
+            accuracy: accuracy || null,
+            heading: heading || null,
+            speed: speed || null,
+            tracking_status: 'active'
+          })
+        });
       } catch (err) {
-        console.warn('Worker 7-sec location sync error:', err);
+        console.warn('Location API post error:', err);
       }
     };
 
-    const syncLiveLocation = () => {
-      if (typeof window !== 'undefined' && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const currentLat = pos.coords.latitude;
-            const currentLng = pos.coords.longitude;
-            setLiveDeviceGps({ lat: currentLat, lng: currentLng });
-            saveLocationToDb(currentLat, currentLng);
-          },
-          (err) => {
-            console.warn('Worker Geolocation position extraction warning:', err);
-            const custLat = activeJob?.lat ? Number(activeJob.lat) : 26.7990;
-            const custLng = activeJob?.lng ? Number(activeJob.lng) : 75.8869;
-            const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : custLat - 0.027;
-            const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : custLng - 0.025;
-            saveLocationToDb(fallbackLat, fallbackLng);
-          },
-          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-        );
-      } else {
-        const custLat = activeJob?.lat ? Number(activeJob.lat) : 26.7990;
-        const custLng = activeJob?.lng ? Number(activeJob.lng) : 75.8869;
-        const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : custLat - 0.027;
-        const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : custLng - 0.025;
-        saveLocationToDb(fallbackLat, fallbackLng);
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const currentLat = pos.coords.latitude;
+          const currentLng = pos.coords.longitude;
+          const accuracy = pos.coords.accuracy;
+          const heading = pos.coords.heading;
+          const speed = pos.coords.speed;
+
+          // Filter out unreliable low-accuracy GPS points
+          if (accuracy && accuracy > 120) {
+            console.warn('Skipping low accuracy GPS point:', accuracy);
+            return;
+          }
+
+          setLiveDeviceGps({ lat: currentLat, lng: currentLng });
+
+          // Throttle network updates to ~5-7 seconds interval to avoid excessive writes
+          const now = Date.now();
+          if (now - lastSentTime > 5000) {
+            lastSentTime = now;
+            sendLocationPayload(currentLat, currentLng, accuracy, heading, speed);
+          }
+        },
+        (err) => {
+          console.warn('Worker GPS watchPosition error:', err);
+          const custLat = activeJob?.lat ? Number(activeJob.lat) : 26.7990;
+          const custLng = activeJob?.lng ? Number(activeJob.lng) : 75.8869;
+          const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : custLat - 0.027;
+          const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : custLng - 0.025;
+          sendLocationPayload(fallbackLat, fallbackLng);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      );
+    }
+
+    return () => {
+      if (watchId !== null && typeof window !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId);
       }
     };
-
-    // Run immediately on active job detection
-    syncLiveLocation();
-
-    // Repeat every 7 seconds until order is completed or cancelled
-    const intervalId = setInterval(syncLiveLocation, 7000);
-
-    return () => clearInterval(intervalId);
-  }, [activeJob?.id, activeJob?.status, activeJob?.worker_lat, activeJob?.worker_lng]);
+  }, [activeJob?.id, activeJob?.status, activeJob?.lat, activeJob?.lng, activeJob?.worker_lat, activeJob?.worker_lng, user?.id]);
 
   // Toggle Online / Offline Status
   const handleToggleOnline = async () => {

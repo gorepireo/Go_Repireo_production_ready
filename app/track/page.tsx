@@ -291,16 +291,24 @@ function TrackContent() {
   // Realtime instant location updates from worker device
   useEffect(() => {
     if (!order?.id) return;
-    const channelName = 'live_location_channel';
-    insforge.realtime.subscribe(channelName).catch(console.warn);
+    const roomTopic = `live_location_${order.id}`;
+    const globalTopic = 'global_live_locations';
+
+    insforge.realtime.subscribe(roomTopic).catch(console.warn);
+    insforge.realtime.subscribe(globalTopic).catch(console.warn);
 
     const handleLocationUpdate = (msg: any) => {
-      if (msg?.channel === channelName && msg?.payload?.order_id === order.id) {
-        const payload = msg.payload;
-        if (payload.lat && payload.lng) {
+      const payload = msg?.payload;
+      if (payload && (payload.order_id === order.id || msg.channel === roomTopic)) {
+        const rawLat = payload.latitude || payload.lat;
+        const rawLng = payload.longitude || payload.lng;
+        if (rawLat !== undefined && rawLng !== undefined) {
           setLiveLocation({
-            lat: Number(payload.lat),
-            lng: Number(payload.lng),
+            lat: Number(rawLat),
+            lng: Number(rawLng),
+            accuracy: payload.accuracy || null,
+            heading: payload.heading || null,
+            speed: payload.speed || null,
             timestamp: Date.now()
           });
         }
@@ -311,7 +319,8 @@ function TrackContent() {
 
     return () => {
       insforge.realtime.off('location_update', handleLocationUpdate);
-      insforge.realtime.unsubscribe(channelName);
+      insforge.realtime.unsubscribe(roomTopic);
+      insforge.realtime.unsubscribe(globalTopic);
     };
   }, [order?.id]);
 
