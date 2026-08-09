@@ -57,6 +57,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const ringtoneTimerRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const addedCandidatesRef = useRef<Set<string>>(new Set());
 
   // WebRTC STUN Config
   const rtcConfig: RTCConfiguration = {
@@ -65,6 +66,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' },
     ]
   };
 
@@ -119,14 +121,31 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
+      try {
+        peerConnectionRef.current.close();
+      } catch (e) {}
       peerConnectionRef.current = null;
     }
 
+    addedCandidatesRef.current.clear();
     setIsMuted(false);
   };
 
-  // InsForge Realtime Subscription for incoming call signaling
+  // Safe ICE Candidate Addition
+  const addIceCandidateSafely = async (candidateData: any) => {
+    if (!peerConnectionRef.current || !candidateData) return;
+    const key = JSON.stringify(candidateData);
+    if (addedCandidatesRef.current.has(key)) return;
+    addedCandidatesRef.current.add(key);
+
+    try {
+      await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidateData));
+    } catch (e) {
+      console.warn('ICE candidate addition error:', e);
+    }
+  };
+
+  // InsForge Realtime Subscription & High-Frequency DB Polling
   useEffect(() => {
     if (!user?.id && !user?.email) return;
 
@@ -158,6 +177,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (msg?.channel === globalTopic && msg?.payload) {
         const data = msg.payload;
         if (data?.sessionId && callData?.sessionId === data.sessionId) {
+          stopRingtoneLoop();
           setCallStatus('ended');
           cleanupCall();
           setTimeout(() => {
@@ -171,32 +191,22 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     insforge.realtime.on('incoming_call', handleIncomingCall);
     insforge.realtime.on('call_ended', handleCallEnded);
 
-    // High-Frequency 1-Second DB Sync for Instant Call State Handshake
+    // High-Frequency 1-Second DB Sync for Call State & ICE Candidate Sync
     const dbPollInterval = setInterval(async () => {
       if (!userKey) return;
 
       try {
-        // If caller is in outgoing ringing state, check if receiver accepted or declined
-        if (callStatus === 'outgoing' && callData?.sessionId) {
+        // 1. Check active session status when in call
+        if (callData?.sessionId && ['outgoing', 'incoming', 'connected'].includes(callStatus)) {
           const { data: session } = await insforge.database
             .from('call_sessions')
-            .select('status, sdp_answer')
+            .select('status, sdp_answer, sdp_offer, ice_candidates')
             .eq('id', callData.sessionId)
             .single();
 
           if (session) {
-            if (session.status === 'accepted') {
-              stopRingtoneLoop();
-              setCallStatus('connected');
-
-              if (session.sdp_answer && peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'stable') {
-                try {
-                  await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(session.sdp_answer));
-                } catch (e) {
-                  console.warn('Set remote sdp_answer error:', e);
-                }
-              }
-            } else if (['declined', 'ended', 'missed', 'cancelled'].includes(session.status)) {
+            // Check if opponent hung up or declined
+            if (['ended', 'declined', 'cancelled'].includes(session.status)) {
               stopRingtoneLoop();
               setCallStatus('ended');
               cleanupCall();
@@ -204,30 +214,35 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setCallStatus('idle');
                 setCallData(null);
               }, 1500);
+              return;
+            }
+
+            // Caller side: check if receiver accepted call
+            if (callStatus === 'outgoing' && session.status === 'accepted') {
+              stopRingtoneLoop();
+              setCallStatus('connected');
+
+              if (session.sdp_answer && peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'stable') {
+                try {
+                  await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(session.sdp_answer));
+                } catch (e) {
+                  console.warn('Set sdp_answer error:', e);
+                }
+              }
+            }
+
+            // Process remote ICE Candidates stored in DB
+            if (Array.isArray(session.ice_candidates)) {
+              for (const candItem of session.ice_candidates) {
+                if (candItem.userId !== userKey) {
+                  await addIceCandidateSafely(candItem.candidate);
+                }
+              }
             }
           }
         }
 
-        // If receiver is in incoming ringing state or active connected call, check if caller hung up
-        if ((callStatus === 'incoming' || callStatus === 'connected') && callData?.sessionId) {
-          const { data: session } = await insforge.database
-            .from('call_sessions')
-            .select('status')
-            .eq('id', callData.sessionId)
-            .single();
-
-          if (session && ['ended', 'declined', 'cancelled'].includes(session.status)) {
-            stopRingtoneLoop();
-            setCallStatus('ended');
-            cleanupCall();
-            setTimeout(() => {
-              setCallStatus('idle');
-              setCallData(null);
-            }, 1500);
-          }
-        }
-
-        // If idle, check for incoming ringing sessions targeted at user
+        // 2. Check for incoming call if currently idle
         if (callStatus === 'idle') {
           const { data: ringingSessions } = await insforge.database
             .from('call_sessions')
@@ -259,7 +274,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       } catch (err) {
-        console.warn('Call DB poll sync error:', err);
+        console.warn('Call DB sync error:', err);
       }
     }, 1000);
 
@@ -286,7 +301,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [callStatus]);
 
-  // Request Microphone Stream safely with Echo Cancellation & Noise Suppression
+  // Request Microphone Stream safely
   const getMicrophoneStream = async (): Promise<MediaStream | null> => {
     try {
       setMicPermissionError(null);
@@ -301,7 +316,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStreamRef.current = stream;
       return stream;
     } catch (err: any) {
-      console.error('Microphone access denied/error:', err);
+      console.error('Microphone access error:', err);
       const msg = err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'
         ? 'Microphone permission denied. Please allow microphone access in your browser settings to make voice calls.'
         : 'Microphone is missing or unavailable on your device.';
@@ -310,82 +325,53 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Create WebRTC Peer Connection
-  const createPeerConnection = (sessionId: string) => {
-    const pc = new RTCPeerConnection(rtcConfig);
-    peerConnectionRef.current = pc;
+  // Helper to append ICE candidate to DB session
+  const saveIceCandidateToDb = async (sessionId: string, candidate: any) => {
+    const userKey = user?.id || user?.email;
+    try {
+      const { data: existing } = await insforge.database
+        .from('call_sessions')
+        .select('ice_candidates')
+        .eq('id', sessionId)
+        .single();
 
-    // Attach local audio tracks
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => {
-        pc.addTrack(track, localStreamRef.current!);
-      });
+      const currentList = Array.isArray(existing?.ice_candidates) ? existing.ice_candidates : [];
+      const updatedList = [...currentList, { userId: userKey, candidate }];
+
+      await insforge.database
+        .from('call_sessions')
+        .update({ ice_candidates: updatedList })
+        .eq('id', sessionId);
+    } catch (e) {
+      console.warn('Save ICE to DB error:', e);
     }
-
-    // Handle remote audio stream
-    pc.ontrack = (event) => {
-      if (event.streams && event.streams[0]) {
-        if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = event.streams[0];
-          remoteAudioRef.current.play().catch(err => console.warn('Remote audio play error:', err));
-        }
-      }
-    };
-
-    // Handle ICE Candidates
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        insforge.realtime.publish(`call_room_${sessionId}`, 'ice_candidate', {
-          candidate: event.candidate,
-          userId: user?.id || user?.email
-        }).catch(console.warn);
-      }
-    };
-
-    pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'connected') {
-        stopRingtoneLoop();
-        setCallStatus('connected');
-        if (remoteAudioRef.current) {
-          remoteAudioRef.current.play().catch(console.warn);
-        }
-      } else if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
-        cleanupCall();
-        setCallStatus('ended');
-        setTimeout(() => {
-          setCallStatus('idle');
-          setCallData(null);
-        }, 1500);
-      }
-    };
-
-    return pc;
   };
 
   // 1. INITIATE CALL (OUTGOING)
   const startCall = async (orderId: string, callerRole: 'customer' | 'worker' = 'customer', participantOverride?: CallParticipant) => {
     if (callStatus !== 'idle') return;
 
-    // Check Mic Permission first
     const stream = await getMicrophoneStream();
     if (!stream) return;
 
     try {
-      // Create local PeerConnection & SDP Offer BEFORE creating API session
-      const tempPc = new RTCPeerConnection(rtcConfig);
-      peerConnectionRef.current = tempPc;
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnectionRef.current = pc;
 
-      stream.getTracks().forEach(track => tempPc.addTrack(track, stream));
+      // Attach microphone tracks
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-      tempPc.ontrack = (event) => {
+      // Receive remote audio track
+      pc.ontrack = (event) => {
         if (event.streams && event.streams[0] && remoteAudioRef.current) {
           remoteAudioRef.current.srcObject = event.streams[0];
           remoteAudioRef.current.play().catch(console.warn);
         }
       };
 
-      const offer = await tempPc.createOffer();
-      await tempPc.setLocalDescription(offer);
+      // Create SDP Offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
 
       const res = await fetch('/api/calls', {
         method: 'POST',
@@ -419,9 +405,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCallStatus('outgoing');
       startRingtoneLoop();
 
-      // Handle ICE Candidates for created tempPc
-      tempPc.onicecandidate = (event) => {
+      // Handle ICE Candidates
+      pc.onicecandidate = (event) => {
         if (event.candidate) {
+          saveIceCandidateToDb(session.id, event.candidate);
           insforge.realtime.publish(`call_room_${session.id}`, 'ice_candidate', {
             candidate: event.candidate,
             userId: user?.id || user?.email
@@ -429,22 +416,16 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
-      tempPc.onconnectionstatechange = () => {
-        if (tempPc.connectionState === 'connected') {
+      pc.onconnectionstatechange = () => {
+        console.log('Caller WebRTC Connection State:', pc.connectionState);
+        if (pc.connectionState === 'connected') {
           stopRingtoneLoop();
           setCallStatus('connected');
           if (remoteAudioRef.current) remoteAudioRef.current.play().catch(console.warn);
-        } else if (['disconnected', 'failed', 'closed'].includes(tempPc.connectionState)) {
-          cleanupCall();
-          setCallStatus('ended');
-          setTimeout(() => {
-            setCallStatus('idle');
-            setCallData(null);
-          }, 1500);
         }
       };
 
-      // Broadcast incoming call event to recipient via InsForge Realtime
+      // Broadcast incoming call event via Realtime
       insforge.realtime.publish('global_voice_calls', 'incoming_call', {
         sessionId: session.id,
         orderId: session.order_id,
@@ -459,13 +440,13 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }).catch(console.warn);
 
-      // Subscribe to session signaling room
+      // Subscribe to session room
       const roomTopic = `call_room_${session.id}`;
       insforge.realtime.subscribe(roomTopic).catch(console.warn);
 
       const handleSdpAnswer = (msg: any) => {
-        if (msg?.channel === roomTopic && msg?.payload?.answer && tempPc.signalingState !== 'stable') {
-          tempPc.setRemoteDescription(new RTCSessionDescription(msg.payload.answer)).then(() => {
+        if (msg?.channel === roomTopic && msg?.payload?.answer && pc.signalingState !== 'stable') {
+          pc.setRemoteDescription(new RTCSessionDescription(msg.payload.answer)).then(() => {
             stopRingtoneLoop();
             setCallStatus('connected');
             if (remoteAudioRef.current) remoteAudioRef.current.play().catch(console.warn);
@@ -475,41 +456,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const handleIceCandidate = (msg: any) => {
         if (msg?.channel === roomTopic && msg?.payload?.candidate && msg.payload.userId !== (user?.id || user?.email)) {
-          tempPc.addIceCandidate(new RTCIceCandidate(msg.payload.candidate)).catch(console.warn);
-        }
-      };
-
-      const handleCallDeclined = (msg: any) => {
-        if (msg?.channel === roomTopic) {
-          setCallStatus('ended');
-          cleanupCall();
-          setTimeout(() => {
-            setCallStatus('idle');
-            setCallData(null);
-          }, 1500);
+          addIceCandidateSafely(msg.payload.candidate);
         }
       };
 
       insforge.realtime.on('sdp_answer', handleSdpAnswer);
       insforge.realtime.on('ice_candidate', handleIceCandidate);
-      insforge.realtime.on('call_declined', handleCallDeclined);
-
-      // Auto Missed Call Timeout (35 seconds)
-      setTimeout(() => {
-        if (peerConnectionRef.current && peerConnectionRef.current.connectionState !== 'connected') {
-          fetch('/api/calls', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ call_id: session.id, status: 'missed' })
-          }).catch(() => {});
-          setCallStatus('ended');
-          cleanupCall();
-          setTimeout(() => {
-            setCallStatus('idle');
-            setCallData(null);
-          }, 1500);
-        }
-      }, 35000);
 
     } catch (err: any) {
       console.error('Call initiation failure:', err);
@@ -531,7 +483,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      // Unblock HTML5 Audio Playback in click gesture
       if (remoteAudioRef.current) {
         remoteAudioRef.current.play().catch(console.warn);
       }
@@ -539,13 +490,44 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Fetch sdp_offer from DB session
       const { data: dbSession } = await insforge.database
         .from('call_sessions')
-        .select('sdp_offer')
+        .select('sdp_offer, ice_candidates')
         .eq('id', callData.sessionId)
         .single();
 
-      const pc = createPeerConnection(callData.sessionId);
-      const roomTopic = `call_room_${callData.sessionId}`;
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnectionRef.current = pc;
 
+      // Attach microphone tracks
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+      // Receive remote audio track
+      pc.ontrack = (event) => {
+        if (event.streams && event.streams[0] && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+          remoteAudioRef.current.play().catch(console.warn);
+        }
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          saveIceCandidateToDb(callData.sessionId, event.candidate);
+          insforge.realtime.publish(`call_room_${callData.sessionId}`, 'ice_candidate', {
+            candidate: event.candidate,
+            userId: user?.id || user?.email
+          }).catch(console.warn);
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        console.log('Receiver WebRTC Connection State:', pc.connectionState);
+        if (pc.connectionState === 'connected') {
+          stopRingtoneLoop();
+          setCallStatus('connected');
+          if (remoteAudioRef.current) remoteAudioRef.current.play().catch(console.warn);
+        }
+      };
+
+      const roomTopic = `call_room_${callData.sessionId}`;
       insforge.realtime.subscribe(roomTopic).catch(console.warn);
 
       if (dbSession?.sdp_offer) {
@@ -568,9 +550,18 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
+      // Add existing ICE Candidates from DB
+      if (Array.isArray(dbSession?.ice_candidates)) {
+        for (const candItem of dbSession.ice_candidates) {
+          if (candItem.userId !== (user?.id || user?.email)) {
+            await addIceCandidateSafely(candItem.candidate);
+          }
+        }
+      }
+
       const handleIceCandidate = (msg: any) => {
         if (msg?.channel === roomTopic && msg?.payload?.candidate && msg.payload.userId !== (user?.id || user?.email)) {
-          pc.addIceCandidate(new RTCIceCandidate(msg.payload.candidate)).catch(console.warn);
+          addIceCandidateSafely(msg.payload.candidate);
         }
       };
 
@@ -596,7 +587,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ call_id: callData.sessionId, status: 'declined', ended_by: user?.id || user?.email })
       });
 
-      insforge.realtime.publish(`call_room_${callData.sessionId}`, 'call_declined', { call_id: callData.sessionId }).catch(console.warn);
+      insforge.realtime.publish('global_voice_calls', 'call_ended', { sessionId: callData.sessionId }).catch(console.warn);
     } catch (e) {
       console.warn('Decline error:', e);
     } finally {
