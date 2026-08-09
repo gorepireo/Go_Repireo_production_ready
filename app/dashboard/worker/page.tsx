@@ -102,7 +102,6 @@ function WorkerDashboardContent() {
     if (!activeJob || !activeStatuses.includes(activeJob.status)) return;
 
     const orderId = activeJob.id;
-    let stepCount = 0;
 
     const syncLiveLocation = () => {
       const currentAvatar = (profile as any)?.avatar_url || (profile as any)?.avatar || user?.user_metadata?.avatar_url || '/technician_hero.jpg';
@@ -115,13 +114,13 @@ function WorkerDashboardContent() {
             setLiveDeviceGps({ lat: currentLat, lng: currentLng });
 
             try {
-              // Delete previous stored location for this order
+              // Delete outdated location entries for this order
               await insforge.database
                 .from('order_live_location')
                 .delete()
                 .eq('order_id', orderId);
 
-              // Store new live location
+              // Insert exact updated worker GPS location
               await insforge.database
                 .from('order_live_location')
                 .insert([{
@@ -133,45 +132,44 @@ function WorkerDashboardContent() {
                   is_moving: true,
                   updated_at: new Date().toISOString()
                 }]);
+
+              // Update order record with exact worker GPS coordinates
+              await insforge.database
+                .from('orders')
+                .update({
+                  worker_lat: currentLat,
+                  worker_lng: currentLng
+                })
+                .eq('id', orderId);
             } catch (err) {
               console.warn('Worker location sync error:', err);
             }
           },
-          async () => {
-            // Geolocation fallback (e.g. desktop/testing mode)
-            stepCount++;
-            const baseLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : 26.7620;
-            const baseLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : 79.0320;
-            const custLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
-            const custLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
-            
-            // Interpolate position towards customer home
-            const progress = Math.min(0.95, stepCount * 0.05);
-            const currentLat = baseLat + (custLat - baseLat) * progress;
-            const currentLng = baseLng + (custLng - baseLng) * progress;
+          async (err) => {
+            console.warn('Worker device GPS extraction warning:', err);
+            // If GPS fails, use existing stored worker_lat/lng if present
+            if (activeJob?.worker_lat && activeJob?.worker_lng) {
+              try {
+                await insforge.database
+                  .from('order_live_location')
+                  .delete()
+                  .eq('order_id', orderId);
 
-            try {
-              await insforge.database
-                .from('order_live_location')
-                .delete()
-                .eq('order_id', orderId);
-
-              await insforge.database
-                .from('order_live_location')
-                .insert([{
-                  order_id: orderId,
-                  lat: currentLat,
-                  lng: currentLng,
-                  worker_name: displayName,
-                  worker_avatar: currentAvatar,
-                  is_moving: true,
-                  updated_at: new Date().toISOString()
-                }]);
-            } catch (err) {
-              console.warn('Fallback location sync error:', err);
+                await insforge.database
+                  .from('order_live_location')
+                  .insert([{
+                    order_id: orderId,
+                    lat: Number(activeJob.worker_lat),
+                    lng: Number(activeJob.worker_lng),
+                    worker_name: displayName,
+                    worker_avatar: currentAvatar,
+                    is_moving: false,
+                    updated_at: new Date().toISOString()
+                  }]);
+              } catch (e) {}
             }
           },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
       }
     };
@@ -179,7 +177,7 @@ function WorkerDashboardContent() {
     // Run immediately on active job detection
     syncLiveLocation();
 
-    // Repeat every 7 seconds until work starts
+    // Repeat every 7 seconds until order is completed or cancelled
     const intervalId = setInterval(syncLiveLocation, 7000);
 
     return () => clearInterval(intervalId);
