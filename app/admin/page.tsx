@@ -32,6 +32,13 @@ type WorkerApp = {
   experience: number;
   address: string;
   user_status: string;
+  other_skills?: string;
+  specializations?: string[];
+  category_tokens?: string[];
+  state?: string;
+  district?: string;
+  pincode?: string;
+  created_at?: string;
 };
 
 type Tab = 'shops' | 'workers' | 'add';
@@ -43,6 +50,7 @@ export default function AdminPanel() {
   const [tab, setTab] = useState<Tab>('shops');
   const [applications, setApplications] = useState<Application[]>([]);
   const [workers, setWorkers] = useState<WorkerApp[]>([]);
+  const [selectedWorkerDetails, setSelectedWorkerDetails] = useState<WorkerApp | null>(null);
   const [loadingApps, setLoadingApps] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -536,30 +544,40 @@ export default function AdminPanel() {
                         </div>
                       </div>
 
-                      {worker.user_status === 'pending_approval' && (
-                        <div className="flex flex-row md:flex-row gap-2.5 sm:gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
-                          <button
-                            onClick={() => handleApproveWorker(worker)}
-                            disabled={actionLoading === worker.id}
-                            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 sm:px-6 h-10 sm:h-12 bg-black text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#34C759] transition-all disabled:opacity-50"
-                          >
-                            {actionLoading === worker.id ? (
-                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            ) : <CheckCircle2 size={14} />}
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectWorker(worker)}
-                            disabled={actionLoading === worker.id + '_reject'}
-                            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 sm:px-6 h-10 sm:h-12 bg-black/[0.04] text-black/60 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#FF3B30] hover:text-white transition-all disabled:opacity-50"
-                          >
-                            {actionLoading === worker.id + '_reject' ? (
-                              <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            ) : <XCircle size={14} />}
-                            Reject
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                        <button
+                          onClick={() => setSelectedWorkerDetails(worker)}
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 h-10 sm:h-12 bg-blue-50 text-[#007AFF] hover:bg-blue-100 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all"
+                        >
+                          <Eye size={14} />
+                          <span>More Details</span>
+                        </button>
+
+                        {worker.user_status === 'pending_approval' && (
+                          <>
+                            <button
+                              onClick={() => handleApproveWorker(worker)}
+                              disabled={actionLoading === worker.id}
+                              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 sm:px-6 h-10 sm:h-12 bg-black text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#34C759] transition-all disabled:opacity-50"
+                            >
+                              {actionLoading === worker.id ? (
+                                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              ) : <CheckCircle2 size={14} />}
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectWorker(worker)}
+                              disabled={actionLoading === worker.id + '_reject'}
+                              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 sm:px-6 h-10 sm:h-12 bg-black/[0.04] text-black/60 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#FF3B30] hover:text-white transition-all disabled:opacity-50"
+                            >
+                              {actionLoading === worker.id + '_reject' ? (
+                                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              ) : <XCircle size={14} />}
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -626,6 +644,127 @@ export default function AdminPanel() {
           </motion.div>
         )}
       </div>
+
+      {/* Worker Full Details Modal */}
+      <AnimatePresence>
+        {selectedWorkerDetails && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2rem] max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 border border-slate-100 shadow-2xl space-y-6"
+            >
+              {/* Modal Header */}
+              <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#007AFF]">Worker Application Details</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                      selectedWorkerDetails.user_status === 'pending_approval' ? 'bg-yellow-50 text-yellow-600' :
+                      selectedWorkerDetails.user_status === 'active' ? 'bg-green-50 text-green-600' :
+                      'bg-red-50 text-red-500'
+                    }`}>
+                      {selectedWorkerDetails.user_status === 'pending_approval' ? 'Pending Approval' : selectedWorkerDetails.user_status}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900 mt-1">{selectedWorkerDetails.from_name}</h3>
+                </div>
+                <button
+                  onClick={() => setSelectedWorkerDetails(null)}
+                  className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-black hover:text-white transition-all shrink-0"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Detailed Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                  <p className="tactile-label mb-1 text-[8px]">Full Name</p>
+                  <p className="text-sm font-bold text-slate-900">{selectedWorkerDetails.from_name || '—'}</p>
+                </div>
+                <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                  <p className="tactile-label mb-1 text-[8px]">Email Address</p>
+                  <p className="text-sm font-bold text-slate-900 break-all">{selectedWorkerDetails.email || '—'}</p>
+                </div>
+                <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                  <p className="tactile-label mb-1 text-[8px]">Phone Number</p>
+                  <p className="text-sm font-bold text-slate-900">{selectedWorkerDetails.mobile || '—'}</p>
+                </div>
+                <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                  <p className="tactile-label mb-1 text-[8px]">Years of Experience</p>
+                  <p className="text-sm font-bold text-slate-900">{selectedWorkerDetails.experience} Years</p>
+                </div>
+                <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 sm:col-span-2">
+                  <p className="tactile-label mb-1 text-[8px]">Primary Service Category</p>
+                  <p className="text-sm font-bold text-slate-900">{selectedWorkerDetails.service || '—'}</p>
+                </div>
+                {selectedWorkerDetails.specializations && selectedWorkerDetails.specializations.length > 0 && (
+                  <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 sm:col-span-2">
+                    <p className="tactile-label mb-2 text-[8px]">Selected Specializations</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedWorkerDetails.specializations.map((spec, i) => (
+                        <span key={i} className="bg-blue-50 text-[#007AFF] text-[10px] font-bold px-3 py-1 rounded-full border border-blue-100">
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                  <p className="tactile-label mb-1 text-[8px]">State & District</p>
+                  <p className="text-sm font-bold text-slate-900">{selectedWorkerDetails.state || 'UP'}, {selectedWorkerDetails.district || 'Etawah'}</p>
+                </div>
+                <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                  <p className="tactile-label mb-1 text-[8px]">Pincode & Location</p>
+                  <p className="text-sm font-bold text-slate-900">{selectedWorkerDetails.pincode || '206001'} ({selectedWorkerDetails.address || 'Etawah'})</p>
+                </div>
+                <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 sm:col-span-2">
+                  <p className="tactile-label mb-1 text-[8px]">Repair Description / Special Skills</p>
+                  <p className="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">
+                    {selectedWorkerDetails.other_skills || 'No additional description provided.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Footer inside Modal */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button
+                  onClick={() => setSelectedWorkerDetails(null)}
+                  className="px-5 h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all"
+                >
+                  Close
+                </button>
+                {selectedWorkerDetails.user_status === 'pending_approval' && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        handleApproveWorker(selectedWorkerDetails);
+                        setSelectedWorkerDetails(null);
+                      }}
+                      disabled={actionLoading === selectedWorkerDetails.id}
+                      className="flex items-center gap-2 px-5 h-11 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#34C759] transition-all disabled:opacity-50"
+                    >
+                      <CheckCircle2 size={14} /> Approve Worker
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleRejectWorker(selectedWorkerDetails);
+                        setSelectedWorkerDetails(null);
+                      }}
+                      disabled={actionLoading === selectedWorkerDetails.id + '_reject'}
+                      className="flex items-center gap-2 px-5 h-11 bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#FF3B30] hover:text-white transition-all disabled:opacity-50"
+                    >
+                      <XCircle size={14} /> Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
