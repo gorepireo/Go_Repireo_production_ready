@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
+import { CallProvider } from "@/context/CallContext";
+import WebRTCCallModal from "@/components/WebRTCCallModal";
 import LayoutWrapper from "@/components/LayoutWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -324,13 +326,70 @@ export default function RootLayout({
             })
           }}
         />
+        {/* LocalBusiness Schema - Boosts local search relevance */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'LocalBusiness',
+              '@id': 'https://gorepireo.in/#localbusiness',
+              'name': 'Go_Repireo',
+              'image': 'https://gorepireo.in/icon.png',
+              'telephone': '+91-8679245568',
+              'email': 'support@gorepireo.com',
+              'url': 'https://gorepireo.in',
+              'priceRange': '₹99 - ₹4999',
+              'currenciesAccepted': 'INR',
+              'paymentAccepted': 'Cash, UPI, Credit Card, Debit Card, Net Banking',
+              'address': {
+                '@type': 'PostalAddress',
+                'streetAddress': 'Etawah',
+                'addressLocality': 'Etawah',
+                'addressRegion': 'Uttar Pradesh',
+                'postalCode': '206001',
+                'addressCountry': 'IN'
+              },
+              'geo': {
+                '@type': 'GeoCoordinates',
+                'latitude': 26.7773,
+                'longitude': 79.0208
+              },
+              'openingHoursSpecification': {
+                '@type': 'OpeningHoursSpecification',
+                'dayOfWeek': ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],
+                'opens': '07:00',
+                'closes': '21:00'
+              },
+              'serviceArea': {
+                '@type': 'City',
+                'name': 'Etawah'
+              },
+              'hasOfferCatalog': {
+                '@type': 'OfferCatalog',
+                'name': 'Go_Repireo Home Services',
+                'itemListElement': [
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Plumbing Services' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Electrical Services' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'AC Repair & Service' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Appliance Repair' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Deep Cleaning' } },
+                  { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Carpentry & Painting' } }
+                ]
+              }
+            })
+          }}
+        />
       </head>
       <body className={`${inter.className} bg-white text-slate-950`} data-deploy-v="REPIREO-ALPHA-1.2">
         <AuthProvider>
           <CartProvider>
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
+            <CallProvider>
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+              <WebRTCCallModal />
+            </CallProvider>
           </CartProvider>
         </AuthProvider>
       </body>

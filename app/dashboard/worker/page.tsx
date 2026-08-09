@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
+import { useCall } from '@/context/CallContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, 
@@ -50,6 +51,7 @@ const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoo
 
 function WorkerDashboardContent() {
   const { user, profile: rawProfile } = useAuth();
+  const { startCall } = useCall();
   const profile = rawProfile as any;
   const router = useRouter();
 
@@ -905,14 +907,31 @@ function WorkerDashboardContent() {
                     </div>
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-2 flex items-center gap-2">
                     <button
                       onClick={handleGetRoute}
-                      className="w-full bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs py-3 px-4 rounded-2xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                      className="flex-1 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs py-3 px-3 rounded-2xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
                     >
-                      <Navigation size={15} />
+                      <Navigation size={14} />
                       <span>Get Route</span>
-                      <ExternalLink size={13} className="opacity-80" />
+                      <ExternalLink size={12} className="opacity-80" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (activeJob?.id) {
+                          startCall(activeJob.id, 'worker', {
+                            id: activeJob.user_id || 'customer',
+                            name: activeJob.user_name || activeJob.user_email?.split('@')[0] || 'Customer',
+                            avatar: '/customer_3d.png',
+                            role: 'Customer'
+                          });
+                        }
+                      }}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs py-3 px-4 rounded-2xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                      title="Private In-App Voice Call to Customer"
+                    >
+                      <Phone size={14} className="fill-current" />
+                      <span>Call Customer</span>
                     </button>
                   </div>
                 </div>

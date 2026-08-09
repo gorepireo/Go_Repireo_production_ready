@@ -28,6 +28,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
+import { useCall } from '@/context/CallContext';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { predictTelemetry } from '@/lib/telemetryModel';
 import Header from '@/components/Header';
@@ -44,6 +45,7 @@ const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoo
 
 function TrackContent() {
   const { user } = useAuth();
+  const { startCall } = useCall();
   const searchParams = useSearchParams();
   const paramOrderId = searchParams.get('order_id');
   const isReviewParam = searchParams.get('review') === 'true';
@@ -719,13 +721,23 @@ function TrackContent() {
                   </div>
                 </div>
 
-                <a 
-                  href={`tel:${workerData.phone}`} 
+                <button 
+                  onClick={() => {
+                    if (order?.id) {
+                      startCall(order.id, 'customer', {
+                        id: workerData.id || 'worker',
+                        name: workerData.name,
+                        avatar: '/hero_technician_banner.png',
+                        role: 'Assigned Expert'
+                      });
+                    }
+                  }}
                   className="w-10 h-10 bg-[#007AFF] hover:bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
-                  aria-label="Call Expert"
+                  aria-label="Call Expert Private Voice Call"
+                  title="Private In-App Voice Call"
                 >
                   <Phone size={16} className="fill-current" />
-                </a>
+                </button>
               </div>
             )}
 
