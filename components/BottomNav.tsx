@@ -47,39 +47,44 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Floating WhatsApp button right over mobile navigation bar */}
+      {/* Floating WhatsApp button over bottom navigation bar */}
       {pathname !== '/whatsapp' && (
-        <Link 
-          href="/whatsapp"
-          className="fixed bottom-[96px] right-4 z-[60] lg:hidden bg-[#25D366] text-white w-12 h-12 rounded-full shadow-xl shadow-emerald-500/40 flex items-center justify-center active:scale-90 transition-transform border-2 border-white hover:bg-[#20ba5a]"
-          aria-label="Book on WhatsApp"
-        >
-          <MessageCircle size={24} className="fill-white stroke-none" />
-        </Link>
+        <div className="fixed bottom-[92px] left-0 right-0 z-[60] pointer-events-none">
+          <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 flex justify-end">
+            <Link 
+              href="/whatsapp"
+              className="pointer-events-auto bg-[#25D366] text-white w-12 h-12 rounded-full shadow-xl shadow-emerald-500/40 flex items-center justify-center active:scale-90 transition-all border-2 border-white hover:bg-[#20ba5a]"
+              aria-label="Book on WhatsApp"
+            >
+              <MessageCircle size={24} className="fill-white stroke-none" />
+            </Link>
+          </div>
+        </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe pt-2 lg:hidden shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
-        <nav className="max-w-md mx-auto px-4 flex items-center justify-between pb-2">
+      {/* Bottom Navigation Bar Centered for Desktop & Mobile */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-100 pb-safe pt-2 shadow-[0_-10px_25px_rgba(0,0,0,0.05)]">
+        <nav className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 flex items-center justify-between pb-2">
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
             return (
               <Link 
                 key={item.name} 
                 href={item.path}
-                className="flex-1 flex items-center justify-center py-2"
+                className="flex-1 flex items-center justify-center py-1.5"
               >
-                <div className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 w-full mx-1 py-1.5 rounded-3xl ${isActive ? 'bg-[#F0F5FF]' : ''}`}>
-                  <div className="relative z-10 flex items-center justify-center min-h-[24px]">
+                <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 w-full max-w-[120px] mx-1 py-1.5 rounded-2xl ${isActive ? 'bg-[#F0F5FF]' : 'hover:bg-slate-50'}`}>
+                  <div className="relative z-10 flex items-center justify-center min-h-[22px]">
                     {item.name === 'Profile' ? (
                       <Avatar 
                         src={profile?.avatar_url} 
                         name={profile?.display_name || profile?.email || 'User'} 
-                        size={24} 
+                        size={22} 
                         className={isActive ? 'ring-2 ring-offset-1 ring-[#007AFF]' : 'opacity-80 grayscale-[20%] hover:grayscale-0 transition-all duration-300'}
                       />
                     ) : (
                       <item.icon 
-                        size={20} 
+                        size={19} 
                         strokeWidth={isActive ? 2.5 : 2}
                         className={`transition-colors duration-300 ${isActive ? 'text-[#007AFF]' : 'text-slate-400 group-hover:text-slate-600'}`}
                       />
