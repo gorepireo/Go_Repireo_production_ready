@@ -919,10 +919,11 @@ function WorkerDashboardContent() {
                     <button
                       onClick={() => {
                         if (activeJob?.id) {
+                          const custAvatar = activeJob.user_avatar || activeJob.customer_avatar || activeJob.user_photo || '/customer_3d.png';
                           startCall(activeJob.id, 'worker', {
                             id: activeJob.user_id || 'customer',
                             name: activeJob.user_name || activeJob.user_email?.split('@')[0] || 'Customer',
-                            avatar: '/customer_3d.png',
+                            avatar: custAvatar,
                             role: 'Customer'
                           });
                         }

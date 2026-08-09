@@ -174,13 +174,13 @@ function TrackContent() {
         let assignedWorkerPhone = currentOrder.worker_phone || '+918679245568';
 
         // Query users/workers table to get real profile picture
-        if (assignedWorkerId && assignedWorkerId !== 'w-rohit-sharma') {
+        if (assignedWorkerId) {
           try {
-            // 1. Check users table by id
+            // 1. Check users table by id or email
             const { data: uRow } = await insforge.database
               .from('users')
               .select('avatar_url, name, display_name, phone')
-              .eq('id', assignedWorkerId)
+              .or(`id.eq.${assignedWorkerId},email.eq.${assignedWorkerId}`)
               .maybeSingle();
 
             if (uRow) {
@@ -193,12 +193,14 @@ function TrackContent() {
             if (!assignedWorkerAvatar) {
               const { data: wRow } = await insforge.database
                 .from('workers')
-                .select('avatar_url, image, name, mobile')
-                .or(`id.eq.${assignedWorkerId},user_id.eq.${assignedWorkerId}`)
+                .select('avatar_url, image, photo_url, profile_picture, name, mobile')
+                .or(`id.eq.${assignedWorkerId},user_id.eq.${assignedWorkerId},email.eq.${assignedWorkerId}`)
                 .maybeSingle();
 
               if (wRow) {
-                if (wRow.avatar_url || wRow.image) assignedWorkerAvatar = wRow.avatar_url || wRow.image;
+                if (wRow.avatar_url || wRow.image || wRow.photo_url || wRow.profile_picture) {
+                  assignedWorkerAvatar = wRow.avatar_url || wRow.image || wRow.photo_url || wRow.profile_picture;
+                }
                 if (wRow.name) assignedWorkerName = wRow.name;
                 if (wRow.mobile) assignedWorkerPhone = wRow.mobile;
               }
@@ -727,7 +729,7 @@ function TrackContent() {
                       startCall(order.id, 'customer', {
                         id: workerData.id || 'worker',
                         name: workerData.name,
-                        avatar: '/hero_technician_banner.png',
+                        avatar: workerData.avatar || order?.worker_avatar || '/technician_hero.jpg',
                         role: 'Assigned Expert'
                       });
                     }

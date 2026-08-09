@@ -47,7 +47,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [callData, setCallData] = useState<CallData | null>(null);
   const [durationSeconds, setDurationSeconds] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(false);
   const [micPermissionError, setMicPermissionError] = useState<string | null>(null);
 
   // WebRTC & Audio Refs
@@ -698,21 +698,25 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsSpeakerOn(nextState);
 
     if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = nextState ? 1.0 : 0.4;
+      remoteAudioRef.current.volume = nextState ? 1.0 : 0.6;
+      remoteAudioRef.current.play().catch(console.warn);
+
       try {
-        if ('setSinkId' in remoteAudioRef.current) {
+        if ('setSinkId' in (remoteAudioRef.current as any)) {
           const devices = await navigator.mediaDevices.enumerateDevices();
           const outputs = devices.filter(d => d.kind === 'audiooutput');
-          const target = nextState 
-            ? (outputs.find(d => d.label.toLowerCase().includes('speaker') || d.label.toLowerCase().includes('loudspeaker')) || outputs[0])
-            : (outputs.find(d => d.label.toLowerCase().includes('earpiece') || d.label.toLowerCase().includes('headset')) || outputs[0]);
+          if (outputs.length > 0) {
+            const target = nextState 
+              ? (outputs.find(d => d.label.toLowerCase().includes('speaker') || d.label.toLowerCase().includes('loudspeaker')) || outputs[0])
+              : (outputs.find(d => d.label.toLowerCase().includes('earpiece') || d.label.toLowerCase().includes('headset')) || outputs[0]);
 
-          if (target) {
-            await (remoteAudioRef.current as any).setSinkId(target.deviceId);
+            if (target && target.deviceId) {
+              await (remoteAudioRef.current as any).setSinkId(target.deviceId);
+            }
           }
         }
       } catch (e) {
-        console.warn('Toggle speaker error:', e);
+        console.warn('Toggle speaker warning:', e);
       }
     }
   };
