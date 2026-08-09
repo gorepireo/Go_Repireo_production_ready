@@ -216,7 +216,7 @@ export default function Home() {
         <div className="flex overflow-x-auto hide-scrollbar justify-between items-center gap-2 pb-3 border-b border-slate-100">
           {categories.map((cat, idx) => (
             <Link href="/services" key={idx} className="flex flex-col items-center gap-1.5 flex-1 min-w-[62px] group">
-              <div className={`w-13 h-13 rounded-2xl flex items-center justify-center border shadow-xs transition-transform active:scale-95 ${cat.bg}`}>
+              <div className={`w-13 h-13 rounded-2xl flex items-center justify-center border transition-transform active:scale-95 ${cat.bg}`}>
                 <cat.icon size={22} className={cat.color} />
               </div>
               <span className={`text-[10px] font-bold text-center ${cat.active ? 'text-[#007AFF]' : 'text-slate-600'}`}>{cat.name}</span>
@@ -227,9 +227,9 @@ export default function Home() {
 
       {/* 5. Limited Time Offer Banner */}
       <section className="px-4 mt-5">
-        <div className="relative bg-gradient-to-r from-[#EBF3FF] to-[#D9E8FF] rounded-3xl p-5 flex items-center justify-between overflow-hidden border border-blue-100/60 shadow-xs">
+        <div className="relative bg-gradient-to-r from-[#EBF3FF] to-[#D9E8FF] rounded-3xl p-5 flex items-center justify-between overflow-hidden border border-blue-100/60">
           <div className="space-y-1.5 z-10 max-w-[62%]">
-            <span className="bg-[#007AFF] text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-xs inline-block">
+            <span className="bg-[#007AFF] text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full inline-block">
               Limited Time Offer
             </span>
             <h3 className="text-base sm:text-xl font-black text-slate-900 leading-snug pt-1">
@@ -243,10 +243,10 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3 z-10 shrink-0">
-            <div className="w-14 h-14 flex items-center justify-center text-4xl drop-shadow-md">
+            <div className="w-14 h-14 flex items-center justify-center text-4xl">
               🎁
             </div>
-            <Link href="/services" className="w-9 h-9 bg-[#007AFF] hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md shadow-blue-500/30 transition-all active:scale-95">
+            <Link href="/services" className="w-9 h-9 bg-[#007AFF] hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all active:scale-95">
               <ArrowRight size={16} />
             </Link>
           </div>
@@ -261,7 +261,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4">
-          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex flex-col gap-1">
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 flex flex-col gap-1">
             <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100">
               <ShieldCheck size={18} />
             </div>
@@ -269,7 +269,7 @@ export default function Home() {
             <p className="text-[9px] text-slate-400 font-medium leading-tight">Background verified & trained experts</p>
           </div>
 
-          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex flex-col gap-1">
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 flex flex-col gap-1">
             <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center border border-blue-100">
               <Clock size={18} />
             </div>
@@ -277,7 +277,7 @@ export default function Home() {
             <p className="text-[9px] text-slate-400 font-medium leading-tight">Punctual & reliable service</p>
           </div>
 
-          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex flex-col gap-1">
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 flex flex-col gap-1">
             <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100">
               <IndianRupee size={18} />
             </div>
@@ -285,7 +285,7 @@ export default function Home() {
             <p className="text-[9px] text-slate-400 font-medium leading-tight">Upfront prices, no hidden charges</p>
           </div>
 
-          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex flex-col gap-1">
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-100 flex flex-col gap-1">
             <div className="w-9 h-9 rounded-full bg-teal-50 text-teal-500 flex items-center justify-center border border-teal-100">
               <ThumbsUp size={18} />
             </div>
@@ -304,7 +304,7 @@ export default function Home() {
 
         <div className="flex overflow-x-auto hide-scrollbar gap-3 px-4 pb-2">
           {popularServices.map((serv, idx) => (
-            <Link href="/services" key={idx} className="bg-white rounded-2xl p-3 min-w-[155px] max-w-[185px] border border-slate-100 shadow-xs flex flex-col justify-between gap-2.5 group">
+            <Link href="/services" key={idx} className="bg-white rounded-2xl p-3 min-w-[155px] max-w-[185px] border border-slate-100 flex flex-col justify-between gap-2.5 group">
               <div className="w-full h-24 rounded-xl overflow-hidden bg-slate-100">
                 <img src={serv.image} alt={serv.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               </div>
@@ -334,7 +334,7 @@ export default function Home() {
         </div>
 
         {loadingBookings ? (
-          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs animate-pulse flex items-center justify-between">
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 animate-pulse flex items-center justify-between">
             <div className="h-4 w-32 bg-slate-100 rounded"></div>
             <div className="h-4 w-16 bg-slate-100 rounded"></div>
           </div>
@@ -351,7 +351,7 @@ export default function Home() {
                 <Link 
                   href={`/track?id=${item.id}`} 
                   key={item.id || idx} 
-                  className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs flex items-center justify-between gap-3 hover:border-blue-100 transition-colors"
+                  className="bg-white p-3.5 rounded-2xl border border-slate-100 flex items-center justify-between gap-3 hover:border-blue-100 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-10 h-10 rounded-xl ${iconObj.bg} flex items-center justify-center shrink-0`}>
@@ -377,7 +377,7 @@ export default function Home() {
             })}
           </div>
         ) : (
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs text-center space-y-3">
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 text-center space-y-3">
             <div className="w-12 h-12 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
               <ClipboardList size={22} />
             </div>
@@ -385,7 +385,7 @@ export default function Home() {
               <h4 className="text-xs font-black text-slate-900">No Recent Bookings</h4>
               <p className="text-[10px] text-slate-400 font-medium">Book a service now to track real-time progress!</p>
             </div>
-            <Link href="/services/service" className="inline-block bg-[#007AFF] text-white text-[10px] font-black px-4 py-2 rounded-full shadow-xs active:scale-95 transition-all">
+            <Link href="/services/service" className="inline-block bg-[#007AFF] text-white text-[10px] font-black px-4 py-2 rounded-full active:scale-95 transition-all">
               Book Service Now
             </Link>
           </div>
@@ -394,7 +394,7 @@ export default function Home() {
 
       {/* 9. Testimonials & Social Proof Card */}
       <section className="px-4 mt-7">
-        <div className="bg-gradient-to-r from-[#EFF6FF] to-[#E0EDFF] rounded-3xl p-5 border border-blue-100/60 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-[#EFF6FF] to-[#E0EDFF] rounded-3xl p-5 border border-blue-100/60 flex flex-col sm:flex-row items-center justify-between gap-4">
           
           <div className="space-y-2 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start -space-x-2">
@@ -418,7 +418,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-blue-100 shadow-xs max-w-xs space-y-1.5 text-left">
+          <div className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-blue-100 max-w-xs space-y-1.5 text-left">
             <Quote size={14} className="text-[#007AFF] fill-[#007AFF]/20" />
             <p className="text-[10px] text-slate-700 font-medium leading-relaxed">
               "{testimonials[activeTestimonial].text}"
