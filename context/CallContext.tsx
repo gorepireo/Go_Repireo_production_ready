@@ -167,10 +167,56 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     insforge.realtime.on('incoming_call', handleIncomingCall);
     insforge.realtime.on('call_ended', handleCallEnded);
 
-    // DB Polling Fallback for active ringing call sessions
+    // High-Frequency 1-Second DB Sync for Instant Call State Handshake
     const dbPollInterval = setInterval(async () => {
-      if (callStatus === 'idle' && (user?.id || user?.email)) {
-        try {
+      if (!userKey) return;
+
+      try {
+        // If caller is in outgoing ringing state, check if receiver accepted or declined
+        if (callStatus === 'outgoing' && callData?.sessionId) {
+          const { data: session } = await insforge.database
+            .from('call_sessions')
+            .select('status')
+            .eq('id', callData.sessionId)
+            .single();
+
+          if (session) {
+            if (session.status === 'accepted') {
+              stopRingtoneLoop();
+              setCallStatus('connected');
+            } else if (['declined', 'ended', 'missed', 'cancelled'].includes(session.status)) {
+              stopRingtoneLoop();
+              setCallStatus('ended');
+              cleanupCall();
+              setTimeout(() => {
+                setCallStatus('idle');
+                setCallData(null);
+              }, 1500);
+            }
+          }
+        }
+
+        // If receiver is in incoming ringing state or active connected call, check if caller hung up
+        if ((callStatus === 'incoming' || callStatus === 'connected') && callData?.sessionId) {
+          const { data: session } = await insforge.database
+            .from('call_sessions')
+            .select('status')
+            .eq('id', callData.sessionId)
+            .single();
+
+          if (session && ['ended', 'declined', 'cancelled'].includes(session.status)) {
+            stopRingtoneLoop();
+            setCallStatus('ended');
+            cleanupCall();
+            setTimeout(() => {
+              setCallStatus('idle');
+              setCallData(null);
+            }, 1500);
+          }
+        }
+
+        // If idle, check for incoming ringing sessions targeted at user
+        if (callStatus === 'idle') {
           const { data: ringingSessions } = await insforge.database
             .from('call_sessions')
             .select('*')
@@ -199,11 +245,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
               startRingtoneLoop();
             }
           }
-        } catch (err) {
-          console.warn('Call DB poll error:', err);
         }
+      } catch (err) {
+        console.warn('Call DB poll sync error:', err);
       }
-    }, 3000);
+    }, 1000);
 
     return () => {
       clearInterval(dbPollInterval);

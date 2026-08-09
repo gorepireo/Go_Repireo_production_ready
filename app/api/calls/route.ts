@@ -75,6 +75,29 @@ export async function POST(req: Request) {
       service: order.service_name || 'Customer Booking'
     };
 
+    // Send Native Mobile WebPush Notification to Target Participant
+    try {
+      const targetUserId = opponentParticipant.id;
+      const notificationTitle = '📞 Incoming Voice Call';
+      const notificationBody = `${initiatedBy === 'customer' ? 'Customer' : 'Your Assigned Expert'} is calling about Order #${(order.id || '').slice(0, 8)}. Tap to answer!`;
+      const redirectUrl = initiatedBy === 'customer' ? '/dashboard/worker' : `/track?id=${order.id}`;
+
+      const origin = req.headers.get('origin') || 'https://gorepireo.in';
+      fetch(`${origin}/api/push/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetUserId,
+          title: notificationTitle,
+          message: notificationBody,
+          url: redirectUrl,
+          orderId: order.id
+        })
+      }).catch(err => console.warn('Native call push send warning:', err));
+    } catch (e) {
+      console.warn('Native call push trigger error:', e);
+    }
+
     return NextResponse.json({
       success: true,
       callSession: {
