@@ -136,15 +136,19 @@ function WorkerDashboardContent() {
           },
           (err) => {
             console.warn('Worker Geolocation position extraction warning:', err);
-            const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : 26.7620;
-            const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : 79.0320;
+            const custLat = activeJob?.lat ? Number(activeJob.lat) : 26.7990;
+            const custLng = activeJob?.lng ? Number(activeJob.lng) : 75.8869;
+            const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : custLat - 0.027;
+            const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : custLng - 0.025;
             saveLocationToDb(fallbackLat, fallbackLng);
           },
           { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
         );
       } else {
-        const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : 26.7620;
-        const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : 79.0320;
+        const custLat = activeJob?.lat ? Number(activeJob.lat) : 26.7990;
+        const custLng = activeJob?.lng ? Number(activeJob.lng) : 75.8869;
+        const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : custLat - 0.027;
+        const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : custLng - 0.025;
         saveLocationToDb(fallbackLat, fallbackLng);
       }
     };
