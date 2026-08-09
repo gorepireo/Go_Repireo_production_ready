@@ -252,11 +252,14 @@ function TrackContent() {
         }
 
         // Live location telemetry
-        const { data: trackData } = await insforge.database
+        const { data: trackDataArray } = await insforge.database
           .from('order_live_location')
           .select('*')
           .eq('order_id', currentOrder.id)
-          .maybeSingle();
+          .order('updated_at', { ascending: false })
+          .limit(1);
+
+        const trackData = trackDataArray && trackDataArray.length > 0 ? trackDataArray[0] : null;
 
         if (trackData) {
           setPrevLocation(liveLocationRef.current);
@@ -524,9 +527,18 @@ function TrackContent() {
   const userLat = order?.lat ? Number(order.lat) : 26.7810;
   const userLng = order?.lng ? Number(order.lng) : 79.0120;
 
-  // Worker Coordinates
-  const workerLat = liveLocation?.lat ? Number(liveLocation.lat) : userLat - 0.015;
-  const workerLng = liveLocation?.lng ? Number(liveLocation.lng) : userLng + 0.018;
+  // Worker Coordinates (Uses real liveLocation from DB or order.worker_lat/lng fallback)
+  const workerLat = liveLocation?.lat 
+    ? Number(liveLocation.lat) 
+    : order?.worker_lat 
+    ? Number(order.worker_lat) 
+    : userLat - 0.015;
+
+  const workerLng = liveLocation?.lng 
+    ? Number(liveLocation.lng) 
+    : order?.worker_lng 
+    ? Number(order.worker_lng) 
+    : userLng + 0.018;
 
   const prevWorkerLat = prevLocation?.lat ? Number(prevLocation.lat) : null;
   const prevWorkerLng = prevLocation?.lng ? Number(prevLocation.lng) : null;
