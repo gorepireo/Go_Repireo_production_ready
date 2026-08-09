@@ -59,7 +59,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const audioCtxRef = useRef<AudioContext | null>(null);
   const addedCandidatesRef = useRef<Set<string>>(new Set());
 
-  // WebRTC STUN Config
+  // WebRTC STUN & TURN Relay Server Config for 4G/5G Cellular NAT Traversal
   const rtcConfig: RTCConfiguration = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
@@ -67,7 +67,24 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
-    ]
+      { urls: 'stun:global.stun.twilio.com:3478' },
+      {
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
+    ],
+    iceCandidatePoolSize: 10
   };
 
   // Play synthetic Ringtone via Web Audio API
@@ -225,6 +242,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (session.sdp_answer && peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'stable') {
                 try {
                   await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(session.sdp_answer));
+                  if (remoteAudioRef.current) {
+                    remoteAudioRef.current.volume = 1.0;
+                    remoteAudioRef.current.play().catch(console.warn);
+                  }
                 } catch (e) {
                   console.warn('Set sdp_answer error:', e);
                 }
@@ -351,6 +372,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const startCall = async (orderId: string, callerRole: 'customer' | 'worker' = 'customer', participantOverride?: CallParticipant) => {
     if (callStatus !== 'idle') return;
 
+    // Unblock Audio Element Playback in click gesture
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = 1.0;
+      remoteAudioRef.current.play().catch(console.warn);
+    }
+
     const stream = await getMicrophoneStream();
     if (!stream) return;
 
@@ -358,14 +385,25 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
+      // Add sendrecv transceiver for guaranteed 2-way audio
+      pc.addTransceiver('audio', { direction: 'sendrecv' });
+
       // Attach microphone tracks
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
       // Receive remote audio track
       pc.ontrack = (event) => {
-        if (event.streams && event.streams[0] && remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = event.streams[0];
-          remoteAudioRef.current.play().catch(console.warn);
+        let remoteStream: MediaStream;
+        if (event.streams && event.streams[0]) {
+          remoteStream = event.streams[0];
+        } else {
+          remoteStream = new MediaStream([event.track]);
+        }
+
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.volume = 1.0;
+          remoteAudioRef.current.play().catch(err => console.warn('Remote audio play error:', err));
         }
       };
 
@@ -421,7 +459,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (pc.connectionState === 'connected') {
           stopRingtoneLoop();
           setCallStatus('connected');
-          if (remoteAudioRef.current) remoteAudioRef.current.play().catch(console.warn);
+          if (remoteAudioRef.current) {
+            remoteAudioRef.current.volume = 1.0;
+            remoteAudioRef.current.play().catch(console.warn);
+          }
         }
       };
 
@@ -449,7 +490,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           pc.setRemoteDescription(new RTCSessionDescription(msg.payload.answer)).then(() => {
             stopRingtoneLoop();
             setCallStatus('connected');
-            if (remoteAudioRef.current) remoteAudioRef.current.play().catch(console.warn);
+            if (remoteAudioRef.current) {
+              remoteAudioRef.current.volume = 1.0;
+              remoteAudioRef.current.play().catch(console.warn);
+            }
           }).catch(console.warn);
         }
       };
@@ -476,6 +520,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     stopRingtoneLoop();
 
+    // Unblock Audio Element Playback in click gesture
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = 1.0;
+      remoteAudioRef.current.play().catch(console.warn);
+    }
+
     const stream = await getMicrophoneStream();
     if (!stream) {
       declineCall();
@@ -483,10 +533,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.play().catch(console.warn);
-      }
-
       // Fetch sdp_offer from DB session
       const { data: dbSession } = await insforge.database
         .from('call_sessions')
@@ -497,14 +543,25 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
+      // Add sendrecv transceiver for guaranteed 2-way audio
+      pc.addTransceiver('audio', { direction: 'sendrecv' });
+
       // Attach microphone tracks
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
       // Receive remote audio track
       pc.ontrack = (event) => {
-        if (event.streams && event.streams[0] && remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = event.streams[0];
-          remoteAudioRef.current.play().catch(console.warn);
+        let remoteStream: MediaStream;
+        if (event.streams && event.streams[0]) {
+          remoteStream = event.streams[0];
+        } else {
+          remoteStream = new MediaStream([event.track]);
+        }
+
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.volume = 1.0;
+          remoteAudioRef.current.play().catch(err => console.warn('Remote audio play error:', err));
         }
       };
 
@@ -523,7 +580,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (pc.connectionState === 'connected') {
           stopRingtoneLoop();
           setCallStatus('connected');
-          if (remoteAudioRef.current) remoteAudioRef.current.play().catch(console.warn);
+          if (remoteAudioRef.current) {
+            remoteAudioRef.current.volume = 1.0;
+            remoteAudioRef.current.play().catch(console.warn);
+          }
         }
       };
 
