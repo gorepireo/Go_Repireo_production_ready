@@ -68,7 +68,7 @@ function TrackContent() {
     isNewWorker: boolean;
   }>({
     name: 'Rohit Sharma',
-    avatar: '/hero_technician_banner.jpg',
+    avatar: '/hero_technician_banner.png',
     phone: '+918679245568',
     avgRating: 4.8,
     reviewsCount: 230,

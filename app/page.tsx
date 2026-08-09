@@ -141,7 +141,7 @@ export default function Home() {
 
           {/* Center-Right Technician Image generated specifically for this banner */}
           <div className="absolute right-0 bottom-0 w-[48%] max-w-[240px] sm:max-w-[340px] h-[100%] pointer-events-none flex items-end justify-end">
-            <img src="/hero_technician_banner.jpg" alt="Technician" className="w-full h-full object-cover object-center rounded-r-[24px]" />
+            <img src="/hero_technician_banner.png" alt="Technician" className="w-full h-full object-cover object-center rounded-r-[24px]" />
           </div>
 
           {/* Right Floating Badge 1: 24/7 Support */}

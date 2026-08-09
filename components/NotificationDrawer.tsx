@@ -161,7 +161,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
   // Worker Accept Order
   const handleWorkerAccept = async (id: string) => {
     const workerName = (profile as any)?.full_name || (profile as any)?.name || user?.email?.split('@')[0] || 'Rohit Sharma';
-    const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.jpg';
+    const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.png';
     const workerPhone = (profile as any)?.phone || '+918679245568';
 
     // Assign pending order in InsForge DB
