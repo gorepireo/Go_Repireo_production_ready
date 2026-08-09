@@ -131,7 +131,7 @@ export default function Home() {
 
       {/* 2. Royal Blue Hero Banner (Carousel) */}
       <section className="px-4 mt-3">
-        <div className="relative bg-gradient-to-r from-[#002B66] via-[#0B3C85] to-[#062557] rounded-[24px] p-4 sm:p-6 overflow-hidden text-white shadow-xl min-h-[170px] sm:min-h-[220px]">
+        <div className="relative bg-gradient-to-r from-[#002B66] via-[#0B3C85] to-[#062557] rounded-[24px] p-4 sm:p-6 overflow-hidden text-white min-h-[170px] sm:min-h-[220px]">
           
           <div className="relative z-10 space-y-2 max-w-[62%] sm:max-w-[58%]">
             {/* Top Left Outline Badge */}
@@ -155,7 +155,7 @@ export default function Home() {
             <div className="pt-1">
               <Link 
                 href="/services" 
-                className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-[#0B3C85] font-extrabold text-[11px] sm:text-xs px-5 py-2 rounded-full shadow-md transition-all active:scale-95"
+                className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-[#0B3C85] font-extrabold text-[11px] sm:text-xs px-5 py-2 rounded-full transition-all active:scale-95"
               >
                 <span>Book a Service</span>
                 <ArrowRight size={13} className="text-[#0B3C85]" />
@@ -165,10 +165,10 @@ export default function Home() {
             {/* Bottom Left 10K+ Happy Customers Avatars */}
             <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
               <div className="flex -space-x-1.5">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
-                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover shadow-xs" />
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover" />
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover" />
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover" />
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover" />
               </div>
               <span className="text-[9px] sm:text-[10px] font-bold text-white tracking-tight">10K+ Happy Customers</span>
             </div>
@@ -180,7 +180,7 @@ export default function Home() {
           </div>
 
           {/* Right Floating Badge 1: 24/7 Support */}
-          <div className="absolute top-4 right-4 z-20 hidden sm:flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white shadow-md text-slate-900">
+          <div className="absolute top-4 right-4 z-20 hidden sm:flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white text-slate-900">
             <Headphones size={15} className="text-[#007AFF]" />
             <div className="text-left">
               <span className="text-xs font-black text-[#007AFF] block leading-tight">24/7</span>
@@ -189,7 +189,7 @@ export default function Home() {
           </div>
 
           {/* Right Floating Badge 2: 4.8 Rating */}
-          <div className="absolute bottom-4 right-4 z-20 hidden sm:block bg-white/95 backdrop-blur-md p-2.5 rounded-xl border border-white text-slate-900 shadow-md min-w-[100px]">
+          <div className="absolute bottom-4 right-4 z-20 hidden sm:block bg-white/95 backdrop-blur-md p-2.5 rounded-xl border border-white text-slate-900 min-w-[100px]">
             <div className="text-sm font-black text-slate-900 leading-tight">4.8</div>
             <div className="flex text-amber-400 my-0.5">
               {[...Array(5)].map((_, i) => (
@@ -200,7 +200,7 @@ export default function Home() {
           </div>
 
           {/* Bottom Center Carousel Notch & Indicator Dots */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-white px-3 py-0.5 rounded-t-full z-20 flex items-center justify-center gap-1 shadow-sm border-t border-x border-slate-100">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-white px-3 py-0.5 rounded-t-full z-20 flex items-center justify-center gap-1 border-t border-x border-slate-100">
             <span className="w-2 h-2 rounded-full bg-[#007AFF]"></span>
             <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
             <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
