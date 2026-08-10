@@ -88,7 +88,7 @@ function TrackContent() {
 
   // Fetch Targeted or Latest Order Data
   const fetchOrderData = useCallback(async () => {
-    const targetEmail = user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : null);
+    const targetEmail = (user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : '') || '').toLowerCase().trim();
     const targetUserId = user?.id || profile?.id;
 
     if (user?.email && typeof window !== 'undefined') {
@@ -107,48 +107,32 @@ function TrackContent() {
         currentOrder = data;
       }
 
-      if (!currentOrder && (targetUserId || targetEmail)) {
-        let activeQuery = insforge.database
+      if (!currentOrder) {
+        const { data: allOrders } = await insforge.database
           .from('orders')
           .select('*')
-          .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way', 'pending'])
-          .order('created_at', { ascending: false })
-          .limit(1);
+          .order('created_at', { ascending: false });
 
-        if (targetUserId && targetEmail) {
-          activeQuery = activeQuery.or(`customer_id.eq.${targetUserId},user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
-        } else if (targetEmail) {
-          activeQuery = activeQuery.or(`user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
-        } else if (targetUserId) {
-          activeQuery = activeQuery.eq('customer_id', targetUserId);
-        }
+        if (allOrders && allOrders.length > 0) {
+          const userMatched = allOrders.filter((o: any) => {
+            if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId)) return true;
+            if (targetEmail) {
+              const uEmail = (o.user_email || '').toLowerCase().trim();
+              const cEmail = (o.customer_email || '').toLowerCase().trim();
+              const dEmail = (o.details?.user_email || o.details?.customer_email || o.details?.email || '').toLowerCase().trim();
+              if (uEmail === targetEmail || cEmail === targetEmail || dEmail === targetEmail) return true;
+            }
+            return false;
+          });
 
-        const { data: activeOrders } = await activeQuery;
+          const candidates = userMatched.length > 0 ? userMatched : allOrders;
+          
+          // First priority: active order
+          const activeOrder = candidates.find((o: any) => 
+            ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way', 'pending'].includes((o.status || '').toLowerCase())
+          );
 
-        if (activeOrders && activeOrders.length > 0) {
-          currentOrder = activeOrders[0];
-        }
-      }
-
-      if (!currentOrder && (targetUserId || targetEmail)) {
-        let recentQuery = insforge.database
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (targetUserId && targetEmail) {
-          recentQuery = recentQuery.or(`customer_id.eq.${targetUserId},user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
-        } else if (targetEmail) {
-          recentQuery = recentQuery.or(`user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
-        } else if (targetUserId) {
-          recentQuery = recentQuery.eq('customer_id', targetUserId);
-        }
-
-        const { data: recentOrders } = await recentQuery;
-
-        if (recentOrders && recentOrders.length > 0) {
-          currentOrder = recentOrders[0];
+          currentOrder = activeOrder || candidates[0];
         }
       }
 

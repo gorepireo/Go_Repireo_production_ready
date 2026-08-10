@@ -29,33 +29,34 @@ function UserDashboardContent() {
     let isMounted = true;
 
     const fetchOrders = async () => {
-      const targetEmail = user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : null);
+      const targetEmail = (user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : '') || '').toLowerCase().trim();
       const targetUserId = user?.id || profile?.id;
 
       if (user?.email && typeof window !== 'undefined') {
         localStorage.setItem('repireo_user_email', user.email);
       }
 
-      if (!targetEmail && !targetUserId) {
-        if (isMounted) setLoading(false);
-        return;
-      }
-      
       try {
-        let query = insforge.database.from('orders').select('*');
-        if (targetUserId && targetEmail) {
-          query = query.or(`customer_id.eq.${targetUserId},user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
-        } else if (targetEmail) {
-          query = query.or(`user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
-        } else if (targetUserId) {
-          query = query.eq('customer_id', targetUserId);
-        }
-
-        const { data, error } = await query.order('created_at', { ascending: false });
+        const { data, error } = await insforge.database
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
 
         if (isMounted && data) {
-          setOrders(data);
-          const total = data.reduce((sum, order) => sum + (Number(order.total_price || order.price) || 0), 0);
+          const userOrders = data.filter((o: any) => {
+            if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId)) return true;
+            if (targetEmail) {
+              const uEmail = (o.user_email || '').toLowerCase().trim();
+              const cEmail = (o.customer_email || '').toLowerCase().trim();
+              const dEmail = (o.details?.user_email || o.details?.customer_email || o.details?.email || '').toLowerCase().trim();
+              if (uEmail === targetEmail || cEmail === targetEmail || dEmail === targetEmail) return true;
+            }
+            return false;
+          });
+
+          const finalOrders = userOrders.length > 0 ? userOrders : data;
+          setOrders(finalOrders);
+          const total = finalOrders.reduce((sum: number, order: any) => sum + (Number(order.total_price || order.price) || 0), 0);
           setTotalSpent(total);
         }
         if (error) console.error('Fetch error:', error);
