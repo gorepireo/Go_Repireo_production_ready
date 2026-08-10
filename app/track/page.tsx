@@ -44,7 +44,7 @@ const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoo
 });
 
 function TrackContent() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { startCall } = useCall();
   const searchParams = useSearchParams();
   const paramOrderId = searchParams.get('order_id');
@@ -88,7 +88,13 @@ function TrackContent() {
 
   // Fetch Targeted or Latest Order Data
   const fetchOrderData = useCallback(async () => {
-    if (!user) return;
+    const targetEmail = user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : null);
+    const targetUserId = user?.id || profile?.id;
+
+    if (user?.email && typeof window !== 'undefined') {
+      localStorage.setItem('repireo_user_email', user.email);
+    }
+
     try {
       let currentOrder: any = null;
 
@@ -101,7 +107,7 @@ function TrackContent() {
         currentOrder = data;
       }
 
-      if (!currentOrder) {
+      if (!currentOrder && (targetUserId || targetEmail)) {
         let activeQuery = insforge.database
           .from('orders')
           .select('*')
@@ -109,12 +115,12 @@ function TrackContent() {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (user?.id && user?.email) {
-          activeQuery = activeQuery.or(`customer_id.eq.${user.id},user_email.eq.${user.email}`);
-        } else if (user?.id) {
-          activeQuery = activeQuery.eq('customer_id', user.id);
-        } else if (user?.email) {
-          activeQuery = activeQuery.eq('user_email', user.email);
+        if (targetUserId && targetEmail) {
+          activeQuery = activeQuery.or(`customer_id.eq.${targetUserId},user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
+        } else if (targetEmail) {
+          activeQuery = activeQuery.or(`user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
+        } else if (targetUserId) {
+          activeQuery = activeQuery.eq('customer_id', targetUserId);
         }
 
         const { data: activeOrders } = await activeQuery;
@@ -124,19 +130,19 @@ function TrackContent() {
         }
       }
 
-      if (!currentOrder) {
+      if (!currentOrder && (targetUserId || targetEmail)) {
         let recentQuery = insforge.database
           .from('orders')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (user?.id && user?.email) {
-          recentQuery = recentQuery.or(`customer_id.eq.${user.id},user_email.eq.${user.email}`);
-        } else if (user?.id) {
-          recentQuery = recentQuery.eq('customer_id', user.id);
-        } else if (user?.email) {
-          recentQuery = recentQuery.eq('user_email', user.email);
+        if (targetUserId && targetEmail) {
+          recentQuery = recentQuery.or(`customer_id.eq.${targetUserId},user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
+        } else if (targetEmail) {
+          recentQuery = recentQuery.or(`user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
+        } else if (targetUserId) {
+          recentQuery = recentQuery.eq('customer_id', targetUserId);
         }
 
         const { data: recentOrders } = await recentQuery;
@@ -280,12 +286,26 @@ function TrackContent() {
       setLoading(false);
     }
   // NOTE: liveLocation removed from deps — use liveLocationRef to avoid infinite re-render loop
-  }, [user, isReviewParam, paramOrderId]);
+  }, [user, profile, isReviewParam, paramOrderId]);
 
   useEffect(() => {
     fetchOrderData();
-    const interval = setInterval(fetchOrderData, 1500);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchOrderData, 2000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchOrderData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchOrderData);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchOrderData);
+    };
   }, [fetchOrderData]);
 
   // Realtime instant location updates from worker device

@@ -26,17 +26,34 @@ function UserDashboardContent() {
   const [totalSpent, setTotalSpent] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchOrders = async () => {
-      if (!user) return;
+      const targetEmail = user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : null);
+      const targetUserId = user?.id || profile?.id;
+
+      if (user?.email && typeof window !== 'undefined') {
+        localStorage.setItem('repireo_user_email', user.email);
+      }
+
+      if (!targetEmail && !targetUserId) {
+        if (isMounted) setLoading(false);
+        return;
+      }
       
       try {
-        const { data, error } = await insforge.database
-          .from('orders')
-          .select('*')
-          .or(`customer_id.eq.${user.id},user_email.eq.${user.email}`)
-          .order('created_at', { ascending: false });
+        let query = insforge.database.from('orders').select('*');
+        if (targetUserId && targetEmail) {
+          query = query.or(`customer_id.eq.${targetUserId},user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
+        } else if (targetEmail) {
+          query = query.or(`user_email.eq.${targetEmail},customer_email.eq.${targetEmail}`);
+        } else if (targetUserId) {
+          query = query.eq('customer_id', targetUserId);
+        }
 
-        if (data) {
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (isMounted && data) {
           setOrders(data);
           const total = data.reduce((sum, order) => sum + (Number(order.total_price || order.price) || 0), 0);
           setTotalSpent(total);
@@ -45,12 +62,27 @@ function UserDashboardContent() {
       } catch (err) {
         console.error('Fetch orders error:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchOrders();
-  }, [user]);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchOrders();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchOrders);
+
+    return () => {
+      isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchOrders);
+    };
+  }, [user, profile]);
 
   const completedOrdersCount = orders.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase())).length;
   const completionPercentage = orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0;
