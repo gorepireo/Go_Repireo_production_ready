@@ -15,6 +15,8 @@ export interface AIGravityResult {
   travelFee: number;
   totalMin: number;
   totalMax: number;
+  ifProceedsMin: number;
+  ifProceedsMax: number;
   reasoning: string;
   suggestedTools: string[];
   suggestedTechniciansCount: number;
@@ -152,6 +154,8 @@ export function trainAndEvaluateAIProblem(
 
   const totalMin = inspectionFee + minServiceFee + platformFee + travelCharge;
   const totalMax = inspectionFee + maxServiceFee + platformFee + travelCharge;
+  const ifProceedsMin = minServiceFee + platformFee + travelCharge;
+  const ifProceedsMax = maxServiceFee + platformFee + travelCharge;
 
   const confidenceScore = Math.min(99, Math.max(82, 78 + highestMatchScore * 2 + (textSeed % 12)));
   const suggestedTechniciansCount = detectedLevel >= 3 ? 2 : 1;
@@ -186,6 +190,8 @@ export function trainAndEvaluateAIProblem(
     travelFee: travelCharge,
     totalMin,
     totalMax,
+    ifProceedsMin,
+    ifProceedsMax,
     reasoning,
     suggestedTools: bestMatch.suggestedTools,
     suggestedTechniciansCount
