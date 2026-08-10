@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapPin, ChevronDown, Bell } from 'lucide-react';
+import { MapPin, ChevronDown, Bell, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import NotificationDrawer from '@/components/NotificationDrawer';
 import NotificationToastBanner from '@/components/NotificationToastBanner';
@@ -24,43 +24,67 @@ export default function Header({
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [currentLocation, setCurrentLocation] = useState('Etawah, UP');
+  const [isLocating, setIsLocating] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchLiveAddress = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`);
+      if (res.ok) {
+        const data = await res.json();
+        const addr = data.address || {};
+        const area = addr.suburb || addr.neighbourhood || addr.residential || addr.quarter || addr.road || addr.village;
+        const city = addr.city || addr.town || addr.county || addr.state_district || 'UP';
+        
+        if (area && city) {
+          setCurrentLocation(`${area}, ${city}`);
+        } else if (city) {
+          setCurrentLocation(`${city}, UP`);
+        } else if (data.display_name) {
+          const parts = data.display_name.split(',');
+          setCurrentLocation(`${parts[0].trim()}, ${parts[1]?.trim() || 'UP'}`);
+        }
+      }
+    } catch (err) {
+      console.warn('Auto reverse-geocode error:', err);
+    }
+  };
 
   // Auto-detect browser live location on mount if location permission is granted
   useEffect(() => {
     if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          try {
-            const { latitude, longitude } = pos.coords;
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14`);
-            if (res.ok) {
-              const data = await res.json();
-              const addr = data.address || {};
-              const area = addr.suburb || addr.neighbourhood || addr.residential || addr.quarter || addr.road || addr.village;
-              const city = addr.city || addr.town || addr.county || addr.state_district || 'UP';
-              
-              if (area && city) {
-                setCurrentLocation(`${area}, ${city}`);
-              } else if (city) {
-                setCurrentLocation(`${city}, UP`);
-              } else if (data.display_name) {
-                const parts = data.display_name.split(',');
-                const shortLoc = `${parts[0].trim()}, ${parts[1]?.trim() || 'UP'}`;
-                setCurrentLocation(shortLoc);
-              }
-            }
-          } catch (err) {
-            console.warn('Auto reverse-geocode error:', err);
-          }
+        (pos) => {
+          fetchLiveAddress(pos.coords.latitude, pos.coords.longitude);
         },
         (err) => {
-          console.log('Location permission not granted or timeout:', err.message);
+          console.log('Location permission not granted or timeout on mount:', err.message);
         },
         { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
       );
     }
   }, []);
+
+  // Handle location pill click - immediately detects live location
+  const handleLocationClick = () => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      setIsLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          await fetchLiveAddress(pos.coords.latitude, pos.coords.longitude);
+          setIsLocating(false);
+        },
+        (err) => {
+          console.warn('GPS permission not granted or error, opening map picker:', err);
+          setIsLocating(false);
+          setIsLocationModalOpen(true);
+        },
+        { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
+      );
+    } else {
+      setIsLocationModalOpen(true);
+    }
+  };
 
   // Dynamic calculation of unread notification count
   useEffect(() => {
@@ -129,10 +153,15 @@ export default function Header({
         {showLocation ? (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsLocationModalOpen(true)}
-              className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-bold border border-slate-200/60 transition-colors active:scale-95"
+              onClick={handleLocationClick}
+              disabled={isLocating}
+              className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-bold border border-slate-200/60 transition-colors active:scale-95 disabled:opacity-80"
             >
-              <MapPin size={13} className="text-[#007AFF] shrink-0" />
+              {isLocating ? (
+                <Loader2 size={13} className="text-[#007AFF] animate-spin shrink-0" />
+              ) : (
+                <MapPin size={13} className="text-[#007AFF] shrink-0" />
+              )}
               <span className="truncate max-w-[90px] sm:max-w-[120px]">{currentLocation}</span>
               <ChevronDown size={12} className="text-slate-400 shrink-0" />
             </button>
