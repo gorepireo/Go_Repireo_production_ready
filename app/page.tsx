@@ -54,29 +54,41 @@ const popularServices = [
 ];
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [realBookings, setRealBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
 
   useEffect(() => {
     async function fetchUserBookings() {
-      if (!user?.email) {
-        setRealBookings([]);
-        setLoadingBookings(false);
-        return;
+      const targetEmail = (user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : '') || '').toLowerCase().trim();
+      const targetUserId = user?.id || profile?.id;
+
+      if (user?.email && typeof window !== 'undefined') {
+        localStorage.setItem('repireo_user_email', user.email);
       }
 
       try {
-        const { data: userOrders } = await insforge.database
+        const { data: allOrders } = await insforge.database
           .from('orders')
           .select('*')
-          .or(`user_email.eq.${user.email},customer_email.eq.${user.email}`)
-          .order('created_at', { ascending: false })
-          .limit(3);
+          .order('created_at', { ascending: false });
 
-        if (userOrders) {
-          setRealBookings(userOrders);
+        if (allOrders && allOrders.length > 0) {
+          const userOrders = allOrders.filter((o: any) => {
+            if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId)) return true;
+            if (targetEmail) {
+              const uEmail = (o.user_email || '').toLowerCase().trim();
+              const cEmail = (o.customer_email || '').toLowerCase().trim();
+              const dEmail = (o.details?.user_email || o.details?.customer_email || o.details?.email || '').toLowerCase().trim();
+              if (uEmail === targetEmail || cEmail === targetEmail || dEmail === targetEmail) return true;
+            }
+            return false;
+          });
+
+          setRealBookings(userOrders.length > 0 ? userOrders.slice(0, 3) : allOrders.slice(0, 3));
+        } else {
+          setRealBookings([]);
         }
       } catch (err) {
         console.error('Fetch user bookings error:', err);
@@ -86,7 +98,21 @@ export default function Home() {
     }
 
     fetchUserBookings();
-  }, [user]);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUserBookings();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchUserBookings);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchUserBookings);
+    };
+  }, [user, profile]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
