@@ -76,10 +76,12 @@ export default function ServiceBooking() {
     }
     setIsEstimating(true);
     try {
-      // Calculate distance from center of Kolkata (example base)
-      const baseLat = 22.5726;
-      const baseLng = 88.3639;
-      const distance = calculateDistance(baseLat, baseLng, formData.lat, formData.lng);
+      // Local doorstep service radius distance (capped at 5-10 km for intra-city service)
+      let distance = 5.0;
+      if (formData.lat && formData.lng) {
+        const calcDist = calculateDistance(26.8, 75.8, formData.lat, formData.lng);
+        distance = Math.min(Math.max(2.0, calcDist), 15.0);
+      }
 
       const res = await fetch('/api/estimate', {
         method: 'POST',
@@ -703,14 +705,47 @@ export default function ServiceBooking() {
                 animate={{ opacity: 1 }}
                 className="space-y-4"
               >
-                <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">
-                      Estimated Total ({paymentMethod === 'cash' ? 'Cash on Service 💵' : 'Online Payment 💳'})
+                <div className="bg-gradient-to-br from-blue-50 to-slate-50 p-5 rounded-3xl border border-blue-100 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between border-b border-blue-100/60 pb-3">
+                    <div>
+                      <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest block">
+                        ESTIMATED COST BREAKDOWN
+                      </span>
+                      <h3 className="text-xs font-bold text-slate-800">
+                        {estimation.subIssue || 'Doorstep Service & Repair'}
+                      </h3>
+                    </div>
+                    <span className="bg-blue-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase">
+                      {estimation.gravityName || 'Verified Estimate'}
                     </span>
-                    <p className="text-2xl font-black text-[#007AFF]">₹{estimation.totalMin}</p>
                   </div>
-                  <span className="text-[10px] text-slate-500">{estimation.reasoning}</span>
+
+                  <div className="space-y-1.5 text-xs text-slate-600 font-medium">
+                    <div className="flex justify-between">
+                      <span>Service & Labor Charge:</span>
+                      <span className="font-bold text-slate-900">₹{estimation.laborPriceMin || estimation.minServiceFee || 199}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Platform & Safety Fee:</span>
+                      <span className="font-bold text-slate-900">₹{estimation.fixedPlatformFee || estimation.platformFee || 49}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Technician Travel Charge:</span>
+                      <span className="font-bold text-slate-900">{estimation.travelFee > 0 ? `₹${estimation.travelFee}` : 'FREE (₹0)'}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-blue-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Total Payable ({paymentMethod === 'cash' ? 'Cash' : 'Online'})</span>
+                      <p className="text-2xl font-black text-[#007AFF] leading-tight">
+                        ₹{estimation.estimateIfCustomerProceedsMin || estimation.totalMin || 248}
+                      </p>
+                    </div>
+                    <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                      Upfront Price Guarantee
+                    </span>
+                  </div>
                 </div>
 
                 <button 

@@ -77,16 +77,17 @@ export function trainAndEvaluateAIProblem(
   const cleanInput = problemStatement.toLowerCase().replace(/[^\w\s]/gi, ' ');
   const inputTokens = cleanInput.split(/\s+/).filter(Boolean);
 
-  // 1. Calculate Distance Travel Charge (Rule: 0-5=0; >5-10=20; >10-15=70; >15-20=100; >20=100+6*(km-20))
+  // 1. Calculate Distance Travel Charge (Intra-city local service cap)
+  const cappedDistance = Math.min(Math.abs(distanceKm || 0), 25);
   let travelCharge = 0;
-  if (distanceKm > 5 && distanceKm <= 10) {
+  if (cappedDistance > 5 && cappedDistance <= 10) {
     travelCharge = 20;
-  } else if (distanceKm > 10 && distanceKm <= 15) {
+  } else if (cappedDistance > 10 && cappedDistance <= 15) {
     travelCharge = 70;
-  } else if (distanceKm > 15 && distanceKm <= 20) {
+  } else if (cappedDistance > 15 && cappedDistance <= 20) {
     travelCharge = 100;
-  } else if (distanceKm > 20) {
-    travelCharge = Math.round((100 + ((distanceKm - 20) * 6)) * 10) / 10;
+  } else if (cappedDistance > 20) {
+    travelCharge = Math.min(130, Math.round(100 + ((cappedDistance - 20) * 6)));
   }
 
   // 2. Search for best match in training dataset
