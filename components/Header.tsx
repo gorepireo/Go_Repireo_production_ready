@@ -26,6 +26,42 @@ export default function Header({
   const [currentLocation, setCurrentLocation] = useState('Etawah, UP');
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Auto-detect browser live location on mount if location permission is granted
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const { latitude, longitude } = pos.coords;
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14`);
+            if (res.ok) {
+              const data = await res.json();
+              const addr = data.address || {};
+              const area = addr.suburb || addr.neighbourhood || addr.residential || addr.quarter || addr.road || addr.village;
+              const city = addr.city || addr.town || addr.county || addr.state_district || 'UP';
+              
+              if (area && city) {
+                setCurrentLocation(`${area}, ${city}`);
+              } else if (city) {
+                setCurrentLocation(`${city}, UP`);
+              } else if (data.display_name) {
+                const parts = data.display_name.split(',');
+                const shortLoc = `${parts[0].trim()}, ${parts[1]?.trim() || 'UP'}`;
+                setCurrentLocation(shortLoc);
+              }
+            }
+          } catch (err) {
+            console.warn('Auto reverse-geocode error:', err);
+          }
+        },
+        (err) => {
+          console.log('Location permission not granted or timeout:', err.message);
+        },
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+      );
+    }
+  }, []);
+
   // Dynamic calculation of unread notification count
   useEffect(() => {
     const updateUnreadBadge = () => {
@@ -62,8 +98,10 @@ export default function Header({
     };
   }, [profile]);
 
-  // Extract user's actual account full name
+  // Extract user's actual account full name or default to 'User'
   const getDisplayName = () => {
+    if (!user) return 'User';
+
     const dbName = (profile as any)?.full_name || (profile as any)?.name || profile?.display_name;
     if (dbName && typeof dbName === 'string' && dbName.trim()) {
       return dbName.trim().split(' ')[0];
@@ -76,7 +114,7 @@ export default function Header({
       const prefix = user.email.split('@')[0];
       return prefix.charAt(0).toUpperCase() + prefix.slice(1);
     }
-    return 'Priithibi';
+    return 'User';
   };
 
   const displayName = getDisplayName();
