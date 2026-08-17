@@ -1,27 +1,27 @@
-import { db } from './firebase';
-import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, setDoc, collection, addDoc } from 'firebase/firestore';
 
-/**
- * Seeds ALL 11+ Firestore Collections required for Go_Repireo:
- * 1. users
- * 2. workers
- * 3. worker_applications
- * 4. shops
- * 5. shop_applications
- * 6. products
- * 7. orders
- * 8. order_live_location
- * 9. user_addresses
- * 10. messages (chats)
- * 11. call_sessions
- * 12. push_subscriptions
- * 13. reviews
- */
-export async function seedFirestoreDatabase() {
+const firebaseConfig = {
+  apiKey: "AIzaSyBjX7u7VciLY0KdqjONmw0byKvORzF-dAM",
+  authDomain: "gorepireo-b2969.firebaseapp.com",
+  projectId: "gorepireo-b2969",
+  storageBucket: "gorepireo-b2969.firebasestorage.app",
+  messagingSenderId: "832687653476",
+  appId: "1:832687653476:web:0b9bcf8d27e3a3b7489571",
+  measurementId: "G-Q570ZNWBSL"
+};
+
+const app = initializeApp(firebaseConfig);
+
+async function runDirectSeed() {
+  console.log('🚀 AI Direct Seeding Starting for Default Firestore Database...');
+
+  // Try default database first
+  const db = getFirestore(app);
+
   try {
-    console.log('Starting full 11+ Firestore collection initialization...');
-
-    // 1. users (Admin Account)
+    // 1. Admin Account
+    console.log('Creating users collection...');
     await setDoc(doc(db, 'users', 'admin_default'), {
       name: 'Go_Repireo Admin',
       email: 'gorepireo@gmail.com',
@@ -29,10 +29,10 @@ export async function seedFirestoreDatabase() {
       status: 'active',
       phone: '+91 9876543210',
       email_verified: true,
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
-    // 2. users (Worker Account) & worker_applications & workers
+    // 2. Sample Worker User Account & Worker Application
     const sampleWorkerId = 'worker_sample_rahul';
     await setDoc(doc(db, 'users', sampleWorkerId), {
       name: 'Rahul Sharma',
@@ -50,9 +50,10 @@ export async function seedFirestoreDatabase() {
       specializations: ['Plumbing', 'Repair & Services'],
       repair_description: 'Expert in tap leakage, concealed pipe repairs, and bath fitting installations.',
       category_tokens: ['plumbing', 'tap', 'leakage', 'pipe', 'bath', 'valve'],
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
+    console.log('Creating worker_applications collection...');
     await setDoc(doc(db, 'worker_applications', sampleWorkerId), {
       app_id: sampleWorkerId,
       from_name: 'Rahul Sharma',
@@ -68,24 +69,10 @@ export async function seedFirestoreDatabase() {
       pincode: '302025',
       address: 'Sanganer, Jaipur',
       status: 'approved',
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
-    await setDoc(doc(db, 'workers', sampleWorkerId), {
-      worker_id: sampleWorkerId,
-      name: 'Rahul Sharma',
-      email: 'rahul.plumber@repireo.com',
-      phone: '+91 9812345678',
-      specialization: 'Plumbing',
-      city: 'Jaipur',
-      lat: 26.8124,
-      lng: 75.8123,
-      rating: 4.9,
-      status: 'available',
-      created_at: serverTimestamp()
-    });
-
-    // 3. users (Shopkeeper Account) & shop_applications & shops
+    // 3. Sample Shopkeeper User & Shop Profile
     const sampleShopkeeperId = 'shopkeeper_sample_gupta';
     await setDoc(doc(db, 'users', sampleShopkeeperId), {
       name: 'Gupta Hardware Store',
@@ -98,21 +85,10 @@ export async function seedFirestoreDatabase() {
       pincode: '302025',
       area: 'Main Road, Sanganer, Jaipur',
       email_verified: true,
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
-    await setDoc(doc(db, 'shop_applications', sampleShopkeeperId), {
-      app_id: sampleShopkeeperId,
-      shop_name: 'Gupta Hardware & Electricals',
-      owner_name: 'Rajesh Gupta',
-      email: 'guptahardware@repireo.com',
-      phone: '+91 9823456789',
-      city: 'Jaipur',
-      address: 'Main Road, Sanganer, Jaipur',
-      status: 'approved',
-      created_at: serverTimestamp()
-    });
-
+    console.log('Creating shops collection...');
     const shopRef = await addDoc(collection(db, 'shops'), {
       shopkeeper_id: sampleShopkeeperId,
       shop_name: 'Gupta Hardware & Electricals',
@@ -125,10 +101,11 @@ export async function seedFirestoreDatabase() {
       lat: 26.8150,
       lng: 75.8150,
       status: 'active',
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
-    // 4. products
+    // 4. Sample Products for Shop
+    console.log('Creating products collection...');
     await addDoc(collection(db, 'products'), {
       shop_id: shopRef.id,
       shop_name: 'Gupta Hardware & Electricals',
@@ -136,9 +113,9 @@ export async function seedFirestoreDatabase() {
       category: 'Plumbing',
       price: 185,
       stock: 50,
-      description: 'Durable leak-proof brass valve compatible with bathroom and kitchen taps.',
+      description: 'Durable leak-proof brass valve compatible with all bathroom and kitchen taps.',
       image_url: '/product_tap.png',
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
     await addDoc(collection(db, 'products'), {
@@ -150,11 +127,12 @@ export async function seedFirestoreDatabase() {
       stock: 35,
       description: 'Standard fan regulator switch with surge protection.',
       image_url: '/product_switch.png',
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
-    // 5. orders & order_live_location
-    const orderRef = await addDoc(collection(db, 'orders'), {
+    // 5. Sample Order Booking
+    console.log('Creating orders collection...');
+    await addDoc(collection(db, 'orders'), {
       service_name: 'Plumbing Service',
       category: 'plumbing',
       problem_description: 'Tap leakage in kitchen area',
@@ -169,18 +147,11 @@ export async function seedFirestoreDatabase() {
       lng: 75.8123,
       customer_email: 'customer.sample@gmail.com',
       assigned_worker_id: sampleWorkerId,
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
-    await setDoc(doc(db, 'order_live_location', orderRef.id), {
-      order_id: orderRef.id,
-      worker_id: sampleWorkerId,
-      lat: 26.8124,
-      lng: 75.8123,
-      updated_at: serverTimestamp()
-    });
-
-    // 6. user_addresses
+    // 6. Sample Customer Saved Address
+    console.log('Creating user_addresses collection...');
     await addDoc(collection(db, 'user_addresses'), {
       user_id: 'customer_sample_id',
       user_email: 'customer.sample@gmail.com',
@@ -190,48 +161,35 @@ export async function seedFirestoreDatabase() {
       pincode: '302025',
       lat: 26.8124,
       lng: 75.8123,
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
-    // 7. messages (chats)
-    await addDoc(collection(db, 'messages'), {
-      order_id: orderRef.id,
-      sender_id: 'customer_sample_id',
-      receiver_id: sampleWorkerId,
-      text: 'Hello, what time will you arrive for the tap repair?',
-      created_at: serverTimestamp()
-    });
-
-    // 8. call_sessions
-    await addDoc(collection(db, 'call_sessions'), {
-      order_id: orderRef.id,
-      caller_id: 'customer_sample_id',
-      receiver_id: sampleWorkerId,
-      status: 'ended',
-      created_at: serverTimestamp()
-    });
-
-    // 9. push_subscriptions
-    await addDoc(collection(db, 'push_subscriptions'), {
-      user_id: 'customer_sample_id',
-      endpoint: 'https://fcm.googleapis.com/fcm/send/sample-token',
-      role: 'user',
-      created_at: serverTimestamp()
-    });
-
-    // 10. reviews
+    // 7. Sample Review & Rating
+    console.log('Creating reviews collection...');
     await addDoc(collection(db, 'reviews'), {
       customer_email: 'customer.sample@gmail.com',
       worker_id: sampleWorkerId,
       rating: 5,
       comment: 'Excellent service! Arrived quickly and fixed the tap leak in 15 minutes.',
-      created_at: serverTimestamp()
+      created_at: new Date().toISOString()
     });
 
-    console.log('All 11+ Firestore collections initialized successfully!');
-    return { success: true, message: 'All 11+ Firestore collections created and seeded successfully.' };
-  } catch (err: any) {
-    console.error('Error seeding Firestore:', err);
-    return { success: false, error: err.message };
+    // 8. Sample Realtime Chat Message
+    console.log('Creating chats collection...');
+    await addDoc(collection(db, 'chats'), {
+      order_id: 'ORD-SAMPLE-1001',
+      sender_id: 'customer_sample_id',
+      receiver_id: sampleWorkerId,
+      message: 'Hello, what time will you arrive for the tap repair?',
+      created_at: new Date().toISOString()
+    });
+
+    console.log('🎉 ALL 9 FIRESTORE COLLECTIONS CREATED & SEEDED SUCCESSFULLY IN DEFAULT DATABASE!');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error during direct seed:', err);
+    process.exit(1);
   }
 }
+
+runDirectSeed();

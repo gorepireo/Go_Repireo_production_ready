@@ -17,6 +17,7 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Support custom named Firestore database 'gorepireo' or '(default)'
+export const db = getFirestore(app, process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "gorepireo");
 export const storage = getStorage(app);
 export default app;
