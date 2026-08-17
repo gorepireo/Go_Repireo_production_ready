@@ -5,6 +5,7 @@ import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/fires
 /**
  * Seeds ALL 11+ Firebase Collections/Nodes:
  * Supports both Firebase Realtime Database (RTDB) and Cloud Firestore
+ * Target Vercel Deployment Sync: 2026-08-18
  */
 export async function seedFirestoreDatabase() {
   const status: any = { rtdb: false, firestore: false };
