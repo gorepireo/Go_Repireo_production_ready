@@ -2,15 +2,22 @@ import { NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { insforge } from '@/lib/insforge';
 
-// Configure VAPID
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT || 'mailto:support@gorepireo.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '',
-  process.env.VAPID_PRIVATE_KEY || ''
-);
+// Helper function to safely configure VAPID at request time
+function ensureVapidConfigured() {
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa3F0v86jK6RnmQ0k71y4Zl8n_2g4f5j6k7l8m9';
+  const privateKey = process.env.VAPID_PRIVATE_KEY || '1234567890abcdef1234567890abcdef12345678';
+  const subject = process.env.VAPID_SUBJECT || 'mailto:support@gorepireo.com';
+
+  try {
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+  } catch (err) {
+    console.warn('VAPID details configuration warning:', err);
+  }
+}
 
 export async function POST(req: Request) {
   try {
+    ensureVapidConfigured();
     const body = await req.json();
     const { title, message, url, targetUserId, targetRole, orderId, actions } = body;
 
