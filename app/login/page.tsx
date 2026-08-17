@@ -2,14 +2,13 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
-import { auth, rtdb, db } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { ref as dbRef, get as dbGet } from 'firebase/database';
-import { doc, getDoc } from 'firebase/firestore';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, Home, ArrowRight, ShieldCheck, Zap, Headphones, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { auth, rtdb, db } from '@/lib/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { ref, get, child } from 'firebase/database';
 
 function LoginForm() {
   const router = useRouter();
@@ -43,7 +42,11 @@ function LoginForm() {
         localStorage.setItem('repireo_admin_logged_in', 'true');
         localStorage.setItem('repireo_admin_email', cleanEmail);
         localStorage.setItem('repireo_cached_role', 'admin');
-        localStorage.setItem('repireo_user_email', cleanEmail);
+      }
+      try {
+        await insforge.auth.signInWithPassword({ email: cleanEmail, password });
+      } catch (err) {
+        // Backend auth fallback for admin override
       }
       await refresh();
       router.push('/admin');
@@ -51,83 +54,126 @@ function LoginForm() {
       return;
     }
 
-    let loggedInUser: any = null;
-    let userRole = 'user';
-
-    // 1. Authenticate with Firebase Authentication
+    // 1. Try InsForge Auth Login
     try {
-      const userCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
-      if (userCred.user) {
-        loggedInUser = { id: userCred.user.uid, email: userCred.user.email };
-      }
-    } catch (fbErr) {
-      console.warn('Firebase login note:', fbErr);
-    }
-
-    // 2. Also authenticate with InsForge in background
-    try {
-      const { data } = await insforge.auth.signInWithPassword({
+      const { data, error: loginError } = await insforge.auth.signInWithPassword({
         email: cleanEmail,
         password,
       });
+
       if (data?.user) {
-        loggedInUser = data.user;
+        let role = 'user';
+        let status = 'active';
+
+        try {
+          const { data: usersRow } = await insforge.database
+            .from('users')
+            .select('role, status')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+
+          if (usersRow) {
+            role = (usersRow as any).role || 'user';
+            status = (usersRow as any).status || 'active';
+          }
+        } catch (dbErr) {}
+
+        if (cleanEmail === 'gorepireo@gmail.com' || cleanEmail === 'admin@23456' || cleanEmail === 'admin@23456.com') {
+          role = 'admin';
+          status = 'active';
+        }
+
+        if (status === 'pending_approval' && (role === 'worker' || role === 'shopkeeper')) {
+          setError('Account pending approval. You will be notified once your profile is verified.');
+          setLoading(false);
+          return;
+        }
+
+        const token = (data as any).session?.accessToken || (data as any).accessToken || (data as any).session?.access_token;
+        if (token && typeof window !== 'undefined') {
+          if (rememberMe) localStorage.setItem('repireo_auth_token', token);
+          else sessionStorage.setItem('repireo_auth_token', token);
+          localStorage.setItem('repireo_user_email', cleanEmail);
+          localStorage.setItem('repireo_cached_role', role);
+        }
+        
+        await refresh();
+        if (role === 'admin') router.push('/admin');
+        else if (role === 'shopkeeper') router.push('/dashboard/shop');
+        else if (role === 'worker') router.push('/dashboard/worker');
+        else router.push('/dashboard/user');
+        setLoading(false);
+        return;
       }
     } catch (insErr) {
-      console.warn('InsForge login note:', insErr);
+      console.warn('InsForge login fallback to Firebase:', insErr);
     }
 
-    // Fallback: If local credentials match stored email
-    if (!loggedInUser) {
-      loggedInUser = { id: 'usr-' + Date.now(), email: cleanEmail };
-    }
-
-    // 3. Determine User Role from Firebase Realtime Database & Firestore
+    // 2. Firebase Auth & Realtime Database Login Fallback
     try {
-      const snapshot = await dbGet(dbRef(rtdb, `users/${loggedInUser.id}`));
-      if (snapshot.exists()) {
-        const val = snapshot.val();
-        userRole = val.role || 'user';
-      } else {
-        const fsDoc = await getDoc(doc(db, 'users', loggedInUser.id));
-        if (fsDoc.exists()) {
-          userRole = fsDoc.data()?.role || 'user';
+      const fbCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+      if (fbCred.user) {
+        let role = (localStorage.getItem('repireo_cached_role') as any) || 'user';
+        let status = 'active';
+
+        try {
+          const sanitizedUid = fbCred.user.uid.replace(/[.#$/\[\]]/g, '_');
+          const snapshot = await get(child(ref(rtdb), `users/${sanitizedUid}`));
+          if (snapshot.exists()) {
+            const val = snapshot.val();
+            role = val.role || role;
+            status = val.status || status;
+          }
+        } catch (rtdbErr) {}
+
+        if (cleanEmail === 'gorepireo@gmail.com' || cleanEmail === 'admin@23456' || cleanEmail === 'admin@23456.com') {
+          role = 'admin';
+          status = 'active';
         }
+
+        if (status === 'pending_approval' && (role === 'worker' || role === 'shopkeeper')) {
+          setError('Account pending approval. You will be notified once your profile is verified.');
+          setLoading(false);
+          return;
+        }
+
+        const token = await fbCred.user.getIdToken();
+        if (typeof window !== 'undefined') {
+          if (rememberMe) localStorage.setItem('repireo_auth_token', token);
+          else sessionStorage.setItem('repireo_auth_token', token);
+          localStorage.setItem('repireo_user_email', cleanEmail);
+          localStorage.setItem('repireo_cached_role', role);
+        }
+
+        await refresh();
+        if (role === 'admin') router.push('/admin');
+        else if (role === 'shopkeeper') router.push('/dashboard/shop');
+        else if (role === 'worker') router.push('/dashboard/worker');
+        else router.push('/dashboard/user');
+        setLoading(false);
+        return;
       }
-    } catch (dbErr) {
-      console.warn('DB role fetch note:', dbErr);
+    } catch (fbAuthErr: any) {
+      console.warn('Firebase signIn note:', fbAuthErr);
     }
 
-    if (cleanEmail === 'gorepireo@gmail.com' || cleanEmail === 'admin@23456' || cleanEmail === 'admin@23456.com') {
-      userRole = 'admin';
-    }
-
-    // Save session locally
-    if (typeof window !== 'undefined') {
-      const token = 'session-' + Date.now();
-      if (rememberMe) {
-        localStorage.setItem('repireo_auth_token', token);
-        localStorage.setItem('repireo_user_email', cleanEmail);
-        localStorage.setItem('repireo_cached_role', userRole);
-      } else {
-        sessionStorage.setItem('repireo_auth_token', token);
-        localStorage.setItem('repireo_user_email', cleanEmail);
-        localStorage.setItem('repireo_cached_role', userRole);
+    // 3. Fallback for stored local cached session
+    const cachedEmail = typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : null;
+    const cachedRole = (typeof window !== 'undefined' ? localStorage.getItem('repireo_cached_role') : null) || 'user';
+    if (cachedEmail && cachedEmail.toLowerCase() === cleanEmail) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('repireo_auth_token', 'fb-token-' + Date.now());
       }
+      await refresh();
+      if (cachedRole === 'admin') router.push('/admin');
+      else if (cachedRole === 'shopkeeper') router.push('/dashboard/shop');
+      else if (cachedRole === 'worker') router.push('/dashboard/worker');
+      else router.push('/dashboard/user');
+      setLoading(false);
+      return;
     }
 
-    await refresh();
-
-    if (userRole === 'admin') {
-      router.push('/admin');
-    } else if (userRole === 'shopkeeper') {
-      router.push('/dashboard/shop');
-    } else if (userRole === 'worker') {
-      router.push('/dashboard/worker');
-    } else {
-      router.push('/dashboard/user');
-    }
-
+    setError('Sign in failed. Please check your email and password.');
     setLoading(false);
   };
 
@@ -238,7 +284,7 @@ function LoginForm() {
               <button 
                 disabled={loading}
                 type="submit" 
-                className="w-full h-14 bg-[#0A1629] text-[#FFFFFF] rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors active:scale-95 mt-4"
+                className="w-full h-14 bg-[#0A1629] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors active:scale-95 mt-4"
               >
                 {loading ? 'SIGNING IN...' : 'SIGN IN'} <ArrowRight size={14} />
               </button>

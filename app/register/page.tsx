@@ -2,10 +2,6 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { insforge } from '@/lib/insforge';
-import { auth, rtdb, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { ref as dbRef, set as dbSet } from 'firebase/database';
-import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -32,6 +28,10 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { classifyWorkerCategories } from '@/lib/workerCategoryClassifier';
+import { auth, rtdb, db } from '@/lib/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { ref, set } from 'firebase/database';
+import { doc, setDoc } from 'firebase/firestore';
 
 type Role = 'user' | 'worker' | 'shopkeeper';
 
@@ -151,105 +151,6 @@ function RegisterForm() {
     }
   };
 
-  // Save profile to Firebase Realtime Database & Firestore
-  const saveFirebaseProfile = async (uid: string, cleanEmail: string) => {
-    const isAdmin = cleanEmail === 'gorepireo@gmail.com';
-    const finalRole = isAdmin ? 'admin' : role;
-    const finalStatus = isAdmin ? 'active' : (role === 'user' ? 'active' : 'pending_approval');
-
-    const classification = classifyWorkerCategories(selectedCategories, repairDescription);
-
-    const userPayload: any = {
-      id: uid,
-      email: cleanEmail,
-      name: isAdmin ? 'Admin Support' : formData.name,
-      role: finalRole,
-      phone: formData.phone,
-      state: formData.state,
-      district: formData.district,
-      pincode: formData.pincode,
-      area: formData.area,
-      lat: formData.lat,
-      lng: formData.lng,
-      status: finalStatus,
-      email_verified: true,
-      specializations: role === 'worker' ? selectedCategories : null,
-      repair_description: role === 'worker' ? repairDescription : null,
-      category_tokens: role === 'worker' ? classification.categoryTokens : null,
-      created_at: new Date().toISOString()
-    };
-
-    // Save to Firebase Realtime Database (RTDB)
-    try {
-      await dbSet(dbRef(rtdb, `users/${uid}`), userPayload);
-      if (role === 'worker') {
-        await dbSet(dbRef(rtdb, `worker_applications/${uid}`), {
-          app_id: uid,
-          from_name: formData.name,
-          email: cleanEmail,
-          mobile: formData.phone,
-          service: selectedCategories.join(', '),
-          experience: parseInt(formData.experience) || 0,
-          other_skills: repairDescription,
-          specializations: selectedCategories,
-          category_tokens: classification.categoryTokens,
-          state: formData.state,
-          district: formData.district,
-          pincode: formData.pincode,
-          address: formData.area,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        });
-      } else if (role === 'shopkeeper') {
-        await dbSet(dbRef(rtdb, `shop_applications/${uid}`), {
-          app_id: uid,
-          shop_name: formData.shopName || formData.name,
-          owner_name: formData.name,
-          email: cleanEmail,
-          phone: formData.phone,
-          city: formData.district,
-          address: formData.area,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        });
-      }
-    } catch (rtdbError) {
-      console.warn('Firebase RTDB write warning:', rtdbError);
-    }
-
-    // Save to Firestore Database
-    try {
-      await setDoc(doc(db, 'users', uid), userPayload);
-    } catch (fsError) {
-      console.warn('Firestore write warning:', fsError);
-    }
-
-    // Save to InsForge Database
-    try {
-      await insforge.database.from('users').upsert(userPayload);
-      if (role === 'worker') {
-        await insforge.database.from('worker_applications').insert({
-          app_id: uid,
-          from_name: formData.name,
-          email: cleanEmail,
-          mobile: formData.phone,
-          service: selectedCategories.join(', '),
-          experience: parseInt(formData.experience) || 0,
-          other_skills: repairDescription,
-          specializations: selectedCategories,
-          category_tokens: classification.categoryTokens,
-          state: formData.state,
-          district: formData.district,
-          pincode: formData.pincode,
-          address: formData.area,
-          password: formData.password
-        });
-      }
-    } catch (insError) {
-      console.warn('InsForge database save note:', insError);
-    }
-  };
-
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -269,45 +170,44 @@ function RegisterForm() {
       }
     }
 
-    const cleanEmail = formData.email.trim().toLowerCase();
-
     try {
-      // 1. Register with Firebase Authentication
-      let firebaseUid = '';
+      // 1. Attempt InsForge signup
+      let isSignedUp = false;
       try {
-        const userCred = await createUserWithEmailAndPassword(auth, cleanEmail, formData.password);
-        firebaseUid = userCred.user.uid;
-      } catch (fbAuthErr: any) {
-        if (fbAuthErr.code === 'auth/email-already-in-use') {
-          // If already in Firebase, generate timestamp UID fallback
-          firebaseUid = 'user-' + Date.now();
-        } else {
-          console.warn('Firebase Auth note:', fbAuthErr);
-          firebaseUid = 'user-' + Date.now();
-        }
-      }
-
-      // 2. Also register with InsForge in background
-      try {
-        await insforge.auth.signUp({
-          email: cleanEmail,
+        const { data, error: signUpError } = await insforge.auth.signUp({
+          email: formData.email,
           password: formData.password,
           name: formData.name,
         });
+
+        if (signUpError) {
+          if (signUpError.message?.toLowerCase().includes('already registered')) {
+            setStep(3);
+            setLoading(false);
+            return;
+          }
+        } else {
+          isSignedUp = true;
+        }
       } catch (insErr) {
-        console.warn('InsForge auth sign-up note:', insErr);
+        console.warn('InsForge signup network fallback:', insErr);
       }
 
-      // 3. Save User Profile across Firebase RTDB, Firestore & InsForge
-      await saveFirebaseProfile(firebaseUid, cleanEmail);
+      // 2. Firebase Auth signup fallback
+      try {
+        await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        isSignedUp = true;
+      } catch (fbErr: any) {
+        if (fbErr.code === 'auth/email-already-in-use') {
+          setStep(3);
+          setLoading(false);
+          return;
+        }
+        console.warn('Firebase createUser note:', fbErr.message);
+      }
 
-      // 4. Move to OTP Verification step or directly complete registration
       setStep(3);
     } catch (err: any) {
-      console.error('Registration handler error:', err);
-      // Even if network fails, complete registration locally
-      const fallbackUid = 'user-' + Date.now();
-      await saveFirebaseProfile(fallbackUid, cleanEmail);
       setStep(3);
     } finally {
       setLoading(false);
@@ -320,28 +220,103 @@ function RegisterForm() {
     setError('');
 
     const cleanEmail = formData.email.trim().toLowerCase();
+    const isAdmin = cleanEmail === 'gorepireo@gmail.com';
+    const finalRole = isAdmin ? 'admin' : role;
+    const finalStatus = isAdmin ? 'active' : (role === 'user' ? 'active' : 'pending_approval');
+    const classification = classifyWorkerCategories(selectedCategories, repairDescription);
+    const userId = auth.currentUser?.uid || 'user_' + Date.now();
 
+    const userDataObj = {
+      id: userId,
+      email: cleanEmail,
+      name: isAdmin ? 'Admin Support' : formData.name,
+      role: finalRole,
+      phone: formData.phone,
+      state: formData.state,
+      district: formData.district,
+      pincode: formData.pincode,
+      area: formData.area,
+      lat: formData.lat,
+      lng: formData.lng,
+      status: finalStatus,
+      email_verified: true,
+      specializations: role === 'worker' ? selectedCategories : null,
+      repair_description: role === 'worker' ? repairDescription : null,
+      category_tokens: role === 'worker' ? classification.categoryTokens : null
+    };
+
+    // 1. Attempt InsForge DB Insert
     try {
-      // Try verifying with InsForge
-      try {
-        await insforge.auth.verifyEmail({
+      const { data: verifyData } = await insforge.auth.verifyEmail({
+        email: formData.email,
+        otp: formData.otp
+      });
+      await insforge.database.from('users').insert(userDataObj);
+      if (role === 'worker') {
+        await insforge.database.from('worker_applications').insert({
+          app_id: userId, 
+          from_name: formData.name,
           email: cleanEmail,
-          otp: formData.otp
+          mobile: formData.phone,
+          service: selectedCategories.join(', '),
+          experience: parseInt(formData.experience) || 0,
+          other_skills: repairDescription,
+          specializations: selectedCategories,
+          category_tokens: classification.categoryTokens,
+          state: formData.state,
+          district: formData.district,
+          pincode: formData.pincode,
+          address: formData.area,
+          password: formData.password
         });
-      } catch (insVerifyErr) {
-        console.warn('InsForge OTP note:', insVerifyErr);
+      }
+    } catch (insErr) {
+      console.warn('InsForge verify fallback to Firebase:', insErr);
+    }
+
+    // 2. Always Save Account & Profile directly to Firebase Realtime Database & Firestore
+    try {
+      const sanitizedUid = userId.replace(/[.#$/\[\]]/g, '_');
+      await set(ref(rtdb, `users/${sanitizedUid}`), userDataObj);
+      try {
+        await setDoc(doc(db, 'users', sanitizedUid), userDataObj);
+      } catch (fsErr) {
+        // Ignore if Firestore native mode disabled
       }
 
-      const uid = 'verified-' + Date.now();
-      await saveFirebaseProfile(uid, cleanEmail);
-
-      router.push('/login?registered=true');
-    } catch (err: any) {
-      console.error('OTP verification error:', err);
-      router.push('/login?registered=true');
-    } finally {
-      setLoading(false);
+      if (role === 'worker') {
+        const workerAppObj = {
+          app_id: userId, 
+          from_name: formData.name,
+          email: cleanEmail,
+          mobile: formData.phone,
+          service: selectedCategories.join(', '),
+          experience: parseInt(formData.experience) || 0,
+          other_skills: repairDescription,
+          specializations: selectedCategories,
+          category_tokens: classification.categoryTokens,
+          state: formData.state,
+          district: formData.district,
+          pincode: formData.pincode,
+          address: formData.area,
+          status: 'pending_approval'
+        };
+        await set(ref(rtdb, `worker_applications/${sanitizedUid}`), workerAppObj);
+        try {
+          await setDoc(doc(db, 'worker_applications', sanitizedUid), workerAppObj);
+        } catch (fsErr) {}
+      }
+    } catch (fbErr) {
+      console.warn('Firebase RTDB store note:', fbErr);
     }
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('repireo_user_email', cleanEmail);
+      localStorage.setItem('repireo_cached_role', finalRole);
+    }
+
+    router.push('/login?registered=true');
+    setLoading(false);
   };
 
   const handleResendOtp = async () => {
@@ -354,7 +329,7 @@ function RegisterForm() {
       });
       alert('Verification OTP resent to ' + formData.email);
     } catch (err: any) {
-      alert('Verification email sent to ' + formData.email);
+      setError('Resend failed: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -379,371 +354,329 @@ function RegisterForm() {
             <div className="relative w-10 h-10 flex items-center justify-center">
                <Bell className="w-5 h-5 text-slate-700" />
             </div>
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-slate-200">
+               <img src="https://i.pravatar.cc/150?img=11" alt="Avatar" className="w-full h-full object-cover" />
+            </div>
          </div>
       </div>
 
-      {/* Main Container */}
-      <div className="relative z-10 max-w-xl mx-auto px-4">
-        
-        {/* Step Indicator */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6">
-          <div className="flex items-center justify-between relative">
-            <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-100 z-0"></div>
-            
-            {/* Step 1 */}
-            <div className={`relative z-10 flex flex-col items-center gap-2 ${step >= 1 ? 'text-[#007AFF]' : 'text-slate-400'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                step >= 1 ? 'bg-[#007AFF] text-white shadow-md shadow-blue-500/20' : 'bg-slate-100 text-slate-400'
-              }`}>
-                1
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Account Role</span>
-            </div>
-
-            {/* Step 2 */}
-            <div className={`relative z-10 flex flex-col items-center gap-2 ${step >= 2 ? 'text-[#007AFF]' : 'text-slate-400'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                step >= 2 ? 'bg-[#007AFF] text-white shadow-md shadow-blue-500/20' : 'bg-slate-100 text-slate-400'
-              }`}>
-                2
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Profile Details</span>
-            </div>
-
-            {/* Step 3 */}
-            <div className={`relative z-10 flex flex-col items-center gap-2 ${step >= 3 ? 'text-[#007AFF]' : 'text-slate-400'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                step >= 3 ? 'bg-[#007AFF] text-white shadow-md shadow-blue-500/20' : 'bg-slate-100 text-slate-400'
-              }`}>
-                3
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Verification</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Form Container */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100">
-          
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3">
-              <span className="text-red-500 text-xs font-bold uppercase tracking-wider">{error}</span>
-            </div>
-          )}
-
-          {/* STEP 1: Select Role */}
-          {step === 1 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              <div>
-                <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Select Account Type</h2>
-                <p className="text-xs text-slate-500 mt-1">Choose how you want to use the Go_Repireo platform</p>
-              </div>
-
-              <div className="space-y-3">
-                {/* Customer Role */}
-                <button
-                  type="button"
-                  onClick={() => setRole('user')}
-                  className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between ${
-                    role === 'user' ? 'border-[#007AFF] bg-blue-50/50 shadow-sm' : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      role === 'user' ? 'bg-[#007AFF] text-white' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      <User size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 uppercase">CUSTOMER / CLIENT</h4>
-                      <p className="text-[10px] text-slate-500">Book maintenance services & order hardware tools</p>
-                    </div>
-                  </div>
-                  {role === 'user' && <CheckCircle2 className="text-[#007AFF]" size={20} />}
-                </button>
-
-                {/* Worker / Technician Role */}
-                <button
-                  type="button"
-                  onClick={() => setRole('worker')}
-                  className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between ${
-                    role === 'worker' ? 'border-[#007AFF] bg-blue-50/50 shadow-sm' : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      role === 'worker' ? 'bg-[#007AFF] text-white' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      <Wrench size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 uppercase">SERVICE TECHNICIAN / WORKER</h4>
-                      <p className="text-[10px] text-slate-500">Earn money by fulfilling local doorstep service jobs</p>
-                    </div>
-                  </div>
-                  {role === 'worker' && <CheckCircle2 className="text-[#007AFF]" size={20} />}
-                </button>
-
-                {/* Shopkeeper Role */}
-                <button
-                  type="button"
-                  onClick={() => setRole('shopkeeper')}
-                  className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between ${
-                    role === 'shopkeeper' ? 'border-[#007AFF] bg-blue-50/50 shadow-sm' : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      role === 'shopkeeper' ? 'bg-[#007AFF] text-white' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      <Building2 size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 uppercase">HARDWARE SHOP MERCHANT</h4>
-                      <p className="text-[10px] text-slate-500">List and sell maintenance parts & tools online</p>
-                    </div>
-                  </div>
-                  {role === 'shopkeeper' && <CheckCircle2 className="text-[#007AFF]" size={20} />}
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="w-full py-4 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs tracking-wider uppercase rounded-full shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all"
-              >
-                <span>CONTINUE TO PROFILE DETAILS</span>
-                <ArrowRight size={16} />
-              </button>
-            </motion.div>
-          )}
-
-          {/* STEP 2: Profile Form */}
-          {step === 2 && (
-            <motion.form initial={{ opacity: 0 }} animate={{ opacity: 1 }} onSubmit={handleRegister} className="space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <button type="button" onClick={() => setStep(1)} className="text-xs text-[#007AFF] font-bold flex items-center gap-1">
-                  <ArrowLeft size={14} /> Back
-                </button>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">STEP 2 OF 3</span>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                <div className="relative flex items-center">
-                  <User className="absolute left-4 text-slate-400" size={16} />
-                  <input
-                    required
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="Enter your full name"
-                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-4 text-slate-400" size={16} />
-                  <input
-                    required
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="Enter your email address"
-                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Password</label>
-                <div className="relative flex items-center">
-                  <Lock className="absolute left-4 text-slate-400" size={16} />
-                  <input
-                    required
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Create a strong password"
-                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-12 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 text-slate-400">
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
-                <div className="relative flex items-center">
-                  <Phone className="absolute left-4 text-slate-400" size={16} />
-                  <input
-                    required
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="Enter 10-digit mobile number"
-                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                  />
-                </div>
-              </div>
-
-              {/* Worker Category & Skills */}
-              {role === 'worker' && (
-                <div className="space-y-3 pt-2">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Select Service Specializations</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {CATEGORIES_LIST.map((cat) => (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => toggleCategory(cat.id)}
-                        className={`p-3 rounded-xl border text-left text-xs font-bold flex items-center justify-between transition-all ${
-                          selectedCategories.includes(cat.id)
-                            ? 'bg-[#007AFF] text-white border-[#007AFF]'
-                            : 'bg-slate-50 text-slate-700 border-slate-200'
-                        }`}
-                      >
-                        <span>{cat.label}</span>
-                        {selectedCategories.includes(cat.id) && <Check size={14} />}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="space-y-1.5 pt-1">
-                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Repair Skills Description</label>
-                    <textarea
-                      rows={2}
-                      value={repairDescription}
-                      onChange={(e) => setRepairDescription(e.target.value)}
-                      placeholder="Describe your specific technical skills and tools..."
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Shopkeeper Shop Name */}
-              {role === 'shopkeeper' && (
-                <div className="space-y-1.5 pt-2">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Shop / Store Name</label>
-                  <div className="relative flex items-center">
-                    <Building2 className="absolute left-4 text-slate-400" size={16} />
-                    <input
-                      required
-                      type="text"
-                      name="shopName"
-                      value={formData.shopName}
-                      onChange={handleInputChange}
-                      placeholder="Enter hardware shop name"
-                      className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Location Fields */}
-              <div className="pt-2 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Service Address & Pincode</label>
-                  <button type="button" onClick={detectLocation} disabled={detecting} className="text-[10px] text-[#007AFF] font-bold flex items-center gap-1">
-                    <Navigation size={12} /> {detecting ? 'Detecting...' : 'Detect Live Location'}
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    required
-                    type="text"
-                    name="pincode"
-                    value={formData.pincode}
-                    onChange={handleInputChange}
-                    placeholder="6-Digit Pincode"
-                    className="h-12 bg-slate-50 border border-slate-200 rounded-2xl px-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                  />
-                  <input
-                    required
-                    type="text"
-                    name="district"
-                    value={formData.district}
-                    onChange={handleInputChange}
-                    placeholder="City / District"
-                    className="h-12 bg-slate-50 border border-slate-200 rounded-2xl px-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                  />
-                </div>
-                <input
-                  required
-                  type="text"
-                  name="area"
-                  value={formData.area}
-                  onChange={handleInputChange}
-                  placeholder="Street / Area / Tehsil"
-                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-2xl px-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs tracking-wider uppercase rounded-full shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all mt-4"
-              >
-                {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
-                <ArrowRight size={16} />
-              </button>
-            </motion.form>
-          )}
-
-          {/* STEP 3: OTP Verification / Completion */}
-          {step === 3 && (
-            <motion.form initial={{ opacity: 0 }} animate={{ opacity: 1 }} onSubmit={handleVerifyOtp} className="space-y-4 text-center">
-              <div className="w-14 h-14 bg-blue-50 text-[#007AFF] rounded-2xl flex items-center justify-center mx-auto mb-2">
-                <ShieldCheck size={28} />
-              </div>
-              <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Verify Email OTP</h2>
-              <p className="text-xs text-slate-500">We sent a 6-digit verification code to <span className="font-bold text-slate-800">{formData.email}</span></p>
-
-              <div className="py-2">
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={formData.otp}
-                  onChange={(e) => setFormData({ ...formData, otp: e.target.value })}
-                  placeholder="Enter OTP (or 123456)"
-                  className="w-full h-14 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xl font-black tracking-widest text-slate-900 focus:outline-none focus:border-[#007AFF]"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs tracking-wider uppercase rounded-full shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all"
-              >
-                {loading ? 'VERIFYING...' : 'VERIFY & SIGN IN'}
-              </button>
-
-              <button type="button" onClick={handleResendOtp} className="text-xs font-bold text-[#007AFF] hover:underline pt-2 block mx-auto">
-                Resend Verification Code
-              </button>
-            </motion.form>
-          )}
-
-          <div className="mt-6 pt-4 border-t border-slate-100 text-center">
-            <p className="text-xs text-slate-500">
-              Already have an account?{' '}
-              <Link href="/login" className="font-bold text-[#007AFF] hover:underline">
-                Sign In
-              </Link>
-            </p>
-          </div>
-
-        </div>
+      {/* Hero Header */}
+      <div className="relative z-10 text-center mb-8 px-4">
+         <h1 className="text-3xl md:text-5xl font-black leading-none tracking-tight text-[#0A1629] uppercase">
+            CREATE<br />
+            <span className="text-[#007AFF]">ACCOUNT.</span>
+         </h1>
+         <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] mt-3">JOIN REPIREO TODAY</p>
       </div>
+
+      {/* Form Container */}
+      <div className="relative z-10 px-4 max-w-xl mx-auto">
+         <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100/60">
+            
+            {/* Step Indicators */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              {[1, 2, 3].map((s) => (
+                <div 
+                  key={s} 
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    step === s ? 'bg-[#007AFF] w-6' : step > s ? 'bg-blue-300 w-3' : 'bg-slate-200 w-1.5'
+                  }`} 
+                />
+              ))}
+            </div>
+
+            <div className="text-center mb-6">
+               <p className="text-[8px] font-bold text-[#007AFF] uppercase tracking-widest mb-1">STEP {step} OF 3</p>
+               <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-[#0A1629]">
+                 {step === 1 ? 'CHOOSE ACCOUNT TYPE' : step === 2 ? 'YOUR DETAILS' : 'VERIFY EMAIL'}
+               </h2>
+            </div>
+
+            {/* Step 1: Role Selection */}
+            {step === 1 && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                 
+                 {/* Customer Card */}
+                 <button 
+                   type="button"
+                   onClick={() => setRole('user')}
+                   className={`w-full text-left p-4 rounded-[1.5rem] flex items-center gap-4 transition-all ${
+                     role === 'user' 
+                     ? 'bg-blue-50/50 border-2 border-[#007AFF] shadow-sm' 
+                     : 'bg-white border border-slate-100 hover:border-slate-200'
+                   }`}
+                 >
+                   <div className="w-16 h-16 shrink-0 bg-[#E6F0FA] rounded-2xl overflow-hidden flex items-end justify-center p-1 relative">
+                      <img src="/customer_3d.png" alt="Customer" className="w-full h-full object-contain" />
+                   </div>
+                   <div className="flex-1 py-1">
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight mb-0.5">CUSTOMER</h3>
+                      <p className="text-[10px] text-slate-500 leading-tight">Book services for your home and manage orders</p>
+                   </div>
+                   <div className="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center shrink-0 border border-slate-100">
+                      <ChevronRight className={`w-4 h-4 ${role === 'user' ? 'text-[#007AFF]' : 'text-slate-300'}`} />
+                   </div>
+                 </button>
+
+                 {/* Specialist Card */}
+                 <button 
+                   type="button"
+                   onClick={() => setRole('worker')}
+                   className={`w-full text-left p-4 rounded-[1.5rem] flex items-center gap-4 transition-all ${
+                     role === 'worker' 
+                     ? 'bg-blue-50/50 border-2 border-[#007AFF] shadow-sm' 
+                     : 'bg-white border border-slate-100 hover:border-slate-200'
+                   }`}
+                 >
+                   <div className="w-16 h-16 shrink-0 bg-slate-50 rounded-2xl flex items-center justify-center p-2">
+                      <img src="/specialist_toolbox_3d.png" alt="Specialist" className="w-full h-full object-contain" />
+                   </div>
+                   <div className="flex-1 py-1">
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight mb-0.5">SPECIALIST / WORKER</h3>
+                      <p className="text-[10px] text-slate-500 leading-tight">Offer your repair, electrical, plumbing & cleaning services</p>
+                   </div>
+                   <div className="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center shrink-0 border border-slate-100">
+                      <ChevronRight className={`w-4 h-4 ${role === 'worker' ? 'text-[#007AFF]' : 'text-slate-300'}`} />
+                   </div>
+                 </button>
+
+                 {/* Shop / Merchant Card (BLURRED & UNCLICKABLE WITH COMING SOON BADGE) */}
+                 <div className="relative w-full p-4 rounded-[1.5rem] flex items-center gap-4 bg-slate-50/70 border border-slate-200/80 pointer-events-none overflow-hidden select-none">
+                   
+                   {/* Diagonal Caution Ribbon Banner */}
+                   <div className="absolute -right-7 top-4 rotate-45 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-[8px] uppercase tracking-widest px-8 py-0.5 shadow-xs z-20">
+                     COMING SOON
+                   </div>
+
+                   <div className="w-16 h-16 shrink-0 bg-slate-100 rounded-2xl flex items-center justify-center p-1 filter blur-[1.5px] opacity-60">
+                      <img src="/merchant_storefront_3d.png" alt="Shopkeeper" className="w-full h-full object-contain" />
+                   </div>
+                   
+                   <div className="flex-1 py-1 filter blur-[0.8px] opacity-70">
+                      <h3 className="text-xs sm:text-sm font-black text-slate-700 uppercase tracking-tight mb-0.5">
+                        SHOPKEEPER / HARDWARE SUPPLY STORE
+                      </h3>
+                      <p className="text-[9.5px] text-slate-400 leading-tight">
+                        Sell hardware, spare parts, and tools on Go_Repireo
+                      </p>
+                   </div>
+
+                   <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 text-slate-400">
+                      <Lock size={12} />
+                   </div>
+                 </div>
+
+                 <button 
+                   type="button"
+                   onClick={() => setStep(2)} 
+                   className="w-full h-12 bg-[#0A1629] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors active:scale-95 mt-6"
+                 >
+                   CONTINUE <ArrowRight size={14} />
+                 </button>
+              </motion.div>
+            )}
+
+            {/* Step 2: Form Details */}
+            {step === 2 && (
+              <motion.form initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} onSubmit={handleRegister} className="space-y-4">
+                 
+                 {/* Full Name */}
+                 <div className="space-y-1">
+                   <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Full Name</label>
+                   <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Your full name" />
+                 </div>
+                 
+                 {/* Email & Phone Grid */}
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Email Address</label>
+                     <input required type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="you@example.com" />
+                   </div>
+
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Phone Number</label>
+                     <input required type="text" name="phone" value={formData.phone} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="10 digit mobile number" />
+                   </div>
+                 </div>
+
+                 {/* Password */}
+                 <div className="space-y-1">
+                   <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Password</label>
+                   <div className="relative">
+                     <input required type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 pl-3 pr-10 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Create password" />
+                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                       {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                     </button>
+                   </div>
+                 </div>
+
+                 {/* Location Details Grid */}
+                 <div className="grid grid-cols-2 gap-3 pt-1">
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">State</label>
+                     <input required name="state" value={formData.state} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Uttar Pradesh" />
+                   </div>
+
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">City / District</label>
+                     <input required name="district" value={formData.district} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Etawah" />
+                   </div>
+
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Pincode</label>
+                     <input required name="pincode" value={formData.pincode} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="206001" maxLength={6} />
+                   </div>
+
+                   <div className="space-y-1">
+                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Area / Landmark</label>
+                     <div className="relative">
+                       <input required name="area" value={formData.area} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 pl-3 pr-8 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Lalpura, Etawah" />
+                       <button type="button" onClick={detectLocation} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#007AFF]">
+                         <Navigation size={12} />
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* WORKER MULTI-SELECT CATEGORIES & MANDATORY REPAIR DESCRIPTION BOX */}
+                 {role === 'worker' && (
+                   <div className="space-y-4 pt-3 border-t border-slate-100">
+                     
+                     {/* Category Selection Header */}
+                     <div className="space-y-1">
+                       <label className="text-[10px] font-black text-slate-900 uppercase tracking-wider block flex items-center justify-between">
+                         <span>Select Specialization Categories (Multi-Select)</span>
+                         <span className="text-[8.5px] font-bold text-[#007AFF] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                           {selectedCategories.length} Selected
+                         </span>
+                       </label>
+
+                       {/* Multi-Select Category Pill Buttons with Modern High-contrast Typography */}
+                       <div className="grid grid-cols-2 gap-2 pt-1">
+                         {CATEGORIES_LIST.map((cat) => {
+                           const isSelected = selectedCategories.includes(cat.id);
+                           return (
+                             <button
+                               key={cat.id}
+                               type="button"
+                               onClick={() => toggleCategory(cat.id)}
+                               className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all active:scale-95 ${
+                                 isSelected
+                                   ? 'bg-blue-50/90 border-[#007AFF] text-[#007AFF] shadow-xs font-black'
+                                   : 'bg-white border-slate-200 text-slate-800 font-bold hover:border-slate-300'
+                               }`}
+                             >
+                               <span className="text-xs tracking-tight">{cat.label}</span>
+                               <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${
+                                 isSelected ? 'bg-[#007AFF] border-[#007AFF] text-white' : 'border-slate-300 bg-white'
+                               }`}>
+                                 {isSelected && <Check size={10} strokeWidth={3} />}
+                               </div>
+                             </button>
+                           );
+                         })}
+                       </div>
+                     </div>
+
+                     {/* Experience Field */}
+                     <div className="space-y-1">
+                       <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Years of Experience</label>
+                       <input 
+                         type="number" 
+                         name="experience" 
+                         value={formData.experience} 
+                         onChange={handleInputChange} 
+                         required 
+                         className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" 
+                         placeholder="e.g. 5 Years" 
+                       />
+                     </div>
+
+                     {/* MANDATORY REPAIR & MAINTENANCE SKILLS DESCRIPTION BOX */}
+                     {selectedCategories.includes('Repair & Services') && (
+                       <div className="space-y-1.5 p-3.5 bg-blue-50/60 rounded-2xl border border-blue-100">
+                         <div className="flex items-center justify-between">
+                           <label className="text-[10px] font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                             <Wrench size={13} className="text-[#007AFF]" />
+                             <span>Describe Repair Skills (Mandatory)</span>
+                           </label>
+                           <span className="text-[8px] font-black text-red-500 uppercase bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                             Required
+                           </span>
+                         </div>
+
+                         <textarea
+                           rows={3}
+                           required
+                           value={repairDescription}
+                           onChange={(e) => setRepairDescription(e.target.value)}
+                           placeholder="Describe your repair skills (e.g. I can repair Split AC, Inverter PCB, Washing Machine motor, Water Purifier, Geyser coil)..."
+                           className="w-full bg-white border border-slate-200 text-slate-900 text-xs p-3 rounded-xl focus:ring-2 focus:ring-[#007AFF]/30 outline-none resize-none font-medium leading-relaxed shadow-2xs"
+                         />
+
+                         <p className="text-[9px] text-blue-700 font-medium">
+                           💡 Our AI model will analyze your repair description and automatically tag your account to receive matching customer notifications.
+                         </p>
+                       </div>
+                     )}
+
+                   </div>
+                 )}
+
+                 {error && <p className="text-[#FF3B30] text-[10px] font-bold uppercase tracking-widest p-3 bg-red-50 rounded-xl border border-red-100 mt-2">{error}</p>}
+
+                 <div className="flex gap-3 pt-4">
+                   <button type="button" onClick={() => setStep(1)} className="flex-1 h-11 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-colors">
+                     <ArrowLeft size={14} /> BACK
+                   </button>
+                   <button disabled={loading} type="submit" className="flex-[2] h-11 bg-[#007AFF] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-colors active:scale-95 shadow-md shadow-blue-500/20">
+                     {loading ? 'CREATING...' : 'CONTINUE'} <ArrowRight size={14} />
+                   </button>
+                 </div>
+              </motion.form>
+            )}
+
+            {/* Step 3: Verification */}
+            {step === 3 && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6">
+                 <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
+                    <ShieldCheck className="w-8 h-8 text-[#007AFF]" />
+                 </div>
+                 
+                 <div>
+                   <p className="text-[10px] text-slate-500 mb-1">We've sent a code to</p>
+                   <p className="text-sm font-bold text-slate-900">{formData.email}</p>
+                 </div>
+
+                 <form onSubmit={handleVerifyOtp} className="space-y-4">
+                   <input 
+                     required 
+                     name="otp" 
+                     value={formData.otp} 
+                     onChange={handleInputChange} 
+                     className="w-full text-center text-4xl font-black tracking-[0.2em] h-20 bg-[#F8FAFC] border border-slate-200 rounded-2xl outline-none text-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20" 
+                     placeholder="000000" 
+                     maxLength={6} 
+                   />
+
+                   {error && <p className="text-[#FF3B30] text-[10px] font-bold tracking-widest p-3 bg-red-50 rounded-xl border border-red-100">{error}</p>}
+
+                   <button disabled={loading} type="submit" className="w-full h-14 bg-[#0A1629] text-white rounded-full flex items-center justify-center text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors active:scale-95 mt-4">
+                     {loading ? 'VERIFYING...' : 'VERIFY & CONTINUE'}
+                   </button>
+
+                   <div className="pt-4 flex flex-col gap-3">
+                     <button type="button" onClick={handleResendOtp} disabled={loading} className="text-[10px] font-bold text-[#007AFF] uppercase tracking-widest hover:underline">
+                       Resend Code
+                     </button>
+                   </div>
+                 </form>
+              </motion.div>
+            )}
+
+         </div>
+      </div>
+
     </div>
   );
 }
@@ -752,7 +685,7 @@ export default function Register() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#F0F5FA] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <RegisterForm />

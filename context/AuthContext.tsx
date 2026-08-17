@@ -68,46 +68,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
 
-      const { data, error } = await insforge.auth.getCurrentUser();
-      if (data?.user) {
-        setUser(data.user);
-        
-        let finalProfile: any = null;
-        
-        // Check users table first as primary source of truth
-        const { data: userData } = await insforge.database
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .maybeSingle();
-          
-        if (userData) {
-           finalProfile = {
-             ...userData,
-             display_name: userData.name || userData.display_name,
-           };
-           // Special override: company admin emails
-           if (data.user.email === 'gorepireo@gmail.com' || data.user.email === 'admin@23456' || data.user.email === 'admin@23456.com') {
-             finalProfile.role = 'admin';
-           }
-        } else {
-          // Fallback to auth profile
-          const { data: profileData } = await insforge.auth.getProfile(data.user.id);
-          finalProfile = profileData || { role: 'user', status: 'active' };
-          if (data.user.email === 'gorepireo@gmail.com' || data.user.email === 'admin@23456' || data.user.email === 'admin@23456.com') {
-             finalProfile.role = 'admin';
-          }
-        }
+      let currentUser = null;
+      let finalProfile: any = null;
 
-        if (finalProfile) {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('repireo_cached_role', finalProfile.role);
-            if (finalProfile.avatar_url) {
-              localStorage.setItem('repireo_cached_avatar', finalProfile.avatar_url);
-            }
+      // 1. Attempt InsForge auth lookup
+      try {
+        const { data } = await insforge.auth.getCurrentUser();
+        if (data?.user) {
+          currentUser = data.user;
+          const { data: userData } = await insforge.database
+            .from('users')
+            .select('*')
+            .eq('id', data.user.id)
+            .maybeSingle();
+          if (userData) {
+            finalProfile = { ...userData, display_name: userData.name || userData.display_name };
           }
         }
-        setProfile(finalProfile);
+      } catch (insErr) {
+        console.warn('InsForge auth check note:', insErr);
+      }
+
+      // 2. Firebase / Local Storage session fallback
+      if (!currentUser && typeof window !== 'undefined') {
+        const storedEmail = localStorage.getItem('repireo_user_email');
+        const storedRole = (localStorage.getItem('repireo_cached_role') as any) || 'user';
+        if (storedEmail) {
+          currentUser = { id: 'usr_' + storedEmail.replace(/[^a-zA-Z0-9]/g, '_'), email: storedEmail };
+          finalProfile = {
+            id: currentUser.id,
+            email: storedEmail,
+            display_name: storedEmail.split('@')[0],
+            role: storedEmail === 'gorepireo@gmail.com' ? 'admin' : storedRole,
+            status: 'active'
+          };
+        }
+      }
+
+      if (currentUser) {
+        setUser(currentUser);
+        setProfile(finalProfile || { id: currentUser.id, email: currentUser.email, role: 'user', status: 'active' });
       } else {
         setUser(null);
         setProfile(null);
