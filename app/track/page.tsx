@@ -33,6 +33,8 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import { predictTelemetry } from '@/lib/telemetryModel';
 import Header from '@/components/Header';
 import Avatar from '@/components/Avatar';
+import { rtdb } from '@/lib/firebase';
+import { ref, get, child, onValue, off } from 'firebase/database';
 
 const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoogleMap'), {
   ssr: false,
@@ -99,40 +101,55 @@ function TrackContent() {
       let currentOrder: any = null;
 
       if (paramOrderId) {
-        const { data } = await insforge.database
-          .from('orders')
-          .select('*')
-          .eq('id', paramOrderId)
-          .maybeSingle();
-        currentOrder = data;
+        try {
+          const { data } = await insforge.database
+            .from('orders')
+            .select('*')
+            .eq('id', paramOrderId)
+            .maybeSingle();
+          currentOrder = data;
+        } catch (e) {}
+
+        if (!currentOrder) {
+          try {
+            const snapshot = await get(child(ref(rtdb), `orders/${paramOrderId}`));
+            if (snapshot.exists()) currentOrder = { ...snapshot.val(), id: paramOrderId };
+          } catch (rtdbErr) {}
+        }
       }
 
       if (!currentOrder) {
-        const { data: allOrders } = await insforge.database
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
+        try {
+          const { data: allOrders } = await insforge.database
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (allOrders && allOrders.length > 0) currentOrder = allOrders[0];
+        } catch (e) {}
 
-        if (allOrders && allOrders.length > 0) {
-          const userMatched = allOrders.filter((o: any) => {
-            if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId)) return true;
-            if (targetEmail) {
-              const uEmail = (o.user_email || '').toLowerCase().trim();
-              const cEmail = (o.customer_email || '').toLowerCase().trim();
-              const dEmail = (o.details?.user_email || o.details?.customer_email || o.details?.email || '').toLowerCase().trim();
-              if (uEmail === targetEmail || cEmail === targetEmail || dEmail === targetEmail) return true;
+        if (!currentOrder) {
+          try {
+            const snapshot = await get(child(ref(rtdb), 'orders'));
+            if (snapshot.exists()) {
+              const val = snapshot.val();
+              const rtdbOrders = Object.keys(val).map(key => ({ ...val[key], id: key }));
+              const userMatched = rtdbOrders.filter((o: any) => {
+                if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId)) return true;
+                if (targetEmail) {
+                  const uEmail = (o.user_email || '').toLowerCase().trim();
+                  const cEmail = (o.customer_email || '').toLowerCase().trim();
+                  const dEmail = (o.details?.user_email || o.details?.customer_email || o.details?.email || '').toLowerCase().trim();
+                  if (uEmail === targetEmail || cEmail === targetEmail || dEmail === targetEmail) return true;
+                }
+                return false;
+              });
+              const candidates = userMatched.length > 0 ? userMatched : rtdbOrders;
+              const activeOrder = candidates.find((o: any) => 
+                ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way', 'pending'].includes((o.status || '').toLowerCase())
+              );
+              currentOrder = activeOrder || candidates[0];
             }
-            return false;
-          });
-
-          const candidates = userMatched.length > 0 ? userMatched : allOrders;
-          
-          // First priority: active order
-          const activeOrder = candidates.find((o: any) => 
-            ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way', 'pending'].includes((o.status || '').toLowerCase())
-          );
-
-          currentOrder = activeOrder || candidates[0];
+          } catch (rtdbErr) {}
         }
       }
 

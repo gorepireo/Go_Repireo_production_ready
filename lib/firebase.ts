@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getDatabase } from 'firebase/database';
+import { getDatabase, ref, set, get, child, push, update, onValue, off, remove } from 'firebase/database';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -22,4 +22,54 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 export const storage = getStorage(app);
+
+/**
+ * Standard Firebase Realtime Database Utility Helpers
+ */
+export const firebaseService = {
+  // Read data node from RTDB
+  async readNode(path: string) {
+    try {
+      const snapshot = await get(child(ref(rtdb), path));
+      return snapshot.exists() ? snapshot.val() : null;
+    } catch (err) {
+      console.warn(`RTDB read error on ${path}:`, err);
+      return null;
+    }
+  },
+
+  // Write/Set node data in RTDB
+  async writeNode(path: string, data: any) {
+    try {
+      await set(ref(rtdb, path), data);
+      return true;
+    } catch (err) {
+      console.warn(`RTDB write error on ${path}:`, err);
+      return false;
+    }
+  },
+
+  // Push new item into node collection
+  async pushNode(path: string, data: any) {
+    try {
+      const newRef = push(ref(rtdb, path));
+      const payload = { ...data, id: newRef.key };
+      await set(newRef, payload);
+      return payload;
+    } catch (err) {
+      console.warn(`RTDB push error on ${path}:`, err);
+      return null;
+    }
+  },
+
+  // Realtime subscription listener
+  listenNode(path: string, callback: (data: any) => void) {
+    const nodeRef = ref(rtdb, path);
+    onValue(nodeRef, (snapshot) => {
+      callback(snapshot.exists() ? snapshot.val() : null);
+    });
+    return () => off(nodeRef);
+  }
+};
+
 export default app;
