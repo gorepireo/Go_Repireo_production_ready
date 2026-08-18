@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "go-repireo-production-ready",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-15",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "go-repireo-production-ready"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
