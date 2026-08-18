@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const emailSubject = subject || getSubjectByType(type, params);
     const emailHtml = html || getHtmlTemplateByType(type, toName, params);
 
-    // Exclusive Gmail SMTP Direct Email Dispatch from gorepireo@gmail.com
+    // Exclusive Gmail SMTP Direct Email Dispatch with Anti-Spam Primary Inbox Optimization
     const gmailResult = await sendGmailEmail({
       toEmail,
       toName,
@@ -35,25 +35,25 @@ export async function POST(request: Request) {
 function getSubjectByType(type?: string, params?: any): string {
   switch (type) {
     case 'otp':
-      return `[Go_Repireo] Your Verification OTP Code is ${params?.OTP || params?.otp || '1234'}`;
+      return `Your Go_Repireo verification code is ${params?.OTP || params?.otp || '1234'}`;
     case 'password_reset_otp':
-      return `[Go_Repireo] Password Reset OTP Code is ${params?.OTP || params?.otp || '1234'}`;
+      return `Your Go_Repireo password reset code is ${params?.OTP || params?.otp || '1234'}`;
     case 'welcome':
-      return 'Welcome to Go_Repireo! Instant Doorstep Home Services';
+      return 'Welcome to Go_Repireo Doorstep Home Services';
     case 'worker_approved':
-      return '🎉 Congratulations! Your Technician Profile is Approved - Go_Repireo';
+      return 'Your Go_Repireo technician profile is approved';
     case 'shop_approved':
-      return '🏬 Your Merchant Store Profile is Approved - Go_Repireo';
+      return 'Your Go_Repireo merchant store profile is approved';
     case 'order_confirmation':
-      return `[Go_Repireo] Booking Confirmed: ${params?.SERVICE_NAME || 'Service Request'} (#${params?.ORDER_ID || ''})`;
+      return `Your Go_Repireo booking is confirmed (#${params?.ORDER_ID || ''})`;
     case 'worker_assigned':
-      return `👨‍🔧 Technician ${params?.WORKER_NAME || ''} Assigned to Order #${params?.ORDER_ID || ''}`;
+      return `Technician ${params?.WORKER_NAME || ''} assigned to your order #${params?.ORDER_ID || ''}`;
     case 'order_completed':
-      return `✨ Service Order #${params?.ORDER_ID || ''} Completed Successfully!`;
+      return `Your Go_Repireo service order #${params?.ORDER_ID || ''} is complete`;
     case 'job_alert':
-      return `⚡ New Service Job Available: ${params?.SERVICE_NAME || 'Service Request'}`;
+      return `New service job available: ${params?.SERVICE_NAME || 'Service Request'}`;
     default:
-      return '[Go_Repireo] Important Notification';
+      return 'Important Go_Repireo Notification';
   }
 }
 
@@ -96,7 +96,7 @@ function getHtmlTemplateByType(type?: string, name?: string, params?: any): stri
       contentHtml = `
         <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Verify Your Email Address</h1>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Hi ${userName},</p>
-        <p style="font-size: 14px; color: #475569; line-height: 1.6;">Welcome to Go_Repireo! Please use the One-Time Password (OTP) below to verify your email address:</p>
+        <p style="font-size: 14px; color: #475569; line-height: 1.6;">Welcome to Go_Repireo. Please use the One-Time Password (OTP) below to verify your email address:</p>
 
         <div style="background: #f0f6ff; border: 2px dashed #007AFF; border-radius: 20px; padding: 24px; text-align: center; margin: 28px 0;">
           <div style="font-size: 11px; font-weight: 800; color: #007AFF; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Verification OTP Code</div>
@@ -128,7 +128,7 @@ function getHtmlTemplateByType(type?: string, name?: string, params?: any): stri
 
     case 'welcome':
       contentHtml = `
-        <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Welcome to Go_Repireo! 🎉</h1>
+        <h1 style="font-size: 24px; font-weight: 900; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Welcome to Go_Repireo</h1>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Hi ${userName},</p>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Your Go_Repireo account is ready! You can now book verified doorstep service professionals and order hardware supplies directly online.</p>
 
@@ -146,7 +146,7 @@ function getHtmlTemplateByType(type?: string, name?: string, params?: any): stri
 
     case 'worker_approved':
       contentHtml = `
-        <h1 style="font-size: 22px; font-weight: 900; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Application Approved! 🟢</h1>
+        <h1 style="font-size: 22px; font-weight: 900; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Application Approved</h1>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Hi ${userName},</p>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Congratulations! Your technician registration application has been verified and approved by the Go_Repireo Admin team.</p>
 
@@ -169,7 +169,7 @@ function getHtmlTemplateByType(type?: string, name?: string, params?: any): stri
 
     case 'shop_approved':
       contentHtml = `
-        <h1 style="font-size: 22px; font-weight: 900; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Store Application Approved! 🏬</h1>
+        <h1 style="font-size: 22px; font-weight: 900; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Store Application Approved</h1>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Hi ${userName},</p>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Your hardware store <strong>${shopName}</strong> has been approved by the Go_Repireo Admin team.</p>
 
@@ -186,7 +186,7 @@ function getHtmlTemplateByType(type?: string, name?: string, params?: any): stri
 
     case 'order_confirmation':
       contentHtml = `
-        <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Booking Confirmed! ✅</h1>
+        <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Booking Confirmed</h1>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Hi ${userName},</p>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Your service request has been successfully placed. A technician will be assigned shortly.</p>
 
@@ -216,7 +216,7 @@ function getHtmlTemplateByType(type?: string, name?: string, params?: any): stri
 
     case 'worker_assigned':
       contentHtml = `
-        <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Technician Assigned 👨‍🔧</h1>
+        <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Technician Assigned</h1>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Hi ${userName},</p>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">A verified service technician has been assigned to your order #${orderId}.</p>
 
@@ -235,7 +235,7 @@ function getHtmlTemplateByType(type?: string, name?: string, params?: any): stri
 
     case 'order_completed':
       contentHtml = `
-        <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Service Completed! ✨</h1>
+        <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 12px 0;">Service Completed</h1>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Hi ${userName},</p>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Your service request <strong>#${orderId}</strong> has been completed successfully.</p>
 
@@ -259,7 +259,7 @@ function getHtmlTemplateByType(type?: string, name?: string, params?: any): stri
 
     case 'job_alert':
       contentHtml = `
-        <h1 style="font-size: 22px; font-weight: 900; color: #0f172a; text-align: center; margin: 0 0 12px 0;">New Service Job Alert! ⚡</h1>
+        <h1 style="font-size: 22px; font-weight: 900; color: #0f172a; text-align: center; margin: 0 0 12px 0;">New Service Job Alert</h1>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">Hi ${userName},</p>
         <p style="font-size: 14px; color: #475569; line-height: 1.6;">A new service request matching your specialization is available in your area:</p>
 
