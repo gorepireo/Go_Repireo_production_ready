@@ -192,7 +192,7 @@ function RegisterForm() {
         });
       } catch (e) {}
 
-      // 3. Dispatch OTP Email to User via /api/send-email (ALWAYS SENT TO RECIPIENT INBOX)
+      // 3. Dispatch OTP Email to User via /api/send-email
       try {
         await fetch('/api/send-email', {
           method: 'POST',
@@ -206,6 +206,22 @@ function RegisterForm() {
         });
       } catch (sendErr) {
         console.warn('OTP dispatch note:', sendErr);
+      }
+
+      // 4. Dispatch SMS OTP via TextBee API (/api/send-sms)
+      if (formData.phone) {
+        try {
+          await fetch('/api/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phoneNumber: formData.phone,
+              otp: generatedOtp
+            })
+          });
+        } catch (smsErr) {
+          console.warn('SMS dispatch note:', smsErr);
+        }
       }
 
       setStep(3);

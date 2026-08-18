@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendSmsGate } from '@/lib/smsGate';
+import { sendTextBeeSms } from '@/lib/textbee';
 
 export async function POST(request: Request) {
   try {
@@ -7,21 +7,21 @@ export async function POST(request: Request) {
     const { phoneNumber, message, otp } = body;
 
     if (!phoneNumber) {
-      return NextResponse.json({ error: 'Mobile phone number (phoneNumber) is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Recipient phone number is required' }, { status: 400 });
     }
 
-    const smsText = message || `Your Go_Repireo verification code is ${otp || '1234'}. It will expire in 10 minutes.`;
+    const smsText = message || `Your Go_Repireo account verification OTP code is: ${otp || '1234'}. Valid for 10 minutes.`;
 
-    const result = await sendSmsGate({
+    const smsResult = await sendTextBeeSms({
       phoneNumber,
       message: smsText
     });
 
-    if (result.success) {
-      return NextResponse.json({ success: true, data: result.data, provider: 'sms_gate' }, { status: 200 });
+    if (smsResult.success) {
+      return NextResponse.json({ success: true, data: smsResult.data }, { status: 200 });
     }
 
-    return NextResponse.json({ success: false, error: result.error }, { status: 500 });
+    return NextResponse.json({ success: false, error: smsResult.error }, { status: 200 });
   } catch (error: any) {
     console.error('Send SMS API Route Error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
