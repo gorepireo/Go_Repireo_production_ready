@@ -9,24 +9,27 @@ export interface GmailEmailOptions {
 
 /**
  * Send Transactional Email via Gmail SMTP (500 FREE Emails / Day)
- * Uses Gmail App Password from GMAIL_APP_PASSWORD
+ * Uses SSL Port 465 for instant Cloud/Vercel Serverless Function delivery.
  */
 export async function sendGmailEmail(options: GmailEmailOptions) {
   try {
-    const user = process.env.GMAIL_USER || 'gorepireo@gmail.com';
-    const pass = process.env.GMAIL_APP_PASSWORD || 'bddcuzcihncjpuod';
+    const rawUser = process.env.GMAIL_USER || 'gorepireo@gmail.com';
+    const rawPass = process.env.GMAIL_APP_PASSWORD || 'bddcuzcihncjpuod';
 
-    if (!user || !pass) {
-      console.warn('Gmail SMTP credentials missing');
-      return { success: false, error: 'Gmail credentials missing' };
-    }
+    const user = rawUser.trim();
+    const pass = rawPass.trim().replace(/\s+/g, '');
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // SSL Port 465 for 100% Vercel Cloud Serverless Function compatibility
       auth: {
-        user,
-        pass: pass.replace(/\s+/g, ''), // Strip spaces from app password
+        user: user,
+        pass: pass,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
 
     const info = await transporter.sendMail({
@@ -36,9 +39,10 @@ export async function sendGmailEmail(options: GmailEmailOptions) {
       html: options.html,
     });
 
+    console.log(`[Gmail SMTP Success] Sent email to ${options.toEmail}, MessageID: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (err: any) {
-    console.error('Gmail SMTP Exception:', err);
-    return { success: false, error: err.message };
+    console.error('[Gmail SMTP Error]:', err);
+    return { success: false, error: err?.message || 'SMTP sending failed' };
   }
 }
