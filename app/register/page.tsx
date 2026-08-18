@@ -510,33 +510,35 @@ function RegisterForm() {
                    </div>
                  </div>
 
-                 {/* Location Details Grid */}
-                 <div className="grid grid-cols-2 gap-3 pt-1">
-                   <div className="space-y-1">
-                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">State</label>
-                     <input required name="state" value={formData.state} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Uttar Pradesh" />
-                   </div>
+                 {/* Location Details Grid - Only required for Worker/Shopkeeper account registration */}
+                 {role !== 'user' && (
+                   <div className="grid grid-cols-2 gap-3 pt-1">
+                     <div className="space-y-1">
+                       <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">State</label>
+                       <input required name="state" value={formData.state} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Uttar Pradesh" />
+                     </div>
 
-                   <div className="space-y-1">
-                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">City / District</label>
-                     <input required name="district" value={formData.district} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Etawah" />
-                   </div>
+                     <div className="space-y-1">
+                       <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">City / District</label>
+                       <input required name="district" value={formData.district} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Etawah" />
+                     </div>
 
-                   <div className="space-y-1">
-                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Pincode</label>
-                     <input required name="pincode" value={formData.pincode} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="206001" maxLength={6} />
-                   </div>
+                     <div className="space-y-1">
+                       <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Pincode</label>
+                       <input required name="pincode" value={formData.pincode} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 px-3 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="206001" maxLength={6} />
+                     </div>
 
-                   <div className="space-y-1">
-                     <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Area / Landmark</label>
-                     <div className="relative">
-                       <input required name="area" value={formData.area} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 pl-3 pr-8 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Lalpura, Etawah" />
-                       <button type="button" onClick={detectLocation} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#007AFF]">
-                         <Navigation size={12} />
-                       </button>
+                     <div className="space-y-1">
+                       <label className="text-[9px] font-extrabold text-slate-700 uppercase tracking-wider block">Area / Landmark</label>
+                       <div className="relative">
+                         <input required name="area" value={formData.area} onChange={handleInputChange} className="w-full h-10 bg-white border border-slate-200 pl-3 pr-8 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-[#007AFF]/20 outline-none placeholder:text-slate-400 shadow-xs" placeholder="Lalpura, Etawah" />
+                         <button type="button" onClick={detectLocation} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#007AFF]">
+                           <Navigation size={12} />
+                         </button>
+                       </div>
                      </div>
                    </div>
-                 </div>
+                 )}
 
                  {/* WORKER MULTI-SELECT CATEGORIES & MANDATORY REPAIR DESCRIPTION BOX */}
                  {role === 'worker' && (
