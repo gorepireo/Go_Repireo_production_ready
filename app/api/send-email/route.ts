@@ -4,7 +4,7 @@ import { sendGmailEmail } from '@/lib/gmail';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { toEmail, toName, params, type, subject, html } = body;
+    const { toEmail, toName, params, type, subject, html, text } = body;
 
     if (!toEmail) {
       return NextResponse.json({ error: 'Recipient email (toEmail) is required' }, { status: 400 });
@@ -12,6 +12,7 @@ export async function POST(request: Request) {
 
     const emailSubject = subject || getSubjectByType(type, params);
     const emailHtml = html || getHtmlTemplateByType(type, toName, params);
+    const emailText = text || getPlainTextByType(type, toName, params);
 
     // Exclusive Gmail SMTP Direct Email Dispatch
     const gmailResult = await sendGmailEmail({
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
       toName,
       subject: emailSubject,
       html: emailHtml,
+      text: emailText,
     });
 
     if (gmailResult.success) {
@@ -35,9 +37,9 @@ export async function POST(request: Request) {
 function getSubjectByType(type?: string, params?: any): string {
   switch (type) {
     case 'otp':
-      return `Your Go_Repireo verification code is ${params?.OTP || params?.otp || '1234'}`;
+      return `Go_Repireo code: ${params?.OTP || params?.otp || '1234'}`;
     case 'password_reset_otp':
-      return `Your Go_Repireo password reset code is ${params?.OTP || params?.otp || '1234'}`;
+      return `Go_Repireo reset code: ${params?.OTP || params?.otp || '1234'}`;
     case 'welcome':
       return 'Welcome to Go_Repireo Doorstep Home Services';
     case 'worker_approved':
@@ -57,6 +59,20 @@ function getSubjectByType(type?: string, params?: any): string {
   }
 }
 
+function getPlainTextByType(type?: string, name?: string, params?: any): string {
+  const userName = name || params?.NAME || params?.WORKER_NAME || 'Customer';
+  const otpCode = params?.OTP || params?.otp || '1234';
+
+  switch (type) {
+    case 'otp':
+      return `Hi ${userName},\n\nYour Go_Repireo account verification code is ${otpCode}.\nIt will expire in 10 minutes.\n\nThanks,\nGo_Repireo Team`;
+    case 'password_reset_otp':
+      return `Hi ${userName},\n\nYour Go_Repireo password reset code is ${otpCode}.\nIt will expire in 10 minutes.\n\nThanks,\nGo_Repireo Team`;
+    default:
+      return `Hi ${userName},\n\nYou have a new notification from Go_Repireo.\n\nThanks,\nGo_Repireo Team`;
+  }
+}
+
 function getHtmlTemplateByType(type?: string, name?: string, params?: any): string {
   const userName = name || params?.NAME || params?.WORKER_NAME || params?.OWNER_NAME || 'Customer';
   const otpCode = params?.OTP || params?.otp || '1234';
@@ -72,26 +88,10 @@ function getHtmlTemplateByType(type?: string, name?: string, params?: any): stri
 
   switch (type) {
     case 'otp':
-      return `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #0f172a; line-height: 1.6; max-width: 500px; margin: 0 auto; padding: 20px;">
-          <p>Hi ${userName},</p>
-          <p>Your verification code for Go_Repireo is <strong style="font-size: 26px; color: #007AFF; font-family: monospace; letter-spacing: 4px;">${otpCode}</strong>.</p>
-          <p>It will expire in 10 minutes.</p>
-          <br>
-          <p style="color: #64748b; font-size: 13px;">Thanks,<br><strong>Go_Repireo Team</strong></p>
-        </div>
-      `;
+      return `<p>Hi ${userName},</p><p>Your Go_Repireo account verification code is <strong style="font-size:24px;color:#007AFF;">${otpCode}</strong>.</p><p>It will expire in 10 minutes.</p><p>Thanks,<br>Go_Repireo Team</p>`;
 
     case 'password_reset_otp':
-      return `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #0f172a; line-height: 1.6; max-width: 500px; margin: 0 auto; padding: 20px;">
-          <p>Hi ${userName},</p>
-          <p>Your password reset code for Go_Repireo is <strong style="font-size: 26px; color: #007AFF; font-family: monospace; letter-spacing: 4px;">${otpCode}</strong>.</p>
-          <p>If you did not request a password reset, you can safely ignore this email.</p>
-          <br>
-          <p style="color: #64748b; font-size: 13px;">Thanks,<br><strong>Go_Repireo Team</strong></p>
-        </div>
-      `;
+      return `<p>Hi ${userName},</p><p>Your Go_Repireo password reset code is <strong style="font-size:24px;color:#007AFF;">${otpCode}</strong>.</p><p>It will expire in 10 minutes.</p><p>Thanks,<br>Go_Repireo Team</p>`;
 
     case 'welcome':
       return `
