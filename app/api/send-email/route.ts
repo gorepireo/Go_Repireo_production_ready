@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { sendGmailEmail } from '@/lib/gmail';
 import { sendResendEmail } from '@/lib/resend';
 import { sendBrevoEmail } from '@/lib/brevo';
 
@@ -14,7 +15,21 @@ export async function POST(request: Request) {
     const emailSubject = subject || getSubjectByType(type, params);
     const emailHtml = html || getHtmlTemplateByType(type, toName, params);
 
-    // 1. Try Resend API Primary
+    // 1. Primary: Gmail SMTP (500 FREE Emails / Day directly to recipient inbox)
+    const gmailResult = await sendGmailEmail({
+      toEmail,
+      toName,
+      subject: emailSubject,
+      html: emailHtml,
+    });
+
+    if (gmailResult.success) {
+      return NextResponse.json({ success: true, messageId: gmailResult.messageId, provider: 'gmail_smtp' }, { status: 200 });
+    }
+
+    console.warn('Gmail SMTP note, falling back to Resend API:', gmailResult.error);
+
+    // 2. Secondary Fallback: Resend API
     const resendResult = await sendResendEmail({
       toEmail,
       toName,
@@ -26,13 +41,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, messageId: resendResult.messageId, provider: 'resend' }, { status: 200 });
     }
 
-    console.warn('Resend failed, trying Brevo fallback:', resendResult.error);
-
-    // 2. Fallback to Brevo Email
+    // 3. Tertiary Fallback: Brevo REST API
     const brevoResult = await sendBrevoEmail({
       toEmail,
       toName,
-      templateId: templateId || 1,
+      subject: emailSubject,
+      html: emailHtml,
+      templateId: templateId,
       params: params || {},
     });
 
@@ -40,7 +55,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, messageId: brevoResult.messageId, provider: 'brevo' }, { status: 200 });
     }
 
-    return NextResponse.json({ success: false, error: resendResult.error || brevoResult.error }, { status: 500 });
+    return NextResponse.json({ success: false, error: gmailResult.error || resendResult.error || brevoResult.error }, { status: 500 });
   } catch (error: any) {
     console.error('Send Email API Route Error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
