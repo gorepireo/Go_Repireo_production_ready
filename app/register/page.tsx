@@ -675,7 +675,7 @@ function RegisterForm() {
                      value={formData.otp} 
                      onChange={handleInputChange} 
                      className="w-full text-center text-4xl font-black tracking-[0.2em] h-20 bg-[#F8FAFC] border border-slate-200 rounded-2xl outline-none text-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20" 
-                     placeholder="000000" 
+                     placeholder="0000" 
                      maxLength={6} 
                    />
 

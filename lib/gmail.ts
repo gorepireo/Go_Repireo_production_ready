@@ -9,20 +9,20 @@ export interface GmailEmailOptions {
 
 /**
  * Send Transactional Email via Gmail SMTP (500 FREE Emails / Day)
- * Uses SSL Port 465 for instant Cloud/Vercel Serverless Function delivery.
+ * Uses SSL Port 465 for 100% Vercel Cloud Serverless Function compatibility.
  */
 export async function sendGmailEmail(options: GmailEmailOptions) {
   try {
-    const rawUser = process.env.GMAIL_USER || 'gorepireo@gmail.com';
-    const rawPass = process.env.GMAIL_APP_PASSWORD || 'bddcuzcihncjpuod';
+    const rawUser = (process.env.GMAIL_USER || '').trim();
+    const rawPass = (process.env.GMAIL_APP_PASSWORD || '').trim().replace(/\s+/g, '');
 
-    const user = rawUser.trim();
-    const pass = rawPass.trim().replace(/\s+/g, '');
+    const user = rawUser.length > 0 ? rawUser : 'gorepireo@gmail.com';
+    const pass = rawPass.length > 0 ? rawPass : 'bddcuzcihncjpuod';
 
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
-      secure: true, // SSL Port 465 for 100% Vercel Cloud Serverless Function compatibility
+      secure: true, // SSL Port 465 for guaranteed Vercel cloud serverless compatibility
       auth: {
         user: user,
         pass: pass,
