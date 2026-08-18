@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import { sendGmailEmail } from '@/lib/gmail';
-import { sendResendEmail } from '@/lib/resend';
-import { sendBrevoEmail } from '@/lib/brevo';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { toEmail, toName, templateId, params, type, subject, html } = body;
+    const { toEmail, toName, params, type, subject, html } = body;
 
     if (!toEmail) {
       return NextResponse.json({ error: 'Recipient email (toEmail) is required' }, { status: 400 });
@@ -15,7 +13,7 @@ export async function POST(request: Request) {
     const emailSubject = subject || getSubjectByType(type, params);
     const emailHtml = html || getHtmlTemplateByType(type, toName, params);
 
-    // 1. Primary: Gmail SMTP (500 FREE Emails / Day directly to recipient inbox)
+    // Exclusive Gmail SMTP Direct Email Dispatch from gorepireo@gmail.com
     const gmailResult = await sendGmailEmail({
       toEmail,
       toName,
@@ -27,37 +25,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, messageId: gmailResult.messageId, provider: 'gmail_smtp' }, { status: 200 });
     }
 
-    console.warn('Gmail SMTP note, falling back to Resend API:', gmailResult.error);
-
-    // 2. Secondary Fallback: Resend API
-    const resendResult = await sendResendEmail({
-      toEmail,
-      toName,
-      subject: emailSubject,
-      html: emailHtml,
-    });
-
-    if (resendResult.success) {
-      return NextResponse.json({ success: true, messageId: resendResult.messageId, provider: 'resend' }, { status: 200 });
-    }
-
-    // 3. Tertiary Fallback: Brevo REST API
-    const brevoResult = await sendBrevoEmail({
-      toEmail,
-      toName,
-      subject: emailSubject,
-      html: emailHtml,
-      templateId: templateId,
-      params: params || {},
-    });
-
-    if (brevoResult.success) {
-      return NextResponse.json({ success: true, messageId: brevoResult.messageId, provider: 'brevo' }, { status: 200 });
-    }
-
-    return NextResponse.json({ success: false, error: gmailResult.error || resendResult.error || brevoResult.error }, { status: 500 });
+    return NextResponse.json({ success: false, error: gmailResult.error }, { status: 500 });
   } catch (error: any) {
-    console.error('Send Email API Route Error:', error);
+    console.error('Gmail SMTP Email API Route Error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
