@@ -170,61 +170,35 @@ function RegisterForm() {
       }
     }
 
+    const cleanEmail = formData.email.trim().toLowerCase();
+
     try {
-      // 1. Attempt InsForge signup
-      let isSignedUp = false;
+      // 1. Firebase Auth signup (best effort)
       try {
-        const { data, error: signUpError } = await insforge.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          name: formData.name,
-        });
-
-        if (signUpError) {
-          if (signUpError.message?.toLowerCase().includes('already registered')) {
-            setStep(3);
-            setLoading(false);
-            return;
-          }
-        } else {
-          isSignedUp = true;
-        }
-      } catch (insErr) {
-        console.warn('InsForge signup network fallback:', insErr);
-      }
-
-      // 2. Firebase Auth signup fallback
-      try {
-        await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-        isSignedUp = true;
+        await createUserWithEmailAndPassword(auth, cleanEmail, formData.password);
       } catch (fbErr: any) {
-        if (fbErr.code === 'auth/email-already-in-use') {
-          setStep(3);
-          setLoading(false);
-          return;
-        }
-        console.warn('Firebase createUser note:', fbErr.message);
+        console.warn('Firebase createUser note (email may exist):', fbErr?.message);
       }
 
-      // Generate 4-digit OTP Code
+      // 2. Generate 4-digit OTP Code (ALWAYS GENERATED FOR EVERY REGISTRATION ATTEMPT)
       const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
       
       // Save OTP to Realtime Database
       try {
-        const sanitizedEmail = formData.email.trim().toLowerCase().replace(/[.#$/\[\]]/g, '_');
+        const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
         await set(ref(rtdb, `temp_otps/${sanitizedEmail}`), {
           otp: generatedOtp,
           created_at: new Date().toISOString()
         });
       } catch (e) {}
 
-      // Dispatch OTP Email to User via /api/send-email
+      // 3. Dispatch OTP Email to User via /api/send-email (ALWAYS SENT TO RECIPIENT INBOX)
       try {
         await fetch('/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            toEmail: formData.email.trim().toLowerCase(),
+            toEmail: cleanEmail,
             toName: formData.name,
             type: 'otp',
             params: { OTP: generatedOtp }
