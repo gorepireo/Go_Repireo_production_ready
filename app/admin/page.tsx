@@ -90,7 +90,7 @@ export default function AdminPanel() {
       
       if (workerData && userData) {
         const merged = (workerData as any[]).map(w => {
-          const user = userData.find(u => u.id === w.app_id);
+          const user = (userData as any[]).find((u: any) => u.id === w.app_id);
           return { ...w, user_status: user ? user.status : 'pending_approval' };
         });
         setWorkers(merged);

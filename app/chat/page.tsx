@@ -41,16 +41,16 @@ function ChatList() {
           .order('created_at', { ascending: false });
           
         if (workerOrders) {
-           const existingIds = new Set(allOrders.map(o => o.id));
-           workerOrders.forEach(wo => {
+           const existingIds = new Set((allOrders as any[]).map((o: any) => o.id));
+           (workerOrders as any[]).forEach((wo: any) => {
              if (!existingIds.has(wo.id)) {
-               allOrders.push(wo);
+               (allOrders as any[]).push(wo);
              }
            });
         }
       }
       
-      allOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      (allOrders as any[]).sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
       setChats(allOrders);
       setLoading(false);
     };

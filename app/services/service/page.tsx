@@ -111,7 +111,7 @@ export default function ServiceBooking() {
   useEffect(() => {
     if (user) {
       insforge.database.from('user_addresses').select('*').eq('user_id', user.id)
-        .then(({ data }) => { if (data) setAddresses(data); });
+        .then((res: any) => { if (res?.data) setAddresses(res.data); });
     }
   }, [user, loading, router]);
 
@@ -205,8 +205,8 @@ export default function ServiceBooking() {
           .select('user_id, service')
           .eq('status', 'active');
 
-        if (activeWorkers && activeWorkers.length > 0) {
-          const matchingWorkers = activeWorkers.filter(w => 
+        if (activeWorkers && (activeWorkers as any[]).length > 0) {
+          const matchingWorkers = (activeWorkers as any[]).filter((w: any) => 
             isServiceMatching(w.service, formData.category)
           );
 
@@ -216,7 +216,7 @@ export default function ServiceBooking() {
               : `SCHEDULED for ${formData.preferredDate} at ${formData.preferredTime}`;
             const payText = payMethod === 'cash' ? 'CASH ON SERVICE' : 'PREPAID ONLINE';
 
-            const workerNotifications = matchingWorkers.map(w => ({
+            const workerNotifications = matchingWorkers.map((w: any) => ({
               user_id: w.user_id,
               title: `New ${formData.category.toUpperCase()} Request`,
               message: `A new ${formData.category.toUpperCase()} request (${timingText}, ${payText}) is available in your workspace. Log in to accept.`,
