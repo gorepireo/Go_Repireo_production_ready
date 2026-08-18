@@ -206,6 +206,34 @@ function RegisterForm() {
         console.warn('Firebase createUser note:', fbErr.message);
       }
 
+      // Generate 4-digit OTP Code
+      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      // Save OTP to Realtime Database
+      try {
+        const sanitizedEmail = formData.email.trim().toLowerCase().replace(/[.#$/\[\]]/g, '_');
+        await set(ref(rtdb, `temp_otps/${sanitizedEmail}`), {
+          otp: generatedOtp,
+          created_at: new Date().toISOString()
+        });
+      } catch (e) {}
+
+      // Dispatch OTP Email to User via /api/send-email
+      try {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            toEmail: formData.email.trim().toLowerCase(),
+            toName: formData.name,
+            type: 'otp',
+            params: { OTP: generatedOtp }
+          })
+        });
+      } catch (sendErr) {
+        console.warn('OTP dispatch note:', sendErr);
+      }
+
       setStep(3);
     } catch (err: any) {
       setStep(3);
@@ -321,13 +349,29 @@ function RegisterForm() {
 
   const handleResendOtp = async () => {
     setLoading(true);
+    setError('');
     try {
-      await insforge.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        name: formData.name
+      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      const cleanEmail = formData.email.trim().toLowerCase();
+      const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
+
+      await set(ref(rtdb, `temp_otps/${sanitizedEmail}`), {
+        otp: generatedOtp,
+        created_at: new Date().toISOString()
       });
-      alert('Verification OTP resent to ' + formData.email);
+
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toEmail: cleanEmail,
+          toName: formData.name,
+          type: 'otp',
+          params: { OTP: generatedOtp }
+        })
+      });
+
+      alert('A new verification OTP code has been sent to ' + cleanEmail);
     } catch (err: any) {
       setError('Resend failed: ' + err.message);
     } finally {
