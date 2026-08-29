@@ -30,7 +30,7 @@ import Link from 'next/link';
 import { classifyWorkerCategories } from '@/lib/workerCategoryClassifier';
 import { auth, rtdb, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { ref, set } from 'firebase/database';
+import { ref, set, remove, get } from 'firebase/database';
 import { doc, setDoc } from 'firebase/firestore';
 
 type Role = 'user' | 'worker' | 'shopkeeper';
@@ -328,12 +328,22 @@ function RegisterForm() {
       console.warn('Firebase RTDB store note:', fbErr);
     }
 
+    // 3. Delete OTP temporary row from Database after successful verification
+    try {
+      const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
+      await remove(ref(rtdb, `temp_otps/${sanitizedEmail}`));
+      await insforge.database.from('temp_otps').delete().eq('email', cleanEmail).catch(() => {});
+    } catch (cleanErr) {
+      console.warn('OTP row cleanup note:', cleanErr);
+    }
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('repireo_user_email', cleanEmail);
       localStorage.setItem('repireo_cached_role', finalRole);
     }
 
-    router.push('/login?registered=true');
+    // 4. Redirect User directly to Home Page (/) upon completing verification
+    router.push('/');
     setLoading(false);
   };
 
