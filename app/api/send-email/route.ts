@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendMailjetEmail } from '@/lib/mailjet';
+import { sendMailblusterEmail } from '@/lib/mailbluster';
 
 export async function POST(request: Request) {
   try {
@@ -14,8 +14,8 @@ export async function POST(request: Request) {
     const emailHtml = html || getHtmlTemplateByType(type, toName, params);
     const emailText = text || getPlainTextByType(type, toName, params);
 
-    // Mailjet API Direct Email Dispatch with Automatic Gmail SMTP Fallback
-    const emailResult: any = await sendMailjetEmail({
+    // Mailbluster API Email Dispatch with Automatic Gmail Direct SMTP Fallback
+    const emailResult: any = await sendMailblusterEmail({
       toEmail,
       toName,
       subject: emailSubject,
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     });
 
     if (emailResult && emailResult.success) {
-      return NextResponse.json({ success: true, provider: emailResult.provider || 'mailjet_api' }, { status: 200 });
+      return NextResponse.json({ success: true, provider: emailResult.provider || 'mailbluster_api' }, { status: 200 });
     }
 
     return NextResponse.json({ success: false, error: emailResult?.error || 'Email dispatch failed' }, { status: 500 });
