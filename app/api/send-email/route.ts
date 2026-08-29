@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendGmailEmail } from '@/lib/gmail';
+import { sendMailjetEmail } from '@/lib/mailjet';
 
 export async function POST(request: Request) {
   try {
@@ -14,8 +14,8 @@ export async function POST(request: Request) {
     const emailHtml = html || getHtmlTemplateByType(type, toName, params);
     const emailText = text || getPlainTextByType(type, toName, params);
 
-    // Exclusive Gmail SMTP Direct Email Dispatch
-    const gmailResult = await sendGmailEmail({
+    // Mailjet API Direct Email Dispatch with Automatic Gmail SMTP Fallback
+    const emailResult: any = await sendMailjetEmail({
       toEmail,
       toName,
       subject: emailSubject,
@@ -23,13 +23,13 @@ export async function POST(request: Request) {
       text: emailText,
     });
 
-    if (gmailResult.success) {
-      return NextResponse.json({ success: true, messageId: gmailResult.messageId, provider: 'gmail_smtp' }, { status: 200 });
+    if (emailResult && emailResult.success) {
+      return NextResponse.json({ success: true, provider: emailResult.provider || 'mailjet_api' }, { status: 200 });
     }
 
-    return NextResponse.json({ success: false, error: gmailResult.error }, { status: 500 });
+    return NextResponse.json({ success: false, error: emailResult?.error || 'Email dispatch failed' }, { status: 500 });
   } catch (error: any) {
-    console.error('Gmail SMTP Email API Route Error:', error);
+    console.error('Send Email API Route Error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
