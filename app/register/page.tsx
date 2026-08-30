@@ -263,15 +263,18 @@ function RegisterForm() {
       category_tokens: role === 'worker' ? classification.categoryTokens : null
     };
 
-    // 1. Attempt InsForge DB Insert
+    // Helper timeout wrapper (max 2.5s) to guarantee the UI never hangs on Vercel
+    const withTimeout = (promise: Promise<any>, ms = 2500) => 
+      Promise.race([
+        promise,
+        new Promise((resolve) => setTimeout(() => resolve(null), ms))
+      ]);
+
+    // 1. Attempt Supabase / InsForge DB Insert
     try {
-      const { data: verifyData } = await insforge.auth.verifyEmail({
-        email: formData.email,
-        otp: formData.otp
-      });
-      await insforge.database.from('users').insert(userDataObj);
+      await withTimeout(insforge.database.from('users').insert(userDataObj));
       if (role === 'worker') {
-        await insforge.database.from('worker_applications').insert({
+        await withTimeout(insforge.database.from('worker_applications').insert({
           app_id: userId, 
           from_name: formData.name,
           email: cleanEmail,
@@ -286,21 +289,17 @@ function RegisterForm() {
           pincode: formData.pincode,
           address: formData.area,
           password: formData.password
-        });
+        }));
       }
     } catch (insErr) {
-      console.warn('InsForge verify fallback to Firebase:', insErr);
+      console.warn('DB insert note:', insErr);
     }
 
-    // 2. Always Save Account & Profile directly to Firebase Realtime Database & Firestore
+    // 2. Save Account & Profile directly to Firebase Realtime Database & Firestore
     try {
       const sanitizedUid = userId.replace(/[.#$/\[\]]/g, '_');
-      await set(ref(rtdb, `users/${sanitizedUid}`), userDataObj);
-      try {
-        await setDoc(doc(db, 'users', sanitizedUid), userDataObj);
-      } catch (fsErr) {
-        // Ignore if Firestore native mode disabled
-      }
+      await withTimeout(set(ref(rtdb, `users/${sanitizedUid}`), userDataObj));
+      await withTimeout(setDoc(doc(db, 'users', sanitizedUid), userDataObj).catch(() => {}));
 
       if (role === 'worker') {
         const workerAppObj = {
@@ -319,10 +318,8 @@ function RegisterForm() {
           address: formData.area,
           status: 'pending_approval'
         };
-        await set(ref(rtdb, `worker_applications/${sanitizedUid}`), workerAppObj);
-        try {
-          await setDoc(doc(db, 'worker_applications', sanitizedUid), workerAppObj);
-        } catch (fsErr) {}
+        await withTimeout(set(ref(rtdb, `worker_applications/${sanitizedUid}`), workerAppObj));
+        await withTimeout(setDoc(doc(db, 'worker_applications', sanitizedUid), workerAppObj).catch(() => {}));
       }
     } catch (fbErr) {
       console.warn('Firebase RTDB store note:', fbErr);
@@ -331,8 +328,8 @@ function RegisterForm() {
     // 3. Delete OTP temporary row from Database after successful verification
     try {
       const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
-      await remove(ref(rtdb, `temp_otps/${sanitizedEmail}`));
-      await insforge.database.from('temp_otps').delete().eq('email', cleanEmail).catch(() => {});
+      await withTimeout(remove(ref(rtdb, `temp_otps/${sanitizedEmail}`)));
+      await withTimeout(insforge.database.from('temp_otps').delete().eq('email', cleanEmail).catch(() => {}));
     } catch (cleanErr) {
       console.warn('OTP row cleanup note:', cleanErr);
     }
@@ -343,8 +340,8 @@ function RegisterForm() {
     }
 
     // 4. Redirect User directly to Home Page (/) upon completing verification
-    router.push('/');
     setLoading(false);
+    router.push('/');
   };
 
   const handleResendOtp = async () => {
