@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@insforge/sdk": "^1.2.5",
+    "@libsql/client": "^0.17.4",
     "@react-google-maps/api": "^2.20.8",
     "@supabase/supabase-js": "^2.112.3",
     "autoprefixer": "^10.5.0",
