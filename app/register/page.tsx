@@ -29,7 +29,7 @@ import {
 import Link from 'next/link';
 import { classifyWorkerCategories } from '@/lib/workerCategoryClassifier';
 import { auth, rtdb, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { ref, set, remove, get } from 'firebase/database';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -48,6 +48,7 @@ function RegisterForm() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -208,19 +209,22 @@ function RegisterForm() {
         console.warn('OTP dispatch note:', sendErr);
       }
 
-      // 4. Dispatch SMS OTP via TextBee API (/api/send-sms)
-      if (formData.phone) {
+      // 5. Firebase Phone SMS Dispatch (10,000 Free SMS/Month)
+      if (formData.phone && typeof window !== 'undefined') {
         try {
-          await fetch('/api/send-sms', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              phoneNumber: formData.phone,
-              otp: generatedOtp
-            })
-          });
-        } catch (smsErr) {
-          console.warn('SMS dispatch note:', smsErr);
+          const rawPhone = formData.phone.trim();
+          const formattedPhone = rawPhone.startsWith('+') ? rawPhone : `+91${rawPhone}`;
+
+          if (!(window as any).recaptchaVerifier) {
+            (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+              size: 'invisible',
+              callback: () => {}
+            });
+          }
+          const confirmation = await signInWithPhoneNumber(auth, formattedPhone, (window as any).recaptchaVerifier);
+          setConfirmationResult(confirmation);
+        } catch (phoneSmsErr) {
+          console.warn('Firebase Phone SMS dispatch note:', phoneSmsErr);
         }
       }
 
@@ -682,6 +686,9 @@ function RegisterForm() {
             {/* Step 3: Verification */}
             {step === 3 && (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6">
+                 {/* Invisible reCAPTCHA container for Firebase Phone SMS */}
+                 <div id="recaptcha-container"></div>
+
                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
                     <ShieldCheck className="w-8 h-8 text-[#007AFF]" />
                  </div>
