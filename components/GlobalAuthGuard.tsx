@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Wrench } from 'lucide-react';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/track', '/admin', '/chat'];
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password'];
 
 export default function GlobalAuthGuard({ children }: { children: React.ReactNode }) {
@@ -17,7 +16,6 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
   useEffect(() => {
     if (authLoading) return;
 
-    const isProtected = PROTECTED_PREFIXES.some(prefix => pathname?.startsWith(prefix));
     const isAuthPage = AUTH_ROUTES.some(route => pathname === route || pathname?.startsWith(route));
 
     let isAuthenticated = !!user || !!profile;
@@ -30,18 +28,18 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
       }
     }
 
-    if (isProtected && !isAuthenticated) {
-      router.replace(`/login?redirect=${encodeURIComponent(pathname || '/')}`);
-    } else if (isAuthPage && isAuthenticated) {
+    if (!isAuthenticated && !isAuthPage) {
+      router.replace('/login');
+    } else if (isAuthenticated && isAuthPage) {
       router.replace('/');
     } else {
       setChecking(false);
     }
   }, [pathname, user, profile, authLoading, router]);
 
-  const isProtected = PROTECTED_PREFIXES.some(prefix => pathname?.startsWith(prefix));
+  const isAuthPage = AUTH_ROUTES.some(route => pathname === route || pathname?.startsWith(route));
 
-  if ((authLoading || checking) && isProtected) {
+  if ((authLoading || checking) && !isAuthPage) {
     return (
       <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 bg-[#007AFF] text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 animate-pulse mb-4">
