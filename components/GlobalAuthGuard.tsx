@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Wrench } from 'lucide-react';
 
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password'];
+const PROTECTED_PREFIXES = ['/dashboard', '/track', '/admin', '/chat'];
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password'];
 
 export default function GlobalAuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,10 +17,11 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
   useEffect(() => {
     if (authLoading) return;
 
-    const isPublicRoute = PUBLIC_ROUTES.some(route => pathname === route || pathname?.startsWith('/login') || pathname?.startsWith('/register') || pathname?.startsWith('/forgot-password'));
-    
+    const isProtected = PROTECTED_PREFIXES.some(prefix => pathname?.startsWith(prefix));
+    const isAuthPage = AUTH_ROUTES.some(route => pathname === route || pathname?.startsWith(route));
+
     let isAuthenticated = !!user || !!profile;
-    
+
     if (typeof window !== 'undefined') {
       const storedEmail = localStorage.getItem('repireo_user_email');
       const storedToken = localStorage.getItem('repireo_auth_token') || sessionStorage.getItem('repireo_auth_token');
@@ -28,18 +30,18 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
       }
     }
 
-    if (!isAuthenticated && !isPublicRoute) {
-      router.replace('/login');
-    } else if (isAuthenticated && isPublicRoute) {
+    if (isProtected && !isAuthenticated) {
+      router.replace(`/login?redirect=${encodeURIComponent(pathname || '/')}`);
+    } else if (isAuthPage && isAuthenticated) {
       router.replace('/');
     } else {
       setChecking(false);
     }
   }, [pathname, user, profile, authLoading, router]);
 
-  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname === route || pathname?.startsWith('/login') || pathname?.startsWith('/register') || pathname?.startsWith('/forgot-password'));
+  const isProtected = PROTECTED_PREFIXES.some(prefix => pathname?.startsWith(prefix));
 
-  if ((authLoading || checking) && !isPublicRoute) {
+  if ((authLoading || checking) && isProtected) {
     return (
       <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 bg-[#007AFF] text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 animate-pulse mb-4">
