@@ -296,29 +296,32 @@ function RegisterForm() {
         new Promise((resolve) => setTimeout(() => resolve(null), ms))
       ]);
 
-    // 1. Save directly to Turso SQLite Database (Edge)
+    // 1. Save User Profile & Application to Turso Database via Serverless API Route
     try {
-      await withTimeout(insertTursoRecord('users', userDataObj));
-      if (role === 'worker') {
-        await withTimeout(insertTursoRecord('worker_applications', {
-          id: userId,
-          user_id: userId,
-          from_name: formData.name,
-          email: cleanEmail,
-          mobile: formData.phone,
-          service: selectedCategories.join(', '),
-          experience: parseInt(formData.experience) || 0,
-          other_skills: repairDescription,
-          specializations: JSON.stringify(selectedCategories),
-          category_tokens: JSON.stringify(classification.categoryTokens),
-          state: formData.state,
-          district: formData.district,
-          pincode: formData.pincode,
-          address: formData.area
-        }));
-      }
+      const workerAppObj = role === 'worker' ? {
+        id: userId,
+        user_id: userId,
+        from_name: formData.name,
+        email: cleanEmail,
+        mobile: formData.phone,
+        service: selectedCategories.join(', '),
+        experience: parseInt(formData.experience) || 0,
+        other_skills: repairDescription,
+        specializations: JSON.stringify(selectedCategories),
+        category_tokens: JSON.stringify(classification.categoryTokens),
+        state: formData.state,
+        district: formData.district,
+        pincode: formData.pincode,
+        address: formData.area
+      } : null;
+
+      await fetch('/api/auth/register-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userDataObj, workerAppObj, role })
+      });
     } catch (tursoErr) {
-      console.warn('Turso direct insert note:', tursoErr);
+      console.warn('Turso API insert note:', tursoErr);
     }
 
     // 2. Save Account & Profile directly to Firebase Realtime Database & Firestore
