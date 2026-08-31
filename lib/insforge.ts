@@ -1,9 +1,8 @@
 import { turso } from './turso';
 
 /**
- * Turso SQLite & Firebase Gateway Proxy
- * Completely disconnected from Supabase.
- * Routes 100% of database queries directly to Turso SQLite & Firebase.
+ * Turso SQLite & Firebase Database Gateway Engine
+ * Handles full CRUD operations (insert, select, update, delete) for Turso & Firebase.
  */
 class DatabaseGatewayProxy {
   auth = {
@@ -12,7 +11,7 @@ class DatabaseGatewayProxy {
     },
     async getProfile(userId: string) {
       try {
-        const rs = await turso.execute({ sql: 'SELECT * FROM users WHERE id = ?', args: [userId] });
+        const rs = await turso.execute({ sql: 'SELECT * FROM users WHERE id = ? LIMIT 1', args: [userId] });
         const row = rs.rows[0] ? Object.assign({}, rs.rows[0]) : null;
         return { data: row, error: null };
       } catch (err) {
@@ -74,19 +73,40 @@ class DatabaseGatewayProxy {
         }),
         insert: async (records: any[]) => {
           try {
-            for (const rec of records) {
-              const keys = Object.keys(rec);
-              const vals: any[] = Object.values(rec);
+            const items = Array.isArray(records) ? records : [records];
+            for (const rec of items) {
+              const cleanRec = { ...rec };
+              if (!cleanRec.id) {
+                cleanRec.id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'rec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+              }
+
+              const keys = Object.keys(cleanRec);
+              const vals = Object.values(cleanRec).map(v => (v !== null && typeof v === 'object') ? JSON.stringify(v) : v);
               const placeholders = keys.map(() => '?').join(', ');
-              const sql = `INSERT INTO ${tableName} (${keys.join(', ')}) VALUES (${placeholders})`;
+              const sql = `INSERT OR REPLACE INTO ${tableName} (${keys.join(', ')}) VALUES (${placeholders})`;
+
               await turso.execute({ sql, args: vals as any });
             }
-            return { data: records, error: null };
+            return { data: items, error: null };
           } catch (err) {
             console.warn(`Turso insert note into ${tableName}:`, err);
             return { data: records, error: null };
           }
         },
+        update: (updatePayload: any) => ({
+          eq: async (col: string, val: any) => {
+            try {
+              const keys = Object.keys(updatePayload);
+              const vals = Object.values(updatePayload).map(v => (v !== null && typeof v === 'object') ? JSON.stringify(v) : v);
+              const setClause = keys.map(k => `${k} = ?`).join(', ');
+              const sql = `UPDATE ${tableName} SET ${setClause} WHERE ${col} = ?`;
+              await turso.execute({ sql, args: [...vals, val] as any });
+              return { data: true, error: null };
+            } catch (err) {
+              return { data: null, error: err };
+            }
+          }
+        }),
         delete: () => ({
           eq: async (col: string, val: any) => {
             try {
