@@ -32,6 +32,7 @@ import { auth, rtdb, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { ref, set, remove, get } from 'firebase/database';
 import { doc, setDoc } from 'firebase/firestore';
+import { insertTursoRecord } from '@/lib/turso';
 
 type Role = 'user' | 'worker' | 'shopkeeper';
 
@@ -295,29 +296,29 @@ function RegisterForm() {
         new Promise((resolve) => setTimeout(() => resolve(null), ms))
       ]);
 
-    // 1. Attempt Supabase / InsForge DB Insert
+    // 1. Save directly to Turso SQLite Database (Edge)
     try {
-      await withTimeout(insforge.database.from('users').insert(userDataObj));
+      await withTimeout(insertTursoRecord('users', userDataObj));
       if (role === 'worker') {
-        await withTimeout(insforge.database.from('worker_applications').insert({
-          app_id: userId, 
+        await withTimeout(insertTursoRecord('worker_applications', {
+          id: userId,
+          user_id: userId,
           from_name: formData.name,
           email: cleanEmail,
           mobile: formData.phone,
           service: selectedCategories.join(', '),
           experience: parseInt(formData.experience) || 0,
           other_skills: repairDescription,
-          specializations: selectedCategories,
-          category_tokens: classification.categoryTokens,
+          specializations: JSON.stringify(selectedCategories),
+          category_tokens: JSON.stringify(classification.categoryTokens),
           state: formData.state,
           district: formData.district,
           pincode: formData.pincode,
-          address: formData.area,
-          password: formData.password
+          address: formData.area
         }));
       }
-    } catch (insErr) {
-      console.warn('DB insert note:', insErr);
+    } catch (tursoErr) {
+      console.warn('Turso direct insert note:', tursoErr);
     }
 
     // 2. Save Account & Profile directly to Firebase Realtime Database & Firestore
