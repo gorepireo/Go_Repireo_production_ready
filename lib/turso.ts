@@ -1,7 +1,7 @@
 import { createClient } from '@libsql/client';
 
 const url = process.env.TURSO_DATABASE_URL || 'libsql://gorepireo-gorepireo.aws-ap-south-1.turso.io';
-const authToken = process.env.TURSO_AUTH_TOKEN || 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODgxMDE2NjcsImlkIjoiMDFhMDUzMTctMDAwMS03MjQ4LWIwMjAtOGNlZDI3NWQwNzZlIiwia2lkIjoiMnFHcGtyTlBFUnhmSnpPWjIxdG9VWnBuY0FES2xsSzNjeWpQcm8zMW9aNCIsInJpZCI6ImIwMmZlYTMzLTJhNWYtNDAzYS1iZGUyLTE1ODRmMDMyNDJhYyJ9.RTV1yPWCLLT3BtpcEnqbX7KeJH0yG9DqNIBVDXZlQToXtHtaJFBJX5x9u5zqO8_ZGVkQ7EnZ15J4RJbKrwgQBw';
+const authToken = process.env.TURSO_AUTH_TOKEN || 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJnaWQiOiJlNzQ5NGZiZC05MzFmLTRlM2ItYTU5Ni1iOWJhZjUwNmRkNzUiLCJpYXQiOjE3ODgyMDU5MzUsImtpZCI6IjJxR3Brck5QRVJ4Zkp6T1oyMXRvVVpwbmNBREtsbEszY3lqUHJvMzFvWjQiLCJyaWQiOiIxYjE5OGUwYS01MjU3LTQxNjEtODYwMC1kMzQwNzMxMzU1YzgifQ.fqVq-6VbeTdm_6RW3D6yPeH9FWb2JuHtUMofCSFJ5hE0GDJ9zznxEI2sYvaeUB9DahtrhxPQ-D3Pfo3MANIfBg';
 
 /**
  * Native Turso Database Client (libsql / Serverless SQLite at Edge)
