@@ -209,20 +209,41 @@ function RegisterForm() {
         console.warn('OTP dispatch note:', sendErr);
       }
 
+      // 4. Dispatch TextBee Mobile SMS OTP (/api/send-sms)
+      if (formData.phone) {
+        try {
+          await fetch('/api/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phoneNumber: formData.phone,
+              otp: generatedOtp,
+              type: 'otp',
+              name: formData.name
+            })
+          });
+        } catch (smsErr) {
+          console.warn('TextBee SMS dispatch note:', smsErr);
+        }
+      }
+
       // 5. Firebase Phone SMS Dispatch (10,000 Free SMS/Month)
       if (formData.phone && typeof window !== 'undefined') {
         try {
           const rawPhone = formData.phone.trim();
           const formattedPhone = rawPhone.startsWith('+') ? rawPhone : `+91${rawPhone}`;
 
-          if (!(window as any).recaptchaVerifier) {
-            (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-              size: 'invisible',
-              callback: () => {}
-            });
+          const recaptchaEl = document.getElementById('recaptcha-container');
+          if (recaptchaEl) {
+            if (!(window as any).recaptchaVerifier) {
+              (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                size: 'invisible',
+                callback: () => {}
+              });
+            }
+            const confirmation = await signInWithPhoneNumber(auth, formattedPhone, (window as any).recaptchaVerifier);
+            setConfirmationResult(confirmation);
           }
-          const confirmation = await signInWithPhoneNumber(auth, formattedPhone, (window as any).recaptchaVerifier);
-          setConfirmationResult(confirmation);
         } catch (phoneSmsErr) {
           console.warn('Firebase Phone SMS dispatch note:', phoneSmsErr);
         }
@@ -417,6 +438,8 @@ function RegisterForm() {
       {/* Form Container */}
       <div className="relative z-10 px-4 max-w-xl mx-auto">
          <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100/60">
+            {/* Invisible reCAPTCHA container for Firebase Phone SMS */}
+            <div id="recaptcha-container"></div>
             
             {/* Step Indicators */}
             <div className="flex items-center justify-center gap-2 mb-6">
