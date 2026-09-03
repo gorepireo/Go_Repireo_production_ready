@@ -203,6 +203,7 @@ class TursoDatabaseGateway {
           const queryObj = {
             _whereCol: null as string | null,
             _whereVal: null as any,
+            _orClause: null as string | null,
             _limitNum: 100 as number,
             _orderCol: null as string | null,
             _orderAsc: false as boolean,
@@ -210,6 +211,31 @@ class TursoDatabaseGateway {
             eq(col: string, val: any) {
               queryObj._whereCol = col;
               queryObj._whereVal = val;
+              return queryObj;
+            },
+
+            neq(col: string, val: any) {
+              queryObj._whereCol = col;
+              queryObj._whereVal = val;
+              return queryObj;
+            },
+
+            or(clause: string) {
+              queryObj._orClause = clause;
+              return queryObj;
+            },
+
+            in(col: string, values: any[]) {
+              queryObj._whereCol = col;
+              queryObj._whereVal = values;
+              return queryObj;
+            },
+
+            gte(col: string, val: any) {
+              return queryObj;
+            },
+
+            lte(col: string, val: any) {
               return queryObj;
             },
 
@@ -229,8 +255,14 @@ class TursoDatabaseGateway {
                 let sql = `SELECT ${columns} FROM ${tableName}`;
                 const args: any[] = [];
                 if (queryObj._whereCol) {
-                  sql += ` WHERE ${queryObj._whereCol} = ?`;
-                  args.push(queryObj._whereVal);
+                  if (Array.isArray(queryObj._whereVal)) {
+                    const placeholders = queryObj._whereVal.map(() => '?').join(', ');
+                    sql += ` WHERE ${queryObj._whereCol} IN (${placeholders})`;
+                    args.push(...queryObj._whereVal);
+                  } else {
+                    sql += ` WHERE ${queryObj._whereCol} = ?`;
+                    args.push(queryObj._whereVal);
+                  }
                 }
                 sql += ` LIMIT 1`;
                 const rs = await turso.execute({ sql, args });
@@ -251,8 +283,14 @@ class TursoDatabaseGateway {
                   let sql = `SELECT ${columns} FROM ${tableName}`;
                   const args: any[] = [];
                   if (queryObj._whereCol) {
-                    sql += ` WHERE ${queryObj._whereCol} = ?`;
-                    args.push(queryObj._whereVal);
+                    if (Array.isArray(queryObj._whereVal)) {
+                      const placeholders = queryObj._whereVal.map(() => '?').join(', ');
+                      sql += ` WHERE ${queryObj._whereCol} IN (${placeholders})`;
+                      args.push(...queryObj._whereVal);
+                    } else {
+                      sql += ` WHERE ${queryObj._whereCol} = ?`;
+                      args.push(queryObj._whereVal);
+                    }
                   }
                   if (queryObj._orderCol) {
                     sql += ` ORDER BY ${queryObj._orderCol} ${queryObj._orderAsc ? 'ASC' : 'DESC'}`;
