@@ -33,7 +33,7 @@ import {
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import Avatar from '@/components/Avatar';
 
@@ -69,7 +69,7 @@ export default function Home() {
       }
 
       try {
-        const { data: allOrders } = await insforge.database
+        const { data: allOrders } = await db.database
           .from('orders')
           .select('*')
           .order('created_at', { ascending: false });

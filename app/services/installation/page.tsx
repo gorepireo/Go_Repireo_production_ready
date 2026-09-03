@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ShoppingCart, ArrowRight, ShieldCheck, Truck, MapPin, Search, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
@@ -50,11 +50,11 @@ export default function InstallationFlow() {
         currency: 'INR',
         name: 'Go_Repireo',
         description: 'Installation & Parts',
-        image: 'https://xipxmg4q.insforge.site/icon.png',
+        image: 'https://xipxmg4q.db.site/icon.png',
         order_id: data.orderId,
         handler: async function (response: any) {
           try {
-            const { data: orderData, error } = await insforge.database
+            const { data: orderData, error } = await db.database
               .from('orders')
               .insert([{
                 user_email: user.email,
@@ -71,7 +71,7 @@ export default function InstallationFlow() {
               .select();
 
             if (orderData) {
-              await insforge.database
+              await db.database
                 .from('order_tracking')
                 .insert([{
                   order_id: orderData[0].id,

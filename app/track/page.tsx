@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { useCall } from '@/context/CallContext';
 import SkeletonLoader from '@/components/SkeletonLoader';
@@ -102,7 +102,7 @@ function TrackContent() {
 
       if (paramOrderId) {
         try {
-          const { data } = await insforge.database
+          const { data } = await db.database
             .from('orders')
             .select('*')
             .eq('id', paramOrderId)
@@ -120,7 +120,7 @@ function TrackContent() {
 
       if (!currentOrder) {
         try {
-          const { data: allOrders } = await insforge.database
+          const { data: allOrders } = await db.database
             .from('orders')
             .select('*')
             .order('created_at', { ascending: false });
@@ -184,7 +184,7 @@ function TrackContent() {
         if (assignedWorkerId) {
           try {
             // 1. Check users table by id or email
-            const { data: uRow } = await insforge.database
+            const { data: uRow } = await db.database
               .from('users')
               .select('avatar_url, name, display_name, phone')
               .or(`id.eq.${assignedWorkerId},email.eq.${assignedWorkerId}`)
@@ -198,7 +198,7 @@ function TrackContent() {
 
             // 2. Check workers table if users avatar is null
             if (!assignedWorkerAvatar) {
-              const { data: wRow } = await insforge.database
+              const { data: wRow } = await db.database
                 .from('workers')
                 .select('avatar_url, image, photo_url, profile_picture, name, mobile')
                 .or(`id.eq.${assignedWorkerId},user_id.eq.${assignedWorkerId},email.eq.${assignedWorkerId}`)
@@ -221,7 +221,7 @@ function TrackContent() {
           assignedWorkerAvatar = '/technician_hero.jpg';
         }
 
-        const { data: reviewsData } = await insforge.database
+        const { data: reviewsData } = await db.database
           .from('reviews')
           .select('rating')
           .eq('worker_id', assignedWorkerId);
@@ -246,7 +246,7 @@ function TrackContent() {
         });
 
         // Check if reviewed
-        const { data: existingReview } = await insforge.database
+        const { data: existingReview } = await db.database
           .from('reviews')
           .select('*')
           .eq('order_id', currentOrder.id)
@@ -259,7 +259,7 @@ function TrackContent() {
         }
 
         // Live location telemetry extracted from order_live_location table
-        const { data: trackDataArray } = await insforge.database
+        const { data: trackDataArray } = await db.database
           .from('order_live_location')
           .select('lat, lng, updated_at')
           .eq('order_id', currentOrder.id)
@@ -315,8 +315,8 @@ function TrackContent() {
     const roomTopic = `live_location_${order.id}`;
     const globalTopic = 'global_live_locations';
 
-    insforge.realtime.subscribe(roomTopic).catch(console.warn);
-    insforge.realtime.subscribe(globalTopic).catch(console.warn);
+    db.realtime.subscribe(roomTopic).catch(console.warn);
+    db.realtime.subscribe(globalTopic).catch(console.warn);
 
     const handleLocationUpdate = (msg: any) => {
       const payload = msg?.payload;
@@ -336,12 +336,12 @@ function TrackContent() {
       }
     };
 
-    insforge.realtime.on('location_update', handleLocationUpdate);
+    db.realtime.on('location_update', handleLocationUpdate);
 
     return () => {
-      insforge.realtime.off('location_update', handleLocationUpdate);
-      insforge.realtime.unsubscribe(roomTopic);
-      insforge.realtime.unsubscribe(globalTopic);
+      db.realtime.off('location_update', handleLocationUpdate);
+      db.realtime.unsubscribe(roomTopic);
+      db.realtime.unsubscribe(globalTopic);
     };
   }, [order?.id]);
 
@@ -389,12 +389,12 @@ function TrackContent() {
         currency: 'INR',
         name: 'Go_Repireo',
         description: `Payment for ${order?.service_name || 'Service'} (Order #${order?.id?.slice(0, 8)})`,
-        image: 'https://xipxmg4q.insforge.site/icon.png',
+        image: 'https://xipxmg4q.db.site/icon.png',
         order_id: orderResData.orderId,
         handler: async function (response: any) {
           try {
             if (order?.id) {
-              await insforge.database
+              await db.database
                 .from('orders')
                 .update({ 
                   payment_status: 'paid',
@@ -453,7 +453,7 @@ function TrackContent() {
     setOrderStage('work_in_progress');
     if (order?.id) {
       try {
-        await insforge.database
+        await db.database
           .from('orders')
           .update({ status: 'work_in_progress' })
           .eq('id', order.id);
@@ -469,7 +469,7 @@ function TrackContent() {
     if (order?.id) {
       try {
         // 1. Mark order completed
-        await insforge.database
+        await db.database
           .from('orders')
           .update({ status: 'completed' })
           .eq('id', order.id);
@@ -478,7 +478,7 @@ function TrackContent() {
         const updatedDetails = { ...(order.details || {}) };
         delete updatedDetails.start_otp;
         delete updatedDetails.completion_otp;
-        await insforge.database
+        await db.database
           .from('orders')
           .update({ details: updatedDetails })
           .eq('id', order.id);
@@ -512,7 +512,7 @@ function TrackContent() {
     setSubmittingReview(true);
     try {
       if (order?.id) {
-        await insforge.database
+        await db.database
           .from('orders')
           .update({
             rating: rating,
@@ -522,7 +522,7 @@ function TrackContent() {
           .eq('id', order.id);
       }
 
-      await insforge.database
+      await db.database
         .from('reviews')
         .insert([{
           order_id: order?.id || 'GR-7821',

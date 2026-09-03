@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import webpush from 'web-push';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 
 // Helper function to safely configure VAPID at request time
 function ensureVapidConfigured() {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     });
 
     // Fetch push subscriptions from DB
-    let query = insforge.database.from('push_subscriptions').select('*');
+    let query = db.database.from('push_subscriptions').select('*');
     if (targetUserId) {
       query = query.eq('user_id', targetUserId);
     } else if (targetRole) {

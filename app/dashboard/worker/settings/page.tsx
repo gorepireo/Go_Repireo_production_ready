@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { Save, Camera, Loader2, User, Phone, Mail, CreditCard, LogOut, Pencil, Lock, Landmark, Banknote } from 'lucide-react';
 import Avatar from '@/components/Avatar';
@@ -45,7 +45,7 @@ export default function WorkerSettings() {
     if (!user) return;
     setLoading(true);
     
-    await insforge.database
+    await db.database
       .from('users')
       .update({
         name: formData.name,
@@ -89,14 +89,14 @@ export default function WorkerSettings() {
       
       const fileExt = 'jpeg';
       const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const { data, error } = await insforge.storage
+      const { data, error } = await db.storage
         .from('avatars')
         .upload(fileName, croppedBlob);
 
       if (data) {
-        const publicUrl = insforge.storage.from('avatars').getPublicUrl(fileName);
+        const publicUrl = db.storage.from('avatars').getPublicUrl(fileName);
         if (publicUrl) {
-          await insforge.database
+          await db.database
             .from('users')
             .update({ avatar_url: publicUrl as string })
             .eq('id', user.id);

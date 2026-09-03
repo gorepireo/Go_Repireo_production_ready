@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit, Trash2, Package, DollarSign, ShoppingBag, X, Tag, Info, ArrowUpRight } from 'lucide-react';
@@ -20,7 +20,7 @@ function ShopkeeperDashboardContent() {
         return;
       }
       try {
-        const { data } = await insforge.database
+        const { data } = await db.database
           .from('products')
           .select('*')
           .eq('shop_id', user.id);
@@ -36,18 +36,18 @@ function ShopkeeperDashboardContent() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await insforge.database
+    const { error } = await db.database
       .from('products')
       .insert({ ...newProduct, shop_id: user.id });
     if (!error) {
       setIsAdding(false);
-      const { data } = await insforge.database.from('products').select('*').eq('shop_id', user.id);
+      const { data } = await db.database.from('products').select('*').eq('shop_id', user.id);
       if (data) setProducts(data);
     }
   };
 
   const handleDeleteProduct = async (id: string) => {
-    const { error } = await insforge.database.from('products').delete().eq('id', id);
+    const { error } = await db.database.from('products').delete().eq('id', id);
     if (!error) {
       setProducts(products.filter(p => p.id !== id));
     }

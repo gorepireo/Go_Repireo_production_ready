@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { 
   CheckCircle2, 
@@ -37,7 +37,7 @@ function UserDashboardContent() {
       }
 
       try {
-        const { data, error } = await insforge.database
+        const { data, error } = await db.database
           .from('orders')
           .select('*')
           .order('created_at', { ascending: false });

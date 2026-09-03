@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { ArrowLeft, Save, Plus, MapPin, Trash2, Camera, Loader2, X, User, Phone, Mail, LogOut, Pencil, Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -48,7 +48,7 @@ export default function UserSettings() {
 
   const fetchAddresses = async () => {
     if (!user) return;
-    const { data } = await insforge.database
+    const { data } = await db.database
       .from('user_addresses')
       .select('*')
       .eq('user_id', user.id)
@@ -61,7 +61,7 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await insforge.database
+    await db.database
       .from('users')
       .update({
         name: formData.name,
@@ -103,14 +103,14 @@ export default function UserSettings() {
       
       const fileExt = 'jpeg';
       const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const { data, error } = await insforge.storage
+      const { data, error } = await db.storage
         .from('avatars')
         .upload(fileName, croppedBlob);
 
       if (data) {
-        const publicUrl = insforge.storage.from('avatars').getPublicUrl(fileName);
+        const publicUrl = db.storage.from('avatars').getPublicUrl(fileName);
         if (publicUrl) {
-          await insforge.database
+          await db.database
             .from('users')
             .update({ avatar_url: publicUrl as string })
             .eq('id', user.id);
@@ -129,7 +129,7 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await insforge.database.from('user_addresses').insert([{
+    await db.database.from('user_addresses').insert([{
       user_id: user.id,
       name: newAddress.name,
       address_text: newAddress.address_text,
@@ -146,7 +146,7 @@ export default function UserSettings() {
   const handleDeleteAddress = async (id: string) => {
     if (!confirm('Are you sure you want to delete this address?')) return;
     setLoading(true);
-    await insforge.database.from('user_addresses').delete().eq('id', id);
+    await db.database.from('user_addresses').delete().eq('id', id);
     await fetchAddresses();
     setLoading(false);
   };

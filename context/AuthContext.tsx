@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 
 interface Profile {
   id: string;
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (typeof window !== 'undefined') {
         const storedToken = localStorage.getItem('repireo_auth_token') || sessionStorage.getItem('repireo_auth_token');
         if (storedToken) {
-          insforge.getHttpClient().setAuthToken(storedToken);
+          db.getHttpClient().setAuthToken(storedToken);
         }
 
         if (localStorage.getItem('repireo_admin_logged_in') === 'true') {
@@ -73,10 +73,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // 1. Attempt InsForge auth lookup
       try {
-        const { data } = await insforge.auth.getCurrentUser();
+        const { data } = await db.auth.getCurrentUser();
         if (data?.user) {
           currentUser = data.user;
-          const { data: userData } = await insforge.database
+          const { data: userData } = await db.database
             .from('users')
             .select('*')
             .eq('id', data.user.id)
@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    await insforge.auth.signOut();
+    await db.auth.signOut();
     setUser(null);
     setProfile(null);
     if (typeof window !== 'undefined') {

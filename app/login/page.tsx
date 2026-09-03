@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, Home, ArrowRight, ShieldCheck, Zap, Headphones, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
-import { auth, rtdb, db } from '@/lib/firebase';
+import { auth, rtdb, firestore } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { ref, get, child } from 'firebase/database';
 
@@ -52,7 +52,7 @@ function LoginForm() {
         localStorage.setItem('repireo_auth_token', 'admin-token-' + Date.now());
       }
       try {
-        await insforge.auth.signInWithPassword({ email: cleanEmail, password });
+        await db.auth.signInWithPassword({ email: cleanEmail, password });
       } catch (err) {}
       await refresh();
       router.push('/admin');
@@ -67,7 +67,7 @@ function LoginForm() {
 
     // 1. Try InsForge Auth Login
     try {
-      const { data, error: loginError } = await insforge.auth.signInWithPassword({
+      const { data, error: loginError } = await db.auth.signInWithPassword({
         email: cleanEmail,
         password,
       });
@@ -95,7 +95,7 @@ function LoginForm() {
 
     // 3. Query Database (Supabase + Firebase RTDB) for user profile and role
     try {
-      const { data: usersRow } = await insforge.database
+      const { data: usersRow } = await db.database
         .from('users')
         .select('role, status')
         .eq('email', cleanEmail)

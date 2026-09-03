@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 
 export interface NotificationItem {
   id: string;
@@ -166,7 +166,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
 
     // Assign pending order in InsForge DB
     try {
-      const { data: pendingOrders } = await insforge.database
+      const { data: pendingOrders } = await db.database
         .from('orders')
         .select('*')
         .eq('status', 'pending')
@@ -174,7 +174,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
         .limit(1);
 
       if (pendingOrders && pendingOrders.length > 0) {
-        await insforge.database
+        await db.database
           .from('orders')
           .update({
             status: 'in_progress',

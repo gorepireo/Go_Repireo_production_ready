@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -82,11 +82,11 @@ export default function AdminPanel() {
   const fetchData = async () => {
     setLoadingApps(true);
     try {
-      const { data: shopData } = await insforge.database.from('shop_applications').select('*');
+      const { data: shopData } = await db.database.from('shop_applications').select('*');
       if (shopData) setApplications(shopData as Application[]);
 
-      const { data: workerData } = await insforge.database.from('worker_applications').select('*');
-      const { data: userData } = await insforge.database.from('users').select('id, status').eq('role', 'worker');
+      const { data: workerData } = await db.database.from('worker_applications').select('*');
+      const { data: userData } = await db.database.from('users').select('id, status').eq('role', 'worker');
       
       if (workerData && userData) {
         const merged = (workerData as any[]).map(w => {
@@ -108,14 +108,14 @@ export default function AdminPanel() {
     setActionLoading(app.id);
     try {
       // 1. Mark application as approved
-      const { error: appErr } = await insforge.database
+      const { error: appErr } = await db.database
         .from('shop_applications')
         .update({ status: 'approved' })
         .eq('id', app.id);
       if (appErr) throw appErr;
 
       // 2. Check if user exists
-      let { data: existingUser } = await insforge.database
+      let { data: existingUser } = await db.database
         .from('users')
         .select('id')
         .eq('email', app.email)
@@ -125,7 +125,7 @@ export default function AdminPanel() {
 
       // If user does not exist, create Auth user and Users table entry
       if (!userId && app.password) {
-        const { data: signUpData, error: signUpError } = await insforge.auth.signUp({
+        const { data: signUpData, error: signUpError } = await db.auth.signUp({
           email: app.email,
           password: app.password,
           name: app.owner_name,
@@ -136,7 +136,7 @@ export default function AdminPanel() {
         userId = signUpData?.user?.id;
         
         if (userId) {
-          await insforge.database.from('users').upsert({
+          await db.database.from('users').upsert({
             id: userId,
             email: app.email,
             name: app.owner_name,
@@ -148,7 +148,7 @@ export default function AdminPanel() {
         }
       } else if (userId) {
         // Update existing user status
-        await insforge.database
+        await db.database
           .from('users')
           .update({ status: 'active', role: 'shopkeeper' })
           .eq('id', userId);
@@ -157,7 +157,7 @@ export default function AdminPanel() {
       if (!userId) throw new Error("Could not determine user ID for the shop owner.");
 
       // 3. Transfer data to shops table
-      const { error: shopInsertErr } = await insforge.database.from('shops').insert({
+      const { error: shopInsertErr } = await db.database.from('shops').insert({
         owner_id: userId,
         name: app.shop_name,
         owner_name: app.owner_name,
@@ -185,7 +185,7 @@ export default function AdminPanel() {
   const handleReject = async (app: Application) => {
     setActionLoading(app.id + '_reject');
     try {
-      const { error } = await insforge.database
+      const { error } = await db.database
         .from('shop_applications')
         .update({ status: 'rejected' })
         .eq('id', app.id);
@@ -206,11 +206,11 @@ export default function AdminPanel() {
     setActionLoading(worker.id);
     try {
       // 1. Update user status to active
-      const { error } = await insforge.database.from('users').update({ status: 'active' }).eq('id', worker.app_id);
+      const { error } = await db.database.from('users').update({ status: 'active' }).eq('id', worker.app_id);
       if (error) throw error;
       
       // 2. Transfer data to workers table
-      const { error: workerInsertErr } = await insforge.database.from('workers').insert({
+      const { error: workerInsertErr } = await db.database.from('workers').insert({
         app_id: worker.app_id,
         user_id: worker.app_id,
         from_name: worker.from_name,
@@ -240,7 +240,7 @@ export default function AdminPanel() {
   const handleRejectWorker = async (worker: WorkerApp) => {
     setActionLoading(worker.id + '_reject');
     try {
-      const { error } = await insforge.database.from('users').update({ status: 'rejected' }).eq('id', worker.app_id);
+      const { error } = await db.database.from('users').update({ status: 'rejected' }).eq('id', worker.app_id);
       if (error) throw error;
       setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, user_status: 'rejected' } : w));
       showToast(`${worker.from_name}'s application rejected.`, 'error');
@@ -255,8 +255,8 @@ export default function AdminPanel() {
     e.preventDefault();
     setAddLoading(true);
     try {
-      // 1. Create auth user via insforge
-      const { data: signUpData, error: signUpError } = await insforge.auth.signUp({
+      // 1. Create auth user via db
+      const { data: signUpData, error: signUpError } = await db.auth.signUp({
         email: addForm.email,
         password: addForm.password,
         name: addForm.owner_name,
@@ -266,7 +266,7 @@ export default function AdminPanel() {
 
       if (signUpError) {
         // User may already exist - check users table
-        const { data: existingUser } = await insforge.database
+        const { data: existingUser } = await db.database
           .from('users')
           .select('id')
           .eq('email', addForm.email)
@@ -280,7 +280,7 @@ export default function AdminPanel() {
       if (!userId) throw new Error('Could not determine user ID.');
 
       // 2. Upsert into users table
-      await insforge.database.from('users').upsert({
+      await db.database.from('users').upsert({
         id: userId,
         email: addForm.email,
         name: addForm.owner_name,
@@ -291,7 +291,7 @@ export default function AdminPanel() {
       });
 
       // 3. Insert into shop_applications
-      await insforge.database.from('shop_applications').insert({
+      await db.database.from('shop_applications').insert({
         shop_name: addForm.shop_name,
         owner_name: addForm.owner_name,
         email: addForm.email,
@@ -302,7 +302,7 @@ export default function AdminPanel() {
       });
 
       // 4. Insert into shops
-      await insforge.database.from('shops').insert({
+      await db.database.from('shops').insert({
         owner_id: userId,
         name: addForm.shop_name,
         owner_name: addForm.owner_name,

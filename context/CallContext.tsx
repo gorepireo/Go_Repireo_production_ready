@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 
 export interface CallParticipant {
@@ -169,7 +169,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userKey = user?.id || user?.email;
     const globalTopic = 'global_voice_calls';
 
-    insforge.realtime.subscribe(globalTopic).catch(console.warn);
+    db.realtime.subscribe(globalTopic).catch(console.warn);
 
     const handleIncomingCall = (msg: any) => {
       if (msg?.channel === globalTopic && msg?.payload) {
@@ -205,8 +205,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    insforge.realtime.on('incoming_call', handleIncomingCall);
-    insforge.realtime.on('call_ended', handleCallEnded);
+    db.realtime.on('incoming_call', handleIncomingCall);
+    db.realtime.on('call_ended', handleCallEnded);
 
     // High-Frequency 1-Second DB Sync for Call State & ICE Candidate Sync
     const dbPollInterval = setInterval(async () => {
@@ -215,7 +215,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // 1. Check active session status when in call
         if (callData?.sessionId && ['outgoing', 'incoming', 'connected'].includes(callStatus)) {
-          const { data: session } = await insforge.database
+          const { data: session } = await db.database
             .from('call_sessions')
             .select('status, sdp_answer, sdp_offer, ice_candidates')
             .eq('id', callData.sessionId)
@@ -265,7 +265,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // 2. Check for incoming call if currently idle
         if (callStatus === 'idle') {
-          const { data: ringingSessions } = await insforge.database
+          const { data: ringingSessions } = await db.database
             .from('call_sessions')
             .select('*')
             .eq('status', 'ringing')
@@ -301,9 +301,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       clearInterval(dbPollInterval);
-      insforge.realtime.off('incoming_call', handleIncomingCall);
-      insforge.realtime.off('call_ended', handleCallEnded);
-      insforge.realtime.unsubscribe(globalTopic);
+      db.realtime.off('incoming_call', handleIncomingCall);
+      db.realtime.off('call_ended', handleCallEnded);
+      db.realtime.unsubscribe(globalTopic);
     };
   }, [user, callStatus, callData?.sessionId]);
 
@@ -350,7 +350,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const saveIceCandidateToDb = async (sessionId: string, candidate: any) => {
     const userKey = user?.id || user?.email;
     try {
-      const { data: existing } = await insforge.database
+      const { data: existing } = await db.database
         .from('call_sessions')
         .select('ice_candidates')
         .eq('id', sessionId)
@@ -359,7 +359,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const currentList = Array.isArray(existing?.ice_candidates) ? existing.ice_candidates : [];
       const updatedList = [...currentList, { userId: userKey, candidate }];
 
-      await insforge.database
+      await db.database
         .from('call_sessions')
         .update({ ice_candidates: updatedList })
         .eq('id', sessionId);
@@ -447,7 +447,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           saveIceCandidateToDb(session.id, event.candidate);
-          insforge.realtime.publish(`call_room_${session.id}`, 'ice_candidate', {
+          db.realtime.publish(`call_room_${session.id}`, 'ice_candidate', {
             candidate: event.candidate,
             userId: user?.id || user?.email
           }).catch(console.warn);
@@ -467,7 +467,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       // Broadcast incoming call event via Realtime
-      insforge.realtime.publish('global_voice_calls', 'incoming_call', {
+      db.realtime.publish('global_voice_calls', 'incoming_call', {
         sessionId: session.id,
         orderId: session.order_id,
         roomId: session.room_id,
@@ -483,7 +483,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Subscribe to session room
       const roomTopic = `call_room_${session.id}`;
-      insforge.realtime.subscribe(roomTopic).catch(console.warn);
+      db.realtime.subscribe(roomTopic).catch(console.warn);
 
       const handleSdpAnswer = (msg: any) => {
         if (msg?.channel === roomTopic && msg?.payload?.answer && pc.signalingState !== 'stable') {
@@ -504,8 +504,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
-      insforge.realtime.on('sdp_answer', handleSdpAnswer);
-      insforge.realtime.on('ice_candidate', handleIceCandidate);
+      db.realtime.on('sdp_answer', handleSdpAnswer);
+      db.realtime.on('ice_candidate', handleIceCandidate);
 
     } catch (err: any) {
       console.error('Call initiation failure:', err);
@@ -534,7 +534,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       // Fetch sdp_offer from DB session
-      const { data: dbSession } = await insforge.database
+      const { data: dbSession } = await db.database
         .from('call_sessions')
         .select('sdp_offer, ice_candidates')
         .eq('id', callData.sessionId)
@@ -568,7 +568,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           saveIceCandidateToDb(callData.sessionId, event.candidate);
-          insforge.realtime.publish(`call_room_${callData.sessionId}`, 'ice_candidate', {
+          db.realtime.publish(`call_room_${callData.sessionId}`, 'ice_candidate', {
             candidate: event.candidate,
             userId: user?.id || user?.email
           }).catch(console.warn);
@@ -588,7 +588,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       const roomTopic = `call_room_${callData.sessionId}`;
-      insforge.realtime.subscribe(roomTopic).catch(console.warn);
+      db.realtime.subscribe(roomTopic).catch(console.warn);
 
       if (dbSession?.sdp_offer) {
         await pc.setRemoteDescription(new RTCSessionDescription(dbSession.sdp_offer));
@@ -601,7 +601,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           body: JSON.stringify({ call_id: callData.sessionId, status: 'accepted', sdp_answer: answer })
         });
 
-        insforge.realtime.publish(roomTopic, 'sdp_answer', { answer }).catch(console.warn);
+        db.realtime.publish(roomTopic, 'sdp_answer', { answer }).catch(console.warn);
       } else {
         await fetch('/api/calls', {
           method: 'PATCH',
@@ -625,7 +625,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
-      insforge.realtime.on('ice_candidate', handleIceCandidate);
+      db.realtime.on('ice_candidate', handleIceCandidate);
 
       stopRingtoneLoop();
       setCallStatus('connected');
@@ -647,7 +647,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ call_id: callData.sessionId, status: 'declined', ended_by: user?.id || user?.email })
       });
 
-      insforge.realtime.publish('global_voice_calls', 'call_ended', { sessionId: callData.sessionId }).catch(console.warn);
+      db.realtime.publish('global_voice_calls', 'call_ended', { sessionId: callData.sessionId }).catch(console.warn);
     } catch (e) {
       console.warn('Decline error:', e);
     } finally {
@@ -668,7 +668,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ call_id: callData.sessionId, status: 'ended', ended_by: user?.id || user?.email })
       });
 
-      insforge.realtime.publish('global_voice_calls', 'call_ended', { sessionId: callData.sessionId }).catch(console.warn);
+      db.realtime.publish('global_voice_calls', 'call_ended', { sessionId: callData.sessionId }).catch(console.warn);
     } catch (e) {
       console.warn('End call error:', e);
     } finally {

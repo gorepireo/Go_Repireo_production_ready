@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { classifyWorkerCategories } from '@/lib/workerCategoryClassifier';
-import { auth, rtdb, db } from '@/lib/firebase';
+import { auth, rtdb, firestore } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { ref, set, remove, get } from 'firebase/database';
 import { doc, setDoc } from 'firebase/firestore';
@@ -328,7 +328,7 @@ function RegisterForm() {
     try {
       const sanitizedUid = userId.replace(/[.#$/\[\]]/g, '_');
       await withTimeout(set(ref(rtdb, `users/${sanitizedUid}`), userDataObj));
-      await withTimeout(setDoc(doc(db, 'users', sanitizedUid), userDataObj).catch(() => {}));
+      await withTimeout(setDoc(doc(firestore, 'users', sanitizedUid), userDataObj).catch(() => {}));
 
       if (role === 'worker') {
         const workerAppObj = {
@@ -358,7 +358,7 @@ function RegisterForm() {
     try {
       const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
       await withTimeout(remove(ref(rtdb, `temp_otps/${sanitizedEmail}`)));
-      await withTimeout(insforge.database.from('temp_otps').delete().eq('email', cleanEmail).catch(() => {}));
+      await withTimeout(db.database.from('temp_otps').delete().eq('email', cleanEmail).catch(() => {}));
     } catch (cleanErr) {
       console.warn('OTP row cleanup note:', cleanErr);
     }

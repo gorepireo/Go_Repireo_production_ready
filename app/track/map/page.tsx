@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Target, Navigation, Info, ShieldCheck, Zap, Activity, Satellite, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import BottomNav from '@/components/BottomNav';
@@ -37,7 +37,7 @@ function StandardMapContent() {
     }
 
     try {
-      const { data: orderData } = await insforge.database
+      const { data: orderData } = await db.database
         .from('orders')
         .select('*')
         .eq('id', orderId)
@@ -49,7 +49,7 @@ function StandardMapContent() {
         let finalTrackData = null;
         
         // 1. Try to get the real-time live location first
-        const { data: liveData } = await insforge.database
+        const { data: liveData } = await db.database
           .from('order_live_location')
           .select('*')
           .eq('order_id', orderId)
@@ -59,7 +59,7 @@ function StandardMapContent() {
           finalTrackData = liveData;
         } else {
           // 2. Fallback to the historical order tracking log
-          const { data: trackData } = await insforge.database
+          const { data: trackData } = await db.database
             .from('order_tracking')
             .select('*')
             .eq('order_id', orderId)

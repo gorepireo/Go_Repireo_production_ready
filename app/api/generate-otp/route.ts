@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 
 // Generate a unique 4-digit OTP not currently used by any active order
 async function generateUniqueOtp(maxTries = 20): Promise<string> {
@@ -7,7 +7,7 @@ async function generateUniqueOtp(maxTries = 20): Promise<string> {
     const candidate = Math.floor(1000 + Math.random() * 9000).toString();
 
     // Check if this OTP is already used in an active order's details
-    const { data: conflictingOrders } = await insforge.database
+    const { data: conflictingOrders } = await db.database
       .from('orders')
       .select('id, details')
       .in('status', ['pending', 'in_progress', 'assigned', 'work_in_progress', 'on_the_way', 'working']);

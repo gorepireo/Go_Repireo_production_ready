@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
@@ -110,7 +110,7 @@ export default function ServiceBooking() {
 
   useEffect(() => {
     if (user) {
-      insforge.database.from('user_addresses').select('*').eq('user_id', user.id)
+      db.database.from('user_addresses').select('*').eq('user_id', user.id)
         .then((res: any) => { if (res?.data) setAddresses(res.data); });
     }
   }, [user, loading, router]);
@@ -153,7 +153,7 @@ export default function ServiceBooking() {
       order_type: 'direct_service'
     };
 
-    let { data, error } = await insforge.database
+    let { data, error } = await db.database
       .from('orders')
       .insert([insertPayload])
       .select();
@@ -161,7 +161,7 @@ export default function ServiceBooking() {
     if (error && (error.message?.includes('payment_method') || error.message?.includes('schema cache'))) {
       delete insertPayload.payment_method;
       delete insertPayload.payment_status;
-      const res = await insforge.database
+      const res = await db.database
         .from('orders')
         .insert([insertPayload])
         .select();
@@ -174,7 +174,7 @@ export default function ServiceBooking() {
     }
 
     if (data && data.length > 0) {
-      await insforge.database
+      await db.database
         .from('order_tracking')
         .insert([{
           order_id: data[0].id,
@@ -186,7 +186,7 @@ export default function ServiceBooking() {
             : 'Order placed & prepaid online. Initialising logistic unit...'
         }]);
 
-      await insforge.database
+      await db.database
         .from('notifications')
         .insert([{
           user_id: user?.id,
@@ -200,7 +200,7 @@ export default function ServiceBooking() {
 
       // Notify matching active workers
       try {
-        const { data: activeWorkers } = await insforge.database
+        const { data: activeWorkers } = await db.database
           .from('workers')
           .select('user_id, service')
           .eq('status', 'active');
@@ -224,7 +224,7 @@ export default function ServiceBooking() {
               link: '/dashboard/worker'
             }));
 
-            await insforge.database.from('notifications').insert(workerNotifications);
+            await db.database.from('notifications').insert(workerNotifications);
 
             // Also send REAL device push notifications to matching workers
             const timingTextPush = formData.bookingType === 'immediately' ? 'Immediate service' : `Scheduled: ${formData.preferredDate}`;
@@ -283,7 +283,7 @@ export default function ServiceBooking() {
           currency: 'INR',
           name: 'Go_Repireo',
           description: `${formData.category.toUpperCase()} Service Base Estimation`,
-          image: 'https://xipxmg4q.insforge.site/icon.png',
+          image: 'https://xipxmg4q.db.site/icon.png',
           order_id: orderResData.orderId,
           handler: async function (response: any) {
             try {

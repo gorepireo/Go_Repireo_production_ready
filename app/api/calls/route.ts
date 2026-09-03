@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Fetch Order from Database
-    const { data: order, error: orderErr } = await insforge.database
+    const { data: order, error: orderErr } = await db.database
       .from('orders')
       .select('*')
       .eq('id', order_id)
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       callSession.sdp_offer = sdp_offer;
     }
 
-    const { error: insertErr } = await insforge.database
+    const { error: insertErr } = await db.database
       .from('call_sessions')
       .insert([callSession]);
 
@@ -142,7 +142,7 @@ export async function PATCH(req: Request) {
       if (ended_by) updateData.ended_by = ended_by;
 
       // Calculate Duration
-      const { data: existing } = await insforge.database
+      const { data: existing } = await db.database
         .from('call_sessions')
         .select('accepted_at')
         .eq('id', call_id)
@@ -155,7 +155,7 @@ export async function PATCH(req: Request) {
       }
     }
 
-    const { error: updateErr } = await insforge.database
+    const { error: updateErr } = await db.database
       .from('call_sessions')
       .update(updateData)
       .eq('id', call_id);

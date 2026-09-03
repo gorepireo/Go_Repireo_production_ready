@@ -19,7 +19,8 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const firestore = getFirestore(app);
+export const db = firestore; // Alias for backward compatibility
 export const rtdb = getDatabase(app);
 export const storage = getStorage(app);
 
@@ -49,27 +50,37 @@ export const firebaseService = {
     }
   },
 
-  // Push new item into node collection
-  async pushNode(path: string, data: any) {
+  // Push new node item in RTDB list
+  async pushToList(path: string, data: any) {
     try {
       const newRef = push(ref(rtdb, path));
-      const payload = { ...data, id: newRef.key };
-      await set(newRef, payload);
-      return payload;
+      await set(newRef, data);
+      return newRef.key;
     } catch (err) {
       console.warn(`RTDB push error on ${path}:`, err);
       return null;
     }
   },
 
-  // Realtime subscription listener
-  listenNode(path: string, callback: (data: any) => void) {
-    const nodeRef = ref(rtdb, path);
-    onValue(nodeRef, (snapshot) => {
-      callback(snapshot.exists() ? snapshot.val() : null);
-    });
-    return () => off(nodeRef);
+  // Update existing node in RTDB
+  async updateNode(path: string, data: any) {
+    try {
+      await update(ref(rtdb, path), data);
+      return true;
+    } catch (err) {
+      console.warn(`RTDB update error on ${path}:`, err);
+      return false;
+    }
+  },
+
+  // Delete node from RTDB
+  async deleteNode(path: string) {
+    try {
+      await remove(ref(rtdb, path));
+      return true;
+    } catch (err) {
+      console.warn(`RTDB delete error on ${path}:`, err);
+      return false;
+    }
   }
 };
-
-export default app;

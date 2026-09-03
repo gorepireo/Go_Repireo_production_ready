@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 
 // Save a user's push subscription to the database
 export async function POST(req: Request) {
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     }
 
     // Upsert push subscription keyed by endpoint
-    const { error } = await insforge.database
+    const { error } = await db.database
       .from('push_subscriptions')
       .upsert([{
         user_id: userId || null,
@@ -45,7 +45,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'endpoint is required' }, { status: 400 });
     }
 
-    await insforge.database
+    await db.database
       .from('push_subscriptions')
       .delete()
       .eq('endpoint', endpoint);

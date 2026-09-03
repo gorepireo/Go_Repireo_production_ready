@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { useCall } from '@/context/CallContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -175,7 +175,7 @@ function WorkerDashboardContent() {
     setIsAvailable(newStatus);
     if (user?.id) {
       try {
-        await insforge.database
+        await db.database
           .from('users')
           .update({ is_available: newStatus })
           .eq('id', user.id);
@@ -195,7 +195,7 @@ function WorkerDashboardContent() {
       let assignedJobs: any[] = [];
 
       if (workerId) {
-        const { data: byId } = await insforge.database
+        const { data: byId } = await db.database
           .from('orders')
           .select('*')
           .eq('worker_id', workerId)
@@ -208,7 +208,7 @@ function WorkerDashboardContent() {
       }
 
       if (assignedJobs.length === 0 && workerEmail) {
-        const { data: byEmail } = await insforge.database
+        const { data: byEmail } = await db.database
           .from('orders')
           .select('*')
           .eq('worker_email', workerEmail)
@@ -226,7 +226,7 @@ function WorkerDashboardContent() {
           const key = localStorage.key(i);
           if (key && key.startsWith('accepted_job_') && localStorage.getItem(key) === 'true') {
             const acceptedId = key.replace('accepted_job_', '');
-            const { data: localOrder } = await insforge.database
+            const { data: localOrder } = await db.database
               .from('orders')
               .select('*')
               .eq('id', acceptedId)
@@ -248,7 +248,7 @@ function WorkerDashboardContent() {
         setActiveJob(assignedJobs[0]);
       } else {
         // ONLY check for unassigned pending orders if worker has no active accepted order
-        const { data: pendingJobs } = await insforge.database
+        const { data: pendingJobs } = await db.database
           .from('orders')
           .select('*')
           .eq('status', 'pending')
@@ -274,7 +274,7 @@ function WorkerDashboardContent() {
       }
 
       // 3. Fetch ALL completed jobs for total LIFETIME EARNINGS & previous orders list
-      let completedQuery = insforge.database
+      let completedQuery = db.database
         .from('orders')
         .select('*')
         .in('status', ['completed', 'delivered'])
@@ -329,7 +329,7 @@ function WorkerDashboardContent() {
 
     try {
       // 1. Fetch current order state from DB to check if it's already accepted by someone else
-      const { data: existingOrder } = await insforge.database
+      const { data: existingOrder } = await db.database
         .from('orders')
         .select('*')
         .eq('id', targetId)
@@ -378,7 +378,7 @@ function WorkerDashboardContent() {
         updateData.worker_id = workerId;
       }
 
-      const { error: updateError } = await insforge.database
+      const { error: updateError } = await db.database
         .from('orders')
         .update(updateData)
         .eq('id', targetId);
@@ -430,7 +430,7 @@ function WorkerDashboardContent() {
         }));
       }
 
-      await insforge.database
+      await db.database
         .from('order_tracking')
         .insert([{
           order_id: targetId,
@@ -441,7 +441,7 @@ function WorkerDashboardContent() {
       const wLat = liveDeviceGps?.lat || (profile?.lat ? Number(profile.lat) : 26.7620);
       const wLng = liveDeviceGps?.lng || (profile?.lng ? Number(profile.lng) : 79.0320);
 
-      await insforge.database
+      await db.database
         .from('order_live_location')
         .upsert([{
           order_id: targetId,
@@ -495,7 +495,7 @@ function WorkerDashboardContent() {
       // Save live worker GPS coordinates to DB
       if (activeJob?.id) {
         try {
-          await insforge.database.from('order_live_location').upsert([{
+          await db.database.from('order_live_location').upsert([{
             order_id: activeJob.id,
             lat: liveDeviceGps.lat,
             lng: liveDeviceGps.lng,
@@ -517,7 +517,7 @@ function WorkerDashboardContent() {
 
           if (activeJob?.id) {
             try {
-              await insforge.database.from('order_live_location').upsert([{
+              await db.database.from('order_live_location').upsert([{
                 order_id: activeJob.id,
                 lat: actualLat,
                 lng: actualLng,
@@ -560,7 +560,7 @@ function WorkerDashboardContent() {
     setVerifyingOtp(true);
     try {
       if (activeJob?.id) {
-        await insforge.database
+        await db.database
           .from('orders')
           .update({ 
             status: 'work_in_progress',
@@ -585,7 +585,7 @@ function WorkerDashboardContent() {
     setCashCollected(true);
     if (activeJob?.id) {
       try {
-        await insforge.database
+        await db.database
           .from('orders')
           .update({ 
             payment_status: 'paid',
@@ -612,7 +612,7 @@ function WorkerDashboardContent() {
     setVerifyingOtp(true);
     try {
       if (activeJob?.id) {
-        await insforge.database
+        await db.database
           .from('orders')
           .update({ 
             status: 'completed',

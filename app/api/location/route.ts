@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Fetch order to verify assigned worker authorization & order status
-    const { data: order, error: orderErr } = await insforge.database
+    const { data: order, error: orderErr } = await db.database
       .from('orders')
       .select('id, worker_id, status, user_email, customer_id')
       .eq('id', order_id)
@@ -32,13 +32,13 @@ export async function POST(req: NextRequest) {
     const updatedAt = new Date().toISOString();
 
     // 2. Delete outdated live location record for this order
-    await insforge.database
+    await db.database
       .from('order_live_location')
       .delete()
       .eq('order_id', order_id);
 
     // 3. Insert updated worker GPS location into order_live_location
-    await insforge.database
+    await db.database
       .from('order_live_location')
       .insert([{
         order_id: order_id,
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Publish to InsForge Realtime Channel for instant customer map update
     const roomTopic = `live_location_${order_id}`;
-    await insforge.realtime.publish(roomTopic, 'location_update', {
+    await db.realtime.publish(roomTopic, 'location_update', {
       order_id,
       worker_id: worker_id || order.worker_id,
       latitude: Number(latitude),
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     }).catch(console.warn);
 
     // Also broadcast to global channel fallback
-    await insforge.realtime.publish('global_live_locations', 'location_update', {
+    await db.realtime.publish('global_live_locations', 'location_update', {
       order_id,
       latitude: Number(latitude),
       longitude: Number(longitude),
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch latest location
-    const { data: locRows, error } = await insforge.database
+    const { data: locRows, error } = await db.database
       .from('order_live_location')
       .select('*')
       .eq('order_id', order_id)

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { trainAndEvaluateAIProblem } from '@/lib/ai/estimatorModel';
-import { insforge } from '@/lib/insforge';
+import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     // 1. Order Lookup: Check if input is a real Booking / Order ID in InsForge DB
     try {
-      const { data: orderData } = await insforge.database
+      const { data: orderData } = await db.database
         .from('orders')
         .select('*')
         .eq('id', trimmedInput)
@@ -61,7 +61,7 @@ You are an expert home repair diagnostic AI.
 Briefly summarize in 1 sentence why this issue ('${trimmedInput}') requires professional repair and what safety precaution the customer should take.
 Return ONLY valid JSON matching: {"insights": "your 1 sentence diagnostic insight"}`;
 
-      const completion = await insforge.ai.chat.completions.create({
+      const completion = await db.ai.chat.completions.create({
         model: 'openai/gpt-4o-mini',
         messages: [{ role: 'system', content: systemPrompt }]
       });
