@@ -1,8 +1,8 @@
-import { turso } from './turso';
+import { turso, insertTursoRecord, updateTursoRecord, getTursoRecord, getTursoRecords, deleteTursoRecord } from './turso';
 
 /**
- * Turso SQLite & Firebase Database Gateway Engine
- * Handles full CRUD operations (insert, select, update, delete) for Turso & Firebase.
+ * Turso SQLite Native Gateway Proxy Engine
+ * Routes 100% of application database queries to Turso SQLite database at the edge.
  */
 class DatabaseGatewayProxy {
   auth = {
@@ -11,8 +11,7 @@ class DatabaseGatewayProxy {
     },
     async getProfile(userId: string) {
       try {
-        const rs = await turso.execute({ sql: 'SELECT * FROM users WHERE id = ? LIMIT 1', args: [userId] });
-        const row = rs.rows[0] ? Object.assign({}, rs.rows[0]) : null;
+        const row = await getTursoRecord('users', 'id', userId);
         return { data: row, error: null };
       } catch (err) {
         return { data: null, error: err };
@@ -35,83 +34,113 @@ class DatabaseGatewayProxy {
   database = {
     from(tableName: string) {
       return {
-        select: (columns = '*') => ({
-          eq: (col: string, val: any) => ({
-            single: async () => {
+        select: (columns = '*') => {
+          const queryObj = {
+            _whereCol: null as string | null,
+            _whereVal: null as any,
+            _limitNum: 100 as number,
+            _orderCol: null as string | null,
+            _orderAsc: false as boolean,
+
+            eq(col: string, val: any) {
+              queryObj._whereCol = col;
+              queryObj._whereVal = val;
+              return queryObj;
+            },
+
+            order(col: string, options?: { ascending?: boolean }) {
+              queryObj._orderCol = col;
+              queryObj._orderAsc = options?.ascending ?? false;
+              return queryObj;
+            },
+
+            limit(num: number) {
+              queryObj._limitNum = num;
+              return queryObj;
+            },
+
+            async single() {
               try {
-                const rs = await turso.execute({ sql: `SELECT ${columns} FROM ${tableName} WHERE ${col} = ? LIMIT 1`, args: [val] });
-                return { data: rs.rows[0] ? Object.assign({}, rs.rows[0]) : null, error: null };
+                let sql = `SELECT ${columns} FROM ${tableName}`;
+                const args: any[] = [];
+                if (queryObj._whereCol) {
+                  sql += ` WHERE ${queryObj._whereCol} = ?`;
+                  args.push(queryObj._whereVal);
+                }
+                sql += ` LIMIT 1`;
+                const rs = await turso.execute({ sql, args });
+                const row = rs.rows[0] ? Object.assign({}, rs.rows[0]) : null;
+                return { data: row, error: null };
               } catch (err) {
                 return { data: null, error: err };
               }
             },
-            maybeSingle: async () => {
-              try {
-                const rs = await turso.execute({ sql: `SELECT ${columns} FROM ${tableName} WHERE ${col} = ? LIMIT 1`, args: [val] });
-                return { data: rs.rows[0] ? Object.assign({}, rs.rows[0]) : null, error: null };
-              } catch (err) {
-                return { data: null, error: err };
-              }
+
+            async maybeSingle() {
+              return this.single();
+            },
+
+            then(onfulfilled?: (value: { data: any[]; error: any }) => any) {
+              const runQuery = async () => {
+                try {
+                  let sql = `SELECT ${columns} FROM ${tableName}`;
+                  const args: any[] = [];
+                  if (queryObj._whereCol) {
+                    sql += ` WHERE ${queryObj._whereCol} = ?`;
+                    args.push(queryObj._whereVal);
+                  }
+                  if (queryObj._orderCol) {
+                    sql += ` ORDER BY ${queryObj._orderCol} ${queryObj._orderAsc ? 'ASC' : 'DESC'}`;
+                  }
+                  sql += ` LIMIT ${queryObj._limitNum}`;
+                  const rs = await turso.execute({ sql, args });
+                  const rows = rs.rows.map(r => Object.assign({}, r));
+                  return { data: rows, error: null };
+                } catch (err) {
+                  return { data: [], error: err };
+                }
+              };
+
+              return runQuery().then(onfulfilled);
             }
-          }),
-          maybeSingle: async () => {
-            try {
-              const rs = await turso.execute({ sql: `SELECT ${columns} FROM ${tableName} LIMIT 1` });
-              return { data: rs.rows[0] ? Object.assign({}, rs.rows[0]) : null, error: null };
-            } catch (err) {
-              return { data: null, error: err };
-            }
-          },
-          limit: async (num: number) => {
-            try {
-              const rs = await turso.execute(`SELECT ${columns} FROM ${tableName} LIMIT ${num}`);
-              return { data: rs.rows.map(r => Object.assign({}, r)), error: null };
-            } catch (err) {
-              return { data: [], error: err };
-            }
-          }
-        }),
+          };
+
+          return queryObj;
+        },
+
         insert: async (records: any[]) => {
           try {
             const items = Array.isArray(records) ? records : [records];
+            const insertedResults: any[] = [];
             for (const rec of items) {
-              const cleanRec = { ...rec };
-              if (!cleanRec.id) {
-                cleanRec.id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'rec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+              const res = await insertTursoRecord(tableName, rec);
+              if (res.success && res.record) {
+                insertedResults.push(res.record);
               }
-
-              const keys = Object.keys(cleanRec);
-              const vals = Object.values(cleanRec).map(v => (v !== null && typeof v === 'object') ? JSON.stringify(v) : v);
-              const placeholders = keys.map(() => '?').join(', ');
-              const sql = `INSERT OR REPLACE INTO ${tableName} (${keys.join(', ')}) VALUES (${placeholders})`;
-
-              await turso.execute({ sql, args: vals as any });
             }
-            return { data: items, error: null };
+            return { data: insertedResults, error: null };
           } catch (err) {
-            console.warn(`Turso insert note into ${tableName}:`, err);
+            console.error(`Turso Insert Exception (${tableName}):`, err);
             return { data: records, error: null };
           }
         },
+
         update: (updatePayload: any) => ({
           eq: async (col: string, val: any) => {
             try {
-              const keys = Object.keys(updatePayload);
-              const vals = Object.values(updatePayload).map(v => (v !== null && typeof v === 'object') ? JSON.stringify(v) : v);
-              const setClause = keys.map(k => `${k} = ?`).join(', ');
-              const sql = `UPDATE ${tableName} SET ${setClause} WHERE ${col} = ?`;
-              await turso.execute({ sql, args: [...vals, val] as any });
-              return { data: true, error: null };
+              const res = await updateTursoRecord(tableName, updatePayload, col, val);
+              return { data: res.success, error: res.error || null };
             } catch (err) {
               return { data: null, error: err };
             }
           }
         }),
+
         delete: () => ({
           eq: async (col: string, val: any) => {
             try {
-              await turso.execute({ sql: `DELETE FROM ${tableName} WHERE ${col} = ?`, args: [val] });
-              return { data: true, error: null };
+              const res = await deleteTursoRecord(tableName, col, val);
+              return { data: res.success, error: res.error || null };
             } catch (err) {
               return { data: null, error: err };
             }
