@@ -1,0 +1,84 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation Template for Go_Repireo PostgreSQL Database (Free Tier Eligible in ap-south-1 Mumbai)",
+  "Parameters": {
+    "DBName": {
+      "Type": "String",
+      "Default": "gorepireo",
+      "Description": "Database name"
+    },
+    "DBUser": {
+      "Type": "String",
+      "Default": "gorepireo_admin",
+      "Description": "Database Master Username"
+    }
+  },
+  "Resources": {
+    "GoRepireoDBSecret": {
+      "Type": "AWS::SecretsManager::Secret",
+      "Properties": {
+        "Name": "gorepireo/db/credentials",
+        "Description": "Master password for Go_Repireo AWS RDS PostgreSQL database",
+        "GenerateSecretString": {
+          "SecretStringTemplate": "{\"username\": \"gorepireo_admin\"}",
+          "GenerateStringKey": "password",
+          "PasswordLength": 16,
+          "ExcludePunctuation": true
+        }
+      }
+    },
+    "GoRepireoDBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security group allowing PostgreSQL access on port 5432",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow PostgreSQL traffic on port 5432"
+          }
+        ]
+      }
+    },
+    "GoRepireoRDSInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBInstanceIdentifier": "gorepireo-postgres-db",
+        "DBName": { "Ref": "DBName" },
+        "AllocatedStorage": "20",
+        "DBInstanceClass": "db.t4g.micro",
+        "Engine": "postgres",
+        "EngineVersion": "16.1",
+        "MasterUsername": { "Ref": "DBUser" },
+        "MasterUserPassword": "{{resolve:secretsmanager:gorepireo/db/credentials:SecretString:password}}",
+        "VPCSecurityGroups": [
+          { "Fn::GetAtt": ["GoRepireoDBSecurityGroup", "GroupId"] }
+        ],
+        "PubliclyAccessible": true,
+        "StorageType": "gp3",
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "Go_Repireo"
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "DBEndpoint": {
+      "Description": "Public PostgreSQL Host Endpoint",
+      "Value": { "Fn::GetAtt": ["GoRepireoRDSInstance", "Endpoint.Address"] }
+    },
+    "DBPort": {
+      "Description": "PostgreSQL Port",
+      "Value": { "Fn::GetAtt": ["GoRepireoRDSInstance", "Endpoint.Port"] }
+    },
+    "SecretArn": {
+      "Description": "AWS Secrets Manager Secret ARN",
+      "Value": { "Ref": "GoRepireoDBSecret" }
+    }
+  }
+}
