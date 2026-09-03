@@ -12,6 +12,11 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const [checking, setChecking] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -39,14 +44,21 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
 
   const isAuthPage = AUTH_ROUTES.some(route => pathname === route || pathname?.startsWith(route));
 
+  // Render children directly during initial SSR to avoid DarkReader/Extension SVG hydration mismatch
+  if (!mounted) {
+    return <div suppressHydrationWarning>{children}</div>;
+  }
+
   if ((authLoading || checking) && !isAuthPage) {
     return (
-      <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 bg-[#007AFF] text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 animate-pulse mb-4">
-          <Wrench className="w-8 h-8 animate-spin" />
+      <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center" suppressHydrationWarning>
+        <div className="w-16 h-16 bg-[#007AFF] text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 animate-pulse mb-4" suppressHydrationWarning>
+          <span suppressHydrationWarning className="inline-flex items-center justify-center">
+            <Wrench className="w-8 h-8 animate-spin" />
+          </span>
         </div>
-        <h2 className="text-sm font-black text-slate-800 tracking-tight uppercase">GO_REPIREO SECURITY</h2>
-        <p className="text-[11px] font-semibold text-slate-400 mt-1">Verifying secure authentication...</p>
+        <h2 className="text-sm font-black text-slate-800 tracking-tight uppercase" suppressHydrationWarning>GO_REPIREO SECURITY</h2>
+        <p className="text-[11px] font-semibold text-slate-400 mt-1" suppressHydrationWarning>Verifying secure authentication...</p>
       </div>
     );
   }
