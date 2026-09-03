@@ -170,6 +170,12 @@ class TursoDatabaseGateway {
     },
     unsubscribe: async (topic: string) => {
       return { success: true };
+    },
+    on: (event: string, callback: Function) => {
+      return { success: true };
+    },
+    off: (event: string, callback: Function) => {
+      return { success: true };
     }
   };
 
