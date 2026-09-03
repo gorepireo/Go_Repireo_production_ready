@@ -52,12 +52,17 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
   if ((authLoading || checking) && !isAuthPage) {
     return (
       <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center" suppressHydrationWarning>
-        <div className="w-16 h-16 bg-[#007AFF] text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 animate-pulse mb-4" suppressHydrationWarning>
-          <span suppressHydrationWarning className="inline-flex items-center justify-center">
-            <Wrench className="w-8 h-8 animate-spin" />
-          </span>
+        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden shadow-xl shadow-blue-500/20 bg-white flex items-center justify-center mb-4 border border-blue-100/80" suppressHydrationWarning>
+          <video 
+            src="/logeing.mp4" 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            className="w-full h-full object-cover" 
+          />
         </div>
-        <h2 className="text-sm font-black text-slate-800 tracking-tight uppercase" suppressHydrationWarning>GO_REPIREO SECURITY</h2>
+        <h2 className="text-xs font-black text-slate-800 tracking-tight uppercase" suppressHydrationWarning>GO_REPIREO SECURITY</h2>
         <p className="text-[11px] font-semibold text-slate-400 mt-1" suppressHydrationWarning>Verifying secure authentication...</p>
       </div>
     );

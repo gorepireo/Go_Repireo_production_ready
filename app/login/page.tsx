@@ -353,7 +353,9 @@ export default function Login() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden shadow-xl shadow-blue-500/20 bg-white border border-blue-100/80">
+          <video src="/logeing.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover" />
+        </div>
       </div>
     }>
       <LoginForm />
