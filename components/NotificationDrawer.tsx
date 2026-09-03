@@ -37,75 +37,9 @@ interface NotificationDrawerProps {
   onClose: () => void;
 }
 
-const customerDefaults: NotificationItem[] = [
-  {
-    id: 'c1',
-    type: 'review',
-    title: 'Rate Your Experience ⭐',
-    message: 'Rohit Sharma completed your AC Repair. Please leave a review!',
-    time: '2m ago',
-    read: false,
-    actionUrl: '/track?review=true'
-  },
-  {
-    id: 'c2',
-    type: 'completed',
-    title: 'Work Completed',
-    message: 'Service completed! Verification OTP verified by Rohit Sharma.',
-    time: '15m ago',
-    read: false,
-    actionUrl: '/track'
-  },
-  {
-    id: 'c3',
-    type: 'started',
-    title: 'Work Started',
-    message: 'Start Work OTP verified. Rohit Sharma is now performing repair.',
-    time: '45m ago',
-    read: true,
-    actionUrl: '/track'
-  },
-  {
-    id: 'c4',
-    type: 'reached',
-    title: 'Expert Reached',
-    message: 'Rohit Sharma has arrived at your address in Etawah.',
-    time: '1h ago',
-    read: true,
-    actionUrl: '/track'
-  },
-  {
-    id: 'c5',
-    type: 'assigned',
-    title: 'Expert Assigned',
-    message: 'Rohit Sharma (4.8 ★) assigned to your AC Repair order #GR-7821.',
-    time: '2h ago',
-    read: true,
-    actionUrl: '/track'
-  }
-];
-
-const workerDefaults: NotificationItem[] = [
-  {
-    id: 'w1',
-    type: 'worker_new_order',
-    title: '⚡ New Service Booking Alert!',
-    message: 'New AC Repair & Service booked in Etawah (2.4 km away). Tap Accept to take this job.',
-    time: 'Just now',
-    read: false,
-    actionUrl: '/dashboard/worker',
-    workerAccepted: false
-  },
-  {
-    id: 'w2',
-    type: 'worker_payment',
-    title: 'Payment Credited ₹499',
-    message: 'Work completion verified. ₹499 credited to your wallet balance.',
-    time: '2h ago',
-    read: true,
-    actionUrl: '/dashboard/worker'
-  }
-];
+// No hardcoded dummy defaults for new users
+const customerDefaults: NotificationItem[] = [];
+const workerDefaults: NotificationItem[] = [];
 
 export default function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps) {
   const router = useRouter();
@@ -125,25 +59,97 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-  // Load notifications from local device storage
+  // Load and sanitize notifications from local device storage + Turso real user orders
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    async function loadNotifications() {
+      if (typeof window === 'undefined') return;
+
+      let stored: NotificationItem[] = [];
       const saved = localStorage.getItem(storageKey);
+      
       if (saved) {
         try {
-          setNotifications(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            // Filter out old hardcoded dummy mock notifications (c1..c5, w1..w2)
+            stored = parsed.filter((item: NotificationItem) => !['c1', 'c2', 'c3', 'c4', 'c5', 'w1', 'w2'].includes(item.id));
+          }
         } catch {
-          const initial = isWorker ? workerDefaults : customerDefaults;
-          setNotifications(initial);
-          localStorage.setItem(storageKey, JSON.stringify(initial));
+          stored = [];
         }
-      } else {
-        const initial = isWorker ? workerDefaults : customerDefaults;
-        setNotifications(initial);
-        localStorage.setItem(storageKey, JSON.stringify(initial));
       }
+
+      // If user has no local notifications, attempt to fetch real user order status from Turso DB
+      const targetEmail = (user?.email || profile?.email || localStorage.getItem('repireo_user_email') || '').toLowerCase().trim();
+      const targetUserId = user?.id || profile?.id;
+
+      if (targetEmail || targetUserId) {
+        try {
+          const { data: allOrders } = await db.database
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (allOrders && allOrders.length > 0) {
+            const userOrders = allOrders.filter((o: any) => {
+              if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId || o.worker_id === targetUserId)) return true;
+              if (targetEmail) {
+                const cEmail = (o.customer_email || o.user_email || o.email || '').toLowerCase().trim();
+                const wEmail = (o.worker_email || '').toLowerCase().trim();
+                return cEmail === targetEmail || wEmail === targetEmail;
+              }
+              return false;
+            });
+
+            // Generate real notification items from actual orders if local storage has fewer items
+            if (userOrders.length > 0) {
+              const realNotifs: NotificationItem[] = userOrders.map((ord: any) => {
+                let nType: NotificationItem['type'] = 'confirmed';
+                let nTitle = 'Order Confirmed';
+                let nMessage = `Your order for ${ord.service_name || 'Service'} has been placed. Searching for technician.`;
+
+                if (ord.status === 'completed') {
+                  nType = 'completed';
+                  nTitle = 'Work Completed ✓';
+                  nMessage = `Service for ${ord.service_name || 'Order'} completed by ${ord.worker_name || 'Technician'}.`;
+                } else if (ord.status === 'in_progress') {
+                  nType = 'started';
+                  nTitle = 'Work In Progress 🛠️';
+                  nMessage = `${ord.worker_name || 'Technician'} is currently performing repair work for ${ord.service_name || 'Order'}.`;
+                }
+
+                return {
+                  id: 'db_ord_' + ord.id,
+                  type: nType,
+                  title: nTitle,
+                  message: nMessage,
+                  time: ord.created_at ? new Date(ord.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
+                  read: true,
+                  actionUrl: '/track'
+                };
+              });
+
+              // Merge real DB order notifications with stored ones without duplicates
+              const mergedMap = new Map<string, NotificationItem>();
+              stored.forEach(n => mergedMap.set(n.id, n));
+              realNotifs.forEach(n => {
+                if (!mergedMap.has(n.id)) mergedMap.set(n.id, n);
+              });
+
+              stored = Array.from(mergedMap.values());
+            }
+          }
+        } catch (err) {
+          console.warn('Real order notification fetch note:', err);
+        }
+      }
+
+      setNotifications(stored);
+      localStorage.setItem(storageKey, JSON.stringify(stored));
     }
-  }, [storageKey, isWorker]);
+
+    loadNotifications();
+  }, [storageKey, user, profile]);
 
   // Persist local notifications on update
   const updateNotifications = (newList: NotificationItem[]) => {
@@ -160,11 +166,11 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
 
   // Worker Accept Order
   const handleWorkerAccept = async (id: string) => {
-    const workerName = (profile as any)?.full_name || (profile as any)?.name || user?.email?.split('@')[0] || 'Rohit Sharma';
+    const workerName = (profile as any)?.full_name || (profile as any)?.name || user?.email?.split('@')[0] || 'Technician';
     const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.png';
     const workerPhone = (profile as any)?.phone || '+918679245568';
 
-    // Assign pending order in InsForge DB
+    // Assign pending order in Turso DB
     try {
       const { data: pendingOrders } = await db.database
         .from('orders')
@@ -178,7 +184,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
           .from('orders')
           .update({
             status: 'in_progress',
-            worker_id: user?.id || 'w-rohit-sharma',
+            worker_id: user?.id || 'worker_id',
             worker_name: workerName,
             worker_avatar: workerAvatar,
             worker_phone: workerPhone,
@@ -191,7 +197,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
     }
 
     const updated = notifications.map(n => 
-      n.id === id ? { ...n, workerAccepted: true, title: 'Order Accepted ✓', message: 'You accepted order #GR-7821. Navigate to customer location.' } : n
+      n.id === id ? { ...n, workerAccepted: true, title: 'Order Accepted ✓', message: 'You accepted order. Navigate to customer location.' } : n
     );
     updateNotifications(updated);
     router.push('/dashboard/worker');

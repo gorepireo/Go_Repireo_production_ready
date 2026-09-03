@@ -139,7 +139,8 @@ export default function Header({
           try {
             const list = JSON.parse(saved);
             if (Array.isArray(list)) {
-              const unread = list.filter((n: any) => !n.read).length;
+              const cleanList = list.filter((item: any) => !['c1', 'c2', 'c3', 'c4', 'c5', 'w1', 'w2'].includes(item.id));
+              const unread = cleanList.filter((n: any) => !n.read).length;
               setUnreadCount(unread);
             } else {
               setUnreadCount(0);
