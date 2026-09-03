@@ -88,7 +88,27 @@ function UserDashboardContent() {
   const completedOrdersCount = orders.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase())).length;
   const completionPercentage = orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0;
   const clientId = user?.id ? user.id.slice(0, 4).toUpperCase() : 'B8DC';
-  const userName = (profile as any)?.full_name || (profile as any)?.name || profile?.display_name || user?.email?.split('@')[0] || 'Prithibi Mandi';
+  const getCleanUserName = () => {
+    const rawName = (profile as any)?.full_name || (profile as any)?.name || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_name') : null);
+    if (rawName && typeof rawName === 'string' && rawName.trim() && !rawName.includes('@')) {
+      return rawName.trim();
+    }
+    const profileDisp = profile?.display_name;
+    if (profileDisp && typeof profileDisp === 'string' && profileDisp.trim() && !profileDisp.includes('@')) {
+      return profileDisp.trim();
+    }
+    if (user?.email || profile?.email) {
+      const targetE = (user?.email || profile?.email || '').split('@')[0];
+      const alphaOnly = targetE.replace(/[0-9]/g, '');
+      if (alphaOnly.length >= 3) {
+        return alphaOnly.charAt(0).toUpperCase() + alphaOnly.slice(1);
+      }
+      return targetE;
+    }
+    return 'User';
+  };
+
+  const userName = getCleanUserName();
   const avatarUrl = profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
 
   if (loading && !user) return <UserDashboardSkeleton />;

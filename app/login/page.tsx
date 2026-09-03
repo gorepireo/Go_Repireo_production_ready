@@ -98,16 +98,18 @@ function LoginForm() {
     }
 
     // 3. Query Database (Supabase + Firebase RTDB) for user profile and role
+    let detectedName = '';
     try {
       const { data: usersRow } = await db.database
         .from('users')
-        .select('role, status')
+        .select('*')
         .eq('email', cleanEmail)
         .maybeSingle();
 
       if (usersRow) {
         detectedRole = (usersRow as any).role || detectedRole;
         detectedStatus = (usersRow as any).status || detectedStatus;
+        detectedName = (usersRow as any).full_name || (usersRow as any).name || (usersRow as any).display_name || '';
         loginSuccess = true; // User exists in database
       } else {
         const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
@@ -116,6 +118,7 @@ function LoginForm() {
           const val = snapshot.val();
           detectedRole = val.role || detectedRole;
           detectedStatus = val.status || detectedStatus;
+          detectedName = val.full_name || val.name || val.display_name || '';
           loginSuccess = true;
         }
       }
@@ -147,6 +150,9 @@ function LoginForm() {
         else sessionStorage.setItem('repireo_auth_token', userToken);
         localStorage.setItem('repireo_user_email', cleanEmail);
         localStorage.setItem('repireo_cached_role', detectedRole);
+        if (detectedName) {
+          localStorage.setItem('repireo_user_name', detectedName);
+        }
       }
 
       await refresh();

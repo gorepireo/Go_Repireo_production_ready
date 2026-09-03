@@ -7,6 +7,8 @@ interface Profile {
   id: string;
   role: 'user' | 'worker' | 'shopkeeper' | 'admin';
   status: 'active' | 'pending_approval' | 'suspended';
+  full_name?: string;
+  name?: string;
   display_name?: string;
   avatar_url?: string;
   email?: string;
@@ -49,7 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       if (typeof window !== 'undefined') {
         const storedToken = localStorage.getItem('repireo_auth_token') || sessionStorage.getItem('repireo_auth_token');
-        if (storedToken) {
+        if (storedToken && db.getHttpClient) {
           db.getHttpClient().setAuthToken(storedToken);
         }
 
@@ -60,6 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             id: 'admin-id-23456',
             role: 'admin',
             status: 'active',
+            full_name: 'System Admin',
             display_name: 'System Admin',
             email: adminEmail
           });
@@ -82,26 +85,71 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .eq('id', data.user.id)
             .maybeSingle();
           if (userData) {
-            finalProfile = { ...userData, display_name: userData.name || userData.display_name };
+            const resolvedName = userData.full_name || userData.name || userData.display_name;
+            finalProfile = { 
+              ...userData, 
+              full_name: resolvedName,
+              display_name: resolvedName 
+            };
+            if (typeof window !== 'undefined' && resolvedName) {
+              localStorage.setItem('repireo_user_name', resolvedName);
+            }
           }
         }
       } catch (insErr) {
-        console.warn('InsForge auth check note:', insErr);
+        console.warn('Auth check note:', insErr);
       }
 
-      // 2. Firebase / Local Storage session fallback
-      if (!currentUser && typeof window !== 'undefined') {
+      // 2. Local Storage session fallback + Turso DB user query
+      if (typeof window !== 'undefined') {
         const storedEmail = localStorage.getItem('repireo_user_email');
         const storedRole = (localStorage.getItem('repireo_cached_role') as any) || 'user';
+        const storedName = localStorage.getItem('repireo_user_name');
+
         if (storedEmail) {
-          currentUser = { id: 'usr_' + storedEmail.replace(/[^a-zA-Z0-9]/g, '_'), email: storedEmail };
-          finalProfile = {
-            id: currentUser.id,
-            email: storedEmail,
-            display_name: storedEmail.split('@')[0],
-            role: storedEmail === 'gorepireo@gmail.com' ? 'admin' : storedRole,
-            status: 'active'
-          };
+          currentUser = currentUser || { id: 'usr_' + storedEmail.replace(/[^a-zA-Z0-9]/g, '_'), email: storedEmail };
+
+          if (!finalProfile) {
+            try {
+              const { data: userData } = await db.database
+                .from('users')
+                .select('*')
+                .eq('email', storedEmail.toLowerCase().trim())
+                .maybeSingle();
+
+              if (userData) {
+                const resolvedName = userData.full_name || userData.name || userData.display_name || storedName;
+                finalProfile = {
+                  ...userData,
+                  full_name: resolvedName,
+                  display_name: resolvedName || storedEmail.split('@')[0],
+                  role: userData.role || storedRole,
+                  status: userData.status || 'active'
+                };
+                if (resolvedName) {
+                  localStorage.setItem('repireo_user_name', resolvedName);
+                }
+              } else {
+                finalProfile = {
+                  id: currentUser.id,
+                  email: storedEmail,
+                  full_name: storedName || '',
+                  display_name: storedName || storedEmail.split('@')[0],
+                  role: storedEmail === 'gorepireo@gmail.com' ? 'admin' : storedRole,
+                  status: 'active'
+                };
+              }
+            } catch {
+              finalProfile = {
+                id: currentUser.id,
+                email: storedEmail,
+                full_name: storedName || '',
+                display_name: storedName || storedEmail.split('@')[0],
+                role: storedEmail === 'gorepireo@gmail.com' ? 'admin' : storedRole,
+                status: 'active'
+              };
+            }
+          }
         }
       }
 
@@ -136,6 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       sessionStorage.removeItem('repireo_auth_token');
       localStorage.removeItem('repireo_cached_role');
       localStorage.removeItem('repireo_cached_avatar');
+      localStorage.removeItem('repireo_user_name');
       localStorage.removeItem('repireo_admin_email');
       localStorage.removeItem('repireo_admin_logged_in');
       window.location.href = '/login';

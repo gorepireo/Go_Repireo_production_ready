@@ -365,6 +365,7 @@ function RegisterForm() {
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('repireo_user_email', cleanEmail);
+      if (formData.name) localStorage.setItem('repireo_user_name', formData.name.trim());
       localStorage.setItem('repireo_cached_role', finalRole);
     }
 
