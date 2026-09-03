@@ -368,9 +368,9 @@ function RegisterForm() {
       localStorage.setItem('repireo_cached_role', finalRole);
     }
 
-    // 4. Redirect User directly to Home Page (/) upon completing verification
+    // 4. Redirect User directly to Login Page (/login) upon completing verification
     setLoading(false);
-    router.push('/');
+    router.push(`/login?registered=true&email=${encodeURIComponent(cleanEmail)}`);
   };
 
   const handleResendOtp = async () => {

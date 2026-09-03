@@ -25,7 +25,11 @@ function LoginForm() {
 
   useEffect(() => {
     if (searchParams.get('registered')) {
-      setSuccessMsg('Registration successful. Please sign in to continue.');
+      setSuccessMsg('Account created successfully! Please sign in to log in.');
+    }
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setEmail(emailParam);
     }
   }, [searchParams]);
 
