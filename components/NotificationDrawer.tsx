@@ -149,7 +149,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
     }
 
     loadNotifications();
-  }, [storageKey, user, profile]);
+  }, [storageKey, user?.id, user?.email, profile?.id, profile?.email]);
 
   // Persist local notifications on update
   const updateNotifications = (newList: NotificationItem[]) => {
