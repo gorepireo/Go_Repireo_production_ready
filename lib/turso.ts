@@ -161,6 +161,18 @@ class TursoDatabaseGateway {
     }
   };
 
+  realtime = {
+    subscribe: async (topic: string) => {
+      return { success: true };
+    },
+    publish: async (topic: string, event: string, payload: any) => {
+      return { success: true };
+    },
+    unsubscribe: async (topic: string) => {
+      return { success: true };
+    }
+  };
+
   database = {
     from(tableName: string) {
       const insertFn = async (records: any[]) => {
