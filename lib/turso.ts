@@ -13,16 +13,46 @@ export const turso = createClient({
   authToken
 });
 
+// Cache valid table columns to prevent SQLite column missing crashes
+const tableColumnsCache: Record<string, Set<string>> = {};
+
+async function getValidTableColumns(tableName: string): Promise<Set<string> | null> {
+  try {
+    if (tableColumnsCache[tableName]) return tableColumnsCache[tableName];
+    const pragma = await turso.execute(`PRAGMA table_info(${tableName})`);
+    if (pragma.rows && pragma.rows.length > 0) {
+      const colSet = new Set<string>();
+      pragma.rows.forEach((row: any) => {
+        if (row && row.name) colSet.add(row.name);
+      });
+      tableColumnsCache[tableName] = colSet;
+      return colSet;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function insertTursoRecord(tableName: string, record: Record<string, any>) {
   try {
-    const cleanRec = { ...record };
+    const cleanRec: Record<string, any> = {};
+    const validCols = await getValidTableColumns(tableName);
+
+    for (const [k, v] of Object.entries(record)) {
+      if (!validCols || validCols.has(k)) {
+        cleanRec[k] = (v !== null && typeof v === 'object') ? JSON.stringify(v) : v;
+      }
+    }
+
     if (!cleanRec.id) {
       cleanRec.id = typeof crypto !== 'undefined' && crypto.randomUUID 
         ? crypto.randomUUID() 
         : 'rec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
     }
+
     const keys = Object.keys(cleanRec);
-    const vals = Object.values(cleanRec).map(v => (v !== null && typeof v === 'object') ? JSON.stringify(v) : v);
+    const vals = Object.values(cleanRec);
     const placeholders = keys.map(() => '?').join(', ');
     const sql = `INSERT OR REPLACE INTO ${tableName} (${keys.join(', ')}) VALUES (${placeholders})`;
 
@@ -65,8 +95,19 @@ export async function getTursoRecords(tableName: string, whereCol?: string, wher
 
 export async function updateTursoRecord(tableName: string, updateData: Record<string, any>, whereCol: string, whereVal: any) {
   try {
-    const keys = Object.keys(updateData);
-    const vals = Object.values(updateData).map(v => (v !== null && typeof v === 'object') ? JSON.stringify(v) : v);
+    const validCols = await getValidTableColumns(tableName);
+    const cleanData: Record<string, any> = {};
+
+    for (const [k, v] of Object.entries(updateData)) {
+      if (!validCols || validCols.has(k)) {
+        cleanData[k] = (v !== null && typeof v === 'object') ? JSON.stringify(v) : v;
+      }
+    }
+
+    const keys = Object.keys(cleanData);
+    if (keys.length === 0) return { success: true };
+
+    const vals = Object.values(cleanData);
     const setClause = keys.map(k => `${k} = ?`).join(', ');
     const sql = `UPDATE ${tableName} SET ${setClause} WHERE ${whereCol} = ?`;
 
