@@ -292,7 +292,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
             </div>
 
             {/* Notification List */}
-            <div className="p-3 overflow-y-auto space-y-2 flex-1 scrollbar-thin">
+            <div className="p-3 overflow-y-auto space-y-2 flex-1 hide-scrollbar">
               {notifications.length === 0 ? (
                 <div className="py-8 text-center space-y-2">
                   <div className="w-10 h-10 bg-slate-100 text-slate-400 rounded-full mx-auto flex items-center justify-center">
