@@ -8,6 +8,8 @@ import Avatar from '@/components/Avatar';
 import { useRouter } from 'next/navigation';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function WorkerSettings() {
   const { user, profile, refresh, loading: authLoading, signOut } = useAuth();
@@ -88,20 +90,18 @@ export default function WorkerSettings() {
       if (!croppedBlob) throw new Error("Failed to crop image");
       
       const fileExt = 'jpeg';
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const { data, error } = await db.storage
-        .from('avatars')
-        .upload(fileName, croppedBlob);
+      const fileName = `avatars/${user.id}-${Math.random()}.${fileExt}`;
+      const storageRef = ref(storage, fileName);
 
-      if (data) {
-        const publicUrl = db.storage.from('avatars').getPublicUrl(fileName);
-        if (publicUrl) {
-          await db.database
-            .from('users')
-            .update({ avatar_url: publicUrl as string })
-            .eq('id', user.id);
-          await refresh();
-        }
+      await uploadBytes(storageRef, croppedBlob);
+      const publicUrl = await getDownloadURL(storageRef);
+
+      if (publicUrl) {
+        await db.database
+          .from('users')
+          .update({ avatar_url: publicUrl as string })
+          .eq('id', user.id);
+        await refresh();
       }
     } catch (err) {
       console.error(err);
