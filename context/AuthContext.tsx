@@ -1,9 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { insforge } from '@/lib/insforge';
+import { AuthService } from '@/lib/services/auth.service';
+import { UserService } from '@/lib/services/user.service';
+import { WorkerService } from '@/lib/services/worker.service';
+import { User } from 'firebase/auth';
 
-interface Profile {
+export interface Profile {
   id: string;
   role: 'user' | 'worker' | 'shopkeeper' | 'admin';
   status: 'active' | 'pending_approval' | 'suspended';
@@ -11,21 +14,14 @@ interface Profile {
   avatar_url?: string;
   email?: string;
   phone?: string;
-  address?: {
-    state: string;
-    district: string;
-    area: string;
-    pincode: string;
-    lat: number;
-    lng: number;
-  };
+  address?: any;
   worker_data?: any;
   shop_data?: any;
   earnings?: number;
 }
 
 interface AuthContextType {
-  user: any | null;
+  user: User | null;
   profile: Profile | null;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -41,94 +37,93 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async () => {
+  const fetchProfileForUser = async (firebaseUser: User) => {
     try {
-      if (typeof window !== 'undefined') {
-        const storedToken = localStorage.getItem('repireo_auth_token') || sessionStorage.getItem('repireo_auth_token');
-        if (storedToken) {
-          insforge.getHttpClient().setAuthToken(storedToken);
-        }
-      }
+      // First try to fetch as a regular user
+      const userProfile = await UserService.getProfile(firebaseUser.uid);
+      
+      let p: Profile | null = null;
 
-      const { data, error } = await insforge.auth.getCurrentUser();
-      if (data?.user) {
-        setUser(data.user);
-        
-        let finalProfile: any = null;
-        
-        // Check users table first as primary source of truth
-        const { data: userData } = await insforge.database
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .maybeSingle();
-          
-        if (userData) {
-           finalProfile = {
-             ...userData,
-             display_name: userData.name || userData.display_name,
-           };
-           // Special override: company email is always admin
-           if (data.user.email === 'gorepireo@gmail.com') {
-             finalProfile.role = 'admin';
-           }
-        } else {
-          // Fallback to auth profile
-          const { data: profileData } = await insforge.auth.getProfile(data.user.id);
-          finalProfile = profileData;
-          if (data.user.email === 'gorepireo@gmail.com') {
-             if (finalProfile) finalProfile.role = 'admin';
+      if (userProfile) {
+        p = {
+          id: userProfile.uid,
+          role: userProfile.role === 'customer' ? 'user' : userProfile.role as any,
+          status: userProfile.isActive ? 'active' : 'suspended',
+          display_name: userProfile.name,
+          email: userProfile.email,
+          phone: userProfile.phone,
+          avatar_url: userProfile.profilePhoto || undefined,
+        };
+
+        // If worker, augment with worker data
+        if (p.role === 'worker') {
+          const workerProfile = await WorkerService.getProfile(firebaseUser.uid);
+          if (workerProfile) {
+             p.worker_data = workerProfile;
+             if (workerProfile.verification.status === 'pending' || workerProfile.verification.status === 'under_review') {
+                p.status = 'pending_approval';
+             }
           }
         }
-
-        if (finalProfile) {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('repireo_cached_role', finalProfile.role);
-            if (finalProfile.avatar_url) {
-              localStorage.setItem('repireo_cached_avatar', finalProfile.avatar_url);
-            }
-          }
-        }
-        setProfile(finalProfile);
       } else {
-        setUser(null);
-        setProfile(null);
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('repireo_cached_role');
-          localStorage.removeItem('repireo_cached_avatar');
-        }
+        // Fallback or legacy mapping if not found in Firestore yet
+        p = {
+          id: firebaseUser.uid,
+          role: 'user',
+          status: 'active',
+          display_name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          email: firebaseUser.email || undefined,
+          avatar_url: firebaseUser.photoURL || undefined,
+        };
+        // Auto-create basic profile
+        await UserService.createProfile(firebaseUser.uid, {
+          name: p.display_name!,
+          email: p.email || '',
+        });
       }
+
+      setProfile(p);
     } catch (err) {
-      console.error('Auth error:', err);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching user profile:", err);
+    }
+  };
+
+  const refresh = async () => {
+    if (user) {
+      await fetchProfileForUser(user);
     }
   };
 
   useEffect(() => {
-    fetchUser();
+    const unsubscribe = AuthService.onAuthStateChange(async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        await fetchProfileForUser(firebaseUser);
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const signOut = async () => {
-    await insforge.auth.signOut();
+    await AuthService.signOut();
     setUser(null);
     setProfile(null);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('repireo_auth_token');
-      sessionStorage.removeItem('repireo_auth_token');
-      localStorage.removeItem('repireo_cached_role');
-      localStorage.removeItem('repireo_cached_avatar');
-      insforge.getHttpClient().setAuthToken(null);
+      localStorage.clear();
+      window.location.href = '/login';
     }
-    window.location.href = '/login';
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, refresh: fetchUser }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, refresh }}>
       {children}
     </AuthContext.Provider>
   );

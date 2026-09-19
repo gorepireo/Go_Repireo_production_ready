@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About Go_Repireo | Etawah Home Services | Expanding Across India',
+  title: 'About Our Etawah Home Services',
   description: 'Go_Repireo (also spelled GoRepireo, Go Repireo, Repireo) is Etawah\'s trusted on-demand home services platform. Book verified plumbers, electricians, AC technicians, and appliance repair experts in Etawah, UP. Founded 2025 — expanding across India.',
   keywords: [
     'Go_Repireo', 'GoRepireo', 'Go Repireo', 'Repireo', 'about gorepireo',

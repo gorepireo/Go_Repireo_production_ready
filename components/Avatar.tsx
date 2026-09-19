@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface AvatarProps {
   src?: string | null;
@@ -25,16 +25,22 @@ const stringToColor = (str: string) => {
 };
 
 export default function Avatar({ src, name, size = 40, className = '' }: AvatarProps) {
+  const [imgError, setImgError] = useState(false);
   const fallbackChar = name ? name.charAt(0).toUpperCase() : 'U';
   const bgColor = name ? stringToColor(name) : '#007AFF';
 
   return (
     <div 
       className={`relative rounded-full overflow-hidden shrink-0 flex items-center justify-center font-black text-white shadow-sm border-2 border-white/20 ${className}`}
-      style={{ width: size, height: size, backgroundColor: src ? 'transparent' : bgColor }}
+      style={{ width: size, height: size, backgroundColor: (src && !imgError) ? 'transparent' : bgColor }}
     >
-      {src ? (
-        <img src={src} alt={name || 'Avatar'} className="w-full h-full object-cover" />
+      {src && !imgError ? (
+        <img 
+          src={src} 
+          alt={name || 'Avatar'} 
+          className="w-full h-full object-cover" 
+          onError={() => setImgError(true)}
+        />
       ) : (
         <span style={{ fontSize: size * 0.45, lineHeight: 1 }}>{fallbackChar}</span>
       )}

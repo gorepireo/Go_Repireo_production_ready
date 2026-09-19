@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Send, ArrowLeft, Loader2, Phone, MessageCircle, ChevronRight, ClipboardList, Wrench, Home, Calendar, Headphones, User as UserIcon } from 'lucide-react';
@@ -17,7 +16,7 @@ function ChatList() {
 
     const fetchChats = async () => {
       let workerId = null;
-      const { data: worker } = await insforge.database
+      const { data: worker } = await (null as any)
         .from('workers')
         .select('id')
         .eq('user_id', user.id)
@@ -25,7 +24,7 @@ function ChatList() {
         
       if (worker) workerId = worker.id;
 
-      const { data: userOrders, error: e1 } = await insforge.database
+      const { data: userOrders, error: e1 } = await (null as any)
         .from('orders')
         .select('*')
         .eq('user_id', user.id)
@@ -34,23 +33,23 @@ function ChatList() {
       let allOrders = userOrders || [];
 
       if (workerId) {
-        const { data: workerOrders, error: e2 } = await insforge.database
+        const { data: workerOrders, error: e2 } = await (null as any)
           .from('orders')
           .select('*')
           .eq('worker_id', workerId)
           .order('created_at', { ascending: false });
           
         if (workerOrders) {
-           const existingIds = new Set(allOrders.map(o => o.id));
-           workerOrders.forEach(wo => {
+           const existingIds = new Set((allOrders as any[]).map((o: any) => o.id));
+           (workerOrders as any[]).forEach((wo: any) => {
              if (!existingIds.has(wo.id)) {
-               allOrders.push(wo);
+               (allOrders as any[]).push(wo);
              }
            });
         }
       }
       
-      allOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      (allOrders as any[]).sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
       setChats(allOrders);
       setLoading(false);
     };
@@ -186,7 +185,7 @@ function ChatContent() {
     const fetchOrderAndMessages = async () => {
       if (!isSubscribed) return;
       
-      const { data: order } = await insforge.database
+      const { data: order } = await (null as any)
         .from('orders')
         .select('status')
         .eq('id', orderId)
@@ -194,7 +193,7 @@ function ChatContent() {
         
       if (order) setOrderStatus(order.status);
 
-      const { data: initialMessages } = await insforge.database
+      const { data: initialMessages } = await (null as any)
         .from('messages')
         .select('*')
         .eq('order_id', orderId)
@@ -209,7 +208,7 @@ function ChatContent() {
     fetchOrderAndMessages();
     const pollInterval = setInterval(fetchOrderAndMessages, 2000);
 
-    insforge.realtime.subscribe(`chat_${orderId}`).catch(console.warn);
+    db.realtime.subscribe(`chat_${orderId}`).catch(console.warn);
     const handleRealtime = (msg: any) => {
       if (msg?.channel === `chat_${orderId}` && msg?.payload) {
         setMessages((current) => {
@@ -219,13 +218,13 @@ function ChatContent() {
         setTimeout(scrollToBottom, 100);
       }
     };
-    insforge.realtime.on('new_message', handleRealtime);
+    db.realtime.on('new_message', handleRealtime);
 
     return () => {
       isSubscribed = false;
       clearInterval(pollInterval);
-      insforge.realtime.off('new_message', handleRealtime);
-      insforge.realtime.unsubscribe(`chat_${orderId}`);
+      db.realtime.off('new_message', handleRealtime);
+      db.realtime.unsubscribe(`chat_${orderId}`);
     };
   }, [user, orderId]);
 
@@ -242,7 +241,7 @@ function ChatContent() {
     const msgText = newMessage.trim();
     setNewMessage(''); // optimistic clear
 
-    const { data, error } = await insforge.database
+    const { data, error } = await (null as any)
       .from('messages')
       .insert({
         order_id: orderId,
@@ -256,7 +255,7 @@ function ChatContent() {
       console.error('Error sending message:', error);
       alert('Failed to send message.');
     } else if (data) {
-      insforge.realtime.publish(`chat_${orderId}`, 'new_message', data).catch(console.warn);
+      db.realtime.publish(`chat_${orderId}`, 'new_message', data).catch(console.warn);
       setMessages((current) => [...current, data]);
       setTimeout(scrollToBottom, 100);
     }

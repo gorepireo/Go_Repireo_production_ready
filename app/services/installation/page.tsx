@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { insforge } from '@/lib/insforge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ShoppingCart, ArrowRight, ShieldCheck, Truck, MapPin, Search, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
@@ -45,16 +44,16 @@ export default function InstallationFlow() {
 
       // 2. Initialize Razorpay Checkout
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TMY7lcMkI2vpQ1',
+        key: 'rzp_live_TNcvyWzcZlRsQY',
         amount: (total + 1500) * 100,
         currency: 'INR',
         name: 'Go_Repireo',
         description: 'Installation & Parts',
-        image: 'https://xipxmg4q.insforge.site/icon.png',
+        image: 'https://xipxmg4q.db.site/icon.png',
         order_id: data.orderId,
         handler: async function (response: any) {
           try {
-            const { data: orderData, error } = await insforge.database
+            const { data: orderData, error } = await (null as any)
               .from('orders')
               .insert([{
                 user_email: user.email,
@@ -71,7 +70,7 @@ export default function InstallationFlow() {
               .select();
 
             if (orderData) {
-              await insforge.database
+              await (null as any)
                 .from('order_tracking')
                 .insert([{
                   order_id: orderData[0].id,

@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { 
   ShieldCheck, 
   MapPin, 
@@ -22,16 +23,31 @@ interface CategoryCityPageProps {
   params: Promise<{ category: string; city: string }>;
 }
 
+const supportedCategories = new Set([
+  'plumbing', 'electrical', 'ac-repair', 'cleaning', 'appliance',
+  'carpentry', 'painting', 'pest-control', 'cctv-installation',
+  'ro-service', 'geyser-repair', 'deep-cleaning',
+]);
+const supportedCities = new Set(['etawah']);
+
+function isSupportedLandingPage(category: string, city: string) {
+  return supportedCategories.has(category) && supportedCities.has(city);
+}
+
 function capitalize(str: string): string {
   return str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
 export async function generateMetadata({ params }: CategoryCityPageProps): Promise<Metadata> {
   const { category, city } = await params;
+
+  if (!isSupportedLandingPage(category, city)) {
+    return { title: 'Service Not Found', robots: { index: false, follow: false } };
+  }
   const categoryName = capitalize(category);
   const cityName = capitalize(city);
 
-  const title = `Best ${categoryName} Services in ${cityName} | Doorstep ${categoryName} | Go_Repireo`;
+  const title = `Best ${categoryName} Services in ${cityName} | Doorstep ${categoryName}`;
   const description = `Book top-rated ${categoryName} professionals in ${cityName}. Verified technicians, transparent pricing, 30-day warranty, and same-day doorstep service.`;
 
   return {
@@ -59,6 +75,10 @@ export async function generateMetadata({ params }: CategoryCityPageProps): Promi
 
 export default async function CategoryCityPage({ params }: CategoryCityPageProps) {
   const { category, city } = await params;
+
+  if (!isSupportedLandingPage(category, city)) {
+    notFound();
+  }
   const categoryName = capitalize(category);
   const cityName = capitalize(city);
   const pageUrl = `https://gorepireo.in/services/${category}/${city}`;
@@ -88,8 +108,6 @@ export default async function CategoryCityPage({ params }: CategoryCityPageProps
         city={cityName}
         minPrice={199}
         maxPrice={2499}
-        ratingValue={4.9}
-        reviewCount={1420}
         faqs={faqs}
       />
 

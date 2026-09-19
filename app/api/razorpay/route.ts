@@ -3,8 +3,8 @@ import Razorpay from 'razorpay';
 
 export async function POST(req: Request) {
   try {
-    const keyId = 'rzp_live_TMY7lcMkI2vpQ1';
-    const keySecret = 'g4ty13wsRTflfdVa2pVB061T';
+    const keyId = 'rzp_live_TNcvyWzcZlRsQY';
+    const keySecret = 'gZ2BdLNOKFyumV4ezxND2V3W';
 
     const razorpay = new Razorpay({
       key_id: keyId,
@@ -19,8 +19,8 @@ export async function POST(req: Request) {
     }
 
     const rawAmount = Number(amount);
-    // Convert Rupees to Paise (e.g., ₹306 -> 30600 paise). If already in paise (> 5000), keep as is.
-    const amountInPaise = rawAmount > 5000 ? Math.round(rawAmount) : Math.round(rawAmount * 100);
+    // Convert Rupees to Paise for Razorpay (e.g., ₹8418 -> 841800 paise)
+    const amountInPaise = Math.round(rawAmount * 100);
 
     const options = {
       amount: amountInPaise,

@@ -1,371 +1,457 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
 import { 
-  ChevronRight, 
-  MapPin, 
-  Star, 
-  Zap, 
-  Users, 
-  ShieldCheck,
-  Headphones,
-  LayoutGrid,
-  Droplet,
-  Sparkles,
-  Paintbrush,
-  Hammer,
+  Menu,
+  MapPin,
+  ChevronDown,
+  Bell,
+  Search,
+  Mic,
   Snowflake,
-  ClipboardList,
-  CalendarDays,
-  UserCheck,
-  Phone,
-  Globe
+  Droplet,
+  Lightbulb,
+  Sparkles,
+  LayoutGrid,
+  MoreHorizontal,
+  Hammer,
+  Zap,
+  ShieldCheck, 
+  Clock, 
+  IndianRupee, 
+  ThumbsUp, 
+  Star, 
+  CalendarDays, 
+  Phone, 
+  Globe, 
+  ChevronRight,
+  ArrowRight,
+  Quote,
+  Headphones,
+  ClipboardList
 } from 'lucide-react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/context/AuthContext';
+import Avatar from '@/components/Avatar';
 
 const categories = [
-  { name: 'All Services', icon: LayoutGrid, color: 'text-blue-500', bg: 'bg-blue-50', active: true },
-  { name: 'Plumbing', icon: Droplet, color: 'text-blue-400', bg: 'bg-white' },
-  { name: 'Electrical', icon: Zap, color: 'text-orange-400', bg: 'bg-white' },
-  { name: 'Cleaning', icon: Sparkles, color: 'text-green-400', bg: 'bg-white' },
-  { name: 'Painting', icon: Paintbrush, color: 'text-red-400', bg: 'bg-white' },
-  { name: 'Carpentry', icon: Hammer, color: 'text-amber-700', bg: 'bg-white' },
-  { name: 'HVAC', icon: Snowflake, color: 'text-cyan-400', bg: 'bg-white' },
-];
-
-const features = [
-  { title: 'Live Tracking', desc: 'Track your service in real-time', icon: Zap, iconColor: 'text-orange-500', iconBg: 'bg-orange-50' },
-  { title: 'Expert Teams', desc: 'Skilled & verified professionals', icon: Users, iconColor: 'text-blue-500', iconBg: 'bg-blue-50' },
-  { title: 'Secure Booking', desc: 'Safe, secure & hassle-free', icon: ShieldCheck, iconColor: 'text-green-500', iconBg: 'bg-green-50' },
-  { title: '24/7 Support', desc: "We're here to help anytime", icon: Headphones, iconColor: 'text-purple-500', iconBg: 'bg-purple-50' },
+  { name: 'All Services', icon: LayoutGrid, color: 'text-[#007AFF]', bg: 'bg-[#EFF6FF] border-[#007AFF]/30', active: true },
+  { name: 'Plumbing', icon: Droplet, color: 'text-[#007AFF]', bg: 'bg-white border-slate-100', active: false },
+  { name: 'Electrical', icon: Zap, color: 'text-[#FF6B00]', bg: 'bg-white border-slate-100', active: false },
+  { name: 'Cleaning', icon: Sparkles, color: 'text-[#10B981]', bg: 'bg-white border-slate-100', active: false },
+  { name: 'Carpentry', icon: Hammer, color: 'text-purple-500', bg: 'bg-white border-slate-100', active: false },
+  { name: 'More', icon: MoreHorizontal, color: 'text-slate-400', bg: 'bg-white border-slate-100', active: false },
 ];
 
 const popularServices = [
-  { name: 'Plumbing Care', rating: '4.8', reviews: '128', price: '₹750', image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=400' },
-  { name: 'Electrical Works', rating: '4.7', reviews: '96', price: '₹1,250', image: 'https://images.unsplash.com/photo-1621905252507-b3523c44dbf4?auto=format&fit=crop&q=80&w=400' },
-  { name: 'HVAC Service', rating: '4.6', reviews: '84', price: '₹1,499', image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=400' },
-  { name: 'Cleaning Services', rating: '4.7', reviews: '112', price: '₹699', image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=400' },
+  { name: 'AC Repair & Service', rating: '4.8', reviews: '2.3k', price: 'Starts at ₹399', image: '/AC technician.png' },
+  { name: 'Plumbing Services', rating: '4.7', reviews: '1.8k', price: 'Starts at ₹299', image: '/repairing an under-sink pipe.png' },
+  { name: 'Electrical Services', rating: '4.9', reviews: '1.2k', price: 'Starts at ₹199', image: '/electrician repairing.png' },
+  { name: 'House Cleaning', rating: '4.6', reviews: '1.6k', price: 'Starts at ₹249', image: '/home-cleaning.png' },
 ];
 
 export default function Home() {
-  const [locationText, setLocationText] = useState('Available Near You');
-  const [isLocating, setIsLocating] = useState(false);
+  const { user, profile } = useAuth();
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [realBookings, setRealBookings] = useState<any[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
 
   useEffect(() => {
-    const fetchLocation = async () => {
-      setIsLocating(true);
+    async function fetchUserBookings() {
+      const targetEmail = (user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : '') || '').toLowerCase().trim();
+      const targetUserId = user?.id || profile?.id;
+
+      if (user?.email && typeof window !== 'undefined') {
+        localStorage.setItem('repireo_user_email', user.email);
+      }
+
       try {
-        const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
-        const data = await res.json();
-        
-        if (data.city) {
-          setLocationText(data.city);
+        const { data: allOrders } = await (null as any)
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (allOrders && allOrders.length > 0) {
+          const userOrders = allOrders.filter((o: any) => {
+            if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId)) return true;
+            if (targetEmail) {
+              const uEmail = (o.user_email || '').toLowerCase().trim();
+              const cEmail = (o.customer_email || '').toLowerCase().trim();
+              const dEmail = (o.details?.user_email || o.details?.customer_email || o.details?.email || '').toLowerCase().trim();
+              if (uEmail === targetEmail || cEmail === targetEmail || dEmail === targetEmail) return true;
+            }
+            return false;
+          });
+
+          setRealBookings(userOrders.length > 0 ? userOrders.slice(0, 3) : allOrders.slice(0, 3));
         } else {
-          setLocationText('Available Near You');
+          setRealBookings([]);
         }
-      } catch (error) {
-        console.error('IP Geolocation error', error);
-        setLocationText('Available Near You');
+      } catch (err) {
+        console.error('Fetch user bookings error:', err);
       } finally {
-        setIsLocating(false);
+        setLoadingBookings(false);
+      }
+    }
+
+    fetchUserBookings();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUserBookings();
       }
     };
 
-    fetchLocation();
-  }, []);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchUserBookings);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchUserBookings);
+    };
+  }, [user, profile]);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return { text: 'Pending', style: 'bg-amber-50 text-amber-600 border-amber-100' };
+      case 'in_progress':
+      case 'assigned':
+      case 'on_the_way':
+        return { text: 'Confirmed', style: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+      case 'work_in_progress':
+      case 'working':
+        return { text: 'In Progress', style: 'bg-blue-50 text-blue-600 border-blue-100' };
+      case 'completed':
+        return { text: 'Completed', style: 'bg-emerald-50 text-emerald-700 border-emerald-100' };
+      case 'cancelled':
+        return { text: 'Cancelled', style: 'bg-rose-50 text-rose-600 border-rose-100' };
+      default:
+        return { text: 'Confirmed', style: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+    }
+  };
+
+  const getServiceIcon = (name?: string) => {
+    const sName = (name || '').toLowerCase();
+    if (sName.includes('plumb')) return { icon: Droplet, bg: 'bg-blue-50 text-blue-500' };
+    if (sName.includes('electr')) return { icon: Zap, bg: 'bg-amber-50 text-amber-500' };
+    if (sName.includes('clean')) return { icon: Sparkles, bg: 'bg-emerald-50 text-emerald-500' };
+    if (sName.includes('carpent')) return { icon: Hammer, bg: 'bg-purple-50 text-purple-500' };
+    return { icon: CalendarDays, bg: 'bg-emerald-50 text-emerald-600' };
+  };
+
+  const testimonials = [
+    { text: "Great service! The expert arrived on time and fixed the issue quickly.", author: "- Neha S." },
+    { text: "Very polite technician and affordable pricing. Highly recommended!", author: "- Rajesh K." },
+    { text: "Instant booking and live map tracking made the experience effortless.", author: "- Ananya P." }
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC] pt-6">
-      {/* Hero Section */}
-      <section className="px-4">
-        <div className="relative bg-gradient-to-br from-[#e8f0fe] to-[#d6e4ff] rounded-3xl p-6 overflow-hidden min-h-[340px] flex items-center justify-between">
-          <div className="relative z-10 space-y-3.5 max-w-[58%] sm:max-w-[62%]">
-            <div className="inline-flex items-center gap-1.5 bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full border border-blue-100">
-              <ShieldCheck size={12} className="text-[#007AFF] fill-[#007AFF]/20" />
-              <span className="text-[9px] font-bold text-[#007AFF] uppercase tracking-widest">Verified & Trusted</span>
-            </div>
-            
-            <div role="heading" aria-level={2} className="text-3xl sm:text-5xl font-black leading-[0.95] tracking-tight text-slate-900">
-              EXPERT<br />REPAIRS<br />
-              <span className="text-[#007AFF]">ON DEMAND.</span>
-            </div>
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
+      
+      {/* 1. Universal Global Header */}
+      <Header />
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <div className="flex text-[#FFB800]">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={10} className="fill-current" />
-                  ))}
-                </div>
-                <span className="text-[9px] text-slate-600 font-medium">10,000+ happy clients</span>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed max-w-[200px]">
-                Book trusted professionals for home repairs & maintenance.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2 pt-1 relative z-20">
-              <Link href="/services" className="bg-[#007AFF] text-white px-3.5 py-2 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 hover:bg-blue-600 active:scale-95 transition-all">
-                Book Service <ChevronRight size={12} />
-              </Link>
-              <a href="tel:+918679245568" className="bg-emerald-600 text-white px-3 py-2 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 hover:bg-emerald-700 active:scale-95 transition-all shadow-sm">
-                <Phone size={11} /> +91 8679245568
-              </a>
-              <button 
-                onClick={() => {
-                  if (locationText === 'Available Near You' || locationText === 'Location Unavailable') {
-                     navigator.geolocation.getCurrentPosition(() => window.location.reload());
-                  }
-                }}
-                className="bg-white/80 backdrop-blur-sm text-slate-700 px-3 py-2 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 border border-white shadow-sm"
-              >
-                <MapPin size={11} className={isLocating ? "text-slate-400 animate-pulse" : "text-[#FF6B00]"} /> 
-                {isLocating ? 'Detecting...' : locationText}
-              </button>
-            </div>
-          </div>
-
-          {/* Hero Image - Right Aligned & Constrained */}
-          <div className="absolute right-0 bottom-0 w-[42%] max-w-[240px] sm:max-w-[320px] h-[85%] z-0 pointer-events-none flex items-end justify-end">
-            <img src="/hero_house_3d.png" alt="House Repairs" className="w-full h-full object-contain object-bottom" />
-          </div>
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="mt-8 px-4">
-        <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-2">
-          {categories.map((category, idx) => (
-            <Link href="/services" key={idx} className="flex flex-col items-center gap-2 min-w-[72px] group">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-sm border border-slate-100 transition-transform active:scale-95 ${category.bg} ${category.active ? 'border-blue-200 shadow-blue-100' : ''}`}>
-                <category.icon className={`w-6 h-6 ${category.color}`} />
-              </div>
-              <span className={`text-[10px] font-semibold text-center ${category.active ? 'text-[#007AFF]' : 'text-slate-600'}`}>{category.name}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="mt-8 px-4">
-        <div className="grid grid-cols-2 gap-3">
-          {features.map((feature, idx) => (
-            <div key={idx} className="bg-white p-4 rounded-2xl flex items-center gap-3 shadow-sm border border-slate-100 active:scale-95 transition-transform">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${feature.iconBg}`}>
-                <feature.icon className={`w-5 h-5 ${feature.iconColor}`} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-xs font-bold text-slate-900 truncate">{feature.title}</h3>
-                <p className="text-[9px] text-slate-500 leading-snug pr-2">{feature.desc}</p>
-              </div>
-              <ChevronRight size={14} className="text-slate-300 shrink-0" />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Stats Strip */}
-      <section className="mt-8 px-4">
-        <div className="bg-white rounded-2xl p-4 flex justify-between items-center shadow-sm border border-slate-100 divide-x divide-slate-100 overflow-x-auto hide-scrollbar">
-          <div className="flex flex-col items-center gap-1 px-4 min-w-fit">
-            <Users size={18} className="text-blue-500" />
-            <span className="text-sm font-bold text-slate-900">10K+</span>
-            <span className="text-[8px] text-slate-500">Happy Customers</span>
-          </div>
-          <div className="flex flex-col items-center gap-1 px-4 min-w-fit">
-            <UserCheck size={18} className="text-orange-500" />
-            <span className="text-sm font-bold text-slate-900">500+</span>
-            <span className="text-[8px] text-slate-500">Expert Technicians</span>
-          </div>
-          <div className="flex flex-col items-center gap-1 px-4 min-w-fit">
-            <Star size={18} className="text-green-500 fill-green-500" />
-            <span className="text-sm font-bold text-slate-900">4.9</span>
-            <span className="text-[8px] text-slate-500">Customer Rating</span>
-          </div>
-          <div className="flex flex-col items-center gap-1 px-4 min-w-fit">
-            <MapPin size={18} className="text-purple-500" />
-            <span className="text-sm font-bold text-slate-900">50+</span>
-            <span className="text-[8px] text-slate-500">Cities Covered</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Services */}
-      <section className="mt-8">
-        <div className="flex justify-between items-end px-4 mb-4">
-          <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">
-            Popular <span className="text-[#007AFF]">Services in Etawah</span>
-          </h2>
-          <Link href="/services" className="text-[10px] font-bold text-[#007AFF] flex items-center gap-1">
-            View all <ChevronRight size={12} />
-          </Link>
-        </div>
+      {/* Main Content Area Container for Desktop & Mobile */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4 pb-8">
         
-        <div className="flex overflow-x-auto hide-scrollbar gap-4 px-4 pb-4">
-          {popularServices.map((service, idx) => (
-            <div key={idx} className="bg-white rounded-2xl p-3 min-w-[160px] max-w-[200px] shadow-sm border border-slate-100 flex flex-col gap-3">
-              <div className="w-full h-28 rounded-xl overflow-hidden bg-slate-100">
-                <img src={service.image} alt={service.name} className="w-full h-full object-cover" />
-              </div>
-              <div className="space-y-1.5 flex-1">
-                <h3 className="text-xs font-bold text-slate-900 truncate">{service.name}</h3>
-                <div className="flex items-center gap-1">
-                  <Star size={10} className="text-[#FFB800] fill-[#FFB800]" />
-                  <span className="text-[10px] font-bold text-slate-700">{service.rating}</span>
-                  <span className="text-[9px] text-slate-400">({service.reviews})</span>
-                </div>
-                <div className="text-sm font-black text-slate-900">{service.price}</div>
-              </div>
-              <button className="w-full bg-[#007AFF] text-white py-2 rounded-xl text-[10px] font-bold hover:bg-blue-600 active:scale-95 transition-all">
-                Book Now
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="mt-6 px-4">
-        <div className="flex justify-between items-end mb-6">
-          <h2 className="text-sm font-black uppercase tracking-tight text-slate-900">
-            How it <span className="text-[#007AFF]">Works</span>
-          </h2>
-          <Link href="/services" className="text-[10px] font-bold text-[#007AFF] flex items-center gap-1">
-            View all <ChevronRight size={12} />
-          </Link>
-        </div>
-
-        <div className="flex items-start justify-between relative px-2">
-          {/* Connecting line */}
-          <div className="absolute top-4 left-6 right-6 h-[2px] border-t-2 border-dashed border-slate-200 -z-10"></div>
-          
-          <div className="flex flex-col items-center text-center gap-2 w-[70px]">
-            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-md shadow-blue-500/20">1</div>
-            <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mt-1">
-              <ClipboardList className="w-5 h-5 text-[#007AFF]" />
-            </div>
-            <h4 className="text-[9px] font-bold text-slate-900 mt-1">Select Service</h4>
-            <p className="text-[7px] text-slate-500 leading-tight">Choose the service<br/>you need</p>
-          </div>
-
-          <div className="flex flex-col items-center text-center gap-2 w-[70px]">
-            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-md shadow-blue-500/20">2</div>
-            <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mt-1">
-              <CalendarDays className="w-5 h-5 text-[#007AFF]" />
-            </div>
-            <h4 className="text-[9px] font-bold text-slate-900 mt-1">Choose Schedule</h4>
-            <p className="text-[7px] text-slate-500 leading-tight">Pick a convenient<br/>date & time</p>
-          </div>
-
-          <div className="flex flex-col items-center text-center gap-2 w-[70px]">
-            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-md shadow-blue-500/20">3</div>
-            <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mt-1">
-              <ShieldCheck className="w-5 h-5 text-green-500" />
-            </div>
-            <h4 className="text-[9px] font-bold text-slate-900 mt-1">Confirm Booking</h4>
-            <p className="text-[7px] text-slate-500 leading-tight">Confirm and pay<br/>securely</p>
-          </div>
-
-          <div className="flex flex-col items-center text-center gap-2 w-[70px]">
-            <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px] shadow-md shadow-blue-500/20">4</div>
-            <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mt-1 overflow-hidden">
-               <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150" alt="Technician" className="w-full h-full object-cover" />
-            </div>
-            <h4 className="text-[9px] font-bold text-slate-900 mt-1">Technician Arrives</h4>
-            <p className="text-[7px] text-slate-500 leading-tight">Our expert will reach<br/>your location</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Subscribe & Direct Contact Banner */}
-      <section className="mt-10 px-4 mb-8">
-        <div className="bg-[#0A1629] rounded-3xl p-6 sm:p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-transparent to-transparent opacity-50 pointer-events-none"></div>
-          
-          <div className="relative z-10 space-y-3 max-w-xl text-left w-full">
-            <div className="inline-flex items-center gap-1.5 bg-blue-500/20 px-3 py-1 rounded-full border border-blue-400/30">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
-              <p className="text-[9px] font-extrabold uppercase tracking-widest text-blue-400">Subscribe & Stay Connected</p>
-            </div>
+        {/* 2. Royal Blue Hero Banner */}
+        <section className="w-full">
+          <div className="relative bg-gradient-to-r from-[#002B66] via-[#0B3C85] to-[#062557] rounded-[24px] p-5 sm:p-8 overflow-hidden text-white min-h-[180px] sm:min-h-[240px] flex items-center">
             
-            <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight uppercase tracking-tight">
-              Get Exclusive Offers & <span className="text-[#007AFF]">Instant Support</span>
-            </h2>
-            <p className="text-xs text-slate-300 leading-relaxed max-w-md">
-              Subscribe with your phone number to receive instant repair updates, or reach us directly via our hotline or website.
-            </p>
+            <div className="relative z-10 space-y-2.5 max-w-[62%] sm:max-w-[55%]">
+              <div className="inline-block border border-[#FFC700] text-[#FFC700] bg-black/20 font-black text-[8px] sm:text-[10px] px-3 py-0.5 rounded-full uppercase tracking-wider">
+                TRUSTED EXPERTS
+              </div>
 
-            {/* Subscribe Form & Contact Buttons */}
-            <div className="pt-2 space-y-3">
-              <form 
-                onSubmit={(e) => { 
-                  e.preventDefault(); 
-                  const val = (e.currentTarget.querySelector('input')?.value || '').trim();
-                  alert('Thank you for subscribing! We will send updates to ' + (val || 'your phone number') + '.'); 
-                }} 
-                className="flex items-center gap-2 max-w-md bg-white/10 backdrop-blur-md p-1.5 rounded-full border border-white/20"
-              >
-                <input 
-                  type="tel" 
-                  placeholder="Enter phone number to subscribe" 
-                  className="bg-transparent text-white text-xs px-4 py-2 focus:outline-none w-full placeholder:text-slate-400" 
-                  required 
-                />
-                <button type="submit" className="bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold px-5 py-2.5 rounded-full whitespace-nowrap active:scale-95 transition-all shadow-md">
-                  Subscribe
-                </button>
-              </form>
+              <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black leading-tight tracking-tight uppercase">
+                <span className="text-[#FFC700]">EXPERT REPAIRS,</span><br />
+                <span className="text-white">HOME SERVICES IN ETAWAH.</span>
+              </h1>
 
-              {/* Direct Action Pills with Phone Number & Website Link */}
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <a 
-                  href="tel:+918679245568" 
-                  className="inline-flex items-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 px-4 py-2 rounded-full text-xs font-bold transition-all active:scale-95"
+              <div className="text-[9px] sm:text-xs text-blue-100/90 font-medium leading-tight space-y-0.5">
+                <p>Verified Professionals • On-Time Service</p>
+                <p>Upfront Pricing • 100% Satisfaction</p>
+              </div>
+
+              <div className="pt-1.5">
+                <Link 
+                  href="/services" 
+                  className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-[#0B3C85] font-extrabold text-[11px] sm:text-xs px-5 py-2 rounded-full transition-all active:scale-95 shadow-md"
                 >
-                  <Phone size={14} className="text-emerald-400" />
-                  <span>Call: +91 8679245568</span>
-                </a>
+                  <span>Book a Service</span>
+                  <ArrowRight size={13} className="text-[#0B3C85]" />
+                </Link>
+              </div>
 
-                <a 
-                  href="https://gorepireo.in" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="inline-flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 px-4 py-2 rounded-full text-xs font-bold transition-all active:scale-95"
-                >
-                  <Globe size={14} className="text-blue-400" />
-                  <span>gorepireo.in</span>
-                </a>
+              <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                <div className="flex -space-x-1.5">
+                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover" />
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover" />
+                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover" />
+                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white object-cover" />
+                </div>
+                <span className="text-[9px] sm:text-[10px] font-bold text-white tracking-tight">10K+ Happy Customers</span>
               </div>
             </div>
+
+            {/* Banner Right Image */}
+            <div className="absolute right-0 bottom-0 w-[45%] max-w-[260px] sm:max-w-[360px] md:max-w-[440px] h-[100%] pointer-events-none flex items-end justify-end">
+              <img src="/hero_technician_banner.png" alt="Technician" className="w-full h-full object-cover object-center rounded-r-[24px]" />
+            </div>
+
+            {/* Right Badges */}
+            <div className="absolute top-4 right-4 z-20 hidden sm:flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white text-slate-900 shadow-sm">
+              <Headphones size={15} className="text-[#007AFF]" />
+              <div className="text-left">
+                <span className="text-xs font-black text-[#007AFF] block leading-tight">24/7</span>
+                <span className="text-[8px] text-slate-500 font-bold block leading-tight">Support</span>
+              </div>
+            </div>
+
+            <div className="absolute bottom-4 right-4 z-20 hidden sm:block bg-white/95 backdrop-blur-md p-2.5 rounded-xl border border-white text-slate-900 min-w-[100px] shadow-sm">
+              <div className="text-sm font-black text-slate-900 leading-tight">4.8</div>
+              <div className="flex text-amber-400 my-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={10} className="fill-current" />
+                ))}
+              </div>
+              <p className="text-[8px] text-slate-400 font-semibold">(2.3k reviews)</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Category Icons Grid */}
+        <section className="w-full">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4">
+            {categories.map((cat, idx) => (
+              <Link href="/services" key={idx} className="flex flex-col items-center gap-1.5 group p-2 rounded-2xl hover:bg-slate-100/60 transition-colors">
+                <div className={`w-13 h-13 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center border transition-transform active:scale-95 ${cat.bg}`}>
+                  <cat.icon size={22} className={cat.color} />
+                </div>
+                <span className={`text-[10px] sm:text-xs font-bold text-center ${cat.active ? 'text-[#007AFF]' : 'text-slate-600'}`}>{cat.name}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 4. Limited Time Offer Banner */}
+        <section className="w-full">
+          <div className="relative bg-gradient-to-r from-[#EBF3FF] to-[#D9E8FF] rounded-3xl p-5 sm:p-6 flex items-center justify-between overflow-hidden border border-blue-100/60 shadow-xs">
+            <div className="space-y-1.5 z-10 max-w-[62%]">
+              <span className="bg-[#007AFF] text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full inline-block">
+                Limited Time Offer
+              </span>
+              <h3 className="text-base sm:text-xl font-black text-slate-900 leading-snug pt-1">
+                Get 20% OFF <span className="font-extrabold text-slate-700 block text-xs sm:text-sm">on your first service</span>
+              </h3>
+              <div className="pt-1">
+                <span className="bg-white/80 backdrop-blur-sm text-[#007AFF] border border-blue-200 text-[10px] font-bold px-3 py-1 rounded-lg inline-block">
+                  Use code: <strong className="text-slate-900 font-black">FIRST20</strong>
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 z-10 shrink-0">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center text-4xl sm:text-5xl">
+                🎁
+              </div>
+              <Link href="/services" className="w-9 h-9 sm:w-11 sm:h-11 bg-[#007AFF] hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all active:scale-95 shadow-md">
+                <ArrowRight size={18} />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* 5. Why Choose Us? */}
+        <section className="w-full space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">Why Choose Us?</h3>
+            <Link href="/about" className="text-[11px] font-bold text-[#007AFF] hover:underline">View all</Link>
           </div>
 
-          <div className="relative z-10 w-full md:w-auto flex justify-end shrink-0 pointer-events-none">
-             <img src="/bottom_toolbox_3d.png" alt="Toolbox" className="w-44 h-44 sm:w-52 sm:h-52 object-contain" />
-          </div>
-        </div>
-      </section>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-1.5 shadow-xs">
+              <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100">
+                <ShieldCheck size={18} />
+              </div>
+              <h4 className="text-xs font-black text-slate-900 mt-1">Verified Pros</h4>
+              <p className="text-[10px] text-slate-400 font-medium leading-tight">Background verified & trained experts</p>
+            </div>
 
-      {/* SEO Content Block (Visually subtle but accessible for search engines) */}
-      <section className="mt-8 px-4 mb-4">
-        <div className="bg-white/50 rounded-2xl p-6 border border-slate-100 text-left">
-          <h1 className="text-xs font-bold text-slate-900 mb-2">Expert Home Repairs & Services On-Demand in Etawah</h1>
-          <h2 className="text-[11px] font-semibold text-slate-800 mb-1">Trusted Local Professionals for Every Home Need</h2>
-          <p className="text-[10px] text-slate-500 leading-relaxed mb-3">
-            Welcome to Go_Repireo, India's premier all-in-one home services marketplace, bringing trusted and verified professionals directly to your doorstep in Etawah. Whether you're dealing with an emergency plumbing leak, require a certified electrician, need urgent AC repair, or simply want a deep cleaning for your home, Go_Repireo connects you with top-rated local experts in seconds.
-          </p>
-          <h2 className="text-[11px] font-semibold text-slate-800 mb-1">How Go_Repireo Works: Instant Booking & Live Tracking</h2>
-          <p className="text-[10px] text-slate-500 leading-relaxed mb-3">
-            Experience the future of home maintenance with instant online bookings, real-time technician tracking on a live map, secure online payments, and transparent pricing. From minor fixes to major installations, Go_Repireo makes managing your home repairs fast, affordable, and completely hassle-free.
-          </p>
-          <h2 className="text-[11px] font-semibold text-slate-800 mb-1">Why Choose Go_Repireo for Your Home Maintenance?</h2>
-          <p className="text-[10px] text-slate-500 leading-relaxed">
-            Our mission is to provide professional doorstep home services with transparent pricing, verified workers, secure payments, and exceptional customer satisfaction. From minor household repairs to major maintenance projects, Go_Repireo is your one-stop destination for every home service need.
-          </p>
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-1.5 shadow-xs">
+              <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center border border-blue-100">
+                <Clock size={18} />
+              </div>
+              <h4 className="text-xs font-black text-slate-900 mt-1">On-Time Service</h4>
+              <p className="text-[10px] text-slate-400 font-medium leading-tight">Punctual & reliable service</p>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-1.5 shadow-xs">
+              <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100">
+                <IndianRupee size={18} />
+              </div>
+              <h4 className="text-xs font-black text-slate-900 mt-1">Transparent Pricing</h4>
+              <p className="text-[10px] text-slate-400 font-medium leading-tight">Upfront prices, no hidden charges</p>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-1.5 shadow-xs">
+              <div className="w-9 h-9 rounded-full bg-teal-50 text-teal-500 flex items-center justify-center border border-teal-100">
+                <ThumbsUp size={18} />
+              </div>
+              <h4 className="text-xs font-black text-slate-900 mt-1">Satisfaction Guaranteed</h4>
+              <p className="text-[10px] text-slate-400 font-medium leading-tight">We've got your back</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. Popular Services */}
+        <section className="w-full space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">Popular Services</h3>
+            <Link href="/services" className="text-[11px] font-bold text-[#007AFF] hover:underline">View all</Link>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            {popularServices.map((serv, idx) => (
+              <Link href="/services" key={idx} className="bg-white rounded-2xl p-3.5 border border-slate-100 flex flex-col justify-between gap-2.5 group shadow-xs hover:border-blue-200 transition-all">
+                <div className="w-full h-28 sm:h-32 rounded-xl overflow-hidden bg-slate-100">
+                  <img src={serv.image} alt={serv.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-black text-slate-900 truncate">{serv.name}</h4>
+                  <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                    <Star size={10} className="fill-amber-400 text-amber-400" />
+                    <span className="font-bold text-slate-800">{serv.rating}</span>
+                    <span className="text-slate-400">({serv.reviews})</span>
+                  </div>
+                </div>
+                <div className="w-full bg-[#EFF6FF] text-[#007AFF] font-extrabold text-[10px] sm:text-xs py-1.5 px-3 rounded-full text-center border border-blue-100">
+                  {serv.price}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 7. Recent Bookings & Testimonials Grid on Desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full pt-2">
+          
+          {/* Recent Bookings */}
+          <section className="w-full space-y-3">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">Recent Bookings</h3>
+              {user && realBookings.length > 0 && (
+                <Link href="/dashboard/user" className="text-[11px] font-bold text-[#007AFF] hover:underline">View all</Link>
+              )}
+            </div>
+
+            {loadingBookings ? (
+              <div className="bg-white p-4 rounded-2xl border border-slate-100 animate-pulse flex items-center justify-between">
+                <div className="h-4 w-32 bg-slate-100 rounded"></div>
+                <div className="h-4 w-16 bg-slate-100 rounded"></div>
+              </div>
+            ) : realBookings.length > 0 ? (
+              <div className="space-y-2.5">
+                {realBookings.map((item, idx) => {
+                  const badge = getStatusBadge(item.status);
+                  const iconObj = getServiceIcon(item.service_name);
+                  const IconComp = iconObj.icon;
+                  const dateText = item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently';
+                  const locationText = item.city || item.details?.city || 'Etawah';
+
+                  return (
+                    <Link 
+                      href={`/track?id=${item.id}`} 
+                      key={item.id || idx} 
+                      className="bg-white p-3.5 rounded-2xl border border-slate-100 flex items-center justify-between gap-3 hover:border-blue-100 transition-colors shadow-xs"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-10 h-10 rounded-xl ${iconObj.bg} flex items-center justify-center shrink-0`}>
+                          <IconComp size={20} />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-black text-slate-900 truncate">{item.service_name || 'Repair Service'}</h4>
+                          <p className="text-[10px] text-slate-400 font-medium truncate">{dateText} • {locationText}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <span className={`${badge.style} border text-[9px] font-extrabold px-3 py-1 rounded-full`}>
+                          {badge.text}
+                        </span>
+                        {item.worker_avatar ? (
+                          <Avatar src={item.worker_avatar} name={item.worker_name || 'Worker'} size={32} />
+                        ) : null}
+                        <ChevronRight size={14} className="text-slate-300" />
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 text-center space-y-3 shadow-xs h-full flex flex-col justify-center items-center">
+                <div className="w-12 h-12 bg-blue-50 text-[#007AFF] rounded-full flex items-center justify-center">
+                  <ClipboardList size={22} />
+                </div>
+                <div className="space-y-0.5">
+                  <h4 className="text-xs font-black text-slate-900">No Recent Bookings</h4>
+                  <p className="text-[10px] text-slate-400 font-medium">Book a service now to track real-time progress!</p>
+                </div>
+                <Link href="/services/service" className="inline-block bg-[#007AFF] text-white text-[10px] font-black px-5 py-2 rounded-full active:scale-95 transition-all shadow-md">
+                  Book Service Now
+                </Link>
+              </div>
+            )}
+          </section>
+
+          {/* Testimonials */}
+          <section className="w-full">
+            <div className="bg-gradient-to-r from-[#EFF6FF] to-[#E0EDFF] rounded-3xl p-5 sm:p-6 border border-blue-100/60 flex flex-col justify-between gap-4 h-full shadow-xs">
+              <div className="space-y-2">
+                <div className="flex items-center -space-x-2">
+                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+                  <span className="w-7 h-7 rounded-full bg-[#007AFF] text-white text-[9px] font-black flex items-center justify-center border-2 border-white">
+                    10K+
+                  </span>
+                </div>
+                
+                <h4 className="text-xs sm:text-sm font-black text-slate-900">
+                  Trusted by 10,000+ happy customers
+                </h4>
+                
+                <div className="flex items-center gap-1 text-[#FFB800]">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={11} className="fill-current" />
+                  ))}
+                  <span className="text-[10px] font-bold text-slate-700 ml-1">4.8 average rating</span>
+                </div>
+              </div>
+
+              <div className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-blue-100 space-y-2">
+                <Quote size={14} className="text-[#007AFF] fill-[#007AFF]/20" />
+                <p className="text-[10px] sm:text-xs text-slate-700 font-medium leading-relaxed">
+                  "{testimonials[activeTestimonial].text}"
+                </p>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[9px] font-bold text-slate-500">{testimonials[activeTestimonial].author}</span>
+                  <div className="flex gap-1">
+                    {testimonials.map((_, i) => (
+                      <button key={i} onClick={() => setActiveTestimonial(i)} className={`w-1.5 h-1.5 rounded-full transition-all ${activeTestimonial === i ? 'bg-[#007AFF] w-3' : 'bg-slate-300'}`} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
         </div>
-      </section>
+
+      </div>
 
       <Footer />
     </div>

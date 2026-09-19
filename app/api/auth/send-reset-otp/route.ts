@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { insforge } from '@/lib/insforge';
+import { rtdb } from '@/lib/firebase';
+import { ref, set } from 'firebase/database';
+import { sendGmailEmail } from '@/lib/gmail';
+import { sendResendEmail } from '@/lib/resend';
+import { sendBrevoEmail } from '@/lib/brevo';
 
 export async function POST(request: Request) {
   try {
@@ -10,78 +14,48 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
 
-    // 1. Check if user exists in database
-    const { data: userRow } = await insforge.database
-      .from('users')
-      .select('id, name, email')
-      .eq('email', cleanEmail)
-      .maybeSingle();
-
-    if (!userRow) {
-      return NextResponse.json({ 
-        error: 'No account found with this email address. Please check your email or register a new account.' 
-      }, { status: 444 });
-    }
-
-    // 2. Generate 6-digit numeric OTP & Store in Database (Valid for 5 minutes)
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes strictly
-
-    await insforge.database
-      .from('users')
-      .update({
-        reset_otp: otp,
-        reset_otp_expires_at: expiresAt,
-      })
-      .eq('email', cleanEmail);
-
-    // 3. Trigger native InsForge Auth reset password email (Works on Free Plan)
-    const { error: authError } = await insforge.auth.sendResetPasswordEmail({ 
-      email: cleanEmail 
-    });
-
-    if (authError) {
-      console.warn('InsForge auth email trigger message:', authError.message);
-    }
-
-    // 4. Try custom email as optional enhancement (suppress free plan restriction error)
-    const userName = (userRow as any).name || 'Valued User';
-    const otpFormatted = otp.split('').join(' ');
-
-    const emailHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Reset Password OTP</title></head>
-<body style="margin:0; padding:20px; background-color:#F8FAFC; font-family:sans-serif;">
-  <div style="max-width:500px; margin:0 auto; background:#FFFFFF; border-radius:16px; padding:32px; border:1px solid #E2E8F0; text-align:center;">
-    <h2 style="color:#0A1629; margin-top:0;">Go_Repireo Password Reset</h2>
-    <p style="color:#475569; font-size:14px;">Hi ${userName}, use the code below to reset your password:</p>
-    <div style="background:#F0F7FF; border:2px dashed #007AFF; padding:20px; border-radius:12px; font-size:32px; font-weight:bold; letter-spacing:8px; color:#0A1629; margin:20px 0;">
-      ${otpFormatted}
-    </div>
-    <p style="color:#64748B; font-size:12px;">⏱️ Valid strictly for <strong>5 minutes</strong>. If you did not request this, please ignore.</p>
-  </div>
-</body>
-</html>`;
-
+    // 1. Store Reset OTP in Firebase Realtime Database
     try {
-      await insforge.emails.send({
-        to: cleanEmail,
-        subject: `🔒 ${otp} is your Go_Repireo Password Reset OTP`,
-        html: emailHtml,
+      await set(ref(rtdb, `temp_otps/${sanitizedEmail}`), {
+        reset_otp: otp,
+        created_at: new Date().toISOString()
       });
-    } catch (e: any) {
-      console.log('Custom email API skipped (free plan mode enabled)');
+    } catch (e) {}
+
+    // 2. Dispatch Password Reset OTP Email
+    const subject = `[Go_Repireo] Password Reset OTP Code is ${otp}`;
+    const html = `
+      <div style="font-family: sans-serif; padding: 24px; background: #f8fafc; text-align: center;">
+        <div style="max-width: 500px; margin: 0 auto; background: #ffffff; border-radius: 20px; padding: 32px; border: 1px solid #e2e8f0;">
+          <h2 style="color: #0A1629; margin-top: 0;">Password Reset Request</h2>
+          <p style="color: #475569; font-size: 14px;">Use the One-Time Password (OTP) code below to reset your Go_Repireo account password:</p>
+          <div style="background: #fff7ed; border: 2px dashed #FF9500; border-radius: 16px; padding: 20px; font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #0A1629; margin: 24px 0;">
+            ${otp}
+          </div>
+          <p style="color: #94a3b8; font-size: 12px;">This code is valid for 10 minutes. If you did not request a password reset, please ignore this email.</p>
+        </div>
+      </div>
+    `;
+
+    // Try Gmail SMTP -> Resend -> Brevo
+    let result = await sendGmailEmail({ toEmail: cleanEmail, subject, html });
+    if (!result.success) {
+      result = await sendResendEmail({ toEmail: cleanEmail, subject, html });
+    }
+    if (!result.success) {
+      result = await sendBrevoEmail({ toEmail: cleanEmail, subject, html });
     }
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Reset OTP code sent! Please check your Gmail inbox for the 6-digit verification code.' 
-    });
+      message: 'Password reset OTP has been sent to your email inbox.' 
+    }, { status: 200 });
 
   } catch (error: any) {
-    console.error('Send reset OTP error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to send reset email' }, { status: 500 });
+    console.error('Send Reset OTP Error:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

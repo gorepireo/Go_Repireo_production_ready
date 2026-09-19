@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
 import { Save, Camera, Loader2, User, Phone, Mail, CreditCard, LogOut, Pencil, Lock, Landmark, Banknote } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 import { useRouter } from 'next/navigation';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function WorkerSettings() {
   const { user, profile, refresh, loading: authLoading, signOut } = useAuth();
@@ -45,7 +46,7 @@ export default function WorkerSettings() {
     if (!user) return;
     setLoading(true);
     
-    await insforge.database
+    await (null as any)
       .from('users')
       .update({
         name: formData.name,
@@ -88,20 +89,18 @@ export default function WorkerSettings() {
       if (!croppedBlob) throw new Error("Failed to crop image");
       
       const fileExt = 'jpeg';
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const { data, error } = await insforge.storage
-        .from('avatars')
-        .upload(fileName, croppedBlob);
+      const fileName = `avatars/${user.id}-${Math.random()}.${fileExt}`;
+      const storageRef = ref(storage, fileName);
 
-      if (data) {
-        const publicUrl = insforge.storage.from('avatars').getPublicUrl(fileName);
-        if (publicUrl) {
-          await insforge.database
-            .from('users')
-            .update({ avatar_url: publicUrl as string })
-            .eq('id', user.id);
-          await refresh();
-        }
+      await uploadBytes(storageRef, croppedBlob);
+      const publicUrl = await getDownloadURL(storageRef);
+
+      if (publicUrl) {
+        await (null as any)
+          .from('users')
+          .update({ avatar_url: publicUrl as string })
+          .eq('id', user.id);
+        await refresh();
       }
     } catch (err) {
       console.error(err);

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { insforge } from '@/lib/insforge';
 import { useAuth } from '@/context/AuthContext';
 import { ArrowLeft, Save, Plus, MapPin, Trash2, Camera, Loader2, X, User, Phone, Mail, LogOut, Pencil, Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -9,6 +8,8 @@ import Avatar from '@/components/Avatar';
 import { useRouter } from 'next/navigation';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import dynamic from 'next/dynamic';
 
@@ -48,7 +49,7 @@ export default function UserSettings() {
 
   const fetchAddresses = async () => {
     if (!user) return;
-    const { data } = await insforge.database
+    const { data } = await (null as any)
       .from('user_addresses')
       .select('*')
       .eq('user_id', user.id)
@@ -61,7 +62,7 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await insforge.database
+    await (null as any)
       .from('users')
       .update({
         name: formData.name,
@@ -102,20 +103,18 @@ export default function UserSettings() {
       if (!croppedBlob) throw new Error("Failed to crop image");
       
       const fileExt = 'jpeg';
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const { data, error } = await insforge.storage
-        .from('avatars')
-        .upload(fileName, croppedBlob);
+      const fileName = `avatars/${user.id}-${Math.random()}.${fileExt}`;
+      const storageRef = ref(storage, fileName);
 
-      if (data) {
-        const publicUrl = insforge.storage.from('avatars').getPublicUrl(fileName);
-        if (publicUrl) {
-          await insforge.database
-            .from('users')
-            .update({ avatar_url: publicUrl as string })
-            .eq('id', user.id);
-          await refresh();
-        }
+      await uploadBytes(storageRef, croppedBlob);
+      const publicUrl = await getDownloadURL(storageRef);
+
+      if (publicUrl) {
+        await (null as any)
+          .from('users')
+          .update({ avatar_url: publicUrl as string })
+          .eq('id', user.id);
+        await refresh();
       }
     } catch (err) {
       console.error(err);
@@ -129,7 +128,7 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await insforge.database.from('user_addresses').insert([{
+    await (null as any).from('user_addresses').insert([{
       user_id: user.id,
       name: newAddress.name,
       address_text: newAddress.address_text,
@@ -146,7 +145,7 @@ export default function UserSettings() {
   const handleDeleteAddress = async (id: string) => {
     if (!confirm('Are you sure you want to delete this address?')) return;
     setLoading(true);
-    await insforge.database.from('user_addresses').delete().eq('id', id);
+    await (null as any).from('user_addresses').delete().eq('id', id);
     await fetchAddresses();
     setLoading(false);
   };

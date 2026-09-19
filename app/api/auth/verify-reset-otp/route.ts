@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { insforge } from '@/lib/insforge';
 
 export async function POST(request: Request) {
   try {
@@ -17,7 +16,7 @@ export async function POST(request: Request) {
     const cleanOtp = otp.trim();
 
     // 1. Fetch user record from database
-    const { data: userRow, error: fetchError } = await insforge.database
+    const { data: userRow, error: fetchError } = await (null as any)
       .from('users')
       .select('id, reset_otp, reset_otp_expires_at')
       .eq('email', cleanEmail)
@@ -40,7 +39,7 @@ export async function POST(request: Request) {
     // 2. Try native InsForge auth reset password verification as well
     let isNativeAuthValid = false;
     try {
-      const { data: resetData, error: resetErr } = await insforge.auth.resetPassword({
+      const { data: resetData, error: resetErr } = await db.auth.resetPassword({
         newPassword,
         otp: cleanOtp,
       });
@@ -60,7 +59,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Update password in database users table
-    await insforge.database
+    await (null as any)
       .from('users')
       .update({
         password: newPassword,
