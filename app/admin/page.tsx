@@ -205,32 +205,18 @@ export default function AdminPanel() {
   const handleApproveWorker = async (worker: WorkerApp) => {
     setActionLoading(worker.id);
     try {
-      // 1. Update user status to active
-      const { error } = await db.database.from('users').update({ status: 'active' }).eq('id', worker.app_id);
-      if (error) throw error;
-      
-      // 2. Transfer data to workers table
-      const { error: workerInsertErr } = await db.database.from('workers').insert({
-        app_id: worker.app_id,
-        user_id: worker.app_id,
-        from_name: worker.from_name,
+      const { AdminService } = await import('@/lib/services/admin.service');
+      await AdminService.approveWorker(worker.app_id, {
+        name: worker.from_name,
         email: worker.email,
-        mobile: worker.mobile,
-        service: worker.service,
-        experience: worker.experience,
-        address: worker.address,
-        status: 'offline',
-        login_access: true,
-        role: 'worker'
+        phone: worker.mobile,
+        services: worker.service.split(', '),
       });
-
-      if (workerInsertErr && !workerInsertErr.message.includes('duplicate')) {
-        throw workerInsertErr;
-      }
 
       setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, user_status: 'active' } : w));
       showToast(`${worker.from_name}'s application approved!`);
     } catch (err: any) {
+      console.error(err);
       showToast(err.message || 'Approval failed', 'error');
     } finally {
       setActionLoading(null);
@@ -240,11 +226,13 @@ export default function AdminPanel() {
   const handleRejectWorker = async (worker: WorkerApp) => {
     setActionLoading(worker.id + '_reject');
     try {
-      const { error } = await db.database.from('users').update({ status: 'rejected' }).eq('id', worker.app_id);
-      if (error) throw error;
+      const { AdminService } = await import('@/lib/services/admin.service');
+      await AdminService.rejectWorker(worker.app_id);
+      
       setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, user_status: 'rejected' } : w));
       showToast(`${worker.from_name}'s application rejected.`, 'error');
     } catch (err: any) {
+      console.error(err);
       showToast(err.message || 'Rejection failed', 'error');
     } finally {
       setActionLoading(null);

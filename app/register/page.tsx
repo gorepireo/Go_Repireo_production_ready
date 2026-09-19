@@ -265,100 +265,63 @@ function RegisterForm() {
 
     const cleanEmail = formData.email.trim().toLowerCase();
     const isAdmin = cleanEmail === 'gorepireo@gmail.com';
-    const finalRole = isAdmin ? 'admin' : role;
-    const finalStatus = isAdmin ? 'active' : (role === 'user' ? 'active' : 'pending_approval');
-    const classification = classifyWorkerCategories(selectedCategories, repairDescription);
+    const finalRole = isAdmin ? 'admin' : (role === 'shopkeeper' ? 'shopkeeper' : role);
     const userId = auth.currentUser?.uid || 'user_' + Date.now();
+    const classification = classifyWorkerCategories(selectedCategories, repairDescription);
 
-    const userDataObj = {
-      id: userId,
-      email: cleanEmail,
-      name: isAdmin ? 'Admin Support' : formData.name,
-      role: finalRole,
-      phone: formData.phone,
-      state: formData.state,
-      district: formData.district,
-      pincode: formData.pincode,
-      area: formData.area,
-      lat: formData.lat,
-      lng: formData.lng,
-      status: finalStatus,
-      email_verified: true,
-      specializations: role === 'worker' ? selectedCategories : null,
-      repair_description: role === 'worker' ? repairDescription : null,
-      category_tokens: role === 'worker' ? classification.categoryTokens : null
-    };
-
-    // Helper timeout wrapper (max 2.5s) to guarantee the UI never hangs on Vercel
-    const withTimeout = (promise: Promise<any>, ms = 2500) => 
-      Promise.race([
-        promise,
-        new Promise((resolve) => setTimeout(() => resolve(null), ms))
-      ]);
-
-    // 1. Save User Profile & Application to Turso Database via Serverless API Route
     try {
-      const workerAppObj = role === 'worker' ? {
-        id: userId,
-        user_id: userId,
-        from_name: formData.name,
+      const { UserService } = await import('@/lib/services/user.service');
+      
+      // 1. Save standard User Profile
+      await UserService.createProfile(userId, {
+        name: isAdmin ? 'Admin Support' : formData.name,
         email: cleanEmail,
-        mobile: formData.phone,
-        service: selectedCategories.join(', '),
-        experience: parseInt(formData.experience) || 0,
-        other_skills: repairDescription,
-        specializations: JSON.stringify(selectedCategories),
-        category_tokens: JSON.stringify(classification.categoryTokens),
-        state: formData.state,
-        district: formData.district,
-        pincode: formData.pincode,
-        address: formData.area
-      } : null;
-
-      await fetch('/api/auth/register-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userDataObj, workerAppObj, role })
+        phone: formData.phone,
+        role: finalRole,
+        isActive: isAdmin ? true : (role === 'user'), 
+        addresses: [{
+          id: 'addr_1',
+          label: 'Home',
+          address: formData.area,
+          city: formData.district,
+          state: formData.state,
+          pincode: formData.pincode,
+          latitude: formData.lat || 0,
+          longitude: formData.lng || 0,
+        }]
       });
-    } catch (tursoErr) {
-      console.warn('Turso API insert note:', tursoErr);
-    }
 
-    // 2. Save Account & Profile directly to Firebase Realtime Database & Firestore
-    try {
-      const sanitizedUid = userId.replace(/[.#$/\[\]]/g, '_');
-      await withTimeout(set(ref(rtdb, `users/${sanitizedUid}`), userDataObj));
-      await withTimeout(setDoc(doc(firestore, 'users', sanitizedUid), userDataObj).catch(() => {}));
-
-      if (role === 'worker') {
-        const workerAppObj = {
-          app_id: userId, 
-          from_name: formData.name,
+      // 2. Submit Worker/Shopkeeper Application if necessary
+      if (role === 'worker' || role === 'shopkeeper') {
+        const { WorkerApplicationService } = await import('@/lib/services/workerApplication.service');
+        await WorkerApplicationService.submitApplication(userId, {
+          name: formData.name,
           email: cleanEmail,
-          mobile: formData.phone,
-          service: selectedCategories.join(', '),
+          phone: formData.phone,
+          services: selectedCategories,
           experience: parseInt(formData.experience) || 0,
           other_skills: repairDescription,
-          specializations: selectedCategories,
           category_tokens: classification.categoryTokens,
-          state: formData.state,
-          district: formData.district,
-          pincode: formData.pincode,
-          address: formData.area,
-          status: 'pending_approval'
-        };
-        await withTimeout(set(ref(rtdb, `worker_applications/${sanitizedUid}`), workerAppObj));
-        await withTimeout(setDoc(doc(db, 'worker_applications', sanitizedUid), workerAppObj).catch(() => {}));
+          address: {
+            state: formData.state,
+            district: formData.district,
+            pincode: formData.pincode,
+            area: formData.area,
+          }
+        });
       }
-    } catch (fbErr) {
-      console.warn('Firebase RTDB store note:', fbErr);
+
+      setStep(4);
+    } catch (err: any) {
+      console.error('Registration profile save error:', err);
+      setError('Registration failed while saving profile.');
+      setStep(3);
+      return;
     }
 
-    // 3. Delete OTP temporary row from Database after successful verification
     try {
       const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
-      await withTimeout(remove(ref(rtdb, `temp_otps/${sanitizedEmail}`)));
-      await withTimeout(db.database.from('temp_otps').delete().eq('email', cleanEmail).catch(() => {}));
+      await remove(ref(rtdb, `temp_otps/${sanitizedEmail}`));
     } catch (cleanErr) {
       console.warn('OTP row cleanup note:', cleanErr);
     }
