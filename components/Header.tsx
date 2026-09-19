@@ -165,18 +165,30 @@ export default function Header({
 
   // Extract user's actual account full name or default to 'User'
   const getDisplayName = () => {
-    if (!user) return 'User';
+    if (!user && !profile) return 'User';
 
-    const dbName = (profile as any)?.full_name || (profile as any)?.name || profile?.display_name;
-    if (dbName && typeof dbName === 'string' && dbName.trim()) {
+    const dbName = (profile as any)?.full_name || (profile as any)?.name;
+    if (dbName && typeof dbName === 'string' && dbName.trim() && !dbName.includes('@')) {
       return dbName.trim().split(' ')[0];
     }
+    const storedName = typeof window !== 'undefined' ? localStorage.getItem('repireo_user_name') : null;
+    if (storedName && typeof storedName === 'string' && storedName.trim() && !storedName.includes('@')) {
+      return storedName.trim().split(' ')[0];
+    }
+    const dispName = profile?.display_name;
+    if (dispName && typeof dispName === 'string' && dispName.trim() && !dispName.includes('@')) {
+      return dispName.trim().split(' ')[0];
+    }
     const metaName = user?.user_metadata?.full_name || user?.user_metadata?.name;
-    if (metaName && typeof metaName === 'string' && metaName.trim()) {
+    if (metaName && typeof metaName === 'string' && metaName.trim() && !metaName.includes('@')) {
       return metaName.trim().split(' ')[0];
     }
-    if (user?.email) {
-      const prefix = user.email.split('@')[0];
+    if (user?.email || profile?.email) {
+      const prefix = (user?.email || profile?.email || '').split('@')[0];
+      const alphaOnly = prefix.replace(/[0-9]/g, '');
+      if (alphaOnly.length >= 3) {
+        return alphaOnly.charAt(0).toUpperCase() + alphaOnly.slice(1);
+      }
       return prefix.charAt(0).toUpperCase() + prefix.slice(1);
     }
     return 'User';
