@@ -1,9 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { db } from '@/lib/db';
+import { AuthService } from '@/lib/services/auth.service';
+import { UserService } from '@/lib/services/user.service';
+import { WorkerService } from '@/lib/services/worker.service';
+import { User } from 'firebase/auth';
 
-interface Profile {
+export interface Profile {
   id: string;
   role: 'user' | 'worker' | 'shopkeeper' | 'admin';
   status: 'active' | 'pending_approval' | 'suspended';
@@ -11,21 +14,14 @@ interface Profile {
   avatar_url?: string;
   email?: string;
   phone?: string;
-  address?: {
-    state: string;
-    district: string;
-    area: string;
-    pincode: string;
-    lat: number;
-    lng: number;
-  };
+  address?: any;
   worker_data?: any;
   shop_data?: any;
   earnings?: number;
 }
 
 interface AuthContextType {
-  user: any | null;
+  user: User | null;
   profile: Profile | null;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -41,109 +37,93 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async () => {
+  const fetchProfileForUser = async (firebaseUser: User) => {
     try {
-      if (typeof window !== 'undefined') {
-        const storedToken = localStorage.getItem('repireo_auth_token') || sessionStorage.getItem('repireo_auth_token');
-        if (storedToken) {
-          db.getHttpClient().setAuthToken(storedToken);
-        }
+      // First try to fetch as a regular user
+      const userProfile = await UserService.getProfile(firebaseUser.uid);
+      
+      let p: Profile | null = null;
 
-        if (localStorage.getItem('repireo_admin_logged_in') === 'true') {
-          const adminEmail = localStorage.getItem('repireo_admin_email') || 'admin@23456';
-          setUser({ id: 'admin-id-23456', email: adminEmail });
-          setProfile({
-            id: 'admin-id-23456',
-            role: 'admin',
-            status: 'active',
-            display_name: 'System Admin',
-            email: adminEmail
-          });
-          setLoading(false);
-          return;
-        }
-      }
+      if (userProfile) {
+        p = {
+          id: userProfile.uid,
+          role: userProfile.role === 'customer' ? 'user' : userProfile.role as any,
+          status: userProfile.isActive ? 'active' : 'suspended',
+          display_name: userProfile.name,
+          email: userProfile.email,
+          phone: userProfile.phone,
+          avatar_url: userProfile.profilePhoto || undefined,
+        };
 
-      let currentUser = null;
-      let finalProfile: any = null;
-
-      // 1. Attempt InsForge auth lookup
-      try {
-        const { data } = await db.auth.getCurrentUser();
-        if (data?.user) {
-          currentUser = data.user;
-          const { data: userData } = await db.database
-            .from('users')
-            .select('*')
-            .eq('id', data.user.id)
-            .maybeSingle();
-          if (userData) {
-            finalProfile = { ...userData, display_name: userData.name || userData.display_name };
+        // If worker, augment with worker data
+        if (p.role === 'worker') {
+          const workerProfile = await WorkerService.getProfile(firebaseUser.uid);
+          if (workerProfile) {
+             p.worker_data = workerProfile;
+             if (workerProfile.verification.status === 'pending' || workerProfile.verification.status === 'under_review') {
+                p.status = 'pending_approval';
+             }
           }
         }
-      } catch (insErr) {
-        console.warn('InsForge auth check note:', insErr);
-      }
-
-      // 2. Firebase / Local Storage session fallback
-      if (!currentUser && typeof window !== 'undefined') {
-        const storedEmail = localStorage.getItem('repireo_user_email');
-        const storedRole = (localStorage.getItem('repireo_cached_role') as any) || 'user';
-        if (storedEmail) {
-          currentUser = { id: 'usr_' + storedEmail.replace(/[^a-zA-Z0-9]/g, '_'), email: storedEmail };
-          finalProfile = {
-            id: currentUser.id,
-            email: storedEmail,
-            display_name: storedEmail.split('@')[0],
-            role: storedEmail === 'gorepireo@gmail.com' ? 'admin' : storedRole,
-            status: 'active'
-          };
-        }
-      }
-
-      if (currentUser) {
-        setUser(currentUser);
-        setProfile(finalProfile || { id: currentUser.id, email: currentUser.email, role: 'user', status: 'active' });
       } else {
-        setUser(null);
-        setProfile(null);
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('repireo_cached_role');
-          localStorage.removeItem('repireo_cached_avatar');
-        }
+        // Fallback or legacy mapping if not found in Firestore yet
+        p = {
+          id: firebaseUser.uid,
+          role: 'user',
+          status: 'active',
+          display_name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          email: firebaseUser.email || undefined,
+          avatar_url: firebaseUser.photoURL || undefined,
+        };
+        // Auto-create basic profile
+        await UserService.createProfile(firebaseUser.uid, {
+          name: p.display_name!,
+          email: p.email || '',
+        });
       }
+
+      setProfile(p);
     } catch (err) {
-      console.error('Auth error:', err);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching user profile:", err);
+    }
+  };
+
+  const refresh = async () => {
+    if (user) {
+      await fetchProfileForUser(user);
     }
   };
 
   useEffect(() => {
-    fetchUser();
+    const unsubscribe = AuthService.onAuthStateChange(async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        await fetchProfileForUser(firebaseUser);
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const signOut = async () => {
-    await db.auth.signOut();
+    await AuthService.signOut();
     setUser(null);
     setProfile(null);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('repireo_auth_token');
-      sessionStorage.removeItem('repireo_auth_token');
-      localStorage.removeItem('repireo_cached_role');
-      localStorage.removeItem('repireo_cached_avatar');
-      localStorage.removeItem('repireo_admin_email');
-      localStorage.removeItem('repireo_admin_logged_in');
+      localStorage.clear();
       window.location.href = '/login';
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, refresh: fetchUser }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, refresh }}>
       {children}
     </AuthContext.Provider>
   );

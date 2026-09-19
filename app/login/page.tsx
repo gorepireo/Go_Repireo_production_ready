@@ -35,8 +35,8 @@ function LoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    setError('');
 
     const cleanEmail = email.trim().toLowerCase();
 
@@ -46,122 +46,38 @@ function LoginForm() {
       return;
     }
 
-    // Check for explicit admin credentials
-    if ((cleanEmail === 'admin@23456' || cleanEmail === 'admin@23456.com' || cleanEmail === 'gorepireo@gmail.com') && password === 'admin@1234567890') {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('repireo_admin_logged_in', 'true');
-        localStorage.setItem('repireo_admin_email', cleanEmail);
-        localStorage.setItem('repireo_cached_role', 'admin');
-        localStorage.setItem('repireo_user_email', cleanEmail);
-        localStorage.setItem('repireo_auth_token', 'admin-token-' + Date.now());
-      }
-      try {
-        await db.auth.signInWithPassword({ email: cleanEmail, password });
-      } catch (err) {}
-      await refresh();
-      router.push('/admin');
-      setLoading(false);
-      return;
-    }
-
-    let detectedRole = 'user';
-    let detectedStatus = 'active';
-    let loginSuccess = false;
-    let userToken = 'token-' + Date.now();
-
-    // 1. Try InsForge Auth Login
     try {
-      const { data, error: loginError } = await db.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
-      });
-
-      if (data?.user) {
-        loginSuccess = true;
-        userToken = (data as any).session?.accessToken || (data as any).accessToken || (data as any).session?.access_token || userToken;
-      }
-    } catch (insErr) {
-      console.warn('InsForge login note:', insErr);
-    }
-
-    // 2. Try Firebase Auth Login Fallback
-    if (!loginSuccess) {
-      try {
-        const fbCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
-        if (fbCred?.user) {
-          loginSuccess = true;
-          userToken = await fbCred.user.getIdToken();
-        }
-      } catch (fbAuthErr: any) {
-        console.warn('Firebase signIn note:', fbAuthErr);
-      }
-    }
-
-    // 3. Query Database (Supabase + Firebase RTDB) for user profile and role
-    try {
-      const { data: usersRow } = await db.database
-        .from('users')
-        .select('role, status')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      if (usersRow) {
-        detectedRole = (usersRow as any).role || detectedRole;
-        detectedStatus = (usersRow as any).status || detectedStatus;
-        loginSuccess = true; // User exists in database
-      } else {
-        const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
-        const snapshot = await get(child(ref(rtdb), `users/${sanitizedEmail}`));
-        if (snapshot.exists()) {
-          const val = snapshot.val();
-          detectedRole = val.role || detectedRole;
-          detectedStatus = val.status || detectedStatus;
-          loginSuccess = true;
-        }
-      }
-    } catch (dbErr) {
-      console.warn('Database user lookup note:', dbErr);
-    }
-
-    // Admin override check
-    if (cleanEmail === 'gorepireo@gmail.com' || cleanEmail === 'admin@23456' || cleanEmail === 'admin@23456.com') {
-      detectedRole = 'admin';
-      detectedStatus = 'active';
-      loginSuccess = true;
-    }
-
-    // Fallback for valid inputs
-    if (!loginSuccess && cleanEmail.includes('@') && password.length >= 4) {
-      loginSuccess = true;
-    }
-
-    if (detectedStatus === 'pending_approval' && (detectedRole === 'worker' || detectedRole === 'shopkeeper')) {
-      setError('Account pending approval. You will be notified once your profile is verified.');
-      setLoading(false);
-      return;
-    }
-
-    if (loginSuccess) {
-      if (typeof window !== 'undefined') {
-        if (rememberMe) localStorage.setItem('repireo_auth_token', userToken);
-        else sessionStorage.setItem('repireo_auth_token', userToken);
-        localStorage.setItem('repireo_user_email', cleanEmail);
-        localStorage.setItem('repireo_cached_role', detectedRole);
-      }
-
+      // 1. Authenticate with Firebase
+      const fbCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+      
+      // 2. Refresh Context (reads Firestore profile)
       await refresh();
 
-      if (detectedRole === 'admin') router.push('/admin');
-      else if (detectedRole === 'shopkeeper') router.push('/dashboard/shop');
-      else if (detectedRole === 'worker') router.push('/dashboard/worker');
+      // 3. Navigate Based on Role (we'll fetch directly to decide where to push)
+      // Since context refresh is async but state update is queued, we fetch role here directly for navigation
+      const { UserService } = await import('@/lib/services/user.service');
+      const userProfile = await UserService.getProfile(fbCred.user.uid);
+      
+      const role = userProfile?.role || 'customer';
+      const isActive = userProfile ? userProfile.isActive : true;
+
+      if (!isActive) {
+        setError('Account suspended or pending approval.');
+        setLoading(false);
+        return;
+      }
+
+      if (role === 'admin') router.push('/admin');
+      else if (role === 'shopkeeper') router.push('/dashboard/shop');
+      else if (role === 'worker') router.push('/dashboard/worker');
       else router.push('/dashboard/user');
 
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError('Invalid credentials or account does not exist.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setError('Sign in failed. Please check your email and password.');
-    setLoading(false);
   };
 
   return (

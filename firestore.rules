@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function signedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isAdmin() {
+      return signedIn() && userData().role == "admin";
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /workers/{workerId} {
+      allow read: if signedIn();
+      allow update: if isOwner(workerId) || isAdmin();
+      allow create, delete: if isAdmin();
+    }
+    
+    match /workerApplications/{applicationId} {
+      allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      // allow read if customer, worker, or admin
+      allow read: if signedIn() && (
+        resource.data.customerId == request.auth.uid || 
+        resource.data.workerId == request.auth.uid || 
+        isAdmin()
+      );
+      // create allowed only for customer, but strictly validated by functions ideally.
+      // We will allow customers to create pending orders.
+      allow create: if signedIn() && request.resource.data.customerId == request.auth.uid;
+      allow update: if signedIn() && (
+        resource.data.customerId == request.auth.uid || 
+        resource.data.workerId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+    
+    match /orders/{orderId}/tracking/{trackingId} {
+      allow read: if signedIn() && (
+        get(/databases/$(database)/documents/orders/$(orderId)).data.customerId == request.auth.uid ||
+        get(/databases/$(database)/documents/orders/$(orderId)).data.workerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow write: if signedIn() && get(/databases/$(database)/documents/orders/$(orderId)).data.workerId == request.auth.uid;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only written by Cloud Functions
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
