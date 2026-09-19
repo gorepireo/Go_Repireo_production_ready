@@ -146,111 +146,89 @@ export default function ServiceBooking() {
         items: [{ type: 'service', name: formData.category }], 
         estimation,
         start_otp: startOtp,
-        completion_otp: completionOtp  // Always set for both cash and online orders
+        completion_otp: completionOtp 
       },
       lat: formData.lat || (12.9716 + (Math.random() - 0.5) * 0.1),
       lng: formData.lng || (77.5946 + (Math.random() - 0.5) * 0.1),
       order_type: 'direct_service'
     };
 
-    let { data, error } = await db.database
-      .from('orders')
-      .insert([insertPayload])
-      .select();
+    try {
+      const { OrderService } = await import('@/lib/services/order.service');
+      const { TrackingService } = await import('@/lib/services/tracking.service');
+      const { NotificationService } = await import('@/lib/services/notification.service');
 
-    if (error && (error.message?.includes('payment_method') || error.message?.includes('schema cache'))) {
-      delete insertPayload.payment_method;
-      delete insertPayload.payment_status;
-      const res = await db.database
-        .from('orders')
-        .insert([insertPayload])
-        .select();
-      data = res.data;
-      error = res.error;
-    }
+      const { orderId } = await OrderService.createOrder(insertPayload);
 
-    if (error) {
-      throw error;
-    }
+      await TrackingService.addTrackingEvent(orderId, {
+        workerId: null,
+        status: 'pending',
+        lat: insertPayload.lat - (Math.random() * 0.1),
+        lng: insertPayload.lng - (Math.random() * 0.1),
+        note: payMethod === 'cash' 
+          ? 'Order placed with Cash payment option. Awaiting worker dispatch...'
+          : 'Order placed & prepaid online. Initialising logistic unit...'
+      });
 
-    if (data && data.length > 0) {
-      await db.database
-        .from('order_tracking')
-        .insert([{
-          order_id: data[0].id,
-          status: 'pending',
-          lat: data[0].lat - (Math.random() * 0.1),
-          lng: data[0].lng - (Math.random() * 0.1),
-          note: payMethod === 'cash' 
-            ? 'Order placed with Cash payment option. Awaiting worker dispatch...'
-            : 'Order placed & prepaid online. Initialising logistic unit...'
-        }]);
-
-      await db.database
-        .from('notifications')
-        .insert([{
-          user_id: user?.id,
-          title: 'Service Requested',
-          message: payMethod === 'cash'
+      if (user?.id) {
+        await NotificationService.notifyUser(
+          user.id,
+          'Service Requested',
+          payMethod === 'cash'
             ? `Your ${formData.category} service request has been placed (Cash payment upon service completion).`
             : `Your ${formData.category} service request has been received and payment confirmed.`,
-          type: 'order',
-          link: `/track?id=${data[0].id}`
-        }]);
+          `/track?id=${orderId}`
+        );
+      }
 
       // Notify matching active workers
       try {
-        const { data: activeWorkers } = await db.database
-          .from('workers')
-          .select('user_id, service')
-          .eq('status', 'active');
+        const { collection, query, where, getDocs } = await import('firebase/firestore');
+        const workersSnap = await getDocs(query(collection(db, "workers"), where("availability.online", "==", true)));
+        
+        const matchingWorkers = workersSnap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() } as any))
+          .filter(w => isServiceMatching(w.services?.join(', ') || '', formData.category));
 
-        if (activeWorkers && (activeWorkers as any[]).length > 0) {
-          const matchingWorkers = (activeWorkers as any[]).filter((w: any) => 
-            isServiceMatching(w.service, formData.category)
-          );
+        if (matchingWorkers.length > 0) {
+          const timingText = formData.bookingType === 'immediately'
+            ? 'IMMEDIATE (ASAP)'
+            : `SCHEDULED for ${formData.preferredDate} at ${formData.preferredTime}`;
+          const payText = payMethod === 'cash' ? 'CASH ON SERVICE' : 'PREPAID ONLINE';
 
-          if (matchingWorkers.length > 0) {
-            const timingText = formData.bookingType === 'immediately'
-              ? 'IMMEDIATE (ASAP)'
-              : `SCHEDULED for ${formData.preferredDate} at ${formData.preferredTime}`;
-            const payText = payMethod === 'cash' ? 'CASH ON SERVICE' : 'PREPAID ONLINE';
-
-            const workerNotifications = matchingWorkers.map((w: any) => ({
-              user_id: w.user_id,
-              title: `New ${formData.category.toUpperCase()} Request`,
-              message: `A new ${formData.category.toUpperCase()} request (${timingText}, ${payText}) is available in your workspace. Log in to accept.`,
-              type: 'order',
-              link: '/dashboard/worker'
-            }));
-
-            await db.database.from('notifications').insert(workerNotifications);
-
-            // Also send REAL device push notifications to matching workers
-            const timingTextPush = formData.bookingType === 'immediately' ? 'Immediate service' : `Scheduled: ${formData.preferredDate}`;
-            for (const w of matchingWorkers) {
-              try {
-                await fetch('/api/push/send', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    title: `⚡ New ${formData.category} Request!`,
-                    message: `${timingTextPush} — ₹${estimatedPrice}. Tap to accept.`,
-                    url: '/dashboard/worker',
-                    targetUserId: w.user_id,
-                    orderId: data[0].id,
-                    actions: [{ action: 'accept', title: 'Accept' }]
-                  })
-                });
-              } catch {}
-            }
+          for (const w of matchingWorkers) {
+            await NotificationService.notifyUser(
+              w.id,
+              `New ${formData.category.toUpperCase()} Request`,
+              `A new ${formData.category.toUpperCase()} request (${timingText}, ${payText}) is available in your workspace. Log in to accept.`,
+              '/dashboard/worker'
+            );
+            
+            // Push Notification
+            try {
+              await fetch('/api/push/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: `⚡ New ${formData.category} Request!`,
+                  message: `${timingText === 'IMMEDIATE (ASAP)' ? 'Immediate service' : `Scheduled: ${formData.preferredDate}`} — ₹${estimatedPrice}. Tap to accept.`,
+                  url: '/dashboard/worker',
+                  targetUserId: w.id,
+                  orderId: orderId,
+                  actions: [{ action: 'accept', title: 'Accept' }]
+                })
+              });
+            } catch {}
           }
         }
-      } catch (notifyErr) {
-        console.warn('Could not notify workers:', notifyErr);
+      } catch (workerNotifyErr) {
+        console.error('Worker notification error:', workerNotifyErr);
       }
 
-      router.push(`/track?id=${data[0].id}`);
+      router.push(`/track?id=${orderId}`);
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
   };
 
