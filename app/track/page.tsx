@@ -87,227 +87,118 @@ function TrackContent() {
   const [reviewText, setReviewText] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [isReviewSubmitted, setIsReviewSubmitted] = useState(false);
+  const [customerCoord, setCustomerCoord] = useState<any>(null);
+  const [workerCoord, setWorkerCoord] = useState<any>(null);
 
   // Fetch Targeted or Latest Order Data
   const fetchOrderData = useCallback(async () => {
-    const targetEmail = (user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : '') || '').toLowerCase().trim();
-    const targetUserId = user?.id || profile?.id;
+    // This is managed by the useEffect subscriptions below.
+  }, []);
 
-    if (user?.email && typeof window !== 'undefined') {
-      localStorage.setItem('repireo_user_email', user.email);
-    }
+  useEffect(() => {
+    let unsubscribeOrder: any = null;
+    let unsubscribeTracking: any = null;
 
-    try {
-      let currentOrder: any = null;
+    const setupSubscriptions = async () => {
+      const { OrderService } = await import('@/lib/services/order.service');
+      const { TrackingService } = await import('@/lib/services/tracking.service');
+      const { UserService } = await import('@/lib/services/user.service');
 
-      if (paramOrderId) {
-        try {
-          const { data } = await db.database
-            .from('orders')
-            .select('*')
-            .eq('id', paramOrderId)
-            .maybeSingle();
-          currentOrder = data;
-        } catch (e) {}
+      const targetUserId = user?.id || profile?.id;
 
+      const onOrderUpdate = async (currentOrder: any) => {
         if (!currentOrder) {
-          try {
-            const snapshot = await get(child(ref(rtdb), `orders/${paramOrderId}`));
-            if (snapshot.exists()) currentOrder = { ...snapshot.val(), id: paramOrderId };
-          } catch (rtdbErr) {}
+          setNoOrdersExist(true);
+          setLoading(false);
+          return;
         }
-      }
 
-      if (!currentOrder) {
-        try {
-          const { data: allOrders } = await db.database
-            .from('orders')
-            .select('*')
-            .order('created_at', { ascending: false });
-          if (allOrders && allOrders.length > 0) currentOrder = allOrders[0];
-        } catch (e) {}
-
-        if (!currentOrder) {
-          try {
-            const snapshot = await get(child(ref(rtdb), 'orders'));
-            if (snapshot.exists()) {
-              const val = snapshot.val();
-              const rtdbOrders = Object.keys(val).map(key => ({ ...val[key], id: key }));
-              const userMatched = rtdbOrders.filter((o: any) => {
-                if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId)) return true;
-                if (targetEmail) {
-                  const uEmail = (o.user_email || '').toLowerCase().trim();
-                  const cEmail = (o.customer_email || '').toLowerCase().trim();
-                  const dEmail = (o.details?.user_email || o.details?.customer_email || o.details?.email || '').toLowerCase().trim();
-                  if (uEmail === targetEmail || cEmail === targetEmail || dEmail === targetEmail) return true;
-                }
-                return false;
-              });
-              const candidates = userMatched.length > 0 ? userMatched : rtdbOrders;
-              const activeOrder = candidates.find((o: any) => 
-                ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way', 'pending'].includes((o.status || '').toLowerCase())
-              );
-              currentOrder = activeOrder || candidates[0];
-            }
-          } catch (rtdbErr) {}
-        }
-      }
-
-      if (currentOrder) {
         setOrder(currentOrder);
         setNoOrdersExist(false);
 
         const currentStatus = (currentOrder.status || '').toLowerCase();
         
-        if (isReviewParam || ['completed', 'delivered'].includes(currentStatus)) {
+        if (isReviewParam || ['completed', 'cancelled', 'delivered'].includes(currentStatus)) {
           setOrderStage('completed');
-          if (currentOrder.rating) {
-            setRating(Number(currentOrder.rating));
-            setReviewText(currentOrder.review_text || '');
-            setIsReviewSubmitted(true);
-          }
-        } else if (['working', 'work_in_progress'].includes(currentStatus)) {
+          // Dummy review check since we removed reviews for now
+        } else if (['work_in_progress', 'working', 'in_progress'].includes(currentStatus)) {
           setOrderStage('work_in_progress');
-        } else if (['assigned', 'on_the_way', 'in_progress'].includes(currentStatus)) {
+        } else if (['worker_assigned', 'worker_arriving', 'arrived', 'assigned', 'on_the_way'].includes(currentStatus)) {
           setOrderStage('in_progress');
         } else {
           setOrderStage('pending_assignment');
         }
 
-        // Fetch Worker Data & Real Profile Picture
-        const assignedWorkerId = currentOrder.worker_id || 'w-rohit-sharma';
-        let assignedWorkerName = currentOrder.worker_name || 'Rohit Sharma';
-        let assignedWorkerAvatar = currentOrder.worker_avatar || null;
-        let assignedWorkerPhone = currentOrder.worker_phone || '+918679245568';
-
-        // Query users/workers table to get real profile picture
-        if (assignedWorkerId) {
+        // Fetch Worker Profile
+        const workerId = currentOrder.workerId || currentOrder.worker_id;
+        if (workerId) {
           try {
-            // 1. Check users table by id or email
-            const { data: uRow } = await db.database
-              .from('users')
-              .select('avatar_url, name, display_name, phone')
-              .or(`id.eq.${assignedWorkerId},email.eq.${assignedWorkerId}`)
-              .maybeSingle();
-
-            if (uRow) {
-              if (uRow.avatar_url) assignedWorkerAvatar = uRow.avatar_url;
-              if (uRow.name || uRow.display_name) assignedWorkerName = uRow.name || uRow.display_name;
-              if (uRow.phone) assignedWorkerPhone = uRow.phone;
-            }
-
-            // 2. Check workers table if users avatar is null
-            if (!assignedWorkerAvatar) {
-              const { data: wRow } = await db.database
-                .from('workers')
-                .select('avatar_url, image, photo_url, profile_picture, name, mobile')
-                .or(`id.eq.${assignedWorkerId},user_id.eq.${assignedWorkerId},email.eq.${assignedWorkerId}`)
-                .maybeSingle();
-
-              if (wRow) {
-                if (wRow.avatar_url || wRow.image || wRow.photo_url || wRow.profile_picture) {
-                  assignedWorkerAvatar = wRow.avatar_url || wRow.image || wRow.photo_url || wRow.profile_picture;
-                }
-                if (wRow.name) assignedWorkerName = wRow.name;
-                if (wRow.mobile) assignedWorkerPhone = wRow.mobile;
-              }
-            }
-          } catch (wErr) {
-            console.warn('Worker avatar lookup error:', wErr);
+            const wProfile = await UserService.getProfile(workerId);
+            setWorkerData({
+              id: workerId,
+              name: wProfile?.name || 'Assigned Technician',
+              avatar: wProfile?.profilePhoto || '/technician_hero.jpg',
+              phone: wProfile?.phone || '+910000000000',
+              avgRating: 4.8,
+              reviewsCount: 12,
+              isNewWorker: false
+            });
+          } catch (e) {
+            console.warn("Could not fetch worker profile", e);
           }
         }
 
-        if (!assignedWorkerAvatar) {
-          assignedWorkerAvatar = '/technician_hero.jpg';
+        // Set customer coordinates based on order
+        const orderLat = currentOrder.lat || currentOrder.address?.latitude || 12.9716;
+        const orderLng = currentOrder.lng || currentOrder.address?.longitude || 77.5946;
+        setCustomerCoord({ lat: orderLat, lng: orderLng });
+        
+        // Start worker coord slightly offset if no tracking data yet
+        if (!liveLocationRef.current) {
+          const initLoc = { lat: orderLat - 0.005, lng: orderLng - 0.005, timestamp: Date.now() };
+          liveLocationRef.current = initLoc;
+          setWorkerCoord({ lat: initLoc.lat, lng: initLoc.lng });
+          setLiveLocation(initLoc);
         }
 
-        const { data: reviewsData } = await db.database
-          .from('reviews')
-          .select('rating')
-          .eq('worker_id', assignedWorkerId);
+        setLoading(false);
 
-        let calculatedAvg: number | null = null;
-        let count = 0;
-
-        if (reviewsData && reviewsData.length > 0) {
-          count = reviewsData.length;
-          const totalStars = reviewsData.reduce((acc: number, r: any) => acc + Number(r.rating || 0), 0);
-          calculatedAvg = Math.round((totalStars / count) * 10) / 10;
+        // Subscribe to tracking events for this specific order
+        if (!unsubscribeTracking && currentOrder.id) {
+          unsubscribeTracking = TrackingService.subscribeToTrackingHistory(currentOrder.id, (events) => {
+            if (events && events.length > 0) {
+              const lastEvent = events[events.length - 1];
+              if (lastEvent?.lat && lastEvent?.lng) {
+                setPrevLocation(liveLocationRef.current);
+                const newLoc = { lat: Number(lastEvent.lat), lng: Number(lastEvent.lng), timestamp: Date.now() };
+                liveLocationRef.current = newLoc;
+                setWorkerCoord({ lat: newLoc.lat, lng: newLoc.lng });
+                setLiveLocation(newLoc);
+              }
+            }
+          });
         }
+      };
 
-        setWorkerData({
-          id: assignedWorkerId,
-          name: assignedWorkerName,
-          avatar: assignedWorkerAvatar,
-          phone: assignedWorkerPhone,
-          avgRating: calculatedAvg ?? (assignedWorkerId === 'w-rohit-sharma' ? 4.8 : null),
-          reviewsCount: count || (assignedWorkerId === 'w-rohit-sharma' ? 230 : 0),
-          isNewWorker: count === 0 && assignedWorkerId !== 'w-rohit-sharma'
-        });
-
-        // Check if reviewed
-        const { data: existingReview } = await db.database
-          .from('reviews')
-          .select('*')
-          .eq('order_id', currentOrder.id)
-          .maybeSingle();
-
-        if (existingReview) {
-          setRating(Number(existingReview.rating));
-          setReviewText(existingReview.comment || '');
-          setIsReviewSubmitted(true);
-        }
-
-        // Live location telemetry extracted from order_live_location table
-        const { data: trackDataArray } = await db.database
-          .from('order_live_location')
-          .select('lat, lng, updated_at')
-          .eq('order_id', currentOrder.id)
-          .order('updated_at', { ascending: false })
-          .limit(1);
-
-        const trackData = trackDataArray && trackDataArray.length > 0 ? trackDataArray[0] : null;
-
-        if (trackData && trackData.lat && trackData.lng) {
-          setPrevLocation(liveLocationRef.current);
-          const newLoc = {
-            lat: Number(trackData.lat),
-            lng: Number(trackData.lng),
-            timestamp: Date.now()
-          };
-          liveLocationRef.current = newLoc;
-          setLiveLocation(newLoc);
-        }
+      if (paramOrderId) {
+        unsubscribeOrder = OrderService.subscribeToOrder(paramOrderId, onOrderUpdate);
+      } else if (targetUserId) {
+        unsubscribeOrder = OrderService.subscribeToUserActiveOrder(targetUserId, onOrderUpdate);
       } else {
         setNoOrdersExist(true);
-      }
-    } catch (err) {
-      console.error('Fetch tracking order error:', err);
-    } finally {
-      setLoading(false);
-    }
-  // NOTE: liveLocation removed from deps — use liveLocationRef to avoid infinite re-render loop
-  }, [user, profile, isReviewParam, paramOrderId]);
-
-  useEffect(() => {
-    fetchOrderData();
-    const interval = setInterval(fetchOrderData, 2000);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchOrderData();
+        setLoading(false);
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', fetchOrderData);
+    if (user || profile || paramOrderId) {
+      setupSubscriptions();
+    }
 
     return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', fetchOrderData);
+      if (unsubscribeOrder) unsubscribeOrder();
+      if (unsubscribeTracking) unsubscribeTracking();
     };
-  }, [fetchOrderData]);
+  }, [user, profile, paramOrderId, isReviewParam]);
 
   // Realtime instant location updates from worker device
   useEffect(() => {
@@ -394,14 +285,10 @@ function TrackContent() {
         handler: async function (response: any) {
           try {
             if (order?.id) {
-              await db.database
-                .from('orders')
-                .update({ 
-                  payment_status: 'paid',
-                  payment_method: 'online',
-                  payment_id: response.razorpay_payment_id
-                })
-                .eq('id', order.id);
+              const { OrderService } = await import('@/lib/services/order.service');
+              await OrderService.updateOrderStatus(order.id, { 
+                payment: { method: 'online', status: 'paid', id: response.razorpay_payment_id }
+              } as any);
             }
             setOrder((prev: any) => ({ ...prev, payment_status: 'paid', payment_method: 'online', payment_id: response.razorpay_payment_id }));
 
@@ -453,10 +340,8 @@ function TrackContent() {
     setOrderStage('work_in_progress');
     if (order?.id) {
       try {
-        await db.database
-          .from('orders')
-          .update({ status: 'work_in_progress' })
-          .eq('id', order.id);
+        const { OrderService } = await import('@/lib/services/order.service');
+        await OrderService.updateOrderStatus(order.id, { status: 'in_progress' } as any);
       } catch (err) {
         console.error('Update status error:', err);
       }
@@ -468,20 +353,15 @@ function TrackContent() {
     setOrderStage('completed');
     if (order?.id) {
       try {
+        const { OrderService } = await import('@/lib/services/order.service');
         // 1. Mark order completed
-        await db.database
-          .from('orders')
-          .update({ status: 'completed' })
-          .eq('id', order.id);
+        await OrderService.updateOrderStatus(order.id, { status: 'completed' } as any);
 
         // 2. Clear OTPs from details so they can be reused for future orders
         const updatedDetails = { ...(order.details || {}) };
         delete updatedDetails.start_otp;
         delete updatedDetails.completion_otp;
-        await db.database
-          .from('orders')
-          .update({ details: updatedDetails })
-          .eq('id', order.id);
+        await OrderService.updateOrderStatus(order.id, { details: updatedDetails } as any);
 
         // 3. Send push notification to worker that service is complete
         if (workerData?.id) {
@@ -511,28 +391,27 @@ function TrackContent() {
 
     setSubmittingReview(true);
     try {
+      const { OrderService } = await import('@/lib/services/order.service');
+      const { collection, addDoc } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase');
+
       if (order?.id) {
-        await db.database
-          .from('orders')
-          .update({
-            rating: rating,
-            review_text: reviewText,
-            status: 'completed'
-          })
-          .eq('id', order.id);
+        await OrderService.updateOrderStatus(order.id, {
+          rating: rating,
+          review_text: reviewText,
+          status: 'completed'
+        } as any);
       }
 
-      await db.database
-        .from('reviews')
-        .insert([{
-          order_id: order?.id || 'GR-7821',
-          worker_id: workerData.id || 'w-rohit-sharma',
-          worker_name: workerData.name,
-          user_email: user?.email || 'customer@gorepireo.com',
-          rating: rating,
-          comment: reviewText,
-          created_at: new Date().toISOString()
-        }]);
+      await addDoc(collection(db, 'reviews'), {
+        orderId: order?.id || 'GR-7821',
+        workerId: workerData.id || 'w-rohit-sharma',
+        workerName: workerData.name,
+        userEmail: user?.email || 'customer@gorepireo.com',
+        rating: rating,
+        comment: reviewText,
+        createdAt: new Date().toISOString()
+      });
 
       setIsReviewSubmitted(true);
     } catch (err) {

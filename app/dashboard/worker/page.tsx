@@ -175,10 +175,8 @@ function WorkerDashboardContent() {
     setIsAvailable(newStatus);
     if (user?.id) {
       try {
-        await db.database
-          .from('users')
-          .update({ is_available: newStatus })
-          .eq('id', user.id);
+        const { UserService } = await import('@/lib/services/user.service');
+        await UserService.updateProfile(user.id, { is_available: newStatus } as any);
       } catch (err) {
         console.error('Toggle status error:', err);
       }
@@ -329,27 +327,17 @@ function WorkerDashboardContent() {
         }));
       }
 
-      await db.database
-        .from('order_tracking')
-        .insert([{
-          order_id: targetId,
-          status: 'in_progress',
-          note: `Order accepted by expert ${displayName} at ${new Date().toLocaleTimeString()}. En route to customer.`
-        }]);
-
+      // Record location tracking ping
       const wLat = liveDeviceGps?.lat || (profile?.lat ? Number(profile.lat) : 26.7620);
       const wLng = liveDeviceGps?.lng || (profile?.lng ? Number(profile.lng) : 79.0320);
 
-      await db.database
-        .from('order_live_location')
-        .upsert([{
-          order_id: targetId,
-          lat: wLat,
-          lng: wLng,
-          worker_name: displayName,
-          is_moving: true,
-          updated_at: nowIso
-        }]);
+      await TrackingService.addTrackingEvent(targetId, {
+        lat: wLat,
+        lng: wLng,
+        workerName: displayName,
+        is_moving: true,
+        status: 'worker_assigned'
+      });
 
     } catch (err) {
       console.error('Accept job error:', err);
@@ -390,22 +378,19 @@ function WorkerDashboardContent() {
     const cLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
     const cLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
 
-    if (liveDeviceGps) {
-      // Save live worker GPS coordinates to DB
+    const recordLocation = async (lat: number, lng: number) => {
       if (activeJob?.id) {
         try {
-          await db.database.from('order_live_location').upsert([{
-            order_id: activeJob.id,
-            lat: liveDeviceGps.lat,
-            lng: liveDeviceGps.lng,
-            worker_name: displayName,
-            updated_at: new Date().toISOString()
-          }]);
+          const { TrackingService } = await import('@/lib/services/tracking.service');
+          await TrackingService.addTrackingEvent(activeJob.id, { lat, lng, workerName: displayName, status: 'worker_assigned' });
         } catch (e) {
           console.warn('Upsert location error:', e);
         }
       }
+    };
 
+    if (liveDeviceGps) {
+      await recordLocation(liveDeviceGps.lat, liveDeviceGps.lng);
       openNativeGoogleMapsApp(liveDeviceGps.lat, liveDeviceGps.lng, cLat, cLng);
     } else if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -413,21 +398,7 @@ function WorkerDashboardContent() {
           const actualLat = pos.coords.latitude;
           const actualLng = pos.coords.longitude;
           setLiveDeviceGps({ lat: actualLat, lng: actualLng });
-
-          if (activeJob?.id) {
-            try {
-              await db.database.from('order_live_location').upsert([{
-                order_id: activeJob.id,
-                lat: actualLat,
-                lng: actualLng,
-                worker_name: displayName,
-                updated_at: new Date().toISOString()
-              }]);
-            } catch (e) {
-              console.warn('Upsert location error:', e);
-            }
-          }
-
+          await recordLocation(actualLat, actualLng);
           openNativeGoogleMapsApp(actualLat, actualLng, cLat, cLng);
         },
         (err) => {

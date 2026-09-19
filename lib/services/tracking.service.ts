@@ -15,5 +15,15 @@ export const TrackingService = {
     const q = query(trackingRef, orderBy("timestamp", "asc"));
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+
+  subscribeToTrackingHistory(orderId: string, callback: (events: any[]) => void) {
+    const { onSnapshot } = require('firebase/firestore');
+    const trackingRef = collection(db, "orders", orderId, "tracking");
+    const q = query(trackingRef, orderBy("timestamp", "asc"));
+    return onSnapshot(q, (snap: any) => {
+      const events = snap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
+      callback(events);
+    });
   }
 };

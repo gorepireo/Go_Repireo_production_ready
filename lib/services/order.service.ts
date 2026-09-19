@@ -8,10 +8,32 @@ export const OrderService = {
    * Listen to a specific order's changes in real-time.
    */
   subscribeToOrder(orderId: string, callback: (order: Order | null) => void) {
+    const { doc, onSnapshot } = require('firebase/firestore');
     const docRef = doc(db, "orders", orderId);
-    return onSnapshot(docRef, (docSnap) => {
+    return onSnapshot(docRef, (docSnap: any) => {
       if (docSnap.exists()) {
         callback({ id: docSnap.id, ...docSnap.data() } as Order);
+      } else {
+        callback(null);
+      }
+    });
+  },
+
+  /**
+   * Listen to a user's most recent active order
+   */
+  subscribeToUserActiveOrder(customerId: string, callback: (order: Order | null) => void) {
+    const { collection, query, where, onSnapshot, orderBy, limit } = require('firebase/firestore');
+    const q = query(
+      collection(db, "orders"),
+      where("customerId", "==", customerId),
+      where("status", "in", ["pending", "searching_worker", "worker_assigned", "worker_arriving", "arrived", "in_progress"]),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+    return onSnapshot(q, (snap: any) => {
+      if (!snap.empty) {
+        callback({ id: snap.docs[0].id, ...snap.docs[0].data() } as Order);
       } else {
         callback(null);
       }
