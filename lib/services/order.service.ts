@@ -59,5 +59,67 @@ export const OrderService = {
       acceptedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
+  },
+
+  /**
+   * Update the status of an order
+   */
+  async updateOrderStatus(orderId: string, updates: Partial<Order>): Promise<void> {
+    const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+    await updateDoc(doc(db, "orders", orderId), {
+      ...updates,
+      updatedAt: serverTimestamp()
+    });
+  },
+
+  /**
+   * Fetch the currently active order for a worker (assigned/in progress)
+   */
+  async getWorkerActiveOrder(workerId: string): Promise<Order | null> {
+    const { collection, query, where, getDocs, orderBy, limit } = await import('firebase/firestore');
+    const q = query(
+      collection(db, "orders"),
+      where("workerId", "==", workerId),
+      where("status", "in", ["worker_assigned", "worker_arriving", "arrived", "in_progress"]),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      return { id: snap.docs[0].id, ...snap.docs[0].data() } as Order;
+    }
+    return null;
+  },
+
+  /**
+   * Fetch available pending orders (for worker matching)
+   */
+  async getAvailableOrders(serviceCategory: string): Promise<Order[]> {
+    const { collection, query, where, getDocs, orderBy, limit } = await import('firebase/firestore');
+    const q = query(
+      collection(db, "orders"),
+      where("status", "==", "pending"),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    );
+    const snap = await getDocs(q);
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() } as Order))
+      .filter(order => order.serviceId === serviceCategory || serviceCategory === 'all' || !order.serviceId);
+  },
+
+  /**
+   * Fetch all completed jobs for a worker
+   */
+  async getCompletedOrders(workerId: string): Promise<Order[]> {
+    const { collection, query, where, getDocs, orderBy } = await import('firebase/firestore');
+    const q = query(
+      collection(db, "orders"),
+      where("workerId", "==", workerId),
+      where("status", "==", "completed"),
+      orderBy("createdAt", "desc")
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
   }
 };

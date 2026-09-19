@@ -192,108 +192,62 @@ function WorkerDashboardContent() {
 
     try {
       // 1. Fetch active order assigned to worker
+      const { OrderService } = await import('@/lib/services/order.service');
+      const activeOrder = workerId ? await OrderService.getWorkerActiveOrder(workerId) : null;
+      
       let assignedJobs: any[] = [];
-
-      if (workerId) {
-        const { data: byId } = await db.database
-          .from('orders')
-          .select('*')
-          .eq('worker_id', workerId)
-          .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'])
-          .order('created_at', { ascending: false })
-          .limit(1);
-        if (byId && byId.length > 0) {
-          assignedJobs = byId;
-        }
-      }
-
-      if (assignedJobs.length === 0 && workerEmail) {
-        const { data: byEmail } = await db.database
-          .from('orders')
-          .select('*')
-          .eq('worker_email', workerEmail)
-          .in('status', ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'])
-          .order('created_at', { ascending: false })
-          .limit(1);
-        if (byEmail && byEmail.length > 0) {
-          assignedJobs = byEmail;
-        }
-      }
-
-      // 2. Check localStorage for any locally accepted job as fallback
-      if (assignedJobs.length === 0 && typeof window !== 'undefined') {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('accepted_job_') && localStorage.getItem(key) === 'true') {
-            const acceptedId = key.replace('accepted_job_', '');
-            const { data: localOrder } = await db.database
-              .from('orders')
-              .select('*')
-              .eq('id', acceptedId)
-              .maybeSingle();
-
-            if (localOrder && ['pending', 'in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'].includes(localOrder.status)) {
-              assignedJobs = [{
-                ...localOrder,
-                status: 'in_progress',
-                worker_id: workerId || localOrder.worker_id
-              }];
-              break;
-            }
-          }
-        }
+      if (activeOrder) {
+        // Map Firestore Order format to component's expected format for smooth transition
+        assignedJobs = [{
+          ...activeOrder,
+          id: activeOrder.id,
+          status: activeOrder.status === 'worker_assigned' ? 'assigned' : 'in_progress',
+          details: { ...activeOrder.problem, estimation: activeOrder.pricing?.total },
+          total_price: activeOrder.pricing?.total,
+          lat: activeOrder.address?.latitude,
+          lng: activeOrder.address?.longitude,
+          address: activeOrder.address?.fullAddress || activeOrder.address?.label,
+          worker_id: activeOrder.workerId
+        }];
       }
 
       if (assignedJobs && assignedJobs.length > 0) {
         setActiveJob(assignedJobs[0]);
       } else {
         // ONLY check for unassigned pending orders if worker has no active accepted order
-        const { data: pendingJobs } = await db.database
-          .from('orders')
-          .select('*')
-          .eq('status', 'pending')
-          .or('accepted.is.null,accepted.eq.false')
-          .order('created_at', { ascending: false })
-          .limit(1);
-
+        const pendingJobs = await OrderService.getAvailableOrders('all'); // Basic fetch all for now
         if (pendingJobs && pendingJobs.length > 0) {
-          const isLocallyAccepted = typeof window !== 'undefined' && localStorage.getItem(`accepted_job_${pendingJobs[0].id}`) === 'true';
-          if (isLocallyAccepted) {
-            setActiveJob({
-              ...pendingJobs[0],
-              status: 'in_progress',
-              accepted: true,
-              worker_id: workerId
-            });
-          } else {
-            setActiveJob(pendingJobs[0]);
-          }
+          const fbOrder = pendingJobs[0];
+          setActiveJob({
+            ...fbOrder,
+            id: fbOrder.id,
+            status: 'pending',
+            details: { ...fbOrder.problem, estimation: fbOrder.pricing?.total },
+            total_price: fbOrder.pricing?.total,
+            lat: fbOrder.address?.latitude,
+            lng: fbOrder.address?.longitude,
+            address: fbOrder.address?.fullAddress || fbOrder.address?.label,
+          });
         } else {
           setActiveJob(null);
         }
       }
 
       // 3. Fetch ALL completed jobs for total LIFETIME EARNINGS & previous orders list
-      let completedQuery = db.database
-        .from('orders')
-        .select('*')
-        .in('status', ['completed', 'delivered'])
-        .order('created_at', { ascending: false });
-
-      if (workerId && workerEmail) {
-        completedQuery = completedQuery.or(`worker_id.eq.${workerId},worker_email.eq.${workerEmail}`);
-      } else if (workerId) {
-        completedQuery = completedQuery.eq('worker_id', workerId);
-      } else if (workerEmail) {
-        completedQuery = completedQuery.eq('worker_email', workerEmail);
-      }
-
-      const { data: completed } = await completedQuery;
-
-      if (completed) {
-        setCompletedJobs(completed);
-        const total = completed.reduce((sum: number, j: any) => sum + (Number(j.total_price || j.price || 499)), 0);
-        setLifetimeEarnings(total);
+      if (workerId) {
+        const completed = await OrderService.getCompletedOrders(workerId);
+        if (completed) {
+          const mappedCompleted = completed.map(j => ({
+             ...j,
+             id: j.id,
+             status: j.status,
+             details: { ...j.problem, estimation: j.pricing?.total },
+             total_price: j.pricing?.total
+          }));
+          setCompletedJobs(mappedCompleted);
+          const total = mappedCompleted.reduce((sum: number, j: any) => sum + (Number(j.total_price || 499)), 0);
+          setLifetimeEarnings(total);
+        }
       }
     } catch (err) {
       console.error('Fetch worker dashboard error:', err);
@@ -328,75 +282,18 @@ function WorkerDashboardContent() {
     const nowIso = new Date().toISOString();
 
     try {
-      // 1. Fetch current order state from DB to check if it's already accepted by someone else
-      const { data: existingOrder } = await db.database
-        .from('orders')
-        .select('*')
-        .eq('id', targetId)
-        .maybeSingle();
+      const { OrderService } = await import('@/lib/services/order.service');
+      const { TrackingService } = await import('@/lib/services/tracking.service');
+      
+      await OrderService.assignWorker(targetId, workerId);
 
-      // If order exists and is ALREADY accepted by ANOTHER worker
-      if (existingOrder && (existingOrder.accepted === true || existingOrder.status !== 'pending')) {
-        const isCurrentWorker = existingOrder.worker_id === workerId || (user?.email && existingOrder.worker_email === user.email);
-        
-        if (!isCurrentWorker) {
-          // Another worker accepted it first!
-          const otherWorkerName = existingOrder.worker_name || 'another technician';
-          console.warn(`⚠️ Order was already accepted by ${otherWorkerName}`);
-
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem(`accepted_job_${targetId}`);
-            window.dispatchEvent(new CustomEvent('repireo_toast', {
-              detail: {
-                id: `toast-${Date.now()}`,
-                type: 'info',
-                title: 'Order Already Accepted',
-                message: `Order was accepted by ${otherWorkerName}. It has been removed from your workspace.`
-              }
-            }));
-          }
-
-          setActiveJob(null);
-          fetchWorkerDashboardData();
-          return;
-        }
-      }
-
-      // 2. Perform DB update for THIS worker
-      const updateData: any = {
-        status: 'in_progress',
-        accepted: true,
-        accepted_at: nowIso,
-        worker_name: displayName,
-        worker_avatar: workerAvatar,
-        worker_phone: workerPhone,
-        worker_email: user?.email || profile?.email || null
-      };
-
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(workerId);
-      if (isUuid) {
-        updateData.worker_id = workerId;
-      }
-
-      const { error: updateError } = await db.database
-        .from('orders')
-        .update(updateData)
-        .eq('id', targetId);
-
-      if (updateError) {
-        console.error('❌ DB order update error:', updateError.message, updateError);
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('repireo_toast', {
-            detail: {
-              id: `toast-${Date.now()}`,
-              type: 'info',
-              title: 'Acceptance Error',
-              message: `Could not update order status: ${updateError.message}`
-            }
-          }));
-        }
-        return;
-      }
+      // Log tracking event
+      await TrackingService.addTrackingEvent(targetId, {
+        workerId,
+        workerName: displayName,
+        status: 'worker_assigned',
+        note: `Technician ${displayName} has accepted the job and is preparing to dispatch.`
+      });
 
       // 3. Mark in localStorage & update local activeJob state
       if (typeof window !== 'undefined') {
@@ -405,7 +302,6 @@ function WorkerDashboardContent() {
 
       setActiveJob((prev: any) => ({
         ...(prev || {}),
-        ...existingOrder,
         id: targetId,
         status: 'in_progress',
         accepted: true,
@@ -414,8 +310,11 @@ function WorkerDashboardContent() {
         worker_name: displayName,
         worker_avatar: workerAvatar,
         worker_phone: workerPhone,
-        worker_email: user?.email || profile?.email
+        worker_email: user?.email || profile?.email || null
       }));
+
+      // Trigger fetch to sync remaining properties
+      setTimeout(fetchWorkerDashboardData, 500);
 
       console.log('✅ Order accepted & activated in DB for worker:', displayName);
 
@@ -546,7 +445,7 @@ function WorkerDashboardContent() {
     }
   };
 
-  // Verify Start Work OTP
+  // Verify Start OTP
   const handleVerifyStartOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setOtpError('');
@@ -560,17 +459,19 @@ function WorkerDashboardContent() {
     setVerifyingOtp(true);
     try {
       if (activeJob?.id) {
-        await db.database
-          .from('orders')
-          .update({ 
-            status: 'work_in_progress',
-            worker_id: user?.id,
-            worker_email: user?.email,
-            worker_name: displayName
-          })
-          .eq('id', activeJob.id);
+        const { OrderService } = await import('@/lib/services/order.service');
+        const { TrackingService } = await import('@/lib/services/tracking.service');
+
+        await OrderService.updateOrderStatus(activeJob.id, { 
+          status: 'in_progress' 
+        } as any);
+
+        await TrackingService.addTrackingEvent(activeJob.id, {
+          status: 'in_progress',
+          note: `Technician started work (Start OTP Verified).`
+        });
       }
-      setActiveJob({ ...activeJob, status: 'work_in_progress' });
+      setActiveJob({ ...activeJob, status: 'work_in_progress' }); // keeping local status names the same for UI compatibility
       setStartOtpInput('');
     } catch (err) {
       console.error('Verify Start OTP error:', err);
@@ -585,13 +486,10 @@ function WorkerDashboardContent() {
     setCashCollected(true);
     if (activeJob?.id) {
       try {
-        await db.database
-          .from('orders')
-          .update({ 
-            payment_status: 'paid',
-            payment_method: 'cash'
-          })
-          .eq('id', activeJob.id);
+        const { OrderService } = await import('@/lib/services/order.service');
+        await OrderService.updateOrderStatus(activeJob.id, { 
+          payment: { method: 'cash', status: 'paid' } 
+        } as any);
       } catch (err) {
         console.error('Cash payment update error:', err);
       }
@@ -612,13 +510,17 @@ function WorkerDashboardContent() {
     setVerifyingOtp(true);
     try {
       if (activeJob?.id) {
-        await db.database
-          .from('orders')
-          .update({ 
-            status: 'completed',
-            payment_status: 'paid'
-          })
-          .eq('id', activeJob.id);
+        const { OrderService } = await import('@/lib/services/order.service');
+        const { TrackingService } = await import('@/lib/services/tracking.service');
+
+        await OrderService.updateOrderStatus(activeJob.id, { 
+          status: 'completed'
+        } as any);
+
+        await TrackingService.addTrackingEvent(activeJob.id, {
+          status: 'completed',
+          note: `Technician successfully completed the service.`
+        });
       }
       const jobPrice = Number(activeJob?.total_price || activeJob?.price || 499);
       setLifetimeEarnings(prev => prev + jobPrice);
