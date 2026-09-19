@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { classifyWorkerCategories } from '@/lib/workerCategoryClassifier';
-import { auth, rtdb, firestore } from '@/lib/firebase';
+import { auth, firestore } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { ref, set, remove, get } from 'firebase/database';
 import { doc, setDoc } from 'firebase/firestore';
@@ -186,7 +186,7 @@ function RegisterForm() {
       // Save OTP to Realtime Database
       try {
         const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
-        await set(ref(rtdb, `temp_otps/${sanitizedEmail}`), {
+        await set(ref(`temp_otps/${sanitizedEmail}`), {
           otp: generatedOtp,
           created_at: new Date().toISOString()
         });
@@ -319,7 +319,7 @@ function RegisterForm() {
 
     try {
       const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
-      await remove(ref(rtdb, `temp_otps/${sanitizedEmail}`));
+      await remove(ref(`temp_otps/${sanitizedEmail}`));
     } catch (cleanErr) {
       console.warn('OTP row cleanup note:', cleanErr);
     }
@@ -343,7 +343,7 @@ function RegisterForm() {
       const cleanEmail = formData.email.trim().toLowerCase();
       const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
 
-      await set(ref(rtdb, `temp_otps/${sanitizedEmail}`), {
+      await set(ref(`temp_otps/${sanitizedEmail}`), {
         otp: generatedOtp,
         created_at: new Date().toISOString()
       });

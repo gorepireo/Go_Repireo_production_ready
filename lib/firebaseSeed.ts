@@ -1,4 +1,4 @@
-import { rtdb, db } from './firebase';
+import { db } from './firebase';
 import { ref, set, push } from 'firebase/database';
 import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -19,7 +19,7 @@ export async function seedFirestoreDatabase() {
     console.log('Seeding Firebase Realtime Database (RTDB)...');
 
     // users
-    await set(ref(rtdb, 'users/admin_default'), {
+    await set(ref('users/admin_default'), {
       name: 'Go_Repireo Admin',
       email: 'gorepireo@gmail.com',
       role: 'admin',
@@ -29,7 +29,7 @@ export async function seedFirestoreDatabase() {
       created_at: timestamp
     });
 
-    await set(ref(rtdb, `users/${sampleWorkerId}`), {
+    await set(ref(`users/${sampleWorkerId}`), {
       name: 'Rahul Sharma',
       email: 'rahul.plumber@repireo.com',
       role: 'worker',
@@ -48,7 +48,7 @@ export async function seedFirestoreDatabase() {
       created_at: timestamp
     });
 
-    await set(ref(rtdb, `users/${sampleShopkeeperId}`), {
+    await set(ref(`users/${sampleShopkeeperId}`), {
       name: 'Gupta Hardware Store',
       email: 'guptahardware@repireo.com',
       role: 'shopkeeper',
@@ -63,7 +63,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // worker_applications
-    await set(ref(rtdb, `worker_applications/${sampleWorkerId}`), {
+    await set(ref(`worker_applications/${sampleWorkerId}`), {
       app_id: sampleWorkerId,
       from_name: 'Rahul Sharma',
       email: 'rahul.plumber@repireo.com',
@@ -82,7 +82,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // workers
-    await set(ref(rtdb, `workers/${sampleWorkerId}`), {
+    await set(ref(`workers/${sampleWorkerId}`), {
       worker_id: sampleWorkerId,
       name: 'Rahul Sharma',
       email: 'rahul.plumber@repireo.com',
@@ -97,7 +97,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // shop_applications
-    await set(ref(rtdb, `shop_applications/${sampleShopkeeperId}`), {
+    await set(ref(`shop_applications/${sampleShopkeeperId}`), {
       app_id: sampleShopkeeperId,
       shop_name: 'Gupta Hardware & Electricals',
       owner_name: 'Rajesh Gupta',
@@ -110,7 +110,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // shops
-    const shopRef = push(ref(rtdb, 'shops'));
+    const shopRef = push(ref('shops'));
     await set(shopRef, {
       shopkeeper_id: sampleShopkeeperId,
       shop_name: 'Gupta Hardware & Electricals',
@@ -127,7 +127,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // products
-    const prod1 = push(ref(rtdb, 'products'));
+    const prod1 = push(ref('products'));
     await set(prod1, {
       shop_id: shopRef.key,
       shop_name: 'Gupta Hardware & Electricals',
@@ -141,7 +141,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // orders
-    const orderRef = push(ref(rtdb, 'orders'));
+    const orderRef = push(ref('orders'));
     await set(orderRef, {
       service_name: 'Plumbing Service',
       category: 'plumbing',
@@ -161,7 +161,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // order_live_location
-    await set(ref(rtdb, `order_live_location/${orderRef.key}`), {
+    await set(ref(`order_live_location/${orderRef.key}`), {
       order_id: orderRef.key,
       worker_id: sampleWorkerId,
       lat: 26.8124,
@@ -170,7 +170,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // user_addresses
-    const addrRef = push(ref(rtdb, 'user_addresses'));
+    const addrRef = push(ref('user_addresses'));
     await set(addrRef, {
       user_id: 'customer_sample_id',
       user_email: 'customer.sample@gmail.com',
@@ -184,7 +184,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // messages (chats)
-    const msgRef = push(ref(rtdb, 'messages'));
+    const msgRef = push(ref('messages'));
     await set(msgRef, {
       order_id: orderRef.key,
       sender_id: 'customer_sample_id',
@@ -194,7 +194,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // call_sessions
-    const callRef = push(ref(rtdb, 'call_sessions'));
+    const callRef = push(ref('call_sessions'));
     await set(callRef, {
       order_id: orderRef.key,
       caller_id: 'customer_sample_id',
@@ -204,7 +204,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // push_subscriptions
-    const pushSubRef = push(ref(rtdb, 'push_subscriptions'));
+    const pushSubRef = push(ref('push_subscriptions'));
     await set(pushSubRef, {
       user_id: 'customer_sample_id',
       endpoint: 'https://fcm.googleapis.com/fcm/send/sample-token',
@@ -213,7 +213,7 @@ export async function seedFirestoreDatabase() {
     });
 
     // reviews
-    const revRef = push(ref(rtdb, 'reviews'));
+    const revRef = push(ref('reviews'));
     await set(revRef, {
       customer_email: 'customer.sample@gmail.com',
       worker_id: sampleWorkerId,
@@ -225,7 +225,7 @@ export async function seedFirestoreDatabase() {
     status.rtdb = true;
     console.log('Realtime Database seeded successfully!');
   } catch (rtdbErr: any) {
-    console.warn('RTDB Seed Note:', rtdbErr.message);
+    console.warn('RTDB Seed Note:'Err.message);
     status.rtdbError = rtdbErr.message;
   }
 

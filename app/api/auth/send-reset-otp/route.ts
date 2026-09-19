@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { rtdb } from '@/lib/firebase';
-import { ref, set } from 'firebase/database';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { sendGmailEmail } from '@/lib/gmail';
 import { sendResendEmail } from '@/lib/resend';
 import { sendBrevoEmail } from '@/lib/brevo';
@@ -17,9 +17,9 @@ export async function POST(request: Request) {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const sanitizedEmail = cleanEmail.replace(/[.#$/\[\]]/g, '_');
 
-    // 1. Store Reset OTP in Firebase Realtime Database
+    // 1. Store Reset OTP in Firebase Firestore
     try {
-      await set(ref(rtdb, `temp_otps/${sanitizedEmail}`), {
+      await setDoc(doc(db, 'temp_otps', sanitizedEmail), {
         reset_otp: otp,
         created_at: new Date().toISOString()
       });
