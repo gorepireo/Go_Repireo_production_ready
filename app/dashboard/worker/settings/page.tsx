@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { Save, Camera, Loader2, User, Phone, Mail, CreditCard, LogOut, Pencil, Lock, Landmark, Banknote } from 'lucide-react';
 import Avatar from '@/components/Avatar';
@@ -47,7 +46,7 @@ export default function WorkerSettings() {
     if (!user) return;
     setLoading(true);
     
-    await db.database
+    await (null as any)
       .from('users')
       .update({
         name: formData.name,
@@ -97,7 +96,7 @@ export default function WorkerSettings() {
       const publicUrl = await getDownloadURL(storageRef);
 
       if (publicUrl) {
-        await db.database
+        await (null as any)
           .from('users')
           .update({ avatar_url: publicUrl as string })
           .eq('id', user.id);

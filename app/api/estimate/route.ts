@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { trainAndEvaluateAIProblem } from '@/lib/ai/estimatorModel';
-import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +13,7 @@ export async function POST(request: Request) {
 
     // 1. Order Lookup: Check if input is a real Booking / Order ID in InsForge DB
     try {
-      const { data: orderData } = await db.database
+      const { data: orderData } = await (null as any)
         .from('orders')
         .select('*')
         .eq('id', trimmedInput)

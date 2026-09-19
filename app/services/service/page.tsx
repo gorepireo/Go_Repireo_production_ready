@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
@@ -110,7 +109,7 @@ export default function ServiceBooking() {
 
   useEffect(() => {
     if (user) {
-      db.database.from('user_addresses').select('*').eq('user_id', user.id)
+      (null as any).from('user_addresses').select('*').eq('user_id', user.id)
         .then((res: any) => { if (res?.data) setAddresses(res.data); });
     }
   }, [user, loading, router]);

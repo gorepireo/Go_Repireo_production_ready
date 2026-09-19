@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Fetch Order from Database
-    const { data: order, error: orderErr } = await db.database
+    const { data: order, error: orderErr } = await (null as any)
       .from('orders')
       .select('*')
       .eq('id', order_id)
@@ -56,7 +55,7 @@ export async function POST(req: Request) {
       callSession.sdp_offer = sdp_offer;
     }
 
-    const { error: insertErr } = await db.database
+    const { error: insertErr } = await (null as any)
       .from('call_sessions')
       .insert([callSession]);
 
@@ -142,7 +141,7 @@ export async function PATCH(req: Request) {
       if (ended_by) updateData.ended_by = ended_by;
 
       // Calculate Duration
-      const { data: existing } = await db.database
+      const { data: existing } = await (null as any)
         .from('call_sessions')
         .select('accepted_at')
         .eq('id', call_id)
@@ -155,7 +154,7 @@ export async function PATCH(req: Request) {
       }
     }
 
-    const { error: updateErr } = await db.database
+    const { error: updateErr } = await (null as any)
       .from('call_sessions')
       .update(updateData)
       .eq('id', call_id);

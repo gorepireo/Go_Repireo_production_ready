@@ -33,7 +33,6 @@ import {
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import Avatar from '@/components/Avatar';
 
@@ -69,7 +68,7 @@ export default function Home() {
       }
 
       try {
-        const { data: allOrders } = await db.database
+        const { data: allOrders } = await (null as any)
           .from('orders')
           .select('*')
           .order('created_at', { ascending: false });

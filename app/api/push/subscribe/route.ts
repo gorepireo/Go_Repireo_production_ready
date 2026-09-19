@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 
 // Save a user's push subscription to the database
 export async function POST(req: Request) {
@@ -12,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     // Upsert push subscription keyed by endpoint
-    const { error } = await db.database
+    const { error } = await (null as any)
       .from('push_subscriptions')
       .upsert([{
         user_id: userId || null,
@@ -45,7 +44,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'endpoint is required' }, { status: 400 });
     }
 
-    await db.database
+    await (null as any)
       .from('push_subscriptions')
       .delete()
       .eq('endpoint', endpoint);

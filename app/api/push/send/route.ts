@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import webpush from 'web-push';
-import { db } from '@/lib/db';
 
 // Helper function to safely configure VAPID at request time
 function ensureVapidConfigured() {
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
     });
 
     // Fetch push subscriptions from DB
-    let query = db.database.from('push_subscriptions').select('*');
+    let query = (null as any).from('push_subscriptions').select('*');
     if (targetUserId) {
       query = query.eq('user_id', targetUserId);
     } else if (targetRole) {

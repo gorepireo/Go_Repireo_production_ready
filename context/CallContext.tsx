@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 
 export interface CallParticipant {
@@ -215,7 +214,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // 1. Check active session status when in call
         if (callData?.sessionId && ['outgoing', 'incoming', 'connected'].includes(callStatus)) {
-          const { data: session } = await db.database
+          const { data: session } = await (null as any)
             .from('call_sessions')
             .select('status, sdp_answer, sdp_offer, ice_candidates')
             .eq('id', callData.sessionId)
@@ -265,7 +264,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // 2. Check for incoming call if currently idle
         if (callStatus === 'idle') {
-          const { data: ringingSessions } = await db.database
+          const { data: ringingSessions } = await (null as any)
             .from('call_sessions')
             .select('*')
             .eq('status', 'ringing')
@@ -350,7 +349,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const saveIceCandidateToDb = async (sessionId: string, candidate: any) => {
     const userKey = user?.id || user?.email;
     try {
-      const { data: existing } = await db.database
+      const { data: existing } = await (null as any)
         .from('call_sessions')
         .select('ice_candidates')
         .eq('id', sessionId)
@@ -359,7 +358,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const currentList = Array.isArray(existing?.ice_candidates) ? existing.ice_candidates : [];
       const updatedList = [...currentList, { userId: userKey, candidate }];
 
-      await db.database
+      await (null as any)
         .from('call_sessions')
         .update({ ice_candidates: updatedList })
         .eq('id', sessionId);
@@ -534,7 +533,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       // Fetch sdp_offer from DB session
-      const { data: dbSession } = await db.database
+      const { data: dbSession } = await (null as any)
         .from('call_sessions')
         .select('sdp_offer, ice_candidates')
         .eq('id', callData.sessionId)

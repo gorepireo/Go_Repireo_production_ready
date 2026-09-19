@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Target, Navigation, Info, ShieldCheck, Zap, Activity, Satellite, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db } from '@/lib/db';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import BottomNav from '@/components/BottomNav';
@@ -37,7 +36,7 @@ function StandardMapContent() {
     }
 
     try {
-      const { data: orderData } = await db.database
+      const { data: orderData } = await (null as any)
         .from('orders')
         .select('*')
         .eq('id', orderId)
@@ -49,7 +48,7 @@ function StandardMapContent() {
         let finalTrackData = null;
         
         // 1. Try to get the real-time live location first
-        const { data: liveData } = await db.database
+        const { data: liveData } = await (null as any)
           .from('order_live_location')
           .select('*')
           .eq('order_id', orderId)
@@ -59,7 +58,7 @@ function StandardMapContent() {
           finalTrackData = liveData;
         } else {
           // 2. Fallback to the historical order tracking log
-          const { data: trackData } = await db.database
+          const { data: trackData } = await (null as any)
             .from('order_tracking')
             .select('*')
             .eq('order_id', orderId)

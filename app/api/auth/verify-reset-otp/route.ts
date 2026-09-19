@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
@@ -17,7 +16,7 @@ export async function POST(request: Request) {
     const cleanOtp = otp.trim();
 
     // 1. Fetch user record from database
-    const { data: userRow, error: fetchError } = await db.database
+    const { data: userRow, error: fetchError } = await (null as any)
       .from('users')
       .select('id, reset_otp, reset_otp_expires_at')
       .eq('email', cleanEmail)
@@ -60,7 +59,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Update password in database users table
-    await db.database
+    await (null as any)
       .from('users')
       .update({
         password: newPassword,

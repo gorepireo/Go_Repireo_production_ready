@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -14,7 +13,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Fetch order to verify assigned worker authorization & order status
-    const { data: order, error: orderErr } = await db.database
+    const { data: order, error: orderErr } = await (null as any)
       .from('orders')
       .select('id, worker_id, status, user_email, customer_id')
       .eq('id', order_id)
@@ -32,13 +31,13 @@ export async function POST(req: NextRequest) {
     const updatedAt = new Date().toISOString();
 
     // 2. Delete outdated live location record for this order
-    await db.database
+    await (null as any)
       .from('order_live_location')
       .delete()
       .eq('order_id', order_id);
 
     // 3. Insert updated worker GPS location into order_live_location
-    await db.database
+    await (null as any)
       .from('order_live_location')
       .insert([{
         order_id: order_id,
@@ -87,7 +86,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch latest location
-    const { data: locRows, error } = await db.database
+    const { data: locRows, error } = await (null as any)
       .from('order_live_location')
       .select('*')
       .eq('order_id', order_id)

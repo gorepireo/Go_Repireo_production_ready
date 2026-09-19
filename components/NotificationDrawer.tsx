@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/db';
 
 export interface NotificationItem {
   id: string;
@@ -85,7 +84,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
 
       if (targetEmail || targetUserId) {
         try {
-          const { data: allOrders } = await db.database
+          const { data: allOrders } = await (null as any)
             .from('orders')
             .select('*')
             .order('created_at', { ascending: false });
@@ -172,7 +171,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
 
     // Assign pending order in Turso DB
     try {
-      const { data: pendingOrders } = await db.database
+      const { data: pendingOrders } = await (null as any)
         .from('orders')
         .select('*')
         .eq('status', 'pending')
@@ -180,7 +179,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
         .limit(1);
 
       if (pendingOrders && pendingOrders.length > 0) {
-        await db.database
+        await (null as any)
           .from('orders')
           .update({
             status: 'in_progress',

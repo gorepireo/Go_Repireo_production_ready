@@ -26,7 +26,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { useCall } from '@/context/CallContext';
 import SkeletonLoader from '@/components/SkeletonLoader';

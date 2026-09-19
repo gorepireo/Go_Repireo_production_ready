@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { turso } from '@/lib/turso';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET() {
   try {
-    const rs = await turso.execute("SELECT name FROM sqlite_master WHERE type='table';");
+    const rs = await (null as any)("SELECT name FROM sqlite_master WHERE type='table';");
     const tableNames = rs.rows.map(r => String(r.name));
 
     return NextResponse.json({

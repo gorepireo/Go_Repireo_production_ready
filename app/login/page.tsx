@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { db } from '@/lib/db';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, Home, ArrowRight, ShieldCheck, Zap, Headphones, CheckCircle2 } from 'lucide-react';

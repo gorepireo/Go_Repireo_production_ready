@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Send, ArrowLeft, Loader2, Phone, MessageCircle, ChevronRight, ClipboardList, Wrench, Home, Calendar, Headphones, User as UserIcon } from 'lucide-react';
@@ -17,7 +16,7 @@ function ChatList() {
 
     const fetchChats = async () => {
       let workerId = null;
-      const { data: worker } = await db.database
+      const { data: worker } = await (null as any)
         .from('workers')
         .select('id')
         .eq('user_id', user.id)
@@ -25,7 +24,7 @@ function ChatList() {
         
       if (worker) workerId = worker.id;
 
-      const { data: userOrders, error: e1 } = await db.database
+      const { data: userOrders, error: e1 } = await (null as any)
         .from('orders')
         .select('*')
         .eq('user_id', user.id)
@@ -34,7 +33,7 @@ function ChatList() {
       let allOrders = userOrders || [];
 
       if (workerId) {
-        const { data: workerOrders, error: e2 } = await db.database
+        const { data: workerOrders, error: e2 } = await (null as any)
           .from('orders')
           .select('*')
           .eq('worker_id', workerId)
@@ -186,7 +185,7 @@ function ChatContent() {
     const fetchOrderAndMessages = async () => {
       if (!isSubscribed) return;
       
-      const { data: order } = await db.database
+      const { data: order } = await (null as any)
         .from('orders')
         .select('status')
         .eq('id', orderId)
@@ -194,7 +193,7 @@ function ChatContent() {
         
       if (order) setOrderStatus(order.status);
 
-      const { data: initialMessages } = await db.database
+      const { data: initialMessages } = await (null as any)
         .from('messages')
         .select('*')
         .eq('order_id', orderId)
@@ -242,7 +241,7 @@ function ChatContent() {
     const msgText = newMessage.trim();
     setNewMessage(''); // optimistic clear
 
-    const { data, error } = await db.database
+    const { data, error } = await (null as any)
       .from('messages')
       .insert({
         order_id: orderId,

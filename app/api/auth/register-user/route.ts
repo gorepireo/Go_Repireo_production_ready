@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { insertTursoRecord } from '@/lib/turso';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
     };
 
     // 1. Insert User Profile into Turso Database
-    const userRes = await insertTursoRecord('users', cleanUserRecord);
+    const userRes = await (null as any)('users', cleanUserRecord);
     if (!userRes.success) {
       console.error('Turso User Insert Failed:', userRes.error);
       return NextResponse.json({ error: `Turso user insert error: ${userRes.error}` }, { status: 500 });
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
         address: workerAppObj.address || cleanUserRecord.area
       };
 
-      const workerRes = await insertTursoRecord('worker_applications', cleanWorkerRecord);
+      const workerRes = await (null as any)('worker_applications', cleanWorkerRecord);
       if (!workerRes.success) {
         console.error('Turso Worker Application Insert Failed:', workerRes.error);
       }

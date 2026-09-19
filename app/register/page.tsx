@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { db } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -32,7 +31,6 @@ import { auth, rtdb, firestore } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { ref, set, remove, get } from 'firebase/database';
 import { doc, setDoc } from 'firebase/firestore';
-import { insertTursoRecord } from '@/lib/turso';
 
 type Role = 'user' | 'worker' | 'shopkeeper';
 

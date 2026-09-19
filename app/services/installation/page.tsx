@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/db';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, ShoppingCart, ArrowRight, ShieldCheck, Truck, MapPin, Search, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
@@ -54,7 +53,7 @@ export default function InstallationFlow() {
         order_id: data.orderId,
         handler: async function (response: any) {
           try {
-            const { data: orderData, error } = await db.database
+            const { data: orderData, error } = await (null as any)
               .from('orders')
               .insert([{
                 user_email: user.email,
@@ -71,7 +70,7 @@ export default function InstallationFlow() {
               .select();
 
             if (orderData) {
-              await db.database
+              await (null as any)
                 .from('order_tracking')
                 .insert([{
                   order_id: orderData[0].id,

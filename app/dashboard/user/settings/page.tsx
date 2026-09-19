@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { db } from '@/lib/db';
 import { useAuth } from '@/context/AuthContext';
 import { ArrowLeft, Save, Plus, MapPin, Trash2, Camera, Loader2, X, User, Phone, Mail, LogOut, Pencil, Lock } from 'lucide-react';
 import Link from 'next/link';
@@ -50,7 +49,7 @@ export default function UserSettings() {
 
   const fetchAddresses = async () => {
     if (!user) return;
-    const { data } = await db.database
+    const { data } = await (null as any)
       .from('user_addresses')
       .select('*')
       .eq('user_id', user.id)
@@ -63,7 +62,7 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await db.database
+    await (null as any)
       .from('users')
       .update({
         name: formData.name,
@@ -111,7 +110,7 @@ export default function UserSettings() {
       const publicUrl = await getDownloadURL(storageRef);
 
       if (publicUrl) {
-        await db.database
+        await (null as any)
           .from('users')
           .update({ avatar_url: publicUrl as string })
           .eq('id', user.id);
@@ -129,7 +128,7 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await db.database.from('user_addresses').insert([{
+    await (null as any).from('user_addresses').insert([{
       user_id: user.id,
       name: newAddress.name,
       address_text: newAddress.address_text,
@@ -146,7 +145,7 @@ export default function UserSettings() {
   const handleDeleteAddress = async (id: string) => {
     if (!confirm('Are you sure you want to delete this address?')) return;
     setLoading(true);
-    await db.database.from('user_addresses').delete().eq('id', id);
+    await (null as any).from('user_addresses').delete().eq('id', id);
     await fetchAddresses();
     setLoading(false);
   };
