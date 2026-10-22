@@ -2,10 +2,10 @@
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Keyboard, Loader2, ScanLine, X } from 'lucide-react';
+import { Camera, Loader2, X } from 'lucide-react';
 
 function extractCode(value: string) {
-  const match = decodeURIComponent(value).toUpperCase().match(/GRC-\d{4}/);
+  const match = decodeURIComponent(value).toUpperCase().match(/GRC-[A-Z0-9]+(?:-[A-Z0-9]+)*|GRI-[A-Z0-9]+/);
   return match?.[0] || '';
 }
 
@@ -29,8 +29,8 @@ export default function CertificateVerifier() {
 
   const verify = (value: string) => {
     const normalized = extractCode(value);
-    if (!/^GRC-\d{4}$/.test(normalized)) {
-      setError('Enter a valid certificate code in the format GRC-1234.');
+    if (!/^(GRC-[A-Z0-9]+(?:-[A-Z0-9]+)*|GRI-[A-Z0-9]+)$/.test(normalized)) {
+      setError('Enter a valid certificate ID or intern code.');
       return;
     }
     stopScanner();
@@ -74,33 +74,36 @@ export default function CertificateVerifier() {
   };
 
   return (
-    <div className="space-y-5">
-      <form onSubmit={submit} className="space-y-4">
-        <label htmlFor="certificate-code" className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-          <Keyboard size={16} /> Certificate code
+    <div className="space-y-7">
+      <form onSubmit={submit} className="space-y-3">
+        <label htmlFor="certificate-code" className="block text-sm font-semibold text-slate-800">
+          Certificate code
         </label>
-        <input id="certificate-code" value={code} onChange={(event) => { setCode(event.target.value.toUpperCase()); setError(''); }} placeholder="GRC-1234" autoComplete="off" maxLength={8} className="h-14 w-full rounded-2xl border border-slate-200 bg-white px-5 text-center font-mono text-lg font-black uppercase tracking-[0.18em] text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
-        <button type="submit" className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#007AFF] text-sm font-black text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600">
-          <ScanLine size={19} /> Verify certificate
-        </button>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input id="certificate-code" value={code} onChange={(event) => { setCode(event.target.value.toUpperCase()); setError(''); }} placeholder="GRC-2026-00125" autoComplete="off" maxLength={64} className="h-12 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-4 font-mono text-base font-semibold uppercase tracking-wider text-slate-900 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-200" />
+          <button type="submit" className="h-12 rounded-lg bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+            Verify certificate
+          </button>
+        </div>
+        <p className="text-xs text-slate-500">Certificate ID or intern code</p>
       </form>
 
-      <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-300"><span className="h-px flex-1 bg-slate-200" />or<span className="h-px flex-1 bg-slate-200" /></div>
+      <div>
+        {!scanning ? (
+          <button type="button" onClick={startScanner} className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-transparent px-4 text-sm font-medium text-slate-600 transition hover:border-slate-500 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-300">
+            <Camera size={18} /> Scan QR code
+          </button>
+        ) : (
+          <div className="relative overflow-hidden rounded-md bg-slate-950">
+            <video ref={videoRef} muted playsInline className="aspect-video w-full object-cover" />
+            <div className="pointer-events-none absolute inset-8 border-2 border-white/90" />
+            <button type="button" onClick={stopScanner} className="absolute right-3 top-3 rounded-md bg-black/70 p-2 text-white" aria-label="Stop QR scanner"><X size={18} /></button>
+            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-md bg-black/70 px-3 py-2 text-xs font-medium text-white"><Loader2 size={14} className="animate-spin" /> Scanning</div>
+          </div>
+        )}
+      </div>
 
-      {!scanning ? (
-        <button type="button" onClick={startScanner} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-700 transition hover:border-blue-300 hover:text-blue-600">
-          <Camera size={19} /> Scan certificate QR code
-        </button>
-      ) : (
-        <div className="relative overflow-hidden rounded-2xl bg-slate-950">
-          <video ref={videoRef} muted playsInline className="aspect-video w-full object-cover" />
-          <div className="pointer-events-none absolute inset-6 rounded-2xl border-2 border-emerald-400 shadow-[0_0_0_999px_rgba(0,0,0,.35)]" />
-          <button type="button" onClick={stopScanner} className="absolute right-3 top-3 rounded-full bg-black/70 p-2 text-white" aria-label="Stop QR scanner"><X size={18} /></button>
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-bold text-white"><Loader2 size={14} className="animate-spin" /> Scanning</div>
-        </div>
-      )}
-
-      {error && <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-center text-xs font-bold text-rose-700">{error}</p>}
+      {error && <p role="alert" className="border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">{error}</p>}
     </div>
   );
 }

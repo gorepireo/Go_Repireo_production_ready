@@ -3,7 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut, type User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, firebaseConfigured } from '@/lib/firebase';
 
 type AppUser = User & {
   id: string;
@@ -134,19 +134,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  useEffect(() => onAuthStateChanged(auth, async (firebaseUser) => {
-    setLoading(true);
-    await hydrate(firebaseUser);
-    setLoading(false);
-  }), [hydrate]);
+  useEffect(() => {
+    if (!firebaseConfigured) {
+      setLoading(false);
+      return;
+    }
+    return onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
+      await hydrate(firebaseUser);
+      setLoading(false);
+    });
+  }, [hydrate]);
 
   const refresh = useCallback(async () => {
+    if (!firebaseConfigured) return;
     if (!auth.currentUser) return;
     await auth.currentUser.getIdToken(true);
     await hydrate(auth.currentUser);
   }, [hydrate]);
 
   const signOut = useCallback(async () => {
+    if (!firebaseConfigured) {
+      window.location.assign('/maintenance');
+      return;
+    }
     await firebaseSignOut(auth);
     setUser(null);
     setRole(null);

@@ -6,6 +6,7 @@ export interface PublicCertificateRecord {
   code: string;
   name: string;
   title: string;
+  department?: string;
   startDate: string;
   endDate: string;
   verified: boolean;
@@ -22,7 +23,7 @@ export function normalizeCertificateCode(input: string) {
 }
 
 export function isCertificateCode(input: string) {
-  return /^GRC-\d{4}$/.test(normalizeCertificateCode(input));
+  return /^(GRC-[A-Z0-9]+(?:-[A-Z0-9]+)*|GRI-[A-Z0-9]+)$/.test(normalizeCertificateCode(input));
 }
 
 function text(value: unknown) {
@@ -32,20 +33,24 @@ function text(value: unknown) {
 function normalizeRecord(payload: unknown, requestedCode: string): PublicCertificateRecord | null {
   if (!payload || typeof payload !== 'object') return null;
   const envelope = payload as Record<string, unknown>;
-  const raw = (envelope.certificate || envelope.data || payload) as Record<string, unknown>;
+  if (envelope.found === false || envelope.success === false) return null;
+  const data = envelope.data && typeof envelope.data === 'object' ? envelope.data as Record<string, unknown> : envelope;
+  const raw = (envelope.certificate || data.certificate || data) as Record<string, unknown>;
+  const person = (envelope.person || data.person || raw.person || {}) as Record<string, unknown>;
   if (!raw || typeof raw !== 'object') return null;
 
-  const code = normalizeCertificateCode(text(raw.code || raw.certificate_code || raw.certificateNumber));
-  const statusText = text(raw.status).toLowerCase();
+  const code = normalizeCertificateCode(text(raw.code || raw.certificate_id || raw.certificate_code || raw.certificateNumber || raw.certificate_number || requestedCode));
+  const statusText = text(raw.verification_status || raw.status).toLowerCase();
   const revoked = raw.revoked === true || statusText === 'revoked';
-  const explicitlyVerified = raw.verified === true || raw.valid === true || ['verified', 'valid'].includes(statusText);
-  const name = text(raw.name || raw.full_name || raw.person_name || raw.recipient_name);
-  const title = text(raw.title || raw.internship_title || raw.job_title || raw.designation || raw.program_title);
-  const startDate = text(raw.startDate || raw.start_date || raw.valid_from || raw.from_date);
-  const endDate = text(raw.endDate || raw.end_date || raw.valid_until || raw.to_date);
+  const explicitlyVerified = envelope.found === true || raw.verified === true || raw.valid === true || ['verified', 'valid', 'active', 'issued'].includes(statusText);
+  const name = text(raw.name || raw.full_name || raw.person_name || raw.recipient_name || person.full_name || person.name);
+  const title = text(raw.title || raw.internship_title || raw.job_title || raw.designation || raw.program_title || person.designation);
+  const department = text(raw.department || raw.department_name || person.department);
+  const startDate = text(raw.startDate || raw.start_date || raw.valid_from || raw.from_date || raw.internship_start_date || raw.employment_start_date);
+  const endDate = text(raw.endDate || raw.end_date || raw.valid_until || raw.to_date || raw.internship_end_date || raw.employment_end_date);
 
-  if (code !== requestedCode || !name || !title || !startDate || !endDate) return null;
-  return { code, name, title, startDate, endDate, verified: explicitlyVerified && !revoked, status: revoked ? 'revoked' : 'verified' };
+  if (!code || !name || !title || !startDate || !endDate) return null;
+  return { code, name, title, department: department || undefined, startDate, endDate, verified: explicitlyVerified && !revoked, status: revoked ? 'revoked' : 'verified' };
 }
 
 async function lookupLocal(code: string) {
@@ -65,8 +70,7 @@ export async function lookupCertificate(input: string): Promise<CertificateLooku
   const local = await lookupLocal(code);
   if (local) return { state: 'found', certificate: local };
 
-  const baseUrl = process.env.GO_REPIREO_PEOPLE_API_URL?.replace(/\/$/, '');
-  if (!baseUrl) return { state: 'unavailable' };
+  const baseUrl = (process.env.GO_REPIREO_PEOPLE_API_URL || 'https://go-repireo-employee-management.vercel.app').replace(/\/$/, '');
 
   try {
     const response = await fetch(`${baseUrl}/api/public/certificates/${encodeURIComponent(code)}`, {

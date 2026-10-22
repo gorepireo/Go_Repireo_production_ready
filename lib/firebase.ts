@@ -5,7 +5,7 @@ import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
 import { getMessaging, isSupported } from "firebase/messaging";
 
-const firebaseConfig = {
+const configuredFirebase = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -13,6 +13,26 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+};
+
+export const firebaseConfigured = Boolean(
+  configuredFirebase.apiKey &&
+  configuredFirebase.authDomain &&
+  configuredFirebase.projectId &&
+  configuredFirebase.appId
+);
+
+// Firebase Auth validates configuration during module evaluation. A complete,
+// inert placeholder keeps maintenance/public pages buildable when deployment
+// variables are intentionally absent; AuthContext never starts Firebase in
+// this state.
+const firebaseConfig = firebaseConfigured ? configuredFirebase : {
+  apiKey: `AIza${'0'.repeat(35)}`,
+  authDomain: 'unconfigured.invalid',
+  projectId: 'unconfigured',
+  storageBucket: 'unconfigured.invalid',
+  messagingSenderId: '000000000000',
+  appId: '1:000000000000:web:0000000000000000000000',
 };
 
 // Initialize Firebase App safely for SSR
