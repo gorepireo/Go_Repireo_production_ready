@@ -1,279 +1,112 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { FormEvent, Suspense, useEffect, useRef, useState } from 'react';
+import { ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { Mail, Lock, Eye, EyeOff, Home, ArrowRight, ShieldCheck, Zap, Headphones, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
-import { auth, rtdb, firestore } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { ref, get, child } from 'firebase/database';
+import { auth } from '@/lib/firebase';
+import { useAuth } from '@/context/AuthContext';
 
-function LoginForm() {
+function normalizeIndianPhone(value: string) {
+  const digits = value.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
+  if (!/^\d{10}$/.test(digits)) throw new Error('Enter a valid 10-digit Indian mobile number.');
+  return `+91${digits}`;
+}
+
+function LoginContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const search = useSearchParams();
   const { refresh } = useAuth();
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const verifier = useRef<RecaptchaVerifier | null>(null);
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
 
-  useEffect(() => {
-    if (searchParams.get('registered')) {
-      setSuccessMsg('Account created successfully! Please sign in to log in.');
+  useEffect(() => () => verifier.current?.clear(), []);
+
+  async function requestCode(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      if (!verifier.current) verifier.current = new RecaptchaVerifier(auth, 'phone-recaptcha', { size: 'normal' });
+      setConfirmation(await signInWithPhoneNumber(auth, normalizeIndianPhone(phone), verifier.current));
+    } catch (cause) {
+      verifier.current?.clear();
+      verifier.current = null;
+      setError(cause instanceof Error ? cause.message : 'Unable to send the verification code.');
+    } finally {
+      setBusy(false);
     }
-    const emailParam = searchParams.get('email');
-    if (emailParam) {
-      setEmail(emailParam);
-    }
-  }, [searchParams]);
+  }
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    const cleanEmail = email.trim().toLowerCase();
-
-    if (!cleanEmail || !password) {
-      setError('Please enter both email and password.');
-      setLoading(false);
+  async function verifyCode(event: FormEvent) {
+    event.preventDefault();
+    if (!confirmation || !/^\d{6}$/.test(code)) {
+      setError('Enter the six-digit verification code.');
       return;
     }
-
+    setBusy(true);
+    setError('');
     try {
-      // 1. Authenticate with Firebase
-      const fbCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
-      
-      // 2. Refresh Context (reads Firestore profile)
-      await refresh();
-
-      // 3. Navigate Based on Role (we'll fetch directly to decide where to push)
-      // Since context refresh is async but state update is queued, we fetch role here directly for navigation
-      const { UserService } = await import('@/lib/services/user.service');
-      const userProfile = await UserService.getProfile(fbCred.user.uid);
-      
-      const role = userProfile?.role || 'customer';
-      const isActive = userProfile ? userProfile.isActive : true;
-
-      if (!isActive) {
-        setError('Account suspended or pending approval.');
-        setLoading(false);
-        return;
+      const credential = await confirmation.confirm(code);
+      const token = await credential.user.getIdTokenResult(true);
+      const role = token.claims.admin === true ? 'admin' : token.claims.role;
+      if (!['customer', 'worker', 'admin'].includes(String(role))) {
+        await auth.signOut();
+        throw new Error('This account has no trusted GO_REPIREO role. Contact support.');
       }
-
-      if (role === 'admin') router.push('/admin');
-      else if (role === 'shopkeeper') router.push('/dashboard/shop');
-      else if (role === 'worker') router.push('/dashboard/worker');
-      else router.push('/dashboard/user');
-
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setError('Invalid credentials or account does not exist.');
+      await refresh();
+      const requested = search.get('next');
+      const safeNext = requested?.startsWith('/') && !requested.startsWith('//') ? requested : null;
+      router.replace(safeNext || (role === 'admin' ? '/admin' : role === 'worker' ? '/dashboard/worker' : '/dashboard/user'));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'The verification code is invalid or expired.');
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24 pt-6 md:pt-12 flex flex-col justify-center items-center">
-      
-      {/* PC Container Centered Max Width Wrapper */}
-      <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
+    <main className="min-h-screen bg-[#F8FAFC] px-4 py-12">
+      <section className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <Link href="/" className="text-sm font-semibold text-[#165DCC]">← Back to GO_REPIREO</Link>
+        <h1 className="mt-6 text-3xl font-black tracking-tight text-[#14243A]">Secure sign in</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Use the same mobile number as your GO_REPIREO Android account.</p>
 
-        {/* Hero Section */}
-        <section className="px-4 mb-6">
-          <div className="relative flex items-center justify-between min-h-[180px] overflow-hidden bg-white md:bg-transparent rounded-3xl p-4 md:p-0 border md:border-none border-slate-100/80">
-            <div className="relative z-10 max-w-[58%] sm:max-w-[65%] pt-2">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] border border-slate-100 mb-4">
-                <img src="/logo.png" alt="Go_Repireo Logo" className="w-8 h-8 object-contain" />
+        <form onSubmit={confirmation ? verifyCode : requestCode} className="mt-8 space-y-5">
+          {!confirmation ? (
+            <label className="block text-sm font-semibold text-slate-800">
+              Mobile number
+              <div className="mt-2 flex rounded-xl border border-slate-300 bg-white focus-within:ring-2 focus-within:ring-[#165DCC]">
+                <span className="px-3 py-3 text-slate-500">+91</span>
+                <input value={phone} onChange={(event) => setPhone(event.target.value)} inputMode="numeric" autoComplete="tel" maxLength={10} className="min-w-0 flex-1 rounded-r-xl px-3 py-3 outline-none" required />
               </div>
-              
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-[#0A1629] uppercase">
-                WELCOME<br />
-                <span className="text-[#007AFF]">BACK.</span>
-              </h1>
-              <p className="text-[11px] text-slate-500 leading-relaxed mt-3 max-w-[200px]">
-                Sign in to continue managing your services, orders and account.
-              </p>
-            </div>
-
-            {/* Hero Image - Properly Anchored */}
-            <div className="absolute right-0 top-0 bottom-0 w-[42%] max-w-[220px] h-full z-0 pointer-events-none flex items-center justify-end">
-              <img src="/login_mechanic_3d.png" alt="Mechanic" className="w-full h-full object-contain object-right" />
-            </div>
-          </div>
-        </section>
-
-        {/* Login Form */}
-        <section className="px-4 mb-8 relative z-20">
-          <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04)] border border-slate-100">
-            
-            {successMsg && (
-              <div className="p-3 mb-6 bg-green-50 rounded-xl border border-green-100 flex items-center gap-2">
-                <ShieldCheck className="text-green-500 w-4 h-4 flex-shrink-0" />
-                <p className="text-[9px] font-bold uppercase tracking-widest text-green-600 leading-tight">{successMsg}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleLogin} className="space-y-5">
-              {/* Email Field */}
-              <div className="space-y-1.5">
-                <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                <div className="relative flex items-center">
-                  <div className="absolute left-1.5 w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center pointer-events-none">
-                    <Mail className="w-5 h-5 text-[#007AFF]" />
-                  </div>
-                  <input 
-                    required 
-                    type="text" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full h-14 bg-[#F8FAFC] pl-14 pr-4 rounded-2xl text-sm font-medium text-slate-900 focus:bg-white focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400"
-                    placeholder="Enter your email address" 
-                  />
-                </div>
-              </div>
-              
-              {/* Password Field */}
-              <div className="space-y-1.5">
-                <label className="text-[8px] font-bold text-slate-400 uppercase tracking-widest ml-1">Password</label>
-                <div className="relative flex items-center">
-                  <div className="absolute left-1.5 w-10 h-10 bg-blue-50/80 rounded-xl flex items-center justify-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-[#007AFF]" />
-                  </div>
-                  <input 
-                    required 
-                    type={showPassword ? "text" : "password"} 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-14 bg-[#F8FAFC] pl-14 pr-12 rounded-2xl text-sm font-medium text-slate-900 focus:bg-white focus:ring-1 focus:ring-[#007AFF]/30 transition-all outline-none placeholder:text-slate-400"
-                    placeholder="Enter your password" 
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 text-slate-400 hover:text-slate-600 focus:outline-none"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Options */}
-              <div className="flex items-center justify-between pt-1">
-                 <label className="flex items-center gap-2 cursor-pointer">
-                   <input 
-                     type="checkbox" 
-                     checked={rememberMe}
-                     onChange={(e) => setRememberMe(e.target.checked)}
-                     className="w-4 h-4 rounded border-slate-300 text-[#007AFF] focus:ring-[#007AFF]" 
-                   />
-                   <span className="text-[10px] font-bold text-slate-500">Remember me</span>
-                 </label>
-                 <Link href="/forgot-password" className="text-[10px] font-bold text-[#007AFF] hover:underline">
-                   Forgot password?
-                 </Link>
-              </div>
-
-              {error && <p className="text-[#FF3B30] text-[10px] font-bold uppercase tracking-widest p-3 bg-red-50 rounded-xl border border-red-100">{error}</p>}
-
-              {/* Submit Button */}
-              <button 
-                disabled={loading}
-                type="submit" 
-                className="w-full h-14 bg-[#0A1629] text-white rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors active:scale-95 mt-4"
-              >
-                {loading ? 'SIGNING IN...' : 'SIGN IN'} <ArrowRight size={14} />
-              </button>
-            </form>
-
-            {/* Divider */}
-            <div className="flex items-center gap-4 my-6">
-              <div className="h-px bg-slate-100 flex-1"></div>
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">NEW TO REPIREO?</span>
-              <div className="h-px bg-slate-100 flex-1"></div>
-            </div>
-
-            {/* Create Account */}
-            <Link href="/register" className="w-full h-14 bg-white text-[#0A1629] border border-slate-100 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] rounded-full flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-colors active:scale-95">
-               CREATE ACCOUNT
-            </Link>
-            
-          </div>
-        </section>
-
-        {/* Return to Home */}
-        <section className="flex justify-center mb-8">
-          <Link href="/" className="flex items-center gap-2 text-[#007AFF] text-[11px] font-bold hover:underline">
-             <Home size={14} /> Return to Home
-          </Link>
-        </section>
-
-        {/* Features Bar */}
-        <section className="px-4 mb-10 overflow-x-auto pb-4 hide-scrollbar">
-          <div className="flex gap-4 min-w-max justify-between md:justify-center">
-             <div className="flex items-center gap-3 px-2 pr-6 border-r border-slate-200">
-                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[#007AFF]">
-                  <ShieldCheck size={16} className="fill-[#007AFF]/20" />
-                </div>
-                <div>
-                  <h4 className="text-[8px] font-black text-slate-900 uppercase tracking-tight">Secure & Trusted</h4>
-                  <p className="text-[7px] text-slate-500">Your data is always<br/>safe with us</p>
-                </div>
-             </div>
-             
-             <div className="flex items-center gap-3 px-2 pr-6 border-r border-slate-200">
-                <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-[#FF9500]">
-                  <Zap size={16} className="fill-[#FF9500]/20" />
-                </div>
-                <div>
-                  <h4 className="text-[8px] font-black text-slate-900 uppercase tracking-tight">Fast & Reliable</h4>
-                  <p className="text-[7px] text-slate-500">Quick access to<br/>your services</p>
-                </div>
-             </div>
-
-             <div className="flex items-center gap-3 px-2 pr-6 border-r border-slate-200">
-                <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">
-                  <Headphones size={16} />
-                </div>
-                <div>
-                  <h4 className="text-[8px] font-black text-slate-900 uppercase tracking-tight">24/7 Support</h4>
-                  <p className="text-[7px] text-slate-500">We're here to help<br/>you anytime</p>
-                </div>
-             </div>
-
-             <div className="flex items-center gap-3 px-2 pr-6">
-                <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500">
-                  <CheckCircle2 size={16} className="fill-green-500/20" />
-                </div>
-                <div>
-                  <h4 className="text-[8px] font-black text-slate-900 uppercase tracking-tight">Verified Platform</h4>
-                  <p className="text-[7px] text-slate-500">Trusted by 10,000+<br/>customers</p>
-                </div>
-             </div>
-          </div>
-        </section>
-
-      </div>
-    </div>
+            </label>
+          ) : (
+            <label className="block text-sm font-semibold text-slate-800">
+              Six-digit verification code
+              <input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-[#165DCC]" required />
+            </label>
+          )}
+          <div id="phone-recaptcha" />
+          {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          <button disabled={busy} className="min-h-12 w-full rounded-xl bg-[#165DCC] px-5 py-3 font-bold text-white disabled:opacity-60">
+            {busy ? 'Please wait…' : confirmation ? 'Verify and continue' : 'Send verification code'}
+          </button>
+          {confirmation && <button type="button" onClick={() => { setConfirmation(null); setCode(''); setError(''); }} className="w-full text-sm font-semibold text-[#165DCC]">Use another number</button>}
+        </form>
+      </section>
+    </main>
   );
 }
 
-export default function Login() {
+export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden shadow-xl shadow-blue-500/20 bg-white border border-blue-100/80">
-          <video src="/logeing.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover" />
-        </div>
-      </div>
-    }>
-      <LoginForm />
+    <Suspense fallback={<main className="min-h-screen bg-[#F8FAFC]" />}>
+      <LoginContent />
     </Suspense>
   );
 }

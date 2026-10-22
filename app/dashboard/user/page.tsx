@@ -17,6 +17,7 @@ import {
 import Link from 'next/link';
 
 import { UserDashboardSkeleton } from '@/components/SkeletonLoader';
+import { OrderService } from '@/lib/services/order.service';
 
 function UserDashboardContent() {
   const { user, profile } = useAuth();
@@ -28,37 +29,14 @@ function UserDashboardContent() {
     let isMounted = true;
 
     const fetchOrders = async () => {
-      const targetEmail = (user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : '') || '').toLowerCase().trim();
-      const targetUserId = user?.id || profile?.id;
-
-      if (user?.email && typeof window !== 'undefined') {
-        localStorage.setItem('repireo_user_email', user.email);
-      }
-
       try {
-        const { data, error } = await (null as any)
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (isMounted && data) {
-          const userOrders = data.filter((o: any) => {
-            if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId)) return true;
-            if (targetEmail) {
-              const uEmail = (o.user_email || '').toLowerCase().trim();
-              const cEmail = (o.customer_email || '').toLowerCase().trim();
-              const dEmail = (o.details?.user_email || o.details?.customer_email || o.details?.email || '').toLowerCase().trim();
-              if (uEmail === targetEmail || cEmail === targetEmail || dEmail === targetEmail) return true;
-            }
-            return false;
-          });
-
-          const finalOrders = userOrders.length > 0 ? userOrders : data;
+        const data = user?.uid ? await OrderService.getUserOrders(user.uid, 'customer') : [];
+        if (isMounted) {
+          const finalOrders = data;
           setOrders(finalOrders);
-          const total = finalOrders.reduce((sum: number, order: any) => sum + (Number(order.total_price || order.price) || 0), 0);
+          const total = finalOrders.reduce((sum: number, order: any) => sum + (Number(order.quotedAmountPaise || order.amountPaise) || 0) / 100, 0);
           setTotalSpent(total);
         }
-        if (error) console.error('Fetch error:', error);
       } catch (err) {
         console.error('Fetch orders error:', err);
       } finally {
@@ -82,11 +60,11 @@ function UserDashboardContent() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', fetchOrders);
     };
-  }, [user, profile]);
+  }, [user?.uid]);
 
   const completedOrdersCount = orders.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase())).length;
   const completionPercentage = orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0;
-  const clientId = user?.id ? user.id.slice(0, 4).toUpperCase() : 'B8DC';
+  const clientId = user?.uid ? user.uid.slice(0, 4).toUpperCase() : 'B8DC';
   const getCleanUserName = () => {
     const rawName = (profile as any)?.full_name || (profile as any)?.name || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_name') : null);
     if (rawName && typeof rawName === 'string' && rawName.trim() && !rawName.includes('@')) {
@@ -296,13 +274,13 @@ function UserDashboardContent() {
             {orders.map((ord) => {
               const statusLower = (ord.status || 'in_progress').toLowerCase();
               const isComp = ['completed', 'delivered'].includes(statusLower);
-              const isWork = ['working', 'work_in_progress'].includes(statusLower);
+              const isWork = ['inservice', 'awaitingcompletion'].includes(statusLower);
               const orderIdStr = `#GR-${(ord.id || '7821').slice(0, 4).toUpperCase()}`;
 
               return (
                 <Link 
                   key={ord.id} 
-                  href={`/track?order_id=${ord.id}`}
+                  href={`/track?orderId=${ord.id}`}
                   className="block bg-white rounded-3xl p-4 border border-slate-100 shadow-xs hover:border-blue-200 transition-all group"
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -322,15 +300,15 @@ function UserDashboardContent() {
                             {isComp ? 'Completed' : isWork ? 'Work In Progress' : 'In Progress'}
                           </span>
                         </div>
-                        <h4 className="text-xs font-bold text-slate-700 truncate">{ord.service_name || 'AC Repair & Service'}</h4>
+                        <h4 className="text-xs font-bold text-slate-700 truncate">{ord.serviceName || 'Repair Service'}</h4>
                         <p className="text-[9.5px] text-slate-400 font-medium">
-                          {ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Today'}
+                          {ord.createdAt?.toDate ? ord.createdAt.toDate().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Today'}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs font-black text-slate-900">₹{ord.total_price || ord.price || 499}</span>
+                      <span className="text-xs font-black text-slate-900">₹{((ord.quotedAmountPaise || ord.amountPaise || 0) / 100).toFixed(0)}</span>
                       <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </div>

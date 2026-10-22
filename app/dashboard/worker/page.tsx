@@ -38,6 +38,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import { WorkerDashboardSkeleton } from '@/components/SkeletonLoader';
+import { OrderService } from '@/lib/services/order.service';
 
 const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoogleMap'), {
   ssr: false,
@@ -97,7 +98,7 @@ function WorkerDashboardContent() {
 
   // Continuous GPS watchPosition Worker Live Location Engine for Active Orders
   useEffect(() => {
-    const activeStatuses = ['in_progress', 'work_in_progress', 'working', 'assigned', 'on_the_way'];
+    const activeStatuses = ['assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion'];
     if (!activeJob?.id || !activeStatuses.includes(activeJob.status)) return;
 
     const rawOrderId = activeJob.id;
@@ -106,20 +107,8 @@ function WorkerDashboardContent() {
 
     const sendLocationPayload = async (lat: number, lng: number, accuracy?: number, heading?: number | null, speed?: number | null) => {
       try {
-        await fetch('/api/location', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            order_id: rawOrderId,
-            worker_id: user?.id,
-            latitude: lat,
-            longitude: lng,
-            accuracy: accuracy || null,
-            heading: heading || null,
-            speed: speed || null,
-            tracking_status: 'active'
-          })
-        });
+        const { WorkerService } = await import('@/lib/services/worker.service');
+        await WorkerService.updateLocation(lat, lng, rawOrderId);
       } catch (err) {
         console.warn('Location API post error:', err);
       }
@@ -166,16 +155,16 @@ function WorkerDashboardContent() {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, [activeJob?.id, activeJob?.status, activeJob?.lat, activeJob?.lng, activeJob?.worker_lat, activeJob?.worker_lng, user?.id]);
+  }, [activeJob?.id, activeJob?.status, activeJob?.lat, activeJob?.lng, activeJob?.worker_lat, activeJob?.worker_lng, user?.uid]);
 
   // Toggle Online / Offline Status
   const handleToggleOnline = async () => {
     const newStatus = !isAvailable;
     setIsAvailable(newStatus);
-    if (user?.id) {
+    if (user?.uid) {
       try {
-        const { UserService } = await import('@/lib/services/user.service');
-        await UserService.updateProfile(user.id, { is_available: newStatus } as any);
+        const { WorkerService } = await import('@/lib/services/worker.service');
+        await WorkerService.updateAvailability(newStatus);
       } catch (err) {
         console.error('Toggle status error:', err);
       }
@@ -184,7 +173,7 @@ function WorkerDashboardContent() {
 
   // Fetch Current Worker Active Job, Previous Orders & Lifetime Earnings
   const fetchWorkerDashboardData = async () => {
-    const workerId = user?.id || profile?.id;
+    const workerId = user?.uid || profile?.id;
     const workerEmail = user?.email || profile?.email;
 
     try {
@@ -198,12 +187,13 @@ function WorkerDashboardContent() {
         assignedJobs = [{
           ...activeOrder,
           id: activeOrder.id,
-          status: activeOrder.status === 'worker_assigned' ? 'assigned' : 'in_progress',
-          details: { ...activeOrder.problem, estimation: activeOrder.pricing?.total },
-          total_price: activeOrder.pricing?.total,
-          lat: activeOrder.address?.latitude,
-          lng: activeOrder.address?.longitude,
-          address: activeOrder.address?.fullAddress || activeOrder.address?.label,
+          status: activeOrder.status,
+          service_name: activeOrder.serviceName || activeOrder.serviceId,
+          details: { description: activeOrder.problemDescription },
+          total_price: (activeOrder.quotedAmountPaise || 0) / 100,
+          lat: activeOrder.latitude,
+          lng: activeOrder.longitude,
+          address: activeOrder.formattedAddress,
           worker_id: activeOrder.workerId
         }];
       }
@@ -212,18 +202,19 @@ function WorkerDashboardContent() {
         setActiveJob(assignedJobs[0]);
       } else {
         // ONLY check for unassigned pending orders if worker has no active accepted order
-        const pendingJobs = await OrderService.getAvailableOrders('all'); // Basic fetch all for now
+        const pendingJobs = await OrderService.getAvailableOrders();
         if (pendingJobs && pendingJobs.length > 0) {
           const fbOrder = pendingJobs[0];
           setActiveJob({
             ...fbOrder,
             id: fbOrder.id,
             status: 'pending',
-            details: { ...fbOrder.problem, estimation: fbOrder.pricing?.total },
-            total_price: fbOrder.pricing?.total,
-            lat: fbOrder.address?.latitude,
-            lng: fbOrder.address?.longitude,
-            address: fbOrder.address?.fullAddress || fbOrder.address?.label,
+            details: { description: fbOrder.problemDescription },
+            service_name: fbOrder.serviceName || fbOrder.serviceId,
+            total_price: (fbOrder.quotedAmountPaise || 0) / 100,
+            lat: fbOrder.latitude,
+            lng: fbOrder.longitude,
+            address: fbOrder.formattedAddress,
           });
         } else {
           setActiveJob(null);
@@ -238,8 +229,8 @@ function WorkerDashboardContent() {
              ...j,
              id: j.id,
              status: j.status,
-             details: { ...j.problem, estimation: j.pricing?.total },
-             total_price: j.pricing?.total
+             details: { description: j.problemDescription },
+             total_price: (j.quotedAmountPaise || 0) / 100
           }));
           setCompletedJobs(mappedCompleted);
           const total = mappedCompleted.reduce((sum: number, j: any) => sum + (Number(j.total_price || 499)), 0);
@@ -261,7 +252,8 @@ function WorkerDashboardContent() {
 
   // Worker Explicitly Accepts Order (Syncs DB & Local State Instantly - First-Come-First-Served)
   const handleAcceptJob = async (jobId: string) => {
-    const workerId = user?.id || profile?.id || 'w-rohit-sharma';
+    const workerId = user?.uid || profile?.id;
+    if (!workerId) return;
     const targetId = jobId || activeJob?.id;
 
     if (!targetId) {
@@ -272,7 +264,7 @@ function WorkerDashboardContent() {
     const workerAvatar = 
       (profile as any)?.avatar_url || 
       (profile as any)?.avatar || 
-      user?.user_metadata?.avatar_url || 
+      user?.photoURL ||
       (typeof window !== 'undefined' ? localStorage.getItem('repireo_cached_avatar') : null) || 
       null;
     const workerPhone = (profile as any)?.phone || '+918679245568';
@@ -282,7 +274,7 @@ function WorkerDashboardContent() {
       const { OrderService } = await import('@/lib/services/order.service');
       const { TrackingService } = await import('@/lib/services/tracking.service');
       
-      await OrderService.assignWorker(targetId, workerId);
+      await OrderService.assignWorker(targetId);
 
       // Log tracking event
       await TrackingService.addTrackingEvent(targetId, {
@@ -300,7 +292,7 @@ function WorkerDashboardContent() {
       setActiveJob((prev: any) => ({
         ...(prev || {}),
         id: targetId,
-        status: 'in_progress',
+        status: 'assigned',
         accepted: true,
         accepted_at: nowIso,
         worker_id: workerId,
@@ -380,6 +372,10 @@ function WorkerDashboardContent() {
     const recordLocation = async (lat: number, lng: number) => {
       if (activeJob?.id) {
         try {
+          if (activeJob.status === 'assigned') {
+            await OrderService.updateOrderStatus(activeJob.id, { status: 'enRoute' });
+            setActiveJob((previous: any) => ({ ...previous, status: 'enRoute' }));
+          }
           const { TrackingService } = await import('@/lib/services/tracking.service');
           await TrackingService.addTrackingEvent(activeJob.id, { lat, lng, workerName: displayName, status: 'worker_assigned' });
         } catch (e) {
@@ -419,33 +415,24 @@ function WorkerDashboardContent() {
   const handleVerifyStartOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setOtpError('');
-    const expectedStartOtp = activeJob?.details?.start_otp || '4812';
-
-    if (startOtpInput.trim() !== expectedStartOtp.trim()) {
-      setOtpError('Incorrect Start OTP. Ask customer for the 4-digit Start OTP.');
-      return;
-    }
-
     setVerifyingOtp(true);
     try {
       if (activeJob?.id) {
         const { OrderService } = await import('@/lib/services/order.service');
         const { TrackingService } = await import('@/lib/services/tracking.service');
 
-        await OrderService.updateOrderStatus(activeJob.id, { 
-          status: 'in_progress' 
-        } as any);
+        await OrderService.verifyOtp(activeJob.id, 'start', startOtpInput.trim());
 
         await TrackingService.addTrackingEvent(activeJob.id, {
           status: 'in_progress',
           note: `Technician started work (Start OTP Verified).`
         });
       }
-      setActiveJob({ ...activeJob, status: 'work_in_progress' }); // keeping local status names the same for UI compatibility
+      setActiveJob({ ...activeJob, status: 'inService' });
       setStartOtpInput('');
     } catch (err) {
       console.error('Verify Start OTP error:', err);
-      setActiveJob({ ...activeJob, status: 'work_in_progress' });
+      setOtpError('Incorrect Start OTP or this booking is not ready to start.');
     } finally {
       setVerifyingOtp(false);
     }
@@ -454,38 +441,19 @@ function WorkerDashboardContent() {
   // Handle Worker Confirming Cash Collection
   const handleConfirmCashPaid = async () => {
     setCashCollected(true);
-    if (activeJob?.id) {
-      try {
-        const { OrderService } = await import('@/lib/services/order.service');
-        await OrderService.updateOrderStatus(activeJob.id, { 
-          payment: { method: 'cash', status: 'paid' } 
-        } as any);
-      } catch (err) {
-        console.error('Cash payment update error:', err);
-      }
-    }
   };
 
   // Verify Work Completion OTP
   const handleVerifyCompletionOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setOtpError('');
-    const expectedCompletionOtp = activeJob?.details?.completion_otp || '7924';
-
-    if (completionOtpInput.trim() !== expectedCompletionOtp.trim()) {
-      setOtpError('Incorrect Completion OTP. Ask customer for the 4-digit Completion OTP.');
-      return;
-    }
-
     setVerifyingOtp(true);
     try {
       if (activeJob?.id) {
         const { OrderService } = await import('@/lib/services/order.service');
         const { TrackingService } = await import('@/lib/services/tracking.service');
 
-        await OrderService.updateOrderStatus(activeJob.id, { 
-          status: 'completed'
-        } as any);
+        await OrderService.verifyOtp(activeJob.id, 'completion', completionOtpInput.trim());
 
         await TrackingService.addTrackingEvent(activeJob.id, {
           status: 'completed',
@@ -499,6 +467,7 @@ function WorkerDashboardContent() {
       fetchWorkerDashboardData();
     } catch (err) {
       console.error('Verify Completion OTP error:', err);
+      setOtpError('Incorrect Completion OTP or this booking is not ready to complete.');
       setActiveJob({ ...activeJob, status: 'completed' });
     } finally {
       setVerifyingOtp(false);
@@ -515,8 +484,8 @@ function WorkerDashboardContent() {
   const activeOrderIdText = activeJob?.id ? `#GR-${activeJob.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
   
   const currentStatus = (activeJob?.status || '').toLowerCase();
-  const isPendingJob = currentStatus === 'pending';
-  const isWorking = ['working', 'work_in_progress'].includes(currentStatus);
+  const isPendingJob = ['pending', 'requested'].includes(currentStatus);
+  const isWorking = ['inservice', 'awaitingcompletion'].includes(currentStatus);
   const isCompletedJob = ['completed', 'delivered'].includes(currentStatus);
   const isPaid = activeJob?.payment_status === 'paid' || cashCollected;
 

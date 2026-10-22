@@ -19,6 +19,10 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { collections } from '@/lib/types/firebase-contract';
+import { collection, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
+import { OrderService } from '@/lib/services/order.service';
 
 export interface NotificationItem {
   id: string;
@@ -29,6 +33,7 @@ export interface NotificationItem {
   read: boolean;
   actionUrl?: string;
   workerAccepted?: boolean;
+  bookingId?: string;
 }
 
 interface NotificationDrawerProps {
@@ -58,97 +63,29 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-  // Load and sanitize notifications from local device storage + Turso real user orders
+  // Notifications are server-created and owner-scoped by Firestore rules.
   useEffect(() => {
-    async function loadNotifications() {
-      if (typeof window === 'undefined') return;
-
-      let stored: NotificationItem[] = [];
-      const saved = localStorage.getItem(storageKey);
-      
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            // Filter out old hardcoded dummy mock notifications (c1..c5, w1..w2)
-            stored = parsed.filter((item: NotificationItem) => !['c1', 'c2', 'c3', 'c4', 'c5', 'w1', 'w2'].includes(item.id));
-          }
-        } catch {
-          stored = [];
-        }
-      }
-
-      // If user has no local notifications, attempt to fetch real user order status from Turso DB
-      const targetEmail = (user?.email || profile?.email || localStorage.getItem('repireo_user_email') || '').toLowerCase().trim();
-      const targetUserId = user?.id || profile?.id;
-
-      if (targetEmail || targetUserId) {
-        try {
-          const { data: allOrders } = await (null as any)
-            .from('orders')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-          if (allOrders && allOrders.length > 0) {
-            const userOrders = allOrders.filter((o: any) => {
-              if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId || o.worker_id === targetUserId)) return true;
-              if (targetEmail) {
-                const cEmail = (o.customer_email || o.user_email || o.email || '').toLowerCase().trim();
-                const wEmail = (o.worker_email || '').toLowerCase().trim();
-                return cEmail === targetEmail || wEmail === targetEmail;
-              }
-              return false;
-            });
-
-            // Generate real notification items from actual orders if local storage has fewer items
-            if (userOrders.length > 0) {
-              const realNotifs: NotificationItem[] = userOrders.map((ord: any) => {
-                let nType: NotificationItem['type'] = 'confirmed';
-                let nTitle = 'Order Confirmed';
-                let nMessage = `Your order for ${ord.service_name || 'Service'} has been placed. Searching for technician.`;
-
-                if (ord.status === 'completed') {
-                  nType = 'completed';
-                  nTitle = 'Work Completed ✓';
-                  nMessage = `Service for ${ord.service_name || 'Order'} completed by ${ord.worker_name || 'Technician'}.`;
-                } else if (ord.status === 'in_progress') {
-                  nType = 'started';
-                  nTitle = 'Work In Progress 🛠️';
-                  nMessage = `${ord.worker_name || 'Technician'} is currently performing repair work for ${ord.service_name || 'Order'}.`;
-                }
-
-                return {
-                  id: 'db_ord_' + ord.id,
-                  type: nType,
-                  title: nTitle,
-                  message: nMessage,
-                  time: ord.created_at ? new Date(ord.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
-                  read: true,
-                  actionUrl: '/track'
-                };
-              });
-
-              // Merge real DB order notifications with stored ones without duplicates
-              const mergedMap = new Map<string, NotificationItem>();
-              stored.forEach(n => mergedMap.set(n.id, n));
-              realNotifs.forEach(n => {
-                if (!mergedMap.has(n.id)) mergedMap.set(n.id, n);
-              });
-
-              stored = Array.from(mergedMap.values());
-            }
-          }
-        } catch (err) {
-          console.warn('Real order notification fetch note:', err);
-        }
-      }
-
-      setNotifications(stored);
-      localStorage.setItem(storageKey, JSON.stringify(stored));
-    }
-
-    loadNotifications();
-  }, [storageKey, user?.id, user?.email, profile?.id, profile?.email]);
+    if (!user?.uid) return;
+    const notificationsQuery = query(
+      collection(db, collections.notifications),
+      where('ownerId', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+    );
+    return onSnapshot(notificationsQuery, (snapshot) => setNotifications(snapshot.docs.map((item) => {
+      const value = item.data();
+      const created = value.createdAt?.toDate?.();
+      return {
+        id: item.id,
+        type: value.type || 'confirmed',
+        title: value.title || 'Notification',
+        message: value.message || '',
+        time: created ? created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
+        read: Boolean(value.readAt),
+        bookingId: value.bookingId,
+        actionUrl: value.bookingId ? `/track?orderId=${value.bookingId}` : undefined,
+      } as NotificationItem;
+    })));
+  }, [user?.uid]);
 
   // Persist local notifications on update
   const updateNotifications = (newList: NotificationItem[]) => {
@@ -165,32 +102,9 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
 
   // Worker Accept Order
   const handleWorkerAccept = async (id: string) => {
-    const workerName = (profile as any)?.full_name || (profile as any)?.name || user?.email?.split('@')[0] || 'Technician';
-    const workerAvatar = (profile as any)?.avatar || '/hero_technician_banner.png';
-    const workerPhone = (profile as any)?.phone || '+918679245568';
-
-    // Assign pending order in Turso DB
+    const target = notifications.find((item) => item.id === id);
     try {
-      const { data: pendingOrders } = await (null as any)
-        .from('orders')
-        .select('*')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (pendingOrders && pendingOrders.length > 0) {
-        await (null as any)
-          .from('orders')
-          .update({
-            status: 'in_progress',
-            worker_id: user?.id || 'worker_id',
-            worker_name: workerName,
-            worker_avatar: workerAvatar,
-            worker_phone: workerPhone,
-            worker_email: user?.email
-          })
-          .eq('id', pendingOrders[0].id);
-      }
+      if (target?.bookingId) await OrderService.assignWorker(target.bookingId);
     } catch (err) {
       console.error('Accept order error:', err);
     }
@@ -213,6 +127,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
     // Mark read
     const updated = notifications.map(n => n.id === notif.id ? { ...n, read: true } : n);
     updateNotifications(updated);
+    if (!notif.read) updateDoc(doc(db, collections.notifications, notif.id), { readAt: serverTimestamp() }).catch(console.warn);
 
     if (notif.actionUrl) {
       router.push(notif.actionUrl);

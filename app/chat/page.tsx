@@ -5,9 +5,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Send, ArrowLeft, Loader2, Phone, MessageCircle, ChevronRight, ClipboardList, Wrench, Home, Calendar, Headphones, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { OrderService } from '@/lib/services/order.service';
+import { collections } from '@/lib/types/firebase-contract';
+import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
 
 function ChatList() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,47 +19,14 @@ function ChatList() {
     if (!user) return;
 
     const fetchChats = async () => {
-      let workerId = null;
-      const { data: worker } = await (null as any)
-        .from('workers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-        
-      if (worker) workerId = worker.id;
-
-      const { data: userOrders, error: e1 } = await (null as any)
-        .from('orders')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      let allOrders = userOrders || [];
-
-      if (workerId) {
-        const { data: workerOrders, error: e2 } = await (null as any)
-          .from('orders')
-          .select('*')
-          .eq('worker_id', workerId)
-          .order('created_at', { ascending: false });
-          
-        if (workerOrders) {
-           const existingIds = new Set((allOrders as any[]).map((o: any) => o.id));
-           (workerOrders as any[]).forEach((wo: any) => {
-             if (!existingIds.has(wo.id)) {
-               (allOrders as any[]).push(wo);
-             }
-           });
-        }
-      }
-      
-      (allOrders as any[]).sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
-      setChats(allOrders);
-      setLoading(false);
+      try {
+        if (role !== 'customer' && role !== 'worker') return setChats([]);
+        setChats(await OrderService.getUserOrders(user.uid, role));
+      } finally { setLoading(false); }
     };
 
     fetchChats();
-  }, [user]);
+  }, [user, role]);
 
   if (loading) {
     return (
@@ -103,7 +74,7 @@ function ChatList() {
           </div>
         ) : (
           chats.map((chat, i) => {
-            const isActive = ['shipping', 'in_progress'].includes(chat.status);
+            const isActive = ['assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion'].includes(chat.status);
             
             const icons = [ClipboardList, Wrench, Home, Calendar, UserIcon, Headphones];
             const Icon = icons[i % icons.length];
@@ -133,7 +104,7 @@ function ChatList() {
 
                   {/* Text Content */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-slate-900 text-[15px] truncate">{chat.service_type || 'Service Order'}</h3>
+                    <h3 className="font-bold text-slate-900 text-[15px] truncate">{chat.serviceName || 'Service Order'}</h3>
                     <p className="text-[11px] text-slate-400 font-mono mt-0.5 tracking-wide">ID: #{chat.id.slice(0, 6)}</p>
                     <p className="text-xs text-slate-500 font-medium truncate mt-1">Last message: {lastMessage}</p>
                   </div>
@@ -161,7 +132,7 @@ function ChatList() {
 }
 
 function ChatContent() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams.get('orderId');
@@ -180,51 +151,21 @@ function ChatContent() {
   useEffect(() => {
     if (!user || !orderId) return;
 
-    let isSubscribed = true;
-
-    const fetchOrderAndMessages = async () => {
-      if (!isSubscribed) return;
-      
-      const { data: order } = await (null as any)
-        .from('orders')
-        .select('status')
-        .eq('id', orderId)
-        .single();
-        
-      if (order) setOrderStatus(order.status);
-
-      const { data: initialMessages } = await (null as any)
-        .from('messages')
-        .select('*')
-        .eq('order_id', orderId)
-        .order('created_at', { ascending: true });
-
-      if (initialMessages) {
-        setMessages(initialMessages);
-      }
+    const stopOrder = OrderService.subscribeToOrder(orderId, (order) => {
+      setOrderStatus(order?.status || null);
       setLoading(false);
-    };
-
-    fetchOrderAndMessages();
-    const pollInterval = setInterval(fetchOrderAndMessages, 2000);
-
-    db.realtime.subscribe(`chat_${orderId}`).catch(console.warn);
-    const handleRealtime = (msg: any) => {
-      if (msg?.channel === `chat_${orderId}` && msg?.payload) {
-        setMessages((current) => {
-          if (current.some(m => m.id === msg.payload.id)) return current;
-          return [...current, msg.payload];
-        });
-        setTimeout(scrollToBottom, 100);
-      }
-    };
-    db.realtime.on('new_message', handleRealtime);
+    });
+    const messageQuery = query(collection(db, collections.bookings, orderId, 'messages'), orderBy('createdAt', 'asc'));
+    const stopMessages = onSnapshot(messageQuery, (snapshot) => {
+      setMessages(snapshot.docs.map((item) => {
+        const value = item.data();
+        return { id: item.id, ...value, sender_id: value.senderId, message_text: value.text, created_at: value.createdAt?.toDate?.()?.toISOString() };
+      }));
+    });
 
     return () => {
-      isSubscribed = false;
-      clearInterval(pollInterval);
-      db.realtime.off('new_message', handleRealtime);
-      db.realtime.unsubscribe(`chat_${orderId}`);
+      stopOrder();
+      stopMessages();
     };
   }, [user, orderId]);
 
@@ -232,7 +173,7 @@ function ChatContent() {
     scrollToBottom();
   }, [messages]);
 
-  const isActive = ['shipping', 'in_progress'].includes(orderStatus || '');
+  const isActive = ['assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion'].includes(orderStatus || '');
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,23 +182,13 @@ function ChatContent() {
     const msgText = newMessage.trim();
     setNewMessage(''); // optimistic clear
 
-    const { data, error } = await (null as any)
-      .from('messages')
-      .insert({
-        order_id: orderId,
-        sender_id: user.id,
-        message_text: msgText
-      })
-      .select('*')
-      .single();
-
-    if (error) {
+    try {
+      await addDoc(collection(db, collections.bookings, orderId, 'messages'), {
+        senderId: user.uid, senderRole: role, type: 'text', text: msgText, createdAt: serverTimestamp(),
+      });
+    } catch (error) {
       console.error('Error sending message:', error);
       alert('Failed to send message.');
-    } else if (data) {
-      db.realtime.publish(`chat_${orderId}`, 'new_message', data).catch(console.warn);
-      setMessages((current) => [...current, data]);
-      setTimeout(scrollToBottom, 100);
     }
   };
 

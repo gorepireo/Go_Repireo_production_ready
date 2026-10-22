@@ -1,39 +1,21 @@
-import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { WorkerProfile } from "@/lib/types/worker";
+import { db, functions } from '@/lib/firebase';
+import { collections, type Worker } from '@/lib/types/firebase-contract';
+import { doc, getDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 
+export type WorkerProfile = Worker & { id: string };
 export const WorkerService = {
-  /**
-   * Fetches a worker profile from the `workers` collection.
-   */
   async getProfile(uid: string): Promise<WorkerProfile | null> {
-    const docRef = doc(db, "workers", uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data() as WorkerProfile;
-    }
-    return null;
+    const snapshot = await getDoc(doc(db, collections.workers, uid));
+    return snapshot.exists() ? ({ id: snapshot.id, ...snapshot.data() } as WorkerProfile) : null;
   },
-
-  /**
-   * Updates an existing worker profile (client-safe fields only, enforced by rules ideally).
-   */
-  async updateAvailability(uid: string, online: boolean): Promise<void> {
-    const docRef = doc(db, "workers", uid);
-    await updateDoc(docRef, {
-      "availability.online": online,
-      updatedAt: serverTimestamp()
-    });
+  async updateAvailability(online: boolean, acceptingJobs = online): Promise<void> {
+    await httpsCallable(functions, 'updateWorkerAvailability')({ online, acceptingJobs });
   },
-  
-  async updateLocation(uid: string, latitude: number, longitude: number): Promise<void> {
-    const docRef = doc(db, "workers", uid);
-    await updateDoc(docRef, {
-      location: {
-        latitude,
-        longitude,
-        updatedAt: serverTimestamp()
-      }
-    });
-  }
+  async updateLocation(latitude: number, longitude: number, bookingId: string): Promise<void> {
+    await httpsCallable(functions, 'updateWorkerLocation')({ latitude, longitude, bookingId });
+  },
+  async updateSettings(fullName: string, upiId: string, bankDetails: string): Promise<void> {
+    await httpsCallable(functions, 'updateWorkerSettings')({ fullName, upiId, bankDetails });
+  },
 };

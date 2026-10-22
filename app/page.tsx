@@ -35,6 +35,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
 import Avatar from '@/components/Avatar';
+import { OrderService } from '@/lib/services/order.service';
 
 const categories = [
   { name: 'All Services', icon: LayoutGrid, color: 'text-[#007AFF]', bg: 'bg-[#EFF6FF] border-[#007AFF]/30', active: true },
@@ -60,35 +61,9 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchUserBookings() {
-      const targetEmail = (user?.email || profile?.email || (typeof window !== 'undefined' ? localStorage.getItem('repireo_user_email') : '') || '').toLowerCase().trim();
-      const targetUserId = user?.id || profile?.id;
-
-      if (user?.email && typeof window !== 'undefined') {
-        localStorage.setItem('repireo_user_email', user.email);
-      }
-
       try {
-        const { data: allOrders } = await (null as any)
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (allOrders && allOrders.length > 0) {
-          const userOrders = allOrders.filter((o: any) => {
-            if (targetUserId && (o.customer_id === targetUserId || o.user_id === targetUserId)) return true;
-            if (targetEmail) {
-              const uEmail = (o.user_email || '').toLowerCase().trim();
-              const cEmail = (o.customer_email || '').toLowerCase().trim();
-              const dEmail = (o.details?.user_email || o.details?.customer_email || o.details?.email || '').toLowerCase().trim();
-              if (uEmail === targetEmail || cEmail === targetEmail || dEmail === targetEmail) return true;
-            }
-            return false;
-          });
-
-          setRealBookings(userOrders.length > 0 ? userOrders.slice(0, 3) : allOrders.slice(0, 3));
-        } else {
-          setRealBookings([]);
-        }
+        if (!user?.uid) return setRealBookings([]);
+        setRealBookings((await OrderService.getUserOrders(user.uid, 'customer')).slice(0, 3));
       } catch (err) {
         console.error('Fetch user bookings error:', err);
       } finally {
@@ -111,7 +86,7 @@ export default function Home() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', fetchUserBookings);
     };
-  }, [user, profile]);
+  }, [user?.uid]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -357,14 +332,15 @@ export default function Home() {
               <div className="space-y-2.5">
                 {realBookings.map((item, idx) => {
                   const badge = getStatusBadge(item.status);
-                  const iconObj = getServiceIcon(item.service_name);
+                  const iconObj = getServiceIcon(item.serviceName);
                   const IconComp = iconObj.icon;
-                  const dateText = item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently';
-                  const locationText = item.city || item.details?.city || 'Etawah';
+                  const createdDate = item.createdAt?.toDate?.() || (item.createdAt ? new Date(item.createdAt) : null);
+                  const dateText = createdDate ? createdDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently';
+                  const locationText = item.addressSnapshot?.city || 'Your address';
 
                   return (
                     <Link 
-                      href={`/track?id=${item.id}`} 
+                      href={`/track?orderId=${item.id}`}
                       key={item.id || idx} 
                       className="bg-white p-3.5 rounded-2xl border border-slate-100 flex items-center justify-between gap-3 hover:border-blue-100 transition-colors shadow-xs"
                     >
@@ -373,7 +349,7 @@ export default function Home() {
                           <IconComp size={20} />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-xs font-black text-slate-900 truncate">{item.service_name || 'Repair Service'}</h4>
+                          <h4 className="text-xs font-black text-slate-900 truncate">{item.serviceName || 'Repair Service'}</h4>
                           <p className="text-[10px] text-slate-400 font-medium truncate">{dateText} • {locationText}</p>
                         </div>
                       </div>
@@ -382,9 +358,6 @@ export default function Home() {
                         <span className={`${badge.style} border text-[9px] font-extrabold px-3 py-1 rounded-full`}>
                           {badge.text}
                         </span>
-                        {item.worker_avatar ? (
-                          <Avatar src={item.worker_avatar} name={item.worker_name || 'Worker'} size={32} />
-                        ) : null}
                         <ChevronRight size={14} className="text-slate-300" />
                       </div>
                     </Link>

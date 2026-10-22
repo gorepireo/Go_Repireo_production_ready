@@ -84,3 +84,4 @@ Return ONLY valid JSON matching: {"insights": "your 1 sentence diagnostic insigh
     return NextResponse.json({ error: error.message || 'Failed to calculate estimate' }, { status: 500 });
   }
 }
+import { disabledLegacyDb as db } from '@/lib/legacy-realtime-disabled';

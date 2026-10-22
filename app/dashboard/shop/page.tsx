@@ -35,6 +35,7 @@ function ShopkeeperDashboardContent() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     const { error } = await (null as any)
       .from('products')
       .insert({ ...newProduct, shop_id: user.id });
@@ -85,7 +86,7 @@ function ShopkeeperDashboardContent() {
              <div className="king-card bg-white p-8 md:p-10 !rounded-[2.5rem] flex flex-col items-center md:items-end shadow-xl">
                 <p className="text-[10px] text-black/40 font-black uppercase tracking-[0.4em] mb-3 italic">Total Revenue</p>
                 <div className="text-right">
-                  <span className="text-5xl md:text-6xl font-black text-black italic tracking-tighter leading-none"><span className="text-xl text-[#007AFF] font-bold mr-1">₹</span>{profile?.earnings || 0}</span>
+                  <span className="text-5xl md:text-6xl font-black text-black italic tracking-tighter leading-none"><span className="text-xl text-[#007AFF] font-bold mr-1">₹</span>{Number(profile?.earnings || 0)}</span>
                 </div>
              </div>
              

@@ -29,6 +29,9 @@ import {
 import dynamic from 'next/dynamic';
 import { isServiceMatching } from '@/lib/serviceMatcher';
 import { ServiceBookingSkeleton } from '@/components/SkeletonLoader';
+import { db } from '@/lib/firebase';
+import { collections } from '@/lib/types/firebase-contract';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelector'), { ssr: false });
 
@@ -109,47 +112,26 @@ export default function ServiceBooking() {
 
   useEffect(() => {
     if (user) {
-      (null as any).from('user_addresses').select('*').eq('user_id', user.id)
-        .then((res: any) => { if (res?.data) setAddresses(res.data); });
+      getDocs(query(collection(db, collections.addresses), where('customerId', '==', user.uid)))
+        .then((snapshot) => setAddresses(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))));
     }
   }, [user, loading, router]);
 
   const createOrderRecord = async (payStatus: string, payMethod: string, payId?: string) => {
-    // Fetch unique OTPs from server (ensures no collision with active orders)
-    let startOtp = Math.floor(1000 + Math.random() * 9000).toString();
-    let completionOtp = Math.floor(1000 + Math.random() * 9000).toString();
-
-    try {
-      const otpRes = await fetch('/api/generate-otp', { method: 'POST' });
-      if (otpRes.ok) {
-        const otpData = await otpRes.json();
-        startOtp = otpData.start_otp || startOtp;
-        completionOtp = otpData.completion_otp || completionOtp;
-      }
-    } catch (otpErr) {
-      console.warn('OTP API error, using fallback:', otpErr);
-    }
-
-    let insertPayload: any = {
-      customer_id: user?.id || null,
-      user_email: user?.email,
-      service_name: formData.category,
-      status: 'pending',
-      payment_status: payStatus,
-      payment_method: payMethod,
-      payment_id: payId || null,
-      total_price: estimatedPrice,
-      details: { 
-        ...formData, 
-        payment_method: payMethod, 
-        items: [{ type: 'service', name: formData.category }], 
-        estimation,
-        start_otp: startOtp,
-        completion_otp: completionOtp 
-      },
-      lat: formData.lat || (12.9716 + (Math.random() - 0.5) * 0.1),
-      lng: formData.lng || (77.5946 + (Math.random() - 0.5) * 0.1),
-      order_type: 'direct_service'
+    const insertPayload = {
+      serviceId: formData.category,
+      serviceName: formData.category,
+      description: formData.description,
+      formattedAddress: formData.address,
+      latitude: formData.lat,
+      longitude: formData.lng,
+      scheduleType: formData.bookingType === 'scheduled' ? 'scheduled' : 'immediate',
+      scheduledAt: formData.bookingType === 'scheduled'
+        ? new Date(`${formData.preferredDate}T${formData.preferredTime}`).toISOString()
+        : null,
+      paymentMethod: payMethod === 'online' ? 'razorpay' : 'cash',
+      amountPaise: Math.round(estimatedPrice * 100),
+      paymentReference: payId || null,
     };
 
     try {
@@ -162,69 +144,27 @@ export default function ServiceBooking() {
       await TrackingService.addTrackingEvent(orderId, {
         workerId: null,
         status: 'pending',
-        lat: insertPayload.lat - (Math.random() * 0.1),
-        lng: insertPayload.lng - (Math.random() * 0.1),
+        lat: insertPayload.latitude,
+        lng: insertPayload.longitude,
         note: payMethod === 'cash' 
           ? 'Order placed with Cash payment option. Awaiting worker dispatch...'
           : 'Order placed & prepaid online. Initialising logistic unit...'
       });
 
-      if (user?.id) {
+      if (user?.uid) {
         await NotificationService.notifyUser(
-          user.id,
+          user.uid,
           'Service Requested',
           payMethod === 'cash'
             ? `Your ${formData.category} service request has been placed (Cash payment upon service completion).`
             : `Your ${formData.category} service request has been received and payment confirmed.`,
-          `/track?id=${orderId}`
+          `/track?orderId=${orderId}`
         );
       }
 
-      // Notify matching active workers
-      try {
-        const { collection, query, where, getDocs } = await import('firebase/firestore');
-        const workersSnap = await getDocs(query(collection(db, "workers"), where("availability.online", "==", true)));
-        
-        const matchingWorkers = workersSnap.docs
-          .map(doc => ({ id: doc.id, ...doc.data() } as any))
-          .filter(w => isServiceMatching(w.services?.join(', ') || '', formData.category));
+      // Worker discovery and notification are performed by the trusted backend.
 
-        if (matchingWorkers.length > 0) {
-          const timingText = formData.bookingType === 'immediately'
-            ? 'IMMEDIATE (ASAP)'
-            : `SCHEDULED for ${formData.preferredDate} at ${formData.preferredTime}`;
-          const payText = payMethod === 'cash' ? 'CASH ON SERVICE' : 'PREPAID ONLINE';
-
-          for (const w of matchingWorkers) {
-            await NotificationService.notifyUser(
-              w.id,
-              `New ${formData.category.toUpperCase()} Request`,
-              `A new ${formData.category.toUpperCase()} request (${timingText}, ${payText}) is available in your workspace. Log in to accept.`,
-              '/dashboard/worker'
-            );
-            
-            // Push Notification
-            try {
-              await fetch('/api/push/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  title: `⚡ New ${formData.category} Request!`,
-                  message: `${timingText === 'IMMEDIATE (ASAP)' ? 'Immediate service' : `Scheduled: ${formData.preferredDate}`} — ₹${estimatedPrice}. Tap to accept.`,
-                  url: '/dashboard/worker',
-                  targetUserId: w.id,
-                  orderId: orderId,
-                  actions: [{ action: 'accept', title: 'Accept' }]
-                })
-              });
-            } catch {}
-          }
-        }
-      } catch (workerNotifyErr) {
-        console.error('Worker notification error:', workerNotifyErr);
-      }
-
-      router.push(`/track?id=${orderId}`);
+      router.push(`/track?orderId=${orderId}`);
     } catch (error) {
       console.error(error);
       throw error;

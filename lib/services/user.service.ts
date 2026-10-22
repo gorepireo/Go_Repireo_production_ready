@@ -1,49 +1,26 @@
-import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { UserProfile, UserRole } from "@/lib/types/user";
+import { db } from '@/lib/firebase';
+import { collections, type Customer } from '@/lib/types/firebase-contract';
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+
+export type CustomerProfile = Customer & { id: string };
+const clean = (data: Record<string, unknown>) => Object.fromEntries(
+  ['name', 'email', 'avatarBase64', 'avatarUrl', 'avatarPublicId']
+    .filter((key) => data[key] !== undefined).map((key) => [key, data[key]]),
+);
 
 export const UserService = {
-  /**
-   * Fetches a user profile from the `users` collection.
-   */
-  async getProfile(uid: string): Promise<UserProfile | null> {
-    const docRef = doc(db, "users", uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data() as UserProfile;
-    }
-    return null;
+  async getProfile(uid: string): Promise<CustomerProfile | null> {
+    const snapshot = await getDoc(doc(db, collections.customers, uid));
+    return snapshot.exists() ? ({ id: snapshot.id, ...snapshot.data() } as CustomerProfile) : null;
   },
-
-  /**
-   * Creates a new user profile (usually called upon first sign-up).
-   */
-  async createProfile(uid: string, data: Partial<UserProfile> & { email: string; name: string; role?: UserRole }): Promise<void> {
-    const docRef = doc(db, "users", uid);
-    const payload: UserProfile = {
-      uid,
-      name: data.name,
-      email: data.email,
-      phone: data.phone || '',
-      role: data.role || 'customer',
-      profilePhoto: data.profilePhoto || null,
-      addresses: [],
-      isActive: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      ...data
-    };
-    await setDoc(docRef, payload, { merge: true });
-  },
-
-  /**
-   * Updates an existing user profile.
-   */
-  async updateProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
-    const docRef = doc(db, "users", uid);
-    await updateDoc(docRef, {
-      ...data,
-      updatedAt: serverTimestamp()
+  async createProfile(uid: string, data: { name: string; phone: string; email?: string | null }): Promise<void> {
+    await setDoc(doc(db, collections.customers, uid), {
+      uid, name: data.name.trim(), phone: data.phone,
+      email: data.email?.trim().toLowerCase() || null,
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
     });
-  }
+  },
+  async updateProfile(uid: string, data: Record<string, unknown>): Promise<void> {
+    await updateDoc(doc(db, collections.customers, uid), { ...clean(data), updatedAt: serverTimestamp() });
+  },
 };

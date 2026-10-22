@@ -1,29 +1,17 @@
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs } from "firebase/firestore";
-
+import { db } from '@/lib/firebase';
+import { collections } from '@/lib/types/firebase-contract';
+import { collection, getDocs, onSnapshot, orderBy, query } from 'firebase/firestore';
+const events = (bookingId: string) => collection(db, collections.bookings, bookingId, 'events');
 export const TrackingService = {
-  async addTrackingEvent(orderId: string, payload: any): Promise<void> {
-    const trackingRef = collection(db, "orders", orderId, "tracking");
-    await addDoc(trackingRef, {
-      ...payload,
-      timestamp: serverTimestamp()
-    });
+  async addTrackingEvent(_bookingId: string, _event: Record<string, unknown>): Promise<void> {
+    // Booking events are written by trusted callable functions.
   },
-
-  async getTrackingHistory(orderId: string): Promise<any[]> {
-    const trackingRef = collection(db, "orders", orderId, "tracking");
-    const q = query(trackingRef, orderBy("timestamp", "asc"));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  async getTrackingHistory(bookingId: string): Promise<any[]> {
+    const snapshot = await getDocs(query(events(bookingId), orderBy('createdAt', 'asc')));
+    return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
   },
-
-  subscribeToTrackingHistory(orderId: string, callback: (events: any[]) => void) {
-    const { onSnapshot } = require('firebase/firestore');
-    const trackingRef = collection(db, "orders", orderId, "tracking");
-    const q = query(trackingRef, orderBy("timestamp", "asc"));
-    return onSnapshot(q, (snap: any) => {
-      const events = snap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
-      callback(events);
-    });
-  }
+  subscribeToTrackingHistory(bookingId: string, callback: (items: any[]) => void) {
+    return onSnapshot(query(events(bookingId), orderBy('createdAt', 'asc')), (snapshot) =>
+      callback(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))));
+  },
 };

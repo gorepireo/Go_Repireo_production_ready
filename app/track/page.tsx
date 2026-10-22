@@ -32,8 +32,9 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import { predictTelemetry } from '@/lib/telemetryModel';
 import Header from '@/components/Header';
 import Avatar from '@/components/Avatar';
-import { rtdb } from '@/lib/firebase';
-import { ref, get, child, onValue, off } from 'firebase/database';
+import { db } from '@/lib/firebase';
+import { collections } from '@/lib/types/firebase-contract';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoogleMap'), {
   ssr: false,
@@ -48,7 +49,7 @@ function TrackContent() {
   const { user, profile } = useAuth();
   const { startCall } = useCall();
   const searchParams = useSearchParams();
-  const paramOrderId = searchParams.get('order_id');
+  const paramOrderId = searchParams.get('orderId') || searchParams.get('order_id') || searchParams.get('id');
   const isReviewParam = searchParams.get('review') === 'true';
 
   const [order, setOrder] = useState<any>(null);
@@ -101,7 +102,6 @@ function TrackContent() {
     const setupSubscriptions = async () => {
       const { OrderService } = await import('@/lib/services/order.service');
       const { TrackingService } = await import('@/lib/services/tracking.service');
-      const { UserService } = await import('@/lib/services/user.service');
 
       const targetUserId = user?.id || profile?.id;
 
@@ -120,31 +120,25 @@ function TrackContent() {
         if (isReviewParam || ['completed', 'cancelled', 'delivered'].includes(currentStatus)) {
           setOrderStage('completed');
           // Dummy review check since we removed reviews for now
-        } else if (['work_in_progress', 'working', 'in_progress'].includes(currentStatus)) {
+        } else if (['work_in_progress', 'working', 'in_progress', 'inservice', 'awaitingcompletion'].includes(currentStatus)) {
           setOrderStage('work_in_progress');
-        } else if (['worker_assigned', 'worker_arriving', 'arrived', 'assigned', 'on_the_way'].includes(currentStatus)) {
+        } else if (['worker_assigned', 'worker_arriving', 'arrived', 'assigned', 'on_the_way', 'enroute'].includes(currentStatus)) {
           setOrderStage('in_progress');
         } else {
           setOrderStage('pending_assignment');
         }
 
-        // Fetch Worker Profile
         const workerId = currentOrder.workerId || currentOrder.worker_id;
         if (workerId) {
-          try {
-            const wProfile = await UserService.getProfile(workerId);
-            setWorkerData({
-              id: workerId,
-              name: wProfile?.name || 'Assigned Technician',
-              avatar: wProfile?.profilePhoto || '/technician_hero.jpg',
-              phone: wProfile?.phone || '+910000000000',
-              avgRating: 4.8,
-              reviewsCount: 12,
-              isNewWorker: false
-            });
-          } catch (e) {
-            console.warn("Could not fetch worker profile", e);
-          }
+          setWorkerData({
+            id: workerId,
+            name: currentOrder.workerName || 'Assigned Technician',
+            avatar: currentOrder.workerAvatarUrl || '/technician_hero.jpg',
+            phone: '',
+            avgRating: currentOrder.workerRatingAverage || 0,
+            reviewsCount: currentOrder.workerRatingCount || 0,
+            isNewWorker: (currentOrder.workerRatingCount || 0) === 0,
+          });
         }
 
         // Set customer coordinates based on order
@@ -199,41 +193,21 @@ function TrackContent() {
     };
   }, [user, profile, paramOrderId, isReviewParam]);
 
-  // Realtime instant location updates from worker device
+  // Firebase worker-location snapshot; access is restricted to booking participants.
   useEffect(() => {
-    if (!order?.id) return;
-    const roomTopic = `live_location_${order.id}`;
-    const globalTopic = 'global_live_locations';
-
-    db.realtime.subscribe(roomTopic).catch(console.warn);
-    db.realtime.subscribe(globalTopic).catch(console.warn);
-
-    const handleLocationUpdate = (msg: any) => {
-      const payload = msg?.payload;
-      if (payload && (payload.order_id === order.id || msg.channel === roomTopic)) {
-        const rawLat = payload.latitude || payload.lat;
-        const rawLng = payload.longitude || payload.lng;
-        if (rawLat !== undefined && rawLng !== undefined) {
-          setLiveLocation({
-            lat: Number(rawLat),
-            lng: Number(rawLng),
-            accuracy: payload.accuracy || null,
-            heading: payload.heading || null,
-            speed: payload.speed || null,
-            timestamp: Date.now()
-          });
-        }
-      }
-    };
-
-    db.realtime.on('location_update', handleLocationUpdate);
-
-    return () => {
-      db.realtime.off('location_update', handleLocationUpdate);
-      db.realtime.unsubscribe(roomTopic);
-      db.realtime.unsubscribe(globalTopic);
-    };
-  }, [order?.id]);
+    const workerId = order?.workerId;
+    if (!workerId) return;
+    return onSnapshot(doc(db, collections.workerLocations, workerId), (snapshot) => {
+      if (!snapshot.exists()) return;
+      const location = snapshot.data();
+      if (location.activeBookingId !== order.id) return;
+      setLiveLocation({
+        lat: Number(location.latitude), lng: Number(location.longitude),
+        accuracy: location.accuracy ?? null, heading: location.heading ?? null,
+        speed: location.speed ?? null, timestamp: location.updatedAt?.toMillis?.() || Date.now(),
+      });
+    });
+  }, [order?.id, order?.workerId]);
 
   // Helper to load Razorpay Checkout Script
   const loadRazorpayScript = () => {

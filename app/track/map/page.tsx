@@ -7,6 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import BottomNav from '@/components/BottomNav';
+import { db } from '@/lib/firebase';
+import { collections } from '@/lib/types/firebase-contract';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 import { GoogleMap, useJsApiLoader, OverlayView, Polyline } from '@react-google-maps/api';
 
@@ -18,7 +21,7 @@ const mapContainerStyle = {
 function StandardMapContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const orderId = searchParams.get('id');
+  const orderId = searchParams.get('orderId') || searchParams.get('id');
   
   const [order, setOrder] = useState<any>(null);
   const [tracking, setTracking] = useState<any>(null);
@@ -29,63 +32,33 @@ function StandardMapContent() {
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
   });
 
-  const fetchTracking = useCallback(async () => {
+  const fetchTracking = useCallback(() => {
     if (!orderId) {
       setLoading(false);
-      return;
+      return () => undefined;
     }
 
-    try {
-      const { data: orderData } = await (null as any)
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
-      
-      if (orderData) {
-        setOrder(orderData);
-        
-        let finalTrackData = null;
-        
-        // 1. Try to get the real-time live location first
-        const { data: liveData } = await (null as any)
-          .from('order_live_location')
-          .select('*')
-          .eq('order_id', orderId)
-          .maybeSingle();
-
-        if (liveData) {
-          finalTrackData = liveData;
-        } else {
-          // 2. Fallback to the historical order tracking log
-          const { data: trackData } = await (null as any)
-            .from('order_tracking')
-            .select('*')
-            .eq('order_id', orderId)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-            
-          if (trackData) {
-            finalTrackData = trackData;
+    let stopLocation: () => void = () => undefined;
+    const stopOrder = onSnapshot(doc(db, collections.bookings, orderId), (snapshot) => {
+      if (!snapshot.exists()) return setLoading(false);
+      const value = snapshot.data();
+      setOrder({ id: snapshot.id, ...value, lat: value.latitude, lng: value.longitude });
+      stopLocation();
+      if (value.workerId) {
+        stopLocation = onSnapshot(doc(db, collections.workerLocations, value.workerId), (locationSnapshot) => {
+          if (locationSnapshot.exists() && locationSnapshot.data().activeBookingId === orderId) {
+            const location = locationSnapshot.data();
+            setTracking({ lat: location.latitude, lng: location.longitude });
           }
-        }
-        
-        if (finalTrackData) {
-          setTracking(finalTrackData);
-        }
+        });
       }
-    } catch (err) {
-      console.error('Fetch tracking error:', err);
-    } finally {
       setLoading(false);
-    }
+    });
+    return () => { stopOrder(); stopLocation(); };
   }, [orderId]);
 
   useEffect(() => {
-    fetchTracking();
-    const interval = setInterval(fetchTracking, 5000); 
-    return () => clearInterval(interval);
+    return fetchTracking();
   }, [fetchTracking]);
 
   const centerLat = tracking ? Number(tracking.lat) : (order ? Number(order.lat) : 28.6139);

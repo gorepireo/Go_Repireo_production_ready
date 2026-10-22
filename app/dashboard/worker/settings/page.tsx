@@ -9,6 +9,7 @@ import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { WorkerService } from '@/lib/services/worker.service';
 
 export default function WorkerSettings() {
   const { user, profile, refresh, loading: authLoading, signOut } = useAuth();
@@ -35,8 +36,8 @@ export default function WorkerSettings() {
       setFormData({
         name: profile.display_name || '',
         phone: profile.phone || '',
-        bank_details: (profile as any).bank_details || '',
-        upi_id: (profile as any).upi_id || ''
+        bank_details: (profile.worker_data as any)?.bankDetails || '',
+        upi_id: (profile.worker_data as any)?.upiId || ''
       });
     }
   }, [profile]);
@@ -46,16 +47,7 @@ export default function WorkerSettings() {
     if (!user) return;
     setLoading(true);
     
-    await (null as any)
-      .from('users')
-      .update({
-        name: formData.name,
-        display_name: formData.name,
-        phone: formData.phone,
-        bank_details: formData.bank_details,
-        upi_id: formData.upi_id
-      })
-      .eq('id', user.id);
+    await WorkerService.updateSettings(formData.name, formData.upi_id, formData.bank_details);
       
     await refresh();
     setLoading(false);
@@ -88,20 +80,7 @@ export default function WorkerSettings() {
       const croppedBlob = await getCroppedImg(cropImageSrc, croppedAreaPixels);
       if (!croppedBlob) throw new Error("Failed to crop image");
       
-      const fileExt = 'jpeg';
-      const fileName = `avatars/${user.id}-${Math.random()}.${fileExt}`;
-      const storageRef = ref(storage, fileName);
-
-      await uploadBytes(storageRef, croppedBlob);
-      const publicUrl = await getDownloadURL(storageRef);
-
-      if (publicUrl) {
-        await (null as any)
-          .from('users')
-          .update({ avatar_url: publicUrl as string })
-          .eq('id', user.id);
-        await refresh();
-      }
+      throw new Error('Worker avatar uploads require the verified Cloudinary backend.');
     } catch (err) {
       console.error(err);
       alert("Failed to crop and upload image.");
@@ -167,7 +146,7 @@ export default function WorkerSettings() {
             </div>
             
             <div className="flex flex-col items-center mb-8 relative">
-              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              <div className="relative group cursor-not-allowed" title="Worker avatars require a verified Cloudinary upload.">
                 <Avatar src={profile?.avatar_url} name={profile?.display_name || profile?.email || 'User'} size={100} className="shadow-lg border-4 border-white bg-[#EAB308]" />
                 <div className="absolute bottom-0 right-0 bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm border border-slate-100">
                   <Camera className="w-4 h-4 text-[#007AFF]" />
@@ -177,7 +156,7 @@ export default function WorkerSettings() {
                 </div>
                 {loading && <div className="absolute inset-0 bg-white/60 rounded-full flex items-center justify-center"><Loader2 className="animate-spin text-[#007AFF]" /></div>}
               </div>
-              <p className="text-[10px] font-bold text-slate-400 mt-4 tracking-wide">Tap to change avatar</p>
+              <p className="text-[10px] font-bold text-slate-400 mt-4 tracking-wide">Avatar changes require verification</p>
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
             </div>
 
@@ -211,12 +190,12 @@ export default function WorkerSettings() {
                   <input 
                     required
                     value={formData.phone}
-                    onChange={e => setFormData({...formData, phone: e.target.value})}
+                    readOnly
                     className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
                   />
                 </div>
                 <div className="text-[#007AFF] pr-2">
-                  <Pencil className="w-4 h-4" />
+                  <Lock className="w-4 h-4" />
                 </div>
               </div>
 
@@ -229,7 +208,7 @@ export default function WorkerSettings() {
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Email (Read Only)</label>
                   <input 
                     readOnly
-                    value={user.email}
+                    value={user.email || ''}
                     className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
                   />
                 </div>

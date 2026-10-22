@@ -8,8 +8,10 @@ import Avatar from '@/components/Avatar';
 import { useRouter } from 'next/navigation';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '@/lib/firebase';
+import { collections } from '@/lib/types/firebase-contract';
+import { UserService } from '@/lib/services/user.service';
+import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp, where } from 'firebase/firestore';
 
 import dynamic from 'next/dynamic';
 
@@ -49,12 +51,9 @@ export default function UserSettings() {
 
   const fetchAddresses = async () => {
     if (!user) return;
-    const { data } = await (null as any)
-      .from('user_addresses')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    if (data) setAddresses(data);
+    const snapshot = await getDocs(query(collection(db, collections.addresses),
+      where('customerId', '==', user.uid), orderBy('createdAt', 'desc')));
+    setAddresses(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -62,14 +61,7 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await (null as any)
-      .from('users')
-      .update({
-        name: formData.name,
-        display_name: formData.name,
-        phone: formData.phone
-      })
-      .eq('id', user.id);
+    await UserService.updateProfile(user.uid, { name: formData.name });
       
     await refresh();
     setLoading(false);
@@ -102,20 +94,15 @@ export default function UserSettings() {
       const croppedBlob = await getCroppedImg(cropImageSrc, croppedAreaPixels);
       if (!croppedBlob) throw new Error("Failed to crop image");
       
-      const fileExt = 'jpeg';
-      const fileName = `avatars/${user.id}-${Math.random()}.${fileExt}`;
-      const storageRef = ref(storage, fileName);
-
-      await uploadBytes(storageRef, croppedBlob);
-      const publicUrl = await getDownloadURL(storageRef);
-
-      if (publicUrl) {
-        await (null as any)
-          .from('users')
-          .update({ avatar_url: publicUrl as string })
-          .eq('id', user.id);
-        await refresh();
-      }
+      const avatarBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(croppedBlob);
+      });
+      if (avatarBase64.length > 700000) throw new Error('Avatar is too large after cropping.');
+      await UserService.updateProfile(user.uid, { avatarBase64 });
+      await refresh();
     } catch (err) {
       console.error(err);
       alert("Failed to crop and upload image.");
@@ -128,13 +115,17 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await (null as any).from('user_addresses').insert([{
-      user_id: user.id,
-      name: newAddress.name,
-      address_text: newAddress.address_text,
-      lat: newAddress.lat,
-      lng: newAddress.lng
-    }]);
+    await addDoc(collection(db, collections.addresses), {
+      customerId: user.uid,
+      label: newAddress.name,
+      formattedAddress: newAddress.address_text,
+      latitude: newAddress.lat,
+      longitude: newAddress.lng,
+      landmark: '',
+      isDefault: addresses.length === 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
 
     setNewAddress({ name: '', address_text: '', lat: 0, lng: 0 });
     setIsAddingAddress(false);
@@ -145,7 +136,7 @@ export default function UserSettings() {
   const handleDeleteAddress = async (id: string) => {
     if (!confirm('Are you sure you want to delete this address?')) return;
     setLoading(true);
-    await (null as any).from('user_addresses').delete().eq('id', id);
+    await deleteDoc(doc(db, collections.addresses, id));
     await fetchAddresses();
     setLoading(false);
   };
@@ -261,13 +252,13 @@ export default function UserSettings() {
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Phone Number</label>
                 <input 
                   required
+                  readOnly
                   value={formData.phone}
-                  onChange={e => setFormData({...formData, phone: e.target.value})}
                   className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
                 />
               </div>
-              <div className="text-[#007AFF] pr-2">
-                <Pencil className="w-4 h-4" />
+              <div className="text-slate-400 pr-2">
+                <Lock className="w-4 h-4" />
               </div>
             </div>
 
@@ -280,7 +271,7 @@ export default function UserSettings() {
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Email (Read Only)</label>
                 <input 
                   readOnly
-                  value={user.email}
+                  value={user.email || ''}
                   className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
                 />
               </div>
@@ -371,8 +362,8 @@ export default function UserSettings() {
                       <MapPin size={18} />
                     </div>
                     <div>
-                      <h4 className="text-[13px] font-bold text-slate-900">{addr.name}</h4>
-                      <p className="text-[10px] font-medium text-slate-500 line-clamp-1 pr-4 mt-0.5">{addr.address_text}</p>
+                      <h4 className="text-[13px] font-bold text-slate-900">{addr.label}</h4>
+                      <p className="text-[10px] font-medium text-slate-500 line-clamp-1 pr-4 mt-0.5">{addr.formattedAddress}</p>
                     </div>
                   </div>
                   <button onClick={() => handleDeleteAddress(addr.id)} className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">

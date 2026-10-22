@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { disabledLegacyDb as db } from '@/lib/legacy-realtime-disabled';
 
 export interface CallParticipant {
   id: string;
@@ -369,6 +370,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 1. INITIATE CALL (OUTGOING)
   const startCall = async (orderId: string, callerRole: 'customer' | 'worker' = 'customer', participantOverride?: CallParticipant) => {
+    if (process.env.NEXT_PUBLIC_ENABLE_LEGACY_CALLS !== 'true') {
+      setMicPermissionError('In-app calling is temporarily unavailable while signaling is moved to a secured Firebase backend.');
+      return;
+    }
     if (callStatus !== 'idle') return;
 
     // Unblock Audio Element Playback in click gesture
