@@ -4,8 +4,12 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, Loader2, X } from 'lucide-react';
 
+const CERTIFICATE_IDENTIFIER = /GRC-\d{4}-\d+|GR\/INT\/\d{4}\/\d+|GR[IE]-[A-Z0-9]+/i;
+
 function extractCode(value: string) {
-  const match = decodeURIComponent(value).toUpperCase().match(/GRC-[A-Z0-9]+(?:-[A-Z0-9]+)*|GRI-[A-Z0-9]+/);
+  let decoded = value;
+  try { decoded = decodeURIComponent(value); } catch { /* Validate the original value. */ }
+  const match = decoded.trim().toUpperCase().match(CERTIFICATE_IDENTIFIER);
   return match?.[0] || '';
 }
 
@@ -29,12 +33,12 @@ export default function CertificateVerifier() {
 
   const verify = (value: string) => {
     const normalized = extractCode(value);
-    if (!/^(GRC-[A-Z0-9]+(?:-[A-Z0-9]+)*|GRI-[A-Z0-9]+)$/.test(normalized)) {
+    if (!new RegExp(`^(?:${CERTIFICATE_IDENTIFIER.source})$`, 'i').test(normalized)) {
       setError('Enter a valid certificate ID or intern code.');
       return;
     }
     stopScanner();
-    router.push(`/verify/certificate/${normalized}`);
+    router.push(`/verify/certificate/${encodeURIComponent(normalized)}`);
   };
 
   const submit = (event: FormEvent) => {
@@ -85,7 +89,7 @@ export default function CertificateVerifier() {
             Verify certificate
           </button>
         </div>
-        <p className="text-xs text-slate-500">Certificate ID or intern code</p>
+        <p className="text-xs text-slate-500">Certificate ID, intern code, or employee code</p>
       </form>
 
       <div>

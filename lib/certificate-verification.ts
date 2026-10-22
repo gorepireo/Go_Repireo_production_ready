@@ -19,11 +19,15 @@ export type CertificateLookup =
   | { state: 'unavailable' };
 
 export function normalizeCertificateCode(input: string) {
-  return decodeURIComponent(input).trim().toUpperCase();
+  try {
+    return decodeURIComponent(input).trim().toUpperCase();
+  } catch {
+    return input.trim().toUpperCase();
+  }
 }
 
 export function isCertificateCode(input: string) {
-  return /^(GRC-[A-Z0-9]+(?:-[A-Z0-9]+)*|GRI-[A-Z0-9]+)$/.test(normalizeCertificateCode(input));
+  return /^(GRC-\d{4}-\d+|GR\/INT\/\d{4}\/\d+|GR[IE]-[A-Z0-9]+)$/i.test(normalizeCertificateCode(input));
 }
 
 function text(value: unknown) {
@@ -39,13 +43,13 @@ function normalizeRecord(payload: unknown, requestedCode: string): PublicCertifi
   const person = (envelope.person || data.person || raw.person || {}) as Record<string, unknown>;
   if (!raw || typeof raw !== 'object') return null;
 
-  const code = normalizeCertificateCode(text(raw.code || raw.certificate_id || raw.certificate_code || raw.certificateNumber || raw.certificate_number || requestedCode));
-  const statusText = text(raw.verification_status || raw.status).toLowerCase();
+  const code = normalizeCertificateCode(text(raw.code || raw.certificateId || raw.certificate_id || raw.certificate_code || raw.certificateNumber || raw.certificate_number || requestedCode));
+  const statusText = text(raw.verificationStatus || raw.verification_status || raw.status).toLowerCase();
   const revoked = raw.revoked === true || statusText === 'revoked';
   const explicitlyVerified = envelope.found === true || raw.verified === true || raw.valid === true || ['verified', 'valid', 'active', 'issued'].includes(statusText);
-  const name = text(raw.name || raw.full_name || raw.person_name || raw.recipient_name || person.full_name || person.name);
-  const title = text(raw.title || raw.internship_title || raw.job_title || raw.designation || raw.program_title || person.designation);
-  const department = text(raw.department || raw.department_name || person.department);
+  const name = text(raw.name || raw.personName || raw.full_name || raw.person_name || raw.recipient_name || person.full_name || person.name);
+  const title = text(raw.title || raw.positionTitle || raw.internship_title || raw.job_title || raw.designation || raw.program_title || person.designation);
+  const department = text(raw.department || raw.departmentName || raw.department_name || person.department);
   const startDate = text(raw.startDate || raw.start_date || raw.valid_from || raw.from_date || raw.internship_start_date || raw.employment_start_date);
   const endDate = text(raw.endDate || raw.end_date || raw.valid_until || raw.to_date || raw.internship_end_date || raw.employment_end_date);
 
