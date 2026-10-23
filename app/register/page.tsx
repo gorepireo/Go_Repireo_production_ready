@@ -1,16 +1,27 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, MapPin, Phone, ShieldCheck, UserRound } from 'lucide-react';
+import {
+  ArrowRight, BriefcaseBusiness, Check, ChevronDown, Hammer, LockKeyhole,
+  Mail, MapPin, Phone, ShieldCheck, Sparkles, UserRound, Wrench, Zap,
+} from 'lucide-react';
 import { auth } from '@/lib/firebase';
 
 type AccountType = 'customer' | 'partner';
 
-const serviceOptions = ['Plumbing', 'Electrical', 'Cleaning', 'Carpentry', 'Appliance repair', 'AC service', 'Other repairs'];
+const serviceOptions = [
+  { name: 'Plumbing', Icon: Phone },
+  { name: 'Electrical', Icon: Zap },
+  { name: 'Cleaning', Icon: Sparkles },
+  { name: 'Carpentry', Icon: Hammer },
+  { name: 'Appliance repair', Icon: BriefcaseBusiness },
+  { name: 'AC service', Icon: Wrench },
+  { name: 'Other repairs', Icon: ShieldCheck },
+];
 
 function friendlyError(cause: unknown) {
   const message = cause instanceof Error ? cause.message : '';
@@ -51,7 +62,7 @@ export default function RegisterPage() {
     setError('');
     if (form.displayName.trim().length < 2) return setError('Enter your full name.');
     if (!/^\d{10}$/.test(form.phone)) return setError('Enter a valid 10-digit Indian mobile number.');
-    if (form.pincode && !/^\d{6}$/.test(form.pincode)) return setError('Enter a valid six-digit pincode.');
+    if (accountType === 'partner' && !/^\d{6}$/.test(form.pincode)) return setError('Enter a valid six-digit pincode.');
     if (accountType === 'partner' && services.length === 0) return setError('Select at least one service category.');
 
     setBusy(true);
@@ -82,7 +93,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           displayName: form.displayName,
           accountType,
-          email: accountType === 'partner' ? form.email : '',
+          email: form.email,
           state: accountType === 'partner' ? form.state : '',
           district: accountType === 'partner' ? form.district : '',
           pincode: accountType === 'partner' ? form.pincode : '',
@@ -104,76 +115,122 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F0F5FA] px-4 py-8 text-[#0F172A]">
-      <div className="mx-auto max-w-3xl">
-        <header className="mb-7 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="flex size-12 items-center justify-center rounded-2xl bg-white shadow-sm"><Image src="/logo.png" alt="Go_Repireo" width={36} height={36} /></span>
-            <span className="text-sm font-black uppercase"><span className="text-[#007AFF]">Go_</span><span className="text-[#FF9500]">Repireo</span></span>
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#e7f4ff_0,#d9edff_42%,#edf7ff_100%)] p-0 text-[#071631] lg:p-6">
+      <div className="mx-auto min-h-screen max-w-[1480px] overflow-hidden bg-white shadow-[0_30px_90px_rgba(26,96,170,0.16)] lg:min-h-0 lg:rounded-[28px]">
+        <header className="flex h-[76px] items-center justify-between px-5 sm:px-9 lg:h-[66px] lg:px-16">
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image src="/logo.png" alt="Go_Repireo" width={44} height={44} className="size-10 object-contain" priority />
+            <span className="text-base font-black uppercase"><span className="text-[#0874ef]">Go_</span><span className="text-[#ff8a00]">Repireo</span></span>
           </Link>
-          <Link href="/login" className="text-xs font-bold text-[#007AFF]">Already registered? Sign in</Link>
+          <Link href="/login" className="flex items-center gap-2 text-xs font-bold text-[#0874ef]"><span className="hidden font-medium text-slate-500 sm:inline">Already registered?</span> Sign in <ArrowRight size={15} /></Link>
         </header>
 
-        <section className="overflow-hidden rounded-[2rem] border border-white bg-white shadow-[0_20px_60px_-24px_rgba(15,23,42,0.18)]">
-          <div className="bg-[#0A1629] px-6 py-8 text-white sm:px-10">
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#62A7FF]">{accountType === 'customer' ? 'Customer account' : 'Service partner application'}</p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{accountType === 'customer' ? 'Book a service faster.' : 'Grow your work with us.'}</h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">{accountType === 'customer' ? 'Create a simple account with your name and verified mobile number.' : 'Tell us about your skills and service area. Partner applications are reviewed before activation.'}</p>
-          </div>
+        <div className="grid lg:grid-cols-[390px_minmax(0,1fr)] xl:grid-cols-[430px_minmax(0,1fr)]">
+          <HeroPanel accountType={accountType} />
 
-          <div className="p-6 sm:p-10">
-            <div className="mb-8 grid grid-cols-2 gap-3">
-              {([
-                { type: 'customer' as const, title: 'Customer', description: 'Book and manage services', Icon: UserRound },
-                { type: 'partner' as const, title: 'Service partner', description: 'Apply to provide services', Icon: BriefcaseBusiness },
-              ]).map(({ type, title, description, Icon }) => (
-                <button key={type} type="button" onClick={() => chooseAccountType(type)} disabled={step === 2} className={`rounded-2xl border p-4 text-left transition ${accountType === type ? 'border-[#007AFF] bg-blue-50 ring-1 ring-[#007AFF]' : 'border-slate-200 bg-white hover:border-slate-300'} disabled:cursor-not-allowed`}>
-                  <span className="flex items-center justify-between"><Icon className={accountType === type ? 'text-[#007AFF]' : 'text-slate-500'} size={22} />{accountType === type && <Check className="text-[#007AFF]" size={18} />}</span>
-                  <span className="mt-3 block text-sm font-black">{title}</span><span className="mt-1 block text-[10px] text-slate-500">{description}</span>
-                </button>
-              ))}
-            </div>
+          <section className="relative bg-white px-5 py-6 sm:px-10 lg:rounded-tl-[28px] lg:px-8 lg:py-8 xl:px-14">
+            <Progress current={step} accountType={accountType} />
 
-            <form onSubmit={step === 1 ? sendCode : finishRegistration} className="space-y-5">
+            <form onSubmit={step === 1 ? sendCode : finishRegistration} className="mx-auto mt-7 max-w-4xl">
               {step === 1 ? <>
-                <div className={accountType === 'partner' ? 'grid gap-4 sm:grid-cols-2' : 'space-y-4'}>
-                  <Field label="Full name" value={form.displayName} onChange={(value) => update('displayName', value)} placeholder="Your full name" required />
-                  {accountType === 'partner' && <Field label="Email address" value={form.email} onChange={(value) => update('email', value)} placeholder="name@example.com" type="email" required />}
-                </div>
-                <div>
-                  <label className="ml-1 text-[9px] font-bold uppercase tracking-widest text-slate-500">Mobile number</label>
-                  <div className="mt-2 flex h-14 items-center rounded-2xl bg-[#F8FAFC] px-4 focus-within:ring-1 focus-within:ring-[#007AFF]"><Phone size={18} className="mr-3 text-[#007AFF]" /><span className="mr-2 text-sm font-semibold text-slate-500">+91</span><input value={form.phone} onChange={(event) => update('phone', event.target.value.replace(/\D/g, '').slice(0, 10))} inputMode="numeric" className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none" placeholder="10-digit mobile number" required /></div>
+                <div className="hidden lg:block">
+                  <h1 className="text-2xl font-black tracking-tight">Create Your Account</h1>
+                  <p className="mt-1 text-sm text-slate-500">Get started by choosing how you want to use Go_Repireo.</p>
                 </div>
 
-                {accountType === 'partner' && <div className="space-y-5 rounded-2xl border border-orange-100 bg-orange-50/50 p-5">
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">Your service location</p>
-                    <div className="mt-3 grid gap-4 sm:grid-cols-2"><Field label="State" value={form.state} onChange={(value) => update('state', value)} placeholder="State" required /><Field label="District" value={form.district} onChange={(value) => update('district', value)} placeholder="District" required /></div>
-                    <div className="mt-4 grid gap-4 sm:grid-cols-[160px_1fr]"><Field label="Pincode" value={form.pincode} onChange={(value) => update('pincode', value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" required /><Field label="Service area" value={form.area} onChange={(value) => update('area', value)} placeholder="Locality or areas you serve" required /></div>
-                  </div>
-                  <div><p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">Services you provide</p><div className="mt-3 flex flex-wrap gap-2">{serviceOptions.map((service) => <button key={service} type="button" onClick={() => setServices((current) => current.includes(service) ? current.filter((item) => item !== service) : [...current, service])} className={`rounded-full border px-3 py-2 text-[10px] font-bold ${services.includes(service) ? 'border-[#007AFF] bg-[#007AFF] text-white' : 'border-slate-200 bg-white text-slate-600'}`}>{service}</button>)}</div></div>
-                  <div className="grid gap-4 sm:grid-cols-[160px_1fr]"><Field label="Experience (years)" value={form.experienceYears} onChange={(value) => update('experienceYears', value.replace(/\D/g, '').slice(0, 2))} type="number" placeholder="0" required /><Field label="Skills description" value={form.description} onChange={(value) => update('description', value)} placeholder="Describe your experience" required /></div>
-                  <p className="flex gap-2 text-[10px] leading-5 text-orange-800"><ShieldCheck size={16} className="shrink-0" />Partner accounts remain pending until an administrator reviews and approves them.</p>
-                </div>}
-                {accountType === 'customer' && <p className="rounded-2xl bg-blue-50 px-4 py-3 text-[10px] leading-5 text-blue-800">That is all we need. You can add addresses and other details later from your account.</p>}
-                <div id="register-recaptcha" className="overflow-hidden rounded-xl" />
-              </> : <div className="rounded-2xl bg-[#F8FAFC] p-6 text-center">
-                <ShieldCheck className="mx-auto text-[#007AFF]" size={34} /><h2 className="mt-3 text-xl font-black">Verify your mobile</h2><p className="mt-2 text-xs text-slate-500">Enter the six-digit code sent to +91 {form.phone}</p>
-                <input value={form.code} onChange={(event) => update('code', event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" className="mx-auto mt-5 block h-14 w-full max-w-xs rounded-2xl border border-slate-200 bg-white px-5 text-center text-xl font-black tracking-[0.4em] outline-none focus:border-[#007AFF]" placeholder="000000" required />
-              </div>}
+                <AccountChoices accountType={accountType} onChoose={chooseAccountType} />
 
-              {error && <p role="alert" className="rounded-xl border border-red-100 bg-red-50 p-3 text-xs font-semibold text-red-600">{error}</p>}
-              <button disabled={busy} className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#0A1629] text-[10px] font-bold uppercase tracking-widest text-white hover:bg-black disabled:opacity-60">{busy ? 'Please wait…' : step === 1 ? accountType === 'customer' ? 'Create customer account' : 'Submit partner application' : 'Verify and create account'} <ArrowRight size={15} /></button>
-              {step === 2 && <button type="button" onClick={() => { setStep(1); setConfirmation(null); update('code', ''); verifier.current?.clear(); verifier.current = null; }} className="flex w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#007AFF]"><ArrowLeft size={14} />Change details</button>}
+                <div className="mt-7">
+                  <h2 className="text-lg font-black">{accountType === 'customer' ? 'Your Information' : 'Basic Information'}</h2>
+                  {accountType === 'partner' && <p className="text-xs text-slate-500">Tell us about yourself.</p>}
+                </div>
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <Field label="Full Name" value={form.displayName} onChange={(value) => update('displayName', value)} placeholder="Your full name" icon={<UserRound size={18} />} required />
+                  <Field label="Email Address" value={form.email} onChange={(value) => update('email', value)} placeholder="name@example.com" icon={<Mail size={18} />} type="email" required={accountType === 'partner'} />
+                </div>
+
+                <div className="mt-4">
+                  <PhoneField value={form.phone} onChange={(value) => update('phone', value)} />
+                </div>
+
+                {accountType === 'customer' && <div className="mt-4 flex items-center gap-3 rounded-xl bg-blue-50 px-4 py-3 text-xs font-medium text-[#0755ad]"><ShieldCheck size={18} className="shrink-0 text-[#0874ef]" />We will send a verification code to your mobile number.</div>}
+
+                {accountType === 'partner' && <PartnerFields form={form} update={update} services={services} setServices={setServices} />}
+
+                <div id="register-recaptcha" className="mt-4 overflow-hidden rounded-xl" />
+              </> : <OtpStep phone={form.phone} code={form.code} onChange={(value) => update('code', value)} />}
+
+              {error && <p role="alert" className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3 text-xs font-semibold text-red-600">{error}</p>}
+
+              <button disabled={busy} className="mt-5 flex h-14 w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#075bd8] to-[#0788ff] text-sm font-extrabold text-white shadow-[0_12px_24px_rgba(0,116,255,0.23)] transition hover:brightness-105 disabled:opacity-60">
+                {busy ? 'Please wait…' : step === 2 ? 'Verify and Create Account' : accountType === 'customer' ? 'Create Customer Account' : 'Submit Partner Application'} <ArrowRight size={18} />
+              </button>
+
+              {step === 2 && <button type="button" onClick={() => { setStep(1); setConfirmation(null); update('code', ''); verifier.current?.clear(); verifier.current = null; }} className="mt-4 w-full text-center text-xs font-bold text-[#0874ef]">Change account details</button>}
+
+              <div className="mt-5 flex flex-col items-center gap-1 text-center text-[11px] text-slate-500">
+                <p className="flex items-center gap-2"><LockKeyhole size={13} />Your information is secure and verified through Firebase.</p>
+                <p>By continuing, you agree to our <Link href="/terms" className="font-semibold text-[#0874ef] underline">Terms</Link> &amp; <Link href="/privacy" className="font-semibold text-[#0874ef] underline">Privacy Policy</Link>.</p>
+              </div>
             </form>
-          </div>
-        </section>
-        {accountType === 'partner' && <p className="mt-5 flex items-center justify-center gap-2 text-[10px] text-slate-500"><MapPin size={13} />Your location helps us connect you with nearby customers.</p>}
+          </section>
+        </div>
       </div>
     </main>
   );
 }
 
-function Field({ label, value, onChange, placeholder, type = 'text', required = false }: { label: string; value: string; onChange: (value: string) => void; placeholder: string; type?: string; required?: boolean }) {
-  return <label className="block"><span className="ml-1 text-[9px] font-bold uppercase tracking-widest text-slate-500">{label}</span><input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} className="mt-2 h-14 w-full rounded-2xl bg-[#F8FAFC] px-4 text-sm font-semibold outline-none focus:ring-1 focus:ring-[#007AFF]" /></label>;
+function HeroPanel({ accountType }: { accountType: AccountType }) {
+  const customer = accountType === 'customer';
+  return <aside className="relative min-h-[205px] overflow-hidden bg-[linear-gradient(145deg,#031c4e_0%,#005cc7_55%,#19a9ff_100%)] px-5 py-6 text-white sm:px-9 lg:min-h-[830px] lg:px-12 lg:py-14">
+    <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_80%_15%,white_0,transparent_20%),linear-gradient(120deg,transparent_35%,#38bdf8_100%)]" />
+    <div className="relative z-10 max-w-[270px] lg:max-w-none">
+      <span className="inline-flex rounded-full border border-white/35 bg-[#0874ef]/35 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.22em]">{customer ? 'Customer account' : 'Service partner application'}</span>
+      <h2 className="mt-3 text-[32px] font-black leading-[0.98] tracking-tight lg:mt-5 lg:text-[42px]">{customer ? <>Book a<br />service <span className="text-[#30a7ff]">faster.</span></> : <>Grow your<br /><span className="text-[#38bdf8]">work with us.</span></>}</h2>
+      <p className="mt-3 max-w-[290px] text-xs font-medium leading-5 text-blue-50 lg:mt-5 lg:text-sm lg:leading-6">{customer ? 'Create a simple account with your name and verified mobile number.' : 'Tell us about your skills and service area. Partner applications are reviewed before activation.'}</p>
+    </div>
+    <Image src={customer ? '/login_mechanic_3d.png' : '/custom_service_mechanic_3d.png'} alt="Go_Repireo service professional" width={520} height={520} className="absolute -bottom-20 right-[-54px] z-[1] w-[230px] object-contain mix-blend-screen sm:right-5 lg:-bottom-2 lg:right-[-55px] lg:w-[430px]" priority />
+    <div className="absolute bottom-12 left-12 z-10 hidden space-y-5 lg:block">
+      {(customer ? ['Quick booking', 'Verified accounts', 'Local experts'] : ['More customers', 'Build your reputation', 'Grow your business']).map((item, index) => <div key={item} className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">{index === 0 ? <Zap size={18} /> : index === 1 ? <ShieldCheck size={18} /> : <MapPin size={18} />}</span><span className="text-sm font-bold">{item}</span></div>)}
+    </div>
+  </aside>;
+}
+
+function Progress({ current, accountType }: { current: 1 | 2; accountType: AccountType }) {
+  const labels = accountType === 'partner' ? ['Basic Details', 'Service Details', 'Review & Submit'] : ['Basic Details', 'Additional Details', 'Review & Submit'];
+  return <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+    {labels.map((label, index) => <div key={label} className="contents"><div className="flex items-center gap-2"><span className={`flex size-7 items-center justify-center rounded-full text-xs font-black ${index + 1 <= current ? 'bg-[#0874ef] text-white' : 'border border-slate-200 text-slate-500'}`}>{index + 1}</span><span className={`text-[9px] font-semibold sm:text-[11px] ${index + 1 <= current ? 'text-[#071631]' : 'text-slate-400'}`}><span className="sm:hidden">{index === 0 ? 'Basic' : index === 1 ? 'Details' : 'Review'}</span><span className="hidden sm:inline">{label}</span></span></div>{index < 2 && <span className="mx-2 h-px flex-1 bg-slate-200" />}</div>)}
+  </div>;
+}
+
+function AccountChoices({ accountType, onChoose }: { accountType: AccountType; onChoose: (type: AccountType) => void }) {
+  return <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-3">
+    {([{ type: 'customer' as const, title: 'Customer', text: 'Book and manage services', Icon: UserRound }, { type: 'partner' as const, title: 'Service partner', text: 'Apply to provide services', Icon: BriefcaseBusiness }]).map(({ type, title, text, Icon }) => <button key={type} type="button" onClick={() => onChoose(type)} className={`relative flex min-h-[86px] items-center gap-2 rounded-xl border p-3 text-left transition sm:gap-4 sm:p-4 ${accountType === type ? 'border-[#0874ef] bg-blue-50/60 ring-1 ring-[#0874ef]' : 'border-slate-200 hover:border-blue-200'}`}><Icon size={23} className={`shrink-0 ${accountType === type ? 'text-[#0874ef]' : 'text-slate-500'}`} /><span className="min-w-0"><strong className="block text-xs sm:text-sm">{title}</strong><span className="mt-1 block text-[9px] leading-4 text-slate-500 sm:text-[11px]">{text}</span></span>{accountType === type && <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-[#0874ef] text-white sm:right-3 sm:top-3 sm:size-6"><Check size={13} /></span>}</button>)}
+  </div>;
+}
+
+function PartnerFields({ form, update, services, setServices }: { form: Record<string, string>; update: (name: 'state' | 'district' | 'pincode' | 'area' | 'experienceYears' | 'description', value: string) => void; services: string[]; setServices: React.Dispatch<React.SetStateAction<string[]>> }) {
+  return <>
+    <div className="mt-5 rounded-2xl border border-orange-200 bg-orange-50/70 p-4">
+      <div className="flex items-center gap-3"><span className="flex size-9 items-center justify-center rounded-full bg-[#ffb338] text-white"><MapPin size={18} /></span><div><h3 className="text-sm font-black">Your Service Location</h3><p className="text-[10px] text-slate-500">Where do you provide your services?</p></div></div>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2"><Field label="State" value={form.state} onChange={(value) => update('state', value)} placeholder="Select your state" icon={<MapPin size={17} />} required /><Field label="District" value={form.district} onChange={(value) => update('district', value)} placeholder="Select your district" icon={<BriefcaseBusiness size={17} />} required /></div>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2"><Field label="Pincode" value={form.pincode} onChange={(value) => update('pincode', value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" icon={<BriefcaseBusiness size={17} />} inputMode="numeric" required /><Field label="Service Area" value={form.area} onChange={(value) => update('area', value)} placeholder="Locality or areas you serve" icon={<MapPin size={17} />} required /></div>
+    </div>
+    <div className="mt-5"><h3 className="text-sm font-black">Services You Provide</h3><p className="text-[11px] text-slate-500">Select all that apply</p><div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">{serviceOptions.map(({ name, Icon }) => <button key={name} type="button" onClick={() => setServices((current) => current.includes(name) ? current.filter((item) => item !== name) : [...current, name])} className={`flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-[10px] font-bold transition ${services.includes(name) ? 'border-[#0874ef] bg-[#0874ef] text-white' : 'border-slate-200 bg-white text-[#12315e] hover:border-blue-300'}`}><Icon size={14} />{name}</button>)}</div></div>
+    <div className="mt-5"><h3 className="text-sm font-black">Experience &amp; Skills</h3><div className="mt-3 grid gap-4 sm:grid-cols-[190px_1fr]"><Field label="Experience (Years)" value={form.experienceYears} onChange={(value) => update('experienceYears', value.replace(/\D/g, '').slice(0, 2))} placeholder="0" type="number" required /><Field label="Skills Description" value={form.description} onChange={(value) => update('description', value)} placeholder="Describe your experience, skills and specialties" icon={<Wrench size={17} />} required /></div></div>
+    <p className="mt-4 flex items-center justify-center gap-2 text-center text-[10px] text-slate-500"><ShieldCheck size={14} className="text-[#0874ef]" />Partner accounts remain pending until an administrator reviews and approves them.</p>
+  </>;
+}
+
+function PhoneField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return <label className="block"><span className="mb-2 block text-xs font-bold text-[#243858]">Mobile Number <b className="text-red-500">*</b></span><span className="flex h-12 items-center rounded-xl border border-slate-200 bg-[#f8fbff] focus-within:border-[#0874ef] focus-within:ring-2 focus-within:ring-blue-100"><span className="flex h-full items-center gap-2 border-r border-slate-200 px-4 text-sm font-bold"><Phone size={18} className="text-[#0874ef]" />+91 <ChevronDown size={14} /></span><input value={value} onChange={(event) => onChange(event.target.value.replace(/\D/g, '').slice(0, 10))} inputMode="numeric" className="min-w-0 flex-1 bg-transparent px-4 text-sm outline-none" placeholder="10-digit mobile number" required /></span></label>;
+}
+
+function OtpStep({ phone, code, onChange }: { phone: string; code: string; onChange: (value: string) => void }) {
+  return <div className="rounded-2xl bg-blue-50/70 px-5 py-10 text-center"><span className="mx-auto flex size-14 items-center justify-center rounded-full bg-white text-[#0874ef] shadow-sm"><ShieldCheck size={28} /></span><h1 className="mt-4 text-2xl font-black">Verify your mobile</h1><p className="mt-2 text-sm text-slate-500">Enter the six-digit code sent to +91 {phone}</p><input value={code} onChange={(event) => onChange(event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" className="mx-auto mt-6 block h-14 w-full max-w-xs rounded-xl border border-slate-200 bg-white px-5 text-center text-xl font-black tracking-[0.4em] outline-none focus:border-[#0874ef]" placeholder="000000" required /></div>;
+}
+
+function Field({ label, value, onChange, placeholder, icon, type = 'text', required = false, inputMode }: { label: string; value: string; onChange: (value: string) => void; placeholder: string; icon?: ReactNode; type?: string; required?: boolean; inputMode?: 'numeric' }) {
+  return <label className="block"><span className="mb-2 block text-xs font-bold text-[#243858]">{label} {required && <b className="text-red-500">*</b>}</span><span className="flex h-12 items-center rounded-xl border border-slate-200 bg-[#f8fbff] px-4 focus-within:border-[#0874ef] focus-within:ring-2 focus-within:ring-blue-100">{icon && <span className="mr-3 text-[#527096]">{icon}</span>}<input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} inputMode={inputMode} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400" /></span></label>;
 }
