@@ -115,8 +115,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#e7f4ff_0,#d9edff_42%,#edf7ff_100%)] p-0 text-[#071631] lg:p-6">
-      <div className="mx-auto min-h-screen max-w-[1480px] overflow-hidden bg-white shadow-[0_30px_90px_rgba(26,96,170,0.16)] lg:min-h-0 lg:rounded-[28px]">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f7fbff_0,#deefff_55%,#eef8ff_100%)] p-0 text-[#071631] lg:p-5">
+      <div className="mx-auto min-h-screen max-w-[1480px] overflow-hidden bg-[linear-gradient(135deg,#f8fcff_0%,#e7f4ff_48%,#f8fcff_100%)] shadow-[0_30px_90px_rgba(26,96,170,0.13)] lg:min-h-0 lg:rounded-[28px]">
         <header className="flex h-[76px] items-center justify-between px-5 sm:px-9 lg:h-[66px] lg:px-16">
           <Link href="/" className="flex items-center gap-2.5">
             <Image src="/logo.png" alt="Go_Repireo" width={44} height={44} className="size-10 object-contain" priority />
@@ -128,10 +128,10 @@ export default function RegisterPage() {
         <div className="grid lg:grid-cols-[390px_minmax(0,1fr)] xl:grid-cols-[430px_minmax(0,1fr)]">
           <HeroPanel accountType={accountType} />
 
-          <section className="relative bg-white px-5 py-6 sm:px-10 lg:rounded-tl-[28px] lg:px-8 lg:py-8 xl:px-14">
-            <Progress current={step} accountType={accountType} />
+          <section className={`relative bg-white px-5 py-6 sm:px-10 lg:mb-7 lg:mr-7 lg:rounded-[28px] lg:px-8 lg:py-8 lg:shadow-[0_20px_50px_rgba(29,96,168,0.12)] xl:px-14 ${accountType === 'partner' ? 'lg:mt-40' : 'lg:mt-7'}`}>
+            {accountType === 'customer' && <Progress current={step} accountType={accountType} />}
 
-            <form onSubmit={step === 1 ? sendCode : finishRegistration} className="mx-auto mt-7 max-w-4xl">
+            <form onSubmit={step === 1 ? sendCode : finishRegistration} className={`mx-auto max-w-4xl ${accountType === 'customer' ? 'mt-7' : ''}`}>
               {step === 1 ? <>
                 <div className="hidden lg:block">
                   <h1 className="text-2xl font-black tracking-tight">Create Your Account</h1>
@@ -141,13 +141,12 @@ export default function RegisterPage() {
                 <AccountChoices accountType={accountType} onChoose={chooseAccountType} />
 
                 <div className="mt-7">
-                  <h2 className="text-lg font-black">{accountType === 'customer' ? 'Your Information' : 'Basic Information'}</h2>
-                  {accountType === 'partner' && <p className="text-xs text-slate-500">Tell us about yourself.</p>}
+                  <h2 className="text-lg font-black">Your Information</h2>
                 </div>
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <Field label="Full Name" value={form.displayName} onChange={(value) => update('displayName', value)} placeholder="Your full name" icon={<UserRound size={18} />} required />
-                  <Field label="Email Address" value={form.email} onChange={(value) => update('email', value)} placeholder="name@example.com" icon={<Mail size={18} />} type="email" required={accountType === 'partner'} />
+                  <Field label="Email Address" value={form.email} onChange={(value) => update('email', value)} placeholder="name@example.com" icon={<Mail size={18} />} type="email" required />
                 </div>
 
                 <div className="mt-4">
@@ -183,16 +182,17 @@ export default function RegisterPage() {
 
 function HeroPanel({ accountType }: { accountType: AccountType }) {
   const customer = accountType === 'customer';
-  return <aside className="relative min-h-[205px] overflow-hidden bg-[linear-gradient(145deg,#031c4e_0%,#005cc7_55%,#19a9ff_100%)] px-5 py-6 text-white sm:px-9 lg:min-h-[830px] lg:px-12 lg:py-14">
-    <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_80%_15%,white_0,transparent_20%),linear-gradient(120deg,transparent_35%,#38bdf8_100%)]" />
+  return <aside className="relative min-h-[205px] overflow-hidden bg-[linear-gradient(145deg,#f7fbff_0%,#dbeeff_58%,#eef8ff_100%)] px-5 py-6 text-[#071631] sm:px-9 lg:min-h-[850px] lg:px-12 lg:py-14">
+    <div className="absolute inset-0 opacity-70 [background-image:radial-gradient(circle_at_88%_13%,white_0,white_8%,transparent_9%),radial-gradient(circle_at_12%_80%,#cbe7ff_0,transparent_36%)]" />
+    <div className="absolute -bottom-24 -left-20 size-72 rounded-full bg-white/70" />
     <div className="relative z-10 max-w-[270px] lg:max-w-none">
-      <span className="inline-flex rounded-full border border-white/35 bg-[#0874ef]/35 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.22em]">{customer ? 'Customer account' : 'Service partner application'}</span>
-      <h2 className="mt-3 text-[32px] font-black leading-[0.98] tracking-tight lg:mt-5 lg:text-[42px]">{customer ? <>Book a<br />service <span className="text-[#30a7ff]">faster.</span></> : <>Grow your<br /><span className="text-[#38bdf8]">work with us.</span></>}</h2>
-      <p className="mt-3 max-w-[290px] text-xs font-medium leading-5 text-blue-50 lg:mt-5 lg:text-sm lg:leading-6">{customer ? 'Create a simple account with your name and verified mobile number.' : 'Tell us about your skills and service area. Partner applications are reviewed before activation.'}</p>
+      <span className="inline-flex rounded-full bg-[#e2f0ff] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-[#086de0]">{customer ? 'Customer account' : 'Service partner application'}</span>
+      <h2 className="mt-3 text-[32px] font-black leading-[0.98] tracking-tight lg:mt-5 lg:text-[46px]">{customer ? <>Book a<br />service <span className="text-[#0874ef]">faster.</span></> : <>Grow your<br /><span className="text-[#0874ef]">work</span> with us.</>}</h2>
+      <p className="mt-3 max-w-[290px] text-xs font-medium leading-5 text-[#496686] lg:mt-5 lg:text-sm lg:leading-6">{customer ? 'Create a simple account with your name and verified mobile number.' : 'Tell us about your skills and service area. Partner applications are reviewed before activation.'}</p>
     </div>
-    <Image src={customer ? '/login_mechanic_3d.png' : '/custom_service_mechanic_3d.png'} alt="Go_Repireo service professional" width={520} height={520} className="absolute -bottom-20 right-[-54px] z-[1] w-[230px] object-contain mix-blend-screen sm:right-5 lg:-bottom-2 lg:right-[-55px] lg:w-[430px]" priority />
-    <div className="absolute bottom-12 left-12 z-10 hidden space-y-5 lg:block">
-      {(customer ? ['Quick booking', 'Verified accounts', 'Local experts'] : ['More customers', 'Build your reputation', 'Grow your business']).map((item, index) => <div key={item} className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">{index === 0 ? <Zap size={18} /> : index === 1 ? <ShieldCheck size={18} /> : <MapPin size={18} />}</span><span className="text-sm font-bold">{item}</span></div>)}
+    <Image src={customer ? '/login_mechanic_3d.png' : '/custom_service_mechanic_3d.png'} alt="Go_Repireo service professional" width={520} height={520} className={`absolute z-[1] object-contain mix-blend-multiply ${customer ? '-bottom-20 right-[-54px] w-[230px] sm:right-5 lg:-bottom-7 lg:right-[-70px] lg:w-[440px]' : '-bottom-16 right-[-45px] w-[220px] sm:right-4 lg:top-0 lg:-right-20 lg:w-[300px]'}`} priority />
+    <div className={`absolute left-12 z-10 hidden space-y-5 lg:block ${customer ? 'bottom-24' : 'top-[315px]'}`}>
+      {(customer ? ['Quick booking', 'Verified accounts', 'Local experts', 'Wide range of services'] : ['Verified & secure', 'Get more customers', 'Grow your business']).map((item, index) => <div key={item} className="flex items-center gap-3"><span className={`flex size-11 items-center justify-center rounded-xl shadow-sm ${index === 2 ? 'bg-blue-100 text-[#0874ef]' : 'bg-white/80 text-[#0874ef]'}`}>{index === 0 ? <Zap size={19} /> : index === 1 ? <ShieldCheck size={19} /> : <MapPin size={19} />}</span><span><strong className="block text-sm capitalize">{item}</strong><small className="text-[10px] text-[#607b99]">{customer ? ['Find trusted service partners', 'Safe and secure platform', 'From your area', 'Home, repair, cleaning and more'][index] : ['Safe and trusted platform', 'Find service requests near you', 'Work on your own terms'][index]}</small></span></div>)}
     </div>
   </aside>;
 }
