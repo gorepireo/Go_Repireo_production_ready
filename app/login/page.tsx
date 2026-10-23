@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useEffect, useRef, useState } from 'react';
 import { ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, CheckCircle2, Headphones, Home, Phone, ShieldCheck, Zap } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
@@ -89,39 +90,48 @@ function LoginContent() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] pb-24 pt-6 md:pt-12">
-      <div className="mx-auto w-full max-w-md md:max-w-lg lg:max-w-xl">
-        <section className="mb-6 px-4">
-          <div className="relative flex min-h-[180px] items-center justify-between overflow-hidden rounded-3xl border border-slate-100/80 bg-white p-4 md:border-none md:bg-transparent md:p-0">
-            <div className="relative z-10 max-w-[58%] pt-2 sm:max-w-[65%]">
-              <div className="mb-4 flex size-12 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)]">
-                <img src="/logo.png" alt="Go_Repireo logo" className="size-8 object-contain" />
-              </div>
-              <h1 className="text-3xl font-black uppercase leading-[0.95] tracking-tight text-[#0A1629] sm:text-4xl md:text-5xl">
-                Welcome<br /><span className="text-[#007AFF]">back.</span>
-              </h1>
-              <p className="mt-3 max-w-[210px] text-[11px] leading-relaxed text-slate-500">
-                Sign in securely with the mobile number connected to your Go_Repireo account.
-              </p>
-            </div>
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-0 flex h-full w-[42%] max-w-[220px] items-center justify-end">
-              <img src="/login_mechanic_3d.png" alt="Go_Repireo mechanic" className="size-full object-contain object-right" />
-            </div>
-          </div>
-        </section>
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f9fcff_0%,#e7f4ff_58%,#f5faff_100%)] p-0 text-[#081832] lg:h-screen lg:overflow-hidden lg:p-4">
+      <div className="relative mx-auto min-h-screen max-w-[1440px] overflow-hidden bg-white/75 shadow-[0_28px_90px_rgba(27,99,172,0.12)] lg:h-full lg:min-h-0 lg:rounded-[28px]">
+        <header className="relative z-30 flex h-[72px] items-center justify-between px-6 sm:px-10 lg:h-[70px] lg:px-16">
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image src="/logo.png" alt="Go_Repireo logo" width={44} height={44} className="size-11 object-contain" priority />
+            <span className="text-base font-black uppercase"><span className="text-[#0874ef]">Go_</span><span className="text-[#ff8a00]">Repireo</span></span>
+          </Link>
+          <Link href="/login" className="flex items-center gap-2 text-xs font-bold text-[#0874ef]"><span className="hidden font-medium text-slate-500 sm:inline">Already registered?</span> Sign in <ArrowRight size={15} /></Link>
+        </header>
 
-        <section className="relative z-20 mb-8 px-4">
-          <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04)] md:p-8">
-            <form onSubmit={confirmation ? verifyCode : requestCode} className="space-y-5">
+        <div className="relative grid lg:h-[calc(100%-70px)] lg:grid-cols-[42%_58%]">
+          <section className="relative z-10 px-6 pb-8 pt-3 sm:px-10 lg:flex lg:flex-col lg:justify-center lg:px-16 lg:pb-32 lg:pt-0">
+            <div className="relative z-10 max-w-[350px]">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#2486ef]">Welcome back</p>
+              <h1 className="mt-3 text-[42px] font-black leading-[0.94] tracking-[-0.045em] sm:text-5xl lg:text-[58px]">Welcome<br /><span className="text-[#0874ef]">Back.</span></h1>
+              <p className="mt-4 max-w-[330px] text-sm font-medium leading-6 text-[#5a7190]">Sign in securely with the mobile number connected to your Go_Repireo account.</p>
+
+              <div className="mt-6 hidden space-y-4 lg:block">
+                {[
+                  { Icon: ShieldCheck, title: 'Secure & Trusted', text: 'Your data is protected', color: 'bg-blue-50 text-[#0874ef]' },
+                  { Icon: Zap, title: 'Fast & Reliable', text: 'Quick and easy access', color: 'bg-orange-50 text-[#ff9900]' },
+                  { Icon: Headphones, title: 'Support', text: 'Help whenever you need', color: 'bg-purple-50 text-purple-500' },
+                ].map(({ Icon, title, text, color }) => <div key={title} className="flex items-center gap-4"><span className={`flex size-11 items-center justify-center rounded-2xl ${color}`}><Icon size={21} /></span><span><strong className="block text-sm">{title}</strong><small className="text-[11px] text-slate-500">{text}</small></span></div>)}
+              </div>
+            </div>
+          </section>
+
+          <div className="pointer-events-none relative order-first h-[245px] overflow-hidden lg:absolute lg:inset-x-[31%] lg:top-0 lg:order-none lg:h-[360px]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#d8efff_0%,transparent_68%)]" />
+            <Image src="/login_mechanic_3d.png" alt="Go_Repireo service professional" width={520} height={520} className="absolute left-1/2 top-0 h-[120%] w-auto -translate-x-1/2 object-contain mix-blend-multiply" priority />
+          </div>
+
+          <section className="relative z-20 px-4 pb-8 sm:px-10 lg:flex lg:flex-col lg:justify-center lg:px-12 lg:pb-20 lg:pt-24">
+            <div className="mx-auto w-full max-w-[610px] rounded-[32px] border border-white bg-white/95 p-6 shadow-[0_22px_60px_rgba(28,91,158,0.13)] backdrop-blur-xl sm:p-8 lg:p-9">
+              <form onSubmit={confirmation ? verifyCode : requestCode} className="space-y-4">
               {!confirmation ? (
                 <div className="space-y-1.5">
-                  <label htmlFor="phone" className="ml-1 text-[8px] font-bold uppercase tracking-widest text-slate-400">Mobile number</label>
-                  <div className="relative flex h-14 items-center rounded-2xl bg-[#F8FAFC] transition-all focus-within:bg-white focus-within:ring-1 focus-within:ring-[#007AFF]/30">
-                    <div className="pointer-events-none absolute left-1.5 flex size-10 items-center justify-center rounded-xl bg-blue-50/80">
-                      <Phone className="size-5 text-[#007AFF]" />
-                    </div>
-                    <span className="absolute left-14 text-sm font-semibold text-slate-500">+91</span>
-                    <input id="phone" value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, '').slice(0, 10))} inputMode="numeric" autoComplete="tel" maxLength={10} className="h-full min-w-0 flex-1 bg-transparent pl-[5.4rem] pr-4 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400" placeholder="Enter mobile number" required />
+                  <label htmlFor="phone" className="ml-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Mobile number</label>
+                  <div className="flex h-14 items-center rounded-2xl border border-[#a9d1ff] bg-[#f8fbff] shadow-[0_7px_18px_rgba(31,133,242,0.08)] transition focus-within:border-[#0874ef] focus-within:ring-2 focus-within:ring-blue-100">
+                    <span className="flex h-full items-center gap-2 border-r border-slate-200 px-4 text-sm font-bold"><span aria-hidden="true">🇮🇳</span> +91</span>
+                    <input id="phone" value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, '').slice(0, 10))} inputMode="numeric" autoComplete="tel" maxLength={10} className="h-full min-w-0 flex-1 bg-transparent px-4 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400" placeholder="Enter mobile number" required />
+                    <span className="mr-2 flex size-10 items-center justify-center rounded-full bg-blue-50 text-[#0874ef]"><Phone size={18} /></span>
                   </div>
                 </div>
               ) : (
@@ -135,7 +145,7 @@ function LoginContent() {
               <div id="phone-recaptcha" className="overflow-hidden rounded-xl" />
               {error && <p role="alert" className="rounded-xl border border-red-100 bg-red-50 p-3 text-[10px] font-bold uppercase tracking-wider text-[#FF3B30]">{error}</p>}
 
-              <button disabled={busy} className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#0A1629] text-[10px] font-bold uppercase tracking-widest text-white transition-colors hover:bg-black active:scale-95 disabled:cursor-not-allowed disabled:opacity-60">
+              <button disabled={busy} className="flex h-14 w-full items-center justify-center gap-3 rounded-full bg-[#081832] text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_25px_rgba(8,24,50,0.14)] transition hover:bg-black active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60">
                 {busy ? 'Please wait…' : confirmation ? 'Verify and continue' : 'Send verification code'} <ArrowRight size={14} />
               </button>
 
@@ -146,36 +156,35 @@ function LoginContent() {
               )}
             </form>
 
-            <div className="my-6 flex items-center gap-4">
+            <div className="my-5 flex items-center gap-4">
               <div className="h-px flex-1 bg-slate-100" />
               <span className="text-[8px] font-bold uppercase tracking-widest text-slate-400">New to Repireo?</span>
               <div className="h-px flex-1 bg-slate-100" />
             </div>
-            <Link href="/register" className="flex h-14 w-full items-center justify-center gap-2 rounded-full border border-slate-100 bg-white text-[10px] font-bold uppercase tracking-widest text-[#0A1629] shadow-[0_5px_15px_-5px_rgba(0,0,0,0.05)] transition-colors hover:bg-slate-50 active:scale-95">
+            <Link href="/register" className="flex h-14 w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white text-[10px] font-black uppercase tracking-[0.1em] text-[#081832] shadow-sm transition hover:bg-slate-50 active:scale-[0.99]">
               Create account
             </Link>
-          </div>
-        </section>
+            </div>
 
-        <section className="mb-8 flex justify-center">
-          <Link href="/" className="flex items-center gap-2 text-[11px] font-bold text-[#007AFF] hover:underline"><Home size={14} /> Return to Home</Link>
-        </section>
+            <Link href="/" className="mx-auto mt-6 flex w-fit items-center gap-2 text-xs font-bold text-[#0874ef] hover:underline"><Home size={15} /> Return to Home</Link>
+          </section>
 
-        <section className="hide-scrollbar mb-10 overflow-x-auto px-4 pb-4">
-          <div className="flex min-w-max justify-between gap-4 md:justify-center">
+          <section className="hide-scrollbar relative z-20 col-span-full overflow-x-auto px-5 pb-7 lg:absolute lg:bottom-5 lg:left-[35%] lg:right-8 lg:px-0 lg:pb-0">
+            <div className="flex min-w-max justify-center gap-3 lg:justify-end">
             {[
               { Icon: ShieldCheck, title: 'Secure & Trusted', text: 'Firebase protected', color: 'bg-blue-50 text-[#007AFF]' },
               { Icon: Zap, title: 'Fast & Reliable', text: 'Quick account access', color: 'bg-orange-50 text-[#FF9500]' },
               { Icon: Headphones, title: 'Support', text: 'Help when needed', color: 'bg-purple-50 text-purple-500' },
-              { Icon: CheckCircle2, title: 'Verified Platform', text: 'Trusted service', color: 'bg-green-50 text-green-500' },
+              { Icon: CheckCircle2, title: 'Verified Platform', text: 'Trusted by thousands', color: 'bg-green-50 text-green-500' },
             ].map(({ Icon, title, text, color }, index) => (
-              <div key={title} className={`flex items-center gap-3 px-2 pr-6 ${index < 3 ? 'border-r border-slate-200' : ''}`}>
+              <div key={title} className={`flex items-center gap-2 px-2 pr-4 ${index < 3 ? 'border-r border-slate-200' : ''}`}>
                 <div className={`flex size-8 items-center justify-center rounded-full ${color}`}><Icon size={16} /></div>
                 <div><h2 className="text-[8px] font-black uppercase tracking-tight text-slate-900">{title}</h2><p className="text-[7px] text-slate-500">{text}</p></div>
               </div>
             ))}
-          </div>
-        </section>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   );
