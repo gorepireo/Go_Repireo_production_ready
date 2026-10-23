@@ -115,9 +115,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f7fbff_0,#deefff_55%,#eef8ff_100%)] p-0 text-[#071631] lg:p-5">
-      <div className="mx-auto min-h-screen max-w-[1480px] overflow-hidden bg-[linear-gradient(135deg,#f8fcff_0%,#e7f4ff_48%,#f8fcff_100%)] shadow-[0_30px_90px_rgba(26,96,170,0.13)] lg:min-h-0 lg:rounded-[28px]">
-        <header className="flex h-[76px] items-center justify-between px-5 sm:px-9 lg:h-[66px] lg:px-16">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f7fbff_0,#deefff_55%,#eef8ff_100%)] p-0 text-[#071631] lg:h-screen lg:min-h-0 lg:p-3">
+      <div className="mx-auto min-h-screen max-w-[1480px] overflow-hidden bg-[linear-gradient(135deg,#f8fcff_0%,#e7f4ff_48%,#f8fcff_100%)] shadow-[0_30px_90px_rgba(26,96,170,0.13)] lg:h-full lg:min-h-0 lg:rounded-[28px]">
+        <header className="flex h-[76px] items-center justify-between px-5 sm:px-9 lg:h-[60px] lg:px-12">
           <Link href="/" className="flex items-center gap-2.5">
             <Image src="/logo.png" alt="Go_Repireo" width={44} height={44} className="size-10 object-contain" priority />
             <span className="text-base font-black uppercase"><span className="text-[#0874ef]">Go_</span><span className="text-[#ff8a00]">Repireo</span></span>
@@ -125,35 +125,35 @@ export default function RegisterPage() {
           <Link href="/login" className="flex items-center gap-2 text-xs font-bold text-[#0874ef]"><span className="hidden font-medium text-slate-500 sm:inline">Already registered?</span> Sign in <ArrowRight size={15} /></Link>
         </header>
 
-        <div className="grid lg:grid-cols-[390px_minmax(0,1fr)] xl:grid-cols-[430px_minmax(0,1fr)]">
+        <div className="grid lg:h-[calc(100%-60px)] lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[410px_minmax(0,1fr)]">
           <HeroPanel accountType={accountType} />
 
-          <section className={`relative bg-white px-5 py-6 sm:px-10 lg:mb-7 lg:mr-7 lg:rounded-[28px] lg:px-8 lg:py-8 lg:shadow-[0_20px_50px_rgba(29,96,168,0.12)] xl:px-14 ${accountType === 'partner' ? 'lg:mt-40' : 'lg:mt-7'}`}>
+          <section className={`relative bg-white px-5 py-6 sm:px-10 lg:mb-4 lg:mr-4 lg:overflow-y-auto lg:rounded-[28px] lg:px-8 lg:py-5 lg:shadow-[0_20px_50px_rgba(29,96,168,0.12)] xl:px-12 ${accountType === 'partner' ? 'lg:mt-16' : 'lg:mt-2'}`}>
             {accountType === 'customer' && <Progress current={step} accountType={accountType} />}
 
-            <form onSubmit={step === 1 ? sendCode : finishRegistration} className={`mx-auto max-w-4xl ${accountType === 'customer' ? 'mt-7' : ''}`}>
+            <form onSubmit={step === 1 ? sendCode : finishRegistration} className={`mx-auto max-w-4xl ${accountType === 'customer' ? 'mt-4' : ''}`}>
               {step === 1 ? <>
                 <div className="hidden lg:block">
                   <h1 className="text-2xl font-black tracking-tight">Create Your Account</h1>
-                  <p className="mt-1 text-sm text-slate-500">Get started by choosing how you want to use Go_Repireo.</p>
+                  <p className="mt-0.5 text-sm text-slate-500">Get started by choosing how you want to use Go_Repireo.</p>
                 </div>
 
                 <AccountChoices accountType={accountType} onChoose={chooseAccountType} />
 
-                <div className="mt-7">
+                <div className="mt-4">
                   <h2 className="text-lg font-black">Your Information</h2>
                 </div>
 
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <Field label="Full Name" value={form.displayName} onChange={(value) => update('displayName', value)} placeholder="Your full name" icon={<UserRound size={18} />} required />
                   <Field label="Email Address" value={form.email} onChange={(value) => update('email', value)} placeholder="name@example.com" icon={<Mail size={18} />} type="email" required />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-3">
                   <PhoneField value={form.phone} onChange={(value) => update('phone', value)} />
                 </div>
 
-                {accountType === 'customer' && <div className="mt-4 flex items-center gap-3 rounded-xl bg-blue-50 px-4 py-3 text-xs font-medium text-[#0755ad]"><ShieldCheck size={18} className="shrink-0 text-[#0874ef]" />We will send a verification code to your mobile number.</div>}
+                {accountType === 'customer' && <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-50 px-4 py-2.5 text-xs font-medium text-[#0755ad]"><ShieldCheck size={18} className="shrink-0 text-[#0874ef]" />We will send a verification code to your mobile number.</div>}
 
                 {accountType === 'partner' && <PartnerFields form={form} update={update} services={services} setServices={setServices} />}
 
@@ -162,13 +162,13 @@ export default function RegisterPage() {
 
               {error && <p role="alert" className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3 text-xs font-semibold text-red-600">{error}</p>}
 
-              <button disabled={busy} className="mt-5 flex h-14 w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#075bd8] to-[#0788ff] text-sm font-extrabold text-white shadow-[0_12px_24px_rgba(0,116,255,0.23)] transition hover:brightness-105 disabled:opacity-60">
+              <button disabled={busy} className="mt-4 flex h-12 w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#075bd8] to-[#0788ff] text-sm font-extrabold text-white shadow-[0_12px_24px_rgba(0,116,255,0.23)] transition hover:brightness-105 disabled:opacity-60">
                 {busy ? 'Please wait…' : step === 2 ? 'Verify and Create Account' : accountType === 'customer' ? 'Create Customer Account' : 'Submit Partner Application'} <ArrowRight size={18} />
               </button>
 
               {step === 2 && <button type="button" onClick={() => { setStep(1); setConfirmation(null); update('code', ''); verifier.current?.clear(); verifier.current = null; }} className="mt-4 w-full text-center text-xs font-bold text-[#0874ef]">Change account details</button>}
 
-              <div className="mt-5 flex flex-col items-center gap-1 text-center text-[11px] text-slate-500">
+              <div className="mt-3 flex flex-col items-center gap-0.5 text-center text-[10px] text-slate-500">
                 <p className="flex items-center gap-2"><LockKeyhole size={13} />Your information is secure and verified through Firebase.</p>
                 <p>By continuing, you agree to our <Link href="/terms" className="font-semibold text-[#0874ef] underline">Terms</Link> &amp; <Link href="/privacy" className="font-semibold text-[#0874ef] underline">Privacy Policy</Link>.</p>
               </div>
@@ -182,18 +182,15 @@ export default function RegisterPage() {
 
 function HeroPanel({ accountType }: { accountType: AccountType }) {
   const customer = accountType === 'customer';
-  return <aside className="relative min-h-[205px] overflow-hidden bg-[linear-gradient(145deg,#f7fbff_0%,#dbeeff_58%,#eef8ff_100%)] px-5 py-6 text-[#071631] sm:px-9 lg:min-h-[850px] lg:px-12 lg:py-14">
+  return <aside className="relative min-h-[205px] overflow-hidden bg-[linear-gradient(145deg,#f7fbff_0%,#dbeeff_58%,#eef8ff_100%)] px-5 py-6 text-[#071631] sm:px-9 lg:h-full lg:min-h-0 lg:px-10 lg:py-8">
     <div className="absolute inset-0 opacity-70 [background-image:radial-gradient(circle_at_88%_13%,white_0,white_8%,transparent_9%),radial-gradient(circle_at_12%_80%,#cbe7ff_0,transparent_36%)]" />
     <div className="absolute -bottom-24 -left-20 size-72 rounded-full bg-white/70" />
     <div className="relative z-10 max-w-[270px] lg:max-w-none">
       <span className="inline-flex rounded-full bg-[#e2f0ff] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.22em] text-[#086de0]">{customer ? 'Customer account' : 'Service partner application'}</span>
-      <h2 className="mt-3 text-[32px] font-black leading-[0.98] tracking-tight lg:mt-5 lg:text-[46px]">{customer ? <>Book a<br />service <span className="text-[#0874ef]">faster.</span></> : <>Grow your<br /><span className="text-[#0874ef]">work</span> with us.</>}</h2>
+      <h2 className="mt-3 text-[32px] font-black leading-[0.98] tracking-tight lg:mt-4 lg:text-[42px]">{customer ? <>Book a<br />service <span className="text-[#0874ef]">faster.</span></> : <>Grow your<br /><span className="text-[#0874ef]">work</span> with us.</>}</h2>
       <p className="mt-3 max-w-[290px] text-xs font-medium leading-5 text-[#496686] lg:mt-5 lg:text-sm lg:leading-6">{customer ? 'Create a simple account with your name and verified mobile number.' : 'Tell us about your skills and service area. Partner applications are reviewed before activation.'}</p>
     </div>
-    <Image src={customer ? '/login_mechanic_3d.png' : '/custom_service_mechanic_3d.png'} alt="Go_Repireo service professional" width={520} height={520} className={`absolute z-[1] object-contain mix-blend-multiply ${customer ? '-bottom-20 right-[-54px] w-[230px] sm:right-5 lg:-bottom-7 lg:right-[-70px] lg:w-[440px]' : '-bottom-16 right-[-45px] w-[220px] sm:right-4 lg:top-0 lg:-right-20 lg:w-[300px]'}`} priority />
-    <div className={`absolute left-12 z-10 hidden space-y-5 lg:block ${customer ? 'bottom-24' : 'top-[315px]'}`}>
-      {(customer ? ['Quick booking', 'Verified accounts', 'Local experts', 'Wide range of services'] : ['Verified & secure', 'Get more customers', 'Grow your business']).map((item, index) => <div key={item} className="flex items-center gap-3"><span className={`flex size-11 items-center justify-center rounded-xl shadow-sm ${index === 2 ? 'bg-blue-100 text-[#0874ef]' : 'bg-white/80 text-[#0874ef]'}`}>{index === 0 ? <Zap size={19} /> : index === 1 ? <ShieldCheck size={19} /> : <MapPin size={19} />}</span><span><strong className="block text-sm capitalize">{item}</strong><small className="text-[10px] text-[#607b99]">{customer ? ['Find trusted service partners', 'Safe and secure platform', 'From your area', 'Home, repair, cleaning and more'][index] : ['Safe and trusted platform', 'Find service requests near you', 'Work on your own terms'][index]}</small></span></div>)}
-    </div>
+    <Image src={customer ? '/login_mechanic_3d.png' : '/custom_service_mechanic_3d.png'} alt="Go_Repireo service professional" width={520} height={520} className={`absolute z-[1] object-contain mix-blend-multiply ${customer ? '-bottom-20 right-[-54px] w-[230px] sm:right-5 lg:-bottom-12 lg:left-1/2 lg:w-[390px] lg:-translate-x-1/2' : '-bottom-16 right-[-45px] w-[220px] sm:right-4 lg:top-0 lg:-right-16 lg:w-[280px]'}`} priority />
   </aside>;
 }
 
