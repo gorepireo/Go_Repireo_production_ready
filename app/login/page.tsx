@@ -63,11 +63,19 @@ function LoginContent() {
     setError('');
     try {
       const credential = await confirmation.confirm(code);
-      const token = await credential.user.getIdTokenResult(true);
-      const role = token.claims.admin === true ? 'admin' : token.claims.role;
-      if (!['customer', 'worker', 'admin'].includes(String(role))) {
+      const idToken = await credential.user.getIdToken(true);
+      const sessionResponse = await fetch('/api/auth/session', {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const session = await sessionResponse.json();
+      if (!sessionResponse.ok || !['customer', 'worker', 'admin'].includes(String(session.user?.role))) {
         await auth.signOut();
-        throw new Error('This account has no trusted GO_REPIREO role. Contact support.');
+        throw new Error(session.error || 'This account is not registered. Create an account first.');
+      }
+      const { role, accountStatus } = session.user;
+      if (accountStatus === 'pending') {
+        await auth.signOut();
+        throw new Error('Your service partner application is awaiting administrator approval.');
       }
       await refresh();
       const requested = search.get('next');
