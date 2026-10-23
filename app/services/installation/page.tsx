@@ -44,7 +44,7 @@ export default function InstallationFlow() {
 
       // 2. Initialize Razorpay Checkout
       const options = {
-        key: 'rzp_live_TNcvyWzcZlRsQY',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: (total + 1500) * 100,
         currency: 'INR',
         name: 'Go_Repireo',

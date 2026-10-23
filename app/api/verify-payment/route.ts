@@ -3,7 +3,10 @@ import crypto from 'crypto';
 
 export async function POST(req: Request) {
   try {
-    const keySecret = 'gZ2BdLNOKFyumV4ezxND2V3W';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keySecret) {
+      return NextResponse.json({ success: false, error: 'Payment service is not configured.' }, { status: 503 });
+    }
 
     const body = await req.json();
     const orderId = body.razorpay_order_id || body.order_id;

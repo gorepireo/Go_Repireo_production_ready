@@ -23,7 +23,7 @@ export default function VerifyCertificatePage() {
       </header>
 
       <div className="relative mx-auto max-w-3xl px-6 pb-16 pt-6 sm:pt-10">
-        <Link href="/maintenance" className="mb-10 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950"><ArrowLeft size={16} /> Back</Link>
+        <Link href="/" className="mb-10 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-950"><ArrowLeft size={16} /> Back</Link>
         <section className="max-w-xl rounded-[2rem] border border-white/80 bg-white/60 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.07)] backdrop-blur-2xl sm:p-10">
           <div className="mb-8">
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">Official registry</p>

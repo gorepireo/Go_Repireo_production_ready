@@ -248,7 +248,7 @@ function TrackContent() {
       if (!res.ok) throw new Error(orderResData.error || 'Failed to create Razorpay payment order');
 
       const options = {
-        key: 'rzp_live_TNcvyWzcZlRsQY',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: Math.round(amountToPay * 100),
         currency: 'INR',
         name: 'Go_Repireo',

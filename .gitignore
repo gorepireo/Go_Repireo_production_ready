@@ -1,5 +1,6 @@
 # next.js
 /.next/
+/.open-next/
 /out/
 
 # production
@@ -16,6 +17,11 @@
 
 # logs
 *.log
+
+# local libSQL/Turso databases
+*.db
+*.db-shm
+*.db-wal
 
 # temporary helper scripts
 scripts/setup-brevo-templates.js

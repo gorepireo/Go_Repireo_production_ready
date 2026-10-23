@@ -3,8 +3,11 @@ import Razorpay from 'razorpay';
 
 export async function POST(req: Request) {
   try {
-    const keyId = 'rzp_live_TNcvyWzcZlRsQY';
-    const keySecret = 'gZ2BdLNOKFyumV4ezxND2V3W';
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) {
+      return NextResponse.json({ error: 'Payment service is not configured.' }, { status: 503 });
+    }
 
     const razorpay = new Razorpay({
       key_id: keyId,
