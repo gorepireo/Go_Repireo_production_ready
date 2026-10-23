@@ -133,12 +133,14 @@ export default function RegisterPage() {
 
             <form onSubmit={step === 1 ? sendCode : finishRegistration} className={`mx-auto max-w-4xl ${accountType === 'customer' ? 'mt-4' : ''}`}>
               {step === 1 ? <>
-                <div className={`hidden lg:block ${accountType === 'partner' ? 'lg:hidden' : ''}`}>
-                  <h1 className="text-2xl font-black tracking-tight">Create Your Account</h1>
-                  <p className="mt-0.5 text-sm text-slate-500">Get started by choosing how you want to use Go_Repireo.</p>
-                </div>
+                <div className={accountType === 'partner' ? 'lg:grid lg:grid-cols-[245px_minmax(0,1fr)] lg:items-center lg:gap-4' : ''}>
+                  <div className="hidden lg:block">
+                    <h1 className={`font-black tracking-tight ${accountType === 'partner' ? 'text-xl' : 'text-2xl'}`}>Create Your Account</h1>
+                    <p className={`mt-0.5 text-slate-500 ${accountType === 'partner' ? 'text-xs leading-5' : 'text-sm'}`}>Get started by choosing how you want to use Go_Repireo.</p>
+                  </div>
 
-                <AccountChoices accountType={accountType} onChoose={chooseAccountType} compact={accountType === 'partner'} />
+                  <AccountChoices accountType={accountType} onChoose={chooseAccountType} compact={accountType === 'partner'} />
+                </div>
 
                 <div className={accountType === 'partner' ? 'mt-3 lg:mt-2' : 'mt-4'}>
                   <h2 className="text-lg font-black">Your Information</h2>
