@@ -14,6 +14,16 @@ function normalizeIndianPhone(value: string) {
   return `+91${digits}`;
 }
 
+function loginErrorMessage(cause: unknown) {
+  const message = cause instanceof Error ? cause.message : '';
+  if (message.includes('auth/invalid-api-key')) return 'Login configuration is unavailable. Please contact support.';
+  if (message.includes('auth/unauthorized-domain')) return 'This website domain is not authorized for login yet.';
+  if (message.includes('auth/operation-not-allowed')) return 'Phone login has not been enabled yet.';
+  if (message.includes('auth/too-many-requests')) return 'Too many attempts. Please wait and try again.';
+  if (message.includes('auth/invalid-phone-number')) return 'Enter a valid 10-digit Indian mobile number.';
+  return message || 'Unable to send the verification code.';
+}
+
 function LoginContent() {
   const router = useRouter();
   const search = useSearchParams();
@@ -37,7 +47,7 @@ function LoginContent() {
     } catch (cause) {
       verifier.current?.clear();
       verifier.current = null;
-      setError(cause instanceof Error ? cause.message : 'Unable to send the verification code.');
+      setError(loginErrorMessage(cause));
     } finally {
       setBusy(false);
     }
@@ -64,7 +74,7 @@ function LoginContent() {
       const safeNext = requested?.startsWith('/') && !requested.startsWith('//') ? requested : null;
       router.replace(safeNext || (role === 'admin' ? '/admin' : role === 'worker' ? '/dashboard/worker' : '/dashboard/user'));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'The verification code is invalid or expired.');
+      setError(loginErrorMessage(cause) || 'The verification code is invalid or expired.');
     } finally {
       setBusy(false);
     }

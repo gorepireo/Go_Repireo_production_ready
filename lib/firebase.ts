@@ -5,14 +5,16 @@ import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
 import { getMessaging, isSupported } from "firebase/messaging";
 
+// Firebase's web configuration identifies the public client application; it
+// is not an Admin credential. Environment values can override these defaults.
 const configuredFirebase = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyA91bP6QxfxDKSMiVK3aOB0F5taGSUlaXg',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'gorepireo-8c017.firebaseapp.com',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'gorepireo-8c017',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'gorepireo-8c017.firebasestorage.app',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '792651382902',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:792651382902:web:4ba484ae9113556b9b1f57',
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || 'G-ES1B0HQ951'
 };
 
 export const firebaseConfigured = Boolean(
@@ -22,18 +24,7 @@ export const firebaseConfigured = Boolean(
   configuredFirebase.appId
 );
 
-// Firebase Auth validates configuration during module evaluation. A complete,
-// inert placeholder keeps maintenance/public pages buildable when deployment
-// variables are intentionally absent; AuthContext never starts Firebase in
-// this state.
-const firebaseConfig = firebaseConfigured ? configuredFirebase : {
-  apiKey: `AIza${'0'.repeat(35)}`,
-  authDomain: 'unconfigured.invalid',
-  projectId: 'unconfigured',
-  storageBucket: 'unconfigured.invalid',
-  messagingSenderId: '000000000000',
-  appId: '1:000000000000:web:0000000000000000000000',
-};
+const firebaseConfig = configuredFirebase;
 
 // Initialize Firebase App safely for SSR
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
