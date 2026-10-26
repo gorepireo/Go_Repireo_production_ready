@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { createHmac, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 import { getFirebaseAdminAuth } from './firebase-admin';
 import { getTurso } from './turso';
 
@@ -22,8 +21,34 @@ export function normalizeIndianPhone(value: unknown) {
   return `+91${digits}`;
 }
 
-function otpHash(challengeId: string, phone: string, otp: string) {
-  return createHmac('sha256', otpSecret()).update(`${challengeId}:${phone}:${otp}`).digest('hex');
+function bytesToHex(bytes: Uint8Array) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function secureSixDigitOtp() {
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  return String(100000 + (values[0] % 900000));
+}
+
+async function otpHash(challengeId: string, phone: string, otp: string) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(otpSecret()),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(`${challengeId}:${phone}:${otp}`));
+  return bytesToHex(new Uint8Array(signature));
+}
+
+function constantTimeEqual(left: string, right: string) {
+  if (left.length !== right.length) return false;
+  let mismatch = 0;
+  for (let index = 0; index < left.length; index += 1) mismatch |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  return mismatch === 0;
 }
 
 async function ensureOtpTable() {
@@ -73,13 +98,13 @@ export async function issuePhoneOtp(phoneInput: unknown, purpose: OtpPurpose) {
     throw new Error('Too many verification codes requested. Please wait ten minutes.');
   }
 
-  const challengeId = randomUUID();
-  const otp = String(randomInt(100000, 1000000));
+  const challengeId = crypto.randomUUID();
+  const otp = secureSixDigitOtp();
   const expiresAt = new Date(Date.now() + OTP_LIFETIME_MS).toISOString();
   await sendRenflairOtp(phone, otp);
   await getTurso().execute({
     sql: 'INSERT INTO auth_otps (id, phone, purpose, otp_hash, expires_at) VALUES (?, ?, ?, ?, ?)',
-    args: [challengeId, phone, purpose, otpHash(challengeId, phone, otp), expiresAt],
+    args: [challengeId, phone, purpose, await otpHash(challengeId, phone, otp), expiresAt],
   });
   return { challengeId, phone, expiresAt };
 }
@@ -98,9 +123,9 @@ export async function verifyPhoneOtp(challengeId: unknown, phoneInput: unknown, 
   if (Number(row.attempts) >= MAX_ATTEMPTS) throw new Error('Too many incorrect attempts. Request a new code.');
   if (Date.parse(String(row.expires_at)) < Date.now()) throw new Error('The verification code has expired. Request a new code.');
 
-  const expected = Buffer.from(String(row.otp_hash), 'hex');
-  const actual = Buffer.from(otpHash(challengeId, phone, code), 'hex');
-  if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
+  const expected = String(row.otp_hash);
+  const actual = await otpHash(challengeId, phone, code);
+  if (!constantTimeEqual(expected, actual)) {
     await getTurso().execute({ sql: 'UPDATE auth_otps SET attempts = attempts + 1 WHERE id = ?', args: [challengeId] });
     throw new Error('The verification code is incorrect.');
   }

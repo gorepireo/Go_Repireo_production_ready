@@ -32,6 +32,23 @@ function friendlyError(cause: unknown) {
   return message || 'Registration could not be completed.';
 }
 
+interface ApiPayload {
+  error?: string;
+  challengeId?: string;
+  customToken?: string;
+  [key: string]: unknown;
+}
+
+async function responseJson(response: Response): Promise<ApiPayload> {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as ApiPayload;
+  } catch {
+    return {};
+  }
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [accountType, setAccountType] = useState<AccountType>('customer');
@@ -69,9 +86,9 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: `+91${form.phone}`, purpose: 'register' }),
       });
-      const result = await response.json();
+      const result = await responseJson(response);
       if (!response.ok) throw new Error(result.error || 'Unable to send the verification code.');
-      setChallengeId(result.challengeId);
+      setChallengeId(result.challengeId || '');
       setStep(2);
     } catch (cause) {
       setError(friendlyError(cause));
@@ -91,7 +108,7 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ challengeId, phone: `+91${form.phone}`, code: form.code, purpose: 'register' }),
       });
-      const verification = await verifyResponse.json();
+      const verification = await responseJson(verifyResponse);
       if (!verifyResponse.ok || !verification.customToken) throw new Error(verification.error || 'The verification code is invalid or expired.');
       const credential = await signInWithCustomToken(auth, verification.customToken);
       const idToken = await credential.user.getIdToken(true);
@@ -111,7 +128,7 @@ export default function RegisterPage() {
           serviceCategories: accountType === 'partner' ? services : [],
         }),
       });
-      const result = await response.json();
+      const result = await responseJson(response);
       if (!response.ok) throw new Error(result.error || 'Account registration failed.');
       await auth.signOut();
       router.replace(`/login?registered=${accountType}`);

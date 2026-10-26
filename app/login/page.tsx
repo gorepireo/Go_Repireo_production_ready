@@ -25,6 +25,24 @@ function loginErrorMessage(cause: unknown) {
   return message || 'Unable to send the verification code.';
 }
 
+interface ApiPayload {
+  error?: string;
+  challengeId?: string;
+  customToken?: string;
+  user?: { role?: string; accountStatus?: string };
+  [key: string]: unknown;
+}
+
+async function responseJson(response: Response): Promise<ApiPayload> {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as ApiPayload;
+  } catch {
+    return {};
+  }
+}
+
 function LoginContent() {
   const router = useRouter();
   const search = useSearchParams();
@@ -45,9 +63,9 @@ function LoginContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: normalizeIndianPhone(phone), purpose: 'login' }),
       });
-      const result = await response.json();
+      const result = await responseJson(response);
       if (!response.ok) throw new Error(result.error || 'Unable to send the verification code.');
-      setChallengeId(result.challengeId);
+      setChallengeId(result.challengeId || '');
     } catch (cause) {
       setError(loginErrorMessage(cause));
     } finally {
@@ -69,19 +87,19 @@ function LoginContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ challengeId, phone: normalizeIndianPhone(phone), code, purpose: 'login' }),
       });
-      const verification = await verifyResponse.json();
+      const verification = await responseJson(verifyResponse);
       if (!verifyResponse.ok || !verification.customToken) throw new Error(verification.error || 'The verification code is invalid or expired.');
       const credential = await signInWithCustomToken(auth, verification.customToken);
       const idToken = await credential.user.getIdToken(true);
       const sessionResponse = await fetch('/api/auth/session', {
         headers: { Authorization: `Bearer ${idToken}` },
       });
-      const session = await sessionResponse.json();
+      const session = await responseJson(sessionResponse);
       if (!sessionResponse.ok || !['customer', 'worker', 'admin'].includes(String(session.user?.role))) {
         await auth.signOut();
         throw new Error(session.error || 'This account is not registered. Create an account first.');
       }
-      const { role, accountStatus } = session.user;
+      const { role, accountStatus } = session.user || {};
       if (accountStatus === 'pending') {
         await auth.signOut();
         throw new Error('Your service partner application is awaiting administrator approval.');
