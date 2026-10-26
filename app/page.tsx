@@ -132,70 +132,17 @@ export default function Home() {
       {/* Main Content Area Container for Desktop & Mobile */}
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4 pb-8">
         
-        {/* 2. Royal Blue Hero Banner */}
+        {/* 2. Hero Banner */}
         <section className="w-full">
-          <div className="relative w-full aspect-[4/2] bg-gradient-to-r from-[#002B66] via-[#0B3C85] to-[#062557] rounded-[20px] sm:rounded-[28px] p-3.5 sm:p-6 md:p-8 lg:p-12 overflow-hidden text-white flex items-center shadow-md">
-            
-            <div className="relative z-10 space-y-1 sm:space-y-2 md:space-y-3 lg:space-y-4 max-w-[62%] sm:max-w-[56%]">
-              <div className="inline-block border border-[#FFC700] text-[#FFC700] bg-black/20 font-black text-[7px] sm:text-[9px] md:text-[11px] px-2 sm:px-3 py-0.5 rounded-full uppercase tracking-wider">
-                TRUSTED EXPERTS
-              </div>
-
-              <h1 className="text-[11px] xs:text-xs sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight uppercase">
-                <span className="text-[#FFC700]">EXPERT REPAIRS,</span><br />
-                <span className="text-white">HOME SERVICES IN ETAWAH.</span>
-              </h1>
-
-              <div className="text-[7px] xs:text-[8px] sm:text-xs md:text-sm text-blue-100/90 font-medium leading-tight space-y-0.5">
-                <p>Verified Professionals • On-Time Service</p>
-                <p className="hidden xs:block">Upfront Pricing • 100% Satisfaction</p>
-              </div>
-
-              <div className="pt-0.5 sm:pt-1">
-                <Link 
-                  href="/services" 
-                  className="inline-flex items-center gap-1 sm:gap-2 bg-white hover:bg-slate-100 text-[#0B3C85] font-extrabold text-[8.5px] xs:text-[10px] sm:text-xs md:text-sm px-2.5 py-1 sm:px-5 sm:py-2 md:px-6 md:py-2.5 rounded-full transition-all active:scale-95 shadow-md"
-                >
-                  <span>Book a Service</span>
-                  <ArrowRight size={11} className="text-[#0B3C85] sm:w-[13px] sm:h-[13px]" />
-                </Link>
-              </div>
-
-              <div className="flex items-center gap-1 sm:gap-1.5 pt-0.5 flex-wrap">
-                <div className="flex -space-x-1 sm:-space-x-1.5">
-                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border border-white object-cover" />
-                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border border-white object-cover" />
-                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border border-white object-cover" />
-                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border border-white object-cover" />
-                </div>
-                <span className="text-[7.5px] xs:text-[8.5px] sm:text-[10px] md:text-xs font-bold text-white tracking-tight">10K+ Happy Customers</span>
-              </div>
+          <Link href="/services" className="block group focus:outline-none">
+            <div className="relative w-full aspect-[4/2] rounded-[20px] sm:rounded-[28px] overflow-hidden shadow-md bg-slate-900">
+              <img
+                src="/hero_plumbing_banner.jpg"
+                alt="Expert Plumbing Solutions At Your Home"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
+              />
             </div>
-
-            {/* Banner Right Image */}
-            <div className="absolute right-0 bottom-0 w-[44%] sm:w-[46%] md:w-[48%] h-full pointer-events-none flex items-end justify-end">
-              <img src="/hero_technician_banner.png" alt="Technician" className="w-full h-full object-cover object-bottom rounded-r-[20px] sm:rounded-r-[28px]" />
-            </div>
-
-            {/* Right Badges */}
-            <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20 flex items-center gap-1 sm:gap-1.5 bg-white/95 backdrop-blur-md px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border border-white text-slate-900 shadow-sm">
-              <Headphones size={11} className="text-[#007AFF] sm:w-[15px] sm:h-[15px]" />
-              <div className="text-left">
-                <span className="text-[8.5px] sm:text-xs font-black text-[#007AFF] block leading-tight">24/7</span>
-                <span className="text-[6.5px] sm:text-[8px] text-slate-500 font-bold block leading-tight">Support</span>
-              </div>
-            </div>
-
-            <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-20 hidden xs:block bg-white/95 backdrop-blur-md p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl border border-white text-slate-900 min-w-[65px] sm:min-w-[100px] shadow-sm">
-              <div className="text-[10px] sm:text-sm font-black text-slate-900 leading-tight">4.8</div>
-              <div className="flex text-amber-400 my-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={8} className="fill-current sm:w-[10px] sm:h-[10px]" />
-                ))}
-              </div>
-              <p className="text-[6.5px] sm:text-[8px] text-slate-400 font-semibold">(2.3k reviews)</p>
-            </div>
-          </div>
+          </Link>
         </section>
 
         {/* 3. Category Icons Grid */}
