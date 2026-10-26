@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { getFirebaseAdminAuth } from './firebase-admin';
 import { getTurso } from './turso';
 
 export type OtpPurpose = 'login' | 'register';
@@ -135,6 +134,7 @@ export async function verifyPhoneOtp(challengeId: unknown, phoneInput: unknown, 
   });
   if (consumed.rowsAffected !== 1) throw new Error('The verification code was already used.');
 
+  const { getFirebaseAdminAuth } = await import('./firebase-admin');
   const adminAuth = getFirebaseAdminAuth();
   let firebaseUser;
   try {
