@@ -53,11 +53,38 @@ const popularServices = [
   { name: 'House Cleaning', rating: '4.6', reviews: '1.6k', price: 'Starts at ₹249', image: '/home-cleaning.png' },
 ];
 
+const heroBanners = [
+  {
+    src: '/hero_banner_welcome.png',
+    alt: 'Welcome to Go_Repireo - Trusted Home Services',
+    link: '/services',
+  },
+  {
+    src: '/hero_banner_electrical.png',
+    alt: 'Expert Electrical Services in Etawah',
+    link: '/services',
+  },
+  {
+    src: '/hero_banner_plumbing.jpg',
+    alt: 'Expert Plumbing Solutions At Your Home',
+    link: '/services',
+  },
+];
+
 export default function Home() {
   const { user, profile } = useAuth();
+  const [currentBanner, setCurrentBanner] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [realBookings, setRealBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
+
+  // Auto-rotate hero banners every 2 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % heroBanners.length);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     async function fetchUserBookings() {
@@ -132,15 +159,38 @@ export default function Home() {
       {/* Main Content Area Container for Desktop & Mobile */}
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4 pb-8">
         
-        {/* 2. Hero Banner */}
+        {/* 2. Hero Banner Carousel (4:2 Aspect Ratio, 2-sec Rotation) */}
         <section className="w-full">
-          <Link href="/services" className="block group focus:outline-none">
+          <Link href={heroBanners[currentBanner].link} className="block group focus:outline-none">
             <div className="relative w-full aspect-[4/2] rounded-[20px] sm:rounded-[28px] overflow-hidden shadow-md bg-slate-900">
-              <img
-                src="/hero_plumbing_banner.jpg"
-                alt="Expert Plumbing Solutions At Your Home"
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
-              />
+              {heroBanners.map((banner, idx) => (
+                <img
+                  key={banner.src}
+                  src={banner.src}
+                  alt={banner.alt}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${
+                    idx === currentBanner ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                  }`}
+                />
+              ))}
+
+              {/* Carousel indicator dots */}
+              <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                {heroBanners.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentBanner(idx);
+                    }}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      idx === currentBanner ? 'w-5 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/80'
+                    }`}
+                    aria-label={`Go to banner slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
             </div>
           </Link>
         </section>
