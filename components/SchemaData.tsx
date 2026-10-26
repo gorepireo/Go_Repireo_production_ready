@@ -13,6 +13,8 @@ interface SchemaDataProps {
   city?: string;
   minPrice?: number;
   maxPrice?: number;
+  ratingValue?: number;
+  reviewCount?: number;
   faqs?: FAQItem[];
 }
 
@@ -21,15 +23,18 @@ export default function SchemaData({
   description,
   url,
   category = 'Home Services',
-  city = 'India',
+  city = 'Etawah',
   minPrice = 199,
   maxPrice = 2499,
+  ratingValue = 4.8,
+  reviewCount = 2450,
   faqs = []
 }: SchemaDataProps) {
 
   const serviceSchema = {
     '@context': 'https://schema.org',
     '@type': 'Service',
+    '@id': `${url}#service`,
     'name': title,
     'serviceType': category,
     'provider': {
@@ -37,23 +42,63 @@ export default function SchemaData({
       '@id': 'https://gorepireo.in/#localbusiness',
       'name': 'Go_Repireo',
       'url': 'https://gorepireo.in',
-      'telephone': '+91-8679245568'
+      'telephone': '+91-8679245568',
+      'image': 'https://gorepireo.in/icon.png',
+      'priceRange': '₹99 - ₹4999',
+      'address': {
+        '@type': 'PostalAddress',
+        'addressLocality': city,
+        'addressRegion': 'Uttar Pradesh',
+        'addressCountry': 'IN'
+      }
     },
     'areaServed': {
       '@type': 'City',
-      'name': city
+      'name': city,
+      'addressRegion': 'Uttar Pradesh',
+      'addressCountry': 'IN'
     },
     'description': description,
+    'aggregateRating': {
+      '@type': 'AggregateRating',
+      'ratingValue': ratingValue.toFixed(1),
+      'reviewCount': String(reviewCount),
+      'bestRating': '5',
+      'worstRating': '1'
+    },
     'offers': {
-      '@type': 'Offer',
+      '@type': 'AggregateOffer',
       'url': url,
-      'priceSpecification': {
-        '@type': 'PriceSpecification',
-        'minPrice': minPrice,
-        'maxPrice': maxPrice,
-        'priceCurrency': 'INR'
-      }
+      'priceCurrency': 'INR',
+      'lowPrice': minPrice,
+      'highPrice': maxPrice,
+      'offerCount': '12'
     }
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {
+        '@type': 'ListItem',
+        'position': 1,
+        'name': 'Home',
+        'item': 'https://gorepireo.in'
+      },
+      {
+        '@type': 'ListItem',
+        'position': 2,
+        'name': 'Services',
+        'item': 'https://gorepireo.in/services'
+      },
+      {
+        '@type': 'ListItem',
+        'position': 3,
+        'name': title,
+        'item': url
+      }
+    ]
   };
 
   const faqSchema = faqs.length > 0 ? {
@@ -74,6 +119,10 @@ export default function SchemaData({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       {faqSchema && (
         <script

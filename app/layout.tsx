@@ -13,10 +13,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://gorepireo.in"),
   title: {
-    default: "Home Repair Services in Etawah | Go_Repireo",
+    default: "Go_Repireo: Trusted Home Services, Electricians, Plumbers, AC & Appliance Repair in Etawah",
     template: "%s | Go_Repireo"
   },
-  description: "Book plumbers, electricians, AC technicians and appliance repair professionals in Etawah. Get transparent pricing, doorstep service and live tracking.",
+  description: "Etawah's #1 on-demand home services platform. Book verified plumbers, electricians, AC technicians, appliance repair and cleaning experts with live technician tracking, upfront pricing and 30-day warranty.",
   keywords: [
     "Go Repireo", "Go_Repireo", "GoRepireo", "Repireo", "GoRepireo.in",
     "Go-Repireo", "go repireo", "go_repireo", "gorepireo",
@@ -143,11 +143,19 @@ export default function RootLayout({
               '@type': 'WebSite',
               '@id': 'https://gorepireo.in/#website',
               'name': 'Go_Repireo',
-              'alternateName': ['GoRepireo', 'Go Repireo', 'Repireo'],
+              'alternateName': ['GoRepireo', 'Go Repireo', 'Repireo', 'Go-Repireo'],
               'url': 'https://gorepireo.in',
               'description': 'Book verified home services - plumber, electrician, AC repair, appliance repair, cleaning in Etawah',
               'publisher': {
                 '@id': 'https://gorepireo.in/#organization'
+              },
+              'potentialAction': {
+                '@type': 'SearchAction',
+                'target': {
+                  '@type': 'EntryPoint',
+                  'urlTemplate': 'https://gorepireo.in/services?q={search_term_string}'
+                },
+                'query-input': 'required name=search_term_string'
               },
               'inLanguage': ['en-IN', 'hi-IN']
             })
@@ -193,6 +201,13 @@ export default function RootLayout({
                 '@type': 'City',
                 'name': 'Etawah'
               },
+              'aggregateRating': {
+                '@type': 'AggregateRating',
+                'ratingValue': '4.8',
+                'reviewCount': '2450',
+                'bestRating': '5',
+                'worstRating': '1'
+              },
               'hasOfferCatalog': {
                 '@type': 'OfferCatalog',
                 'name': 'Go_Repireo Home Services',
@@ -205,6 +220,107 @@ export default function RootLayout({
                   { '@type': 'Offer', 'itemOffered': { '@type': 'Service', 'name': 'Carpentry & Painting' } }
                 ]
               }
+            })
+          }}
+        />
+        {/* SiteNavigationElement Schema for Urban Company style Sitelinks */}
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'SiteNavigationElement',
+                  'name': 'AC Service & Repair',
+                  'url': 'https://gorepireo.in/near-me/ac-service-near-me',
+                  'description': 'Doorstep AC repair, gas filling & filter cleaning'
+                },
+                {
+                  '@type': 'SiteNavigationElement',
+                  'name': 'Electrician Services',
+                  'url': 'https://gorepireo.in/near-me/electrician-near-me',
+                  'description': 'Verified doorstep electricians in Etawah'
+                },
+                {
+                  '@type': 'SiteNavigationElement',
+                  'name': 'Plumbing Services',
+                  'url': 'https://gorepireo.in/near-me/plumber-near-me',
+                  'description': 'Fast pipe, tap, leakage & bathroom plumbing fixes'
+                },
+                {
+                  '@type': 'SiteNavigationElement',
+                  'name': 'Appliance Repair',
+                  'url': 'https://gorepireo.in/near-me/washing-machine-repair-near-me',
+                  'description': 'Washing machine, refrigerator & microwave repair'
+                },
+                {
+                  '@type': 'SiteNavigationElement',
+                  'name': 'Deep Cleaning Services',
+                  'url': 'https://gorepireo.in/near-me/deep-cleaning-near-me',
+                  'description': 'Full house, kitchen & bathroom deep sanitization'
+                },
+                {
+                  '@type': 'SiteNavigationElement',
+                  'name': 'Live Technician Tracking',
+                  'url': 'https://gorepireo.in/track',
+                  'description': 'Track your assigned professional arrival on map'
+                }
+              ]
+            })
+          }}
+        />
+        {/* Brand FAQPage Schema for Rich Search Accordions */}
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              'mainEntity': [
+                {
+                  '@type': 'Question',
+                  'name': 'What is Go_Repireo and how does it work?',
+                  'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'Go_Repireo is an on-demand doorstep home services platform in Etawah. You can select your required service (plumbing, electrical, AC, cleaning, appliance repair), get an instant price estimate, and have a background-verified technician dispatched to your home with real-time map tracking.'
+                  }
+                },
+                {
+                  '@type': 'Question',
+                  'name': 'How fast can a technician arrive at my doorstep?',
+                  'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'For emergency immediate bookings, a verified technician typically arrives in 30 to 45 minutes across Etawah. You can also schedule bookings for your preferred date and time slot.'
+                  }
+                },
+                {
+                  '@type': 'Question',
+                  'name': 'Are Go_Repireo technicians verified and trusted?',
+                  'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'Yes, all technicians on Go_Repireo undergo strict identity verification, background checks, and professional skills vetting before taking service orders.'
+                  }
+                },
+                {
+                  '@type': 'Question',
+                  'name': 'Is there a warranty on services provided?',
+                  'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'Yes, Go_Repireo provides a 30-day post-service warranty on all repair and installation services. If any issue reoccurs within 30 days, we revisit and resolve it at no extra charge.'
+                  }
+                },
+                {
+                  '@type': 'Question',
+                  'name': 'What payment options are supported?',
+                  'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'We support Cash on Delivery (pay after service completion) as well as secure online payments via UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, and Net Banking.'
+                  }
+                }
+              ]
             })
           }}
         />
