@@ -38,7 +38,11 @@ export async function POST(request: Request) {
     let decoded;
     try {
       decoded = await getFirebaseAdminAuth().verifyIdToken(token, true);
-    } catch {
+    } catch (error) {
+      console.error('Firebase ID token verification failed.', {
+        code: typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown',
+        message: error instanceof Error ? error.message : 'Unknown Firebase Admin error',
+      });
       throw new AuthError(401, 'The authentication token is invalid or expired.');
     }
 

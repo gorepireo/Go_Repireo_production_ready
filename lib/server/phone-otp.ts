@@ -141,6 +141,12 @@ export async function verifyPhoneOtp(challengeId: unknown, phoneInput: unknown, 
     firebaseUser = await adminAuth.getUserByPhoneNumber(phone);
   } catch (error: unknown) {
     const codeValue = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
+    if (codeValue !== 'auth/user-not-found') {
+      console.error('Firebase phone account lookup failed.', {
+        code: codeValue || 'unknown',
+        message: error instanceof Error ? error.message : 'Unknown Firebase Admin error',
+      });
+    }
     if (codeValue !== 'auth/user-not-found' || purpose === 'login') throw new Error(purpose === 'login' ? 'No registered account was found for this mobile number.' : 'Unable to prepare this account.');
     firebaseUser = await adminAuth.createUser({ phoneNumber: phone });
   }
