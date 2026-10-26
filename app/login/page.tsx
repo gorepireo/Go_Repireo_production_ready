@@ -5,7 +5,7 @@ import { signInWithCustomToken } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Home, Phone } from 'lucide-react';
+import { ArrowRight, Phone } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 
@@ -184,7 +184,6 @@ function LoginContent() {
             </Link>
             </div>
 
-            <Link href="/" className="mx-auto mt-6 flex w-fit items-center gap-2 text-xs font-bold text-[#0874ef] hover:underline"><Home size={15} /> Return to Home</Link>
           </section>
 
         </div>
