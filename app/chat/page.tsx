@@ -161,7 +161,7 @@ function ChatContent() {
         const value = item.data();
         return { id: item.id, ...value, sender_id: value.senderId, message_text: value.text, created_at: value.createdAt?.toDate?.()?.toISOString() };
       }));
-    });
+    }, () => setMessages([]));
 
     return () => {
       stopOrder();

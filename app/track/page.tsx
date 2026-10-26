@@ -206,7 +206,7 @@ function TrackContent() {
         accuracy: location.accuracy ?? null, heading: location.heading ?? null,
         speed: location.speed ?? null, timestamp: location.updatedAt?.toMillis?.() || Date.now(),
       });
-    });
+    }, () => undefined);
   }, [order?.id, order?.workerId]);
 
   // Helper to load Razorpay Checkout Script

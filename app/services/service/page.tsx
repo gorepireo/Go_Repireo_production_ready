@@ -29,9 +29,6 @@ import {
 import dynamic from 'next/dynamic';
 import { isServiceMatching } from '@/lib/serviceMatcher';
 import { ServiceBookingSkeleton } from '@/components/SkeletonLoader';
-import { db } from '@/lib/firebase';
-import { collections } from '@/lib/types/firebase-contract';
-import { collection, getDocs, query, where } from 'firebase/firestore';
 
 const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelector'), { ssr: false });
 
@@ -112,8 +109,12 @@ export default function ServiceBooking() {
 
   useEffect(() => {
     if (user) {
-      getDocs(query(collection(db, collections.addresses), where('customerId', '==', user.uid)))
-        .then((snapshot) => setAddresses(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))));
+      fetch('/api/addresses', { credentials: 'include' })
+        .then((res) => (res.ok ? res.json() : { addresses: [] }))
+        .then((data) => {
+          if (Array.isArray(data.addresses)) setAddresses(data.addresses);
+        })
+        .catch(console.warn);
     }
   }, [user, loading, router]);
 

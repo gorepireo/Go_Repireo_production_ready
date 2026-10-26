@@ -4,12 +4,10 @@ import { FormEvent, ReactNode, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signInWithCustomToken } from 'firebase/auth';
 import {
   ArrowRight, BriefcaseBusiness, Check, ChevronDown, Hammer, LockKeyhole,
   Mail, MapPin, Phone, ShieldCheck, Sparkles, UserRound, Wrench, Zap,
 } from 'lucide-react';
-import { auth } from '@/lib/firebase';
 
 type AccountType = 'customer' | 'partner';
 
@@ -25,17 +23,15 @@ const serviceOptions = [
 
 function friendlyError(cause: unknown) {
   const message = cause instanceof Error ? cause.message : '';
-  if (message.includes('auth/unauthorized-domain')) return 'This website domain is not authorized for Firebase login.';
-  if (message.includes('auth/operation-not-allowed')) return 'Phone authentication is not enabled in Firebase.';
-  if (message.includes('auth/too-many-requests')) return 'Too many attempts. Please wait and try again.';
-  if (message.includes('auth/invalid-verification-code')) return 'The verification code is incorrect.';
+  if (message.includes('Too many')) return 'Too many attempts. Please wait and try again.';
+  if (message.includes('verification code is incorrect')) return 'The verification code is incorrect.';
   return message || 'Registration could not be completed.';
 }
 
 interface ApiPayload {
   error?: string;
   challengeId?: string;
-  customToken?: string;
+  verified?: boolean;
   [key: string]: unknown;
 }
 
@@ -109,12 +105,10 @@ export default function RegisterPage() {
         body: JSON.stringify({ challengeId, phone: `+91${form.phone}`, code: form.code, purpose: 'register' }),
       });
       const verification = await responseJson(verifyResponse);
-      if (!verifyResponse.ok || !verification.customToken) throw new Error(verification.error || 'The verification code is invalid or expired.');
-      const credential = await signInWithCustomToken(auth, verification.customToken);
-      const idToken = await credential.user.getIdToken(true);
+      if (!verifyResponse.ok || !verification.verified) throw new Error(verification.error || 'The verification code is invalid or expired.');
       const response = await fetch('/api/auth/register-user', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           displayName: form.displayName,
           accountType,
@@ -130,7 +124,6 @@ export default function RegisterPage() {
       });
       const result = await responseJson(response);
       if (!response.ok) throw new Error(result.error || 'Account registration failed.');
-      await auth.signOut();
       router.replace(`/login?registered=${accountType}`);
     } catch (cause) {
       setError(friendlyError(cause));
@@ -193,7 +186,7 @@ export default function RegisterPage() {
               {step === 2 && <button type="button" onClick={() => { setStep(1); setChallengeId(''); update('code', ''); }} className="mt-4 w-full text-center text-xs font-bold text-[#0874ef]">Change account details</button>}
 
               <div className={`flex flex-col items-center gap-0.5 text-center text-[10px] text-slate-500 ${accountType === 'partner' ? 'mt-2' : 'mt-3'}`}>
-                <p className="flex items-center gap-2"><LockKeyhole size={13} />Your information is secure and verified through Firebase.</p>
+                <p className="flex items-center gap-2"><LockKeyhole size={13} />Your information is securely stored in the Go_Repireo database.</p>
                 <p>By continuing, you agree to our <Link href="/terms" className="font-semibold text-[#0874ef] underline">Terms</Link> &amp; <Link href="/privacy" className="font-semibold text-[#0874ef] underline">Privacy Policy</Link>.</p>
               </div>
             </form>

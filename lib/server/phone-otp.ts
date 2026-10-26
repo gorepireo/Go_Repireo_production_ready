@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getTurso } from './turso';
+import { createSession } from './session';
 
 export type OtpPurpose = 'login' | 'register';
 
@@ -66,7 +67,13 @@ async function ensureOtpTable() {
 
 async function sendRenflairOtp(phone: string, otp: string) {
   const apiKey = process.env.RENFLAIR_API_KEY?.trim();
-  if (!apiKey) throw new Error('RENFLAIR_API_KEY is not configured.');
+  if (!apiKey) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.info(`[DEV OTP] Mobile: ${phone}, OTP: ${otp}`);
+      return;
+    }
+    throw new Error('RENFLAIR_API_KEY is not configured.');
+  }
   const query = new URLSearchParams({ API: apiKey, PHONE: phone.replace(/^\+91/, ''), OTP: otp });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10_000);
@@ -134,28 +141,12 @@ export async function verifyPhoneOtp(challengeId: unknown, phoneInput: unknown, 
   });
   if (consumed.rowsAffected !== 1) throw new Error('The verification code was already used.');
 
-  const { getFirebaseAdminAuth } = await import('./firebase-admin');
-  const adminAuth = getFirebaseAdminAuth();
-  let firebaseUser;
-  try {
-    firebaseUser = await adminAuth.getUserByPhoneNumber(phone);
-  } catch (error: unknown) {
-    const codeValue = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
-    if (codeValue !== 'auth/user-not-found') {
-      console.error('Firebase phone account lookup failed.', {
-        code: codeValue || 'unknown',
-        message: error instanceof Error ? error.message : 'Unknown Firebase Admin error',
-      });
-    }
-    if (codeValue !== 'auth/user-not-found' || purpose === 'login') throw new Error(purpose === 'login' ? 'No registered account was found for this mobile number.' : 'Unable to prepare this account.');
-    firebaseUser = await adminAuth.createUser({ phoneNumber: phone });
-  }
-
-  let role: 'customer' | 'worker' | 'admin' | null = null;
+  let userId: string | null = null;
+  let user: { id: string; phone: string; email: string | null; displayName: string; role: string; accountStatus: string } | null = null;
   if (purpose === 'login') {
     const account = await getTurso().execute({
-      sql: 'SELECT role, account_status FROM users WHERE id = ? OR phone = ? LIMIT 1',
-      args: [firebaseUser.uid, phone],
+      sql: 'SELECT id, phone, email, display_name, role, account_status FROM users WHERE phone = ? LIMIT 1',
+      args: [phone],
     });
     const accountRow = account.rows[0];
     if (!accountRow) throw new Error('No registered account was found for this mobile number.');
@@ -163,9 +154,21 @@ export async function verifyPhoneOtp(challengeId: unknown, phoneInput: unknown, 
     if (status === 'suspended' || status === 'disabled') throw new Error('This account is not permitted to sign in.');
     const storedRole = String(accountRow.role);
     if (!['customer', 'worker', 'admin'].includes(storedRole)) throw new Error('This account has an invalid role.');
-    role = storedRole as 'customer' | 'worker' | 'admin';
-    await adminAuth.setCustomUserClaims(firebaseUser.uid, { role, admin: role === 'admin' });
+    userId = String(accountRow.id);
+    user = {
+      id: userId,
+      phone: String(accountRow.phone || phone),
+      email: accountRow.email ? String(accountRow.email) : null,
+      displayName: String(accountRow.display_name || ''),
+      role: storedRole,
+      accountStatus: status,
+    };
+    await getTurso().execute({ sql: 'UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?', args: [new Date().toISOString(), new Date().toISOString(), userId] });
+  } else {
+    const existing = await getTurso().execute({ sql: 'SELECT id FROM users WHERE phone = ? LIMIT 1', args: [phone] });
+    if (existing.rows[0]) throw new Error('An account already exists for this mobile number. Sign in instead.');
   }
 
-  return { customToken: await adminAuth.createCustomToken(firebaseUser.uid, role ? { role, admin: role === 'admin' } : undefined) };
+  const session = await createSession(phone, purpose, userId);
+  return { verified: true, user, sessionCookie: session.cookie };
 }

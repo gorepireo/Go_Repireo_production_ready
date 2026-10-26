@@ -50,10 +50,10 @@ function StandardMapContent() {
             const location = locationSnapshot.data();
             setTracking({ lat: location.latitude, lng: location.longitude });
           }
-        });
+        }, () => undefined);
       }
       setLoading(false);
-    });
+    }, () => setLoading(false));
     return () => { stopOrder(); stopLocation(); };
   }, [orderId]);
 

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
+import { isTursoConfigured } from '@/lib/server/turso';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET() {
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const connected = isTursoConfigured();
   return NextResponse.json({
-    status: projectId ? 'configured' : 'missing_configuration',
-    connected: Boolean(projectId),
-    provider: 'Firebase (Authentication, Firestore, Functions)',
-    projectId: projectId || null,
-  }, { status: projectId ? 200 : 503 });
+    status: connected ? 'configured' : 'missing_configuration',
+    connected,
+    provider: 'Turso (authentication, sessions, and application data)',
+  }, { status: connected ? 200 : 503 });
 }

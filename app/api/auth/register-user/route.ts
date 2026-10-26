@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { InStatement } from '@libsql/client';
 import { AuthError, authErrorResponse } from '@/lib/server/auth';
-import { getFirebaseAdminAuth } from '@/lib/server/firebase-admin';
 import { getTurso } from '@/lib/server/turso';
+import { clearSessionCookie, readSession } from '@/lib/server/session';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -24,31 +24,16 @@ function text(value: unknown, max: number) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
-function bearerToken(request: Request) {
-  const value = request.headers.get('authorization') || '';
-  return value.startsWith('Bearer ') ? value.slice(7).trim() : '';
-}
-
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as RegistrationBody;
-    const token = bearerToken(request);
-    if (!token) throw new AuthError(401, 'Authentication is required.');
-
-    let decoded;
-    try {
-      decoded = await getFirebaseAdminAuth().verifyIdToken(token, true);
-    } catch (error) {
-      console.error('Firebase ID token verification failed.', {
-        code: typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown',
-        message: error instanceof Error ? error.message : 'Unknown Firebase Admin error',
-      });
-      throw new AuthError(401, 'The authentication token is invalid or expired.');
-    }
+    const registrationSession = await readSession(request, 'register');
+    if (!registrationSession) throw new AuthError(401, 'Verify your mobile number before creating an account.');
+    const phone = String(registrationSession.phone);
 
     const displayName = text(body.displayName, 120);
     const accountType = body.accountType === 'partner' ? 'partner' : body.accountType === 'customer' ? 'customer' : '';
-    const email = text(body.email, 254).toLowerCase() || decoded.email || null;
+    const email = text(body.email, 254).toLowerCase() || null;
     const state = text(body.state, 100);
     const district = text(body.district, 100);
     const pincode = text(body.pincode, 10);
@@ -73,20 +58,21 @@ export async function POST(request: Request) {
     }
 
     const db = getTurso();
-    const existing = await db.execute({ sql: 'SELECT role FROM users WHERE id = ? LIMIT 1', args: [decoded.uid] });
+    const existing = await db.execute({ sql: 'SELECT id, role FROM users WHERE phone = ? LIMIT 1', args: [phone] });
     const role = accountType === 'partner' ? 'worker' : 'customer';
-    if (existing.rows[0] && String(existing.rows[0].role) !== role) {
-      return NextResponse.json({ error: 'This identity is already registered with another account type.' }, { status: 409 });
+    if (existing.rows[0]) {
+      return NextResponse.json({ error: 'An account already exists for this mobile number. Sign in instead.' }, { status: 409 });
     }
 
     const now = new Date().toISOString();
+    const userId = crypto.randomUUID();
     const accountStatus = role === 'worker' ? 'pending' : 'active';
     const statements: InStatement[] = [
       {
         sql: `INSERT INTO users (id, phone, email, display_name, role, account_status, created_at, updated_at, last_login_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(id) DO UPDATE SET phone = COALESCE(excluded.phone, users.phone), email = COALESCE(excluded.email, users.email), display_name = excluded.display_name, updated_at = excluded.updated_at`,
-        args: [decoded.uid, decoded.phone_number || null, email, displayName, role, accountStatus, now, now, now],
+        args: [userId, phone, email, displayName, role, accountStatus, now, now, now],
       },
     ];
 
@@ -95,22 +81,24 @@ export async function POST(request: Request) {
         sql: `INSERT INTO customer_profiles (user_id, state, district, pincode, area, created_at, updated_at)
               VALUES (?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(user_id) DO UPDATE SET state = excluded.state, district = excluded.district, pincode = excluded.pincode, area = excluded.area, updated_at = excluded.updated_at`,
-        args: [decoded.uid, state, district, pincode, area, now, now],
+        args: [userId, state, district, pincode, area, now, now],
       });
     } else {
       statements.push({
         sql: `INSERT INTO worker_profiles (user_id, full_name, experience_years, description, verification_status, approval_status, availability_status, accepting_jobs, state, district, pincode, area, service_categories_json, created_at, updated_at)
               VALUES (?, ?, ?, ?, 'pending', 'pending', 'offline', 0, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(user_id) DO UPDATE SET full_name = excluded.full_name, experience_years = excluded.experience_years, description = excluded.description, state = excluded.state, district = excluded.district, pincode = excluded.pincode, area = excluded.area, service_categories_json = excluded.service_categories_json, verification_status = 'pending', approval_status = 'pending', updated_at = excluded.updated_at`,
-        args: [decoded.uid, displayName, experienceYears, description, state, district, pincode, area, JSON.stringify(serviceCategories), now, now],
+        args: [userId, displayName, experienceYears, description, state, district, pincode, area, JSON.stringify(serviceCategories), now, now],
       });
     }
 
     await db.batch(statements, 'write');
-    await getFirebaseAdminAuth().setCustomUserClaims(decoded.uid, { role });
-    return NextResponse.json({
-      user: { uid: decoded.uid, phone: decoded.phone_number || null, email, displayName, role, accountStatus },
-    }, { status: existing.rows[0] ? 200 : 201 });
+    await db.execute({ sql: 'DELETE FROM auth_sessions WHERE token_hash = ?', args: [String(registrationSession.token_hash)] });
+    const response = NextResponse.json({
+      user: { uid: userId, phone, email, displayName, role, accountStatus },
+    }, { status: 201 });
+    response.headers.set('Set-Cookie', clearSessionCookie());
+    return response;
   } catch (error) {
     return authErrorResponse(error);
   }

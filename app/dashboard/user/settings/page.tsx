@@ -8,10 +8,6 @@ import Avatar from '@/components/Avatar';
 import { useRouter } from 'next/navigation';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/cropImage';
-import { db } from '@/lib/firebase';
-import { collections } from '@/lib/types/firebase-contract';
-import { UserService } from '@/lib/services/user.service';
-import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp, where } from 'firebase/firestore';
 
 import dynamic from 'next/dynamic';
 
@@ -51,9 +47,15 @@ export default function UserSettings() {
 
   const fetchAddresses = async () => {
     if (!user) return;
-    const snapshot = await getDocs(query(collection(db, collections.addresses),
-      where('customerId', '==', user.uid), orderBy('createdAt', 'desc')));
-    setAddresses(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
+    try {
+      const res = await fetch('/api/addresses', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.addresses)) setAddresses(data.addresses);
+      }
+    } catch (err) {
+      console.warn('Failed to load addresses from Turso:', err);
+    }
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -61,11 +63,22 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await UserService.updateProfile(user.uid, { name: formData.name });
-      
-    await refresh();
-    setLoading(false);
-    alert('Profile updated successfully!');
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: formData.name }),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to update profile');
+      await refresh();
+      alert('Profile updated successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update profile.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,7 +114,12 @@ export default function UserSettings() {
         reader.readAsDataURL(croppedBlob);
       });
       if (avatarBase64.length > 700000) throw new Error('Avatar is too large after cropping.');
-      await UserService.updateProfile(user.uid, { avatarBase64 });
+      await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatarBase64 }),
+        credentials: 'include',
+      });
       await refresh();
     } catch (err) {
       console.error(err);
@@ -115,30 +133,45 @@ export default function UserSettings() {
     if (!user) return;
     setLoading(true);
     
-    await addDoc(collection(db, collections.addresses), {
-      customerId: user.uid,
-      label: newAddress.name,
-      formattedAddress: newAddress.address_text,
-      latitude: newAddress.lat,
-      longitude: newAddress.lng,
-      landmark: '',
-      isDefault: addresses.length === 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    setNewAddress({ name: '', address_text: '', lat: 0, lng: 0 });
-    setIsAddingAddress(false);
-    await fetchAddresses();
-    setLoading(false);
+    try {
+      const res = await fetch('/api/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newAddress.name,
+          address_text: newAddress.address_text,
+          lat: newAddress.lat,
+          lng: newAddress.lng,
+        }),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to save address');
+      setNewAddress({ name: '', address_text: '', lat: 0, lng: 0 });
+      setIsAddingAddress(false);
+      await fetchAddresses();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save address.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteAddress = async (id: string) => {
     if (!confirm('Are you sure you want to delete this address?')) return;
     setLoading(true);
-    await deleteDoc(doc(db, collections.addresses, id));
-    await fetchAddresses();
-    setLoading(false);
+    try {
+      await fetch(`/api/addresses?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      await fetchAddresses();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete address.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const detectLocationForNewAddress = () => {

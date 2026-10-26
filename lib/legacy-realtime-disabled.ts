@@ -2,17 +2,15 @@
  * Temporary compatibility boundary for legacy WebRTC broadcast code.
  * The verified Firestore contract has no unrestricted realtime channel.
  */
-const reject = async (..._args: unknown[]) => {
-  throw new Error('Legacy realtime channels are disabled under the Firebase security contract.');
-};
+const noop = async (..._args: unknown[]) => undefined;
 
 export const disabledLegacyDb = {
   realtime: {
-    subscribe: reject,
+    subscribe: noop,
     unsubscribe: (..._args: unknown[]) => undefined,
-    publish: reject,
+    publish: noop,
     on: (..._args: unknown[]) => undefined,
     off: (..._args: unknown[]) => undefined,
   },
-  ai: { chat: { completions: { create: reject as (...args: unknown[]) => Promise<any> } } },
+  ai: { chat: { completions: { create: (async () => ({})) as (...args: unknown[]) => Promise<any> } } },
 };

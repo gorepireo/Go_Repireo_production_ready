@@ -1,12 +1,10 @@
 'use client';
 
 import { FormEvent, Suspense, useState } from 'react';
-import { signInWithCustomToken } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Phone } from 'lucide-react';
-import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 
 function normalizeIndianPhone(value: string) {
@@ -17,18 +15,13 @@ function normalizeIndianPhone(value: string) {
 
 function loginErrorMessage(cause: unknown) {
   const message = cause instanceof Error ? cause.message : '';
-  if (message.includes('auth/invalid-api-key')) return 'Login configuration is unavailable. Please contact support.';
-  if (message.includes('auth/unauthorized-domain')) return 'This website domain is not authorized for login yet.';
-  if (message.includes('auth/operation-not-allowed')) return 'Phone login has not been enabled yet.';
-  if (message.includes('auth/too-many-requests')) return 'Too many attempts. Please wait and try again.';
-  if (message.includes('auth/invalid-phone-number')) return 'Enter a valid 10-digit Indian mobile number.';
+  if (message.includes('Too many')) return 'Too many attempts. Please wait and try again.';
   return message || 'Unable to send the verification code.';
 }
 
 interface ApiPayload {
   error?: string;
   challengeId?: string;
-  customToken?: string;
   user?: { role?: string; accountStatus?: string };
   [key: string]: unknown;
 }
@@ -88,20 +81,10 @@ function LoginContent() {
         body: JSON.stringify({ challengeId, phone: normalizeIndianPhone(phone), code, purpose: 'login' }),
       });
       const verification = await responseJson(verifyResponse);
-      if (!verifyResponse.ok || !verification.customToken) throw new Error(verification.error || 'The verification code is invalid or expired.');
-      const credential = await signInWithCustomToken(auth, verification.customToken);
-      const idToken = await credential.user.getIdToken(true);
-      const sessionResponse = await fetch('/api/auth/session', {
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-      const session = await responseJson(sessionResponse);
-      if (!sessionResponse.ok || !['customer', 'worker', 'admin'].includes(String(session.user?.role))) {
-        await auth.signOut();
-        throw new Error(session.error || 'This account is not registered. Create an account first.');
-      }
-      const { role, accountStatus } = session.user || {};
+      if (!verifyResponse.ok || !verification.user) throw new Error(verification.error || 'The verification code is invalid or expired.');
+      const { role, accountStatus } = verification.user || {};
       if (accountStatus === 'pending') {
-        await auth.signOut();
+        await fetch('/api/auth/session', { method: 'DELETE' });
         throw new Error('Your service partner application is awaiting administrator approval.');
       }
       await refresh();

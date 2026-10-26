@@ -19,9 +19,6 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/firebase';
-import { collections } from '@/lib/types/firebase-contract';
-import { collection, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
 import { OrderService } from '@/lib/services/order.service';
 
 export interface NotificationItem {
@@ -63,28 +60,34 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-  // Notifications are server-created and owner-scoped by Firestore rules.
+  // Notifications are stored in Turso and queried via /api/notifications
   useEffect(() => {
-    if (!user?.uid) return;
-    const notificationsQuery = query(
-      collection(db, collections.notifications),
-      where('ownerId', '==', user.uid),
-      orderBy('createdAt', 'desc'),
-    );
-    return onSnapshot(notificationsQuery, (snapshot) => setNotifications(snapshot.docs.map((item) => {
-      const value = item.data();
-      const created = value.createdAt?.toDate?.();
-      return {
-        id: item.id,
-        type: value.type || 'confirmed',
-        title: value.title || 'Notification',
-        message: value.message || '',
-        time: created ? created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
-        read: Boolean(value.readAt),
-        bookingId: value.bookingId,
-        actionUrl: value.bookingId ? `/track?orderId=${value.bookingId}` : undefined,
-      } as NotificationItem;
-    })));
+    if (!user?.uid) {
+      setNotifications([]);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch('/api/notifications', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && Array.isArray(data.notifications)) {
+            setNotifications(data.notifications);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load notifications:', err);
+      }
+    };
+
+    void fetchNotifications();
+    const interval = setInterval(fetchNotifications, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [user?.uid]);
 
   // Persist local notifications on update
@@ -96,8 +99,18 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
   };
 
   // Clear all notifications
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     updateNotifications([]);
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clearAll: true }),
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.warn('Failed to clear notifications in Turso:', err);
+    }
   };
 
   // Worker Accept Order
@@ -127,7 +140,14 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
     // Mark read
     const updated = notifications.map(n => n.id === notif.id ? { ...n, read: true } : n);
     updateNotifications(updated);
-    if (!notif.read) updateDoc(doc(db, collections.notifications, notif.id), { readAt: serverTimestamp() }).catch(console.warn);
+    if (!notif.read) {
+      fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: notif.id }),
+        credentials: 'include',
+      }).catch(console.warn);
+    }
 
     if (notif.actionUrl) {
       router.push(notif.actionUrl);

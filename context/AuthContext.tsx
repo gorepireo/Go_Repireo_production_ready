@@ -1,16 +1,19 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signOut as firebaseSignOut, type User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db, firebaseConfigured } from '@/lib/firebase';
-
-type AppUser = User & {
-  id: string;
-  user_metadata: { name?: string | null; full_name?: string | null; avatar_url?: string | null };
-};
+import { useRouter } from 'next/navigation';
 
 export type TrustedRole = 'customer' | 'worker' | 'admin';
+
+export interface AppUser {
+  id: string;
+  uid: string;
+  email: string | null;
+  phone: string | null;
+  displayName: string;
+  photoURL: string | null;
+  user_metadata: { name?: string | null; full_name?: string | null; avatar_url?: string | null };
+}
 
 export interface Profile {
   id: string;
@@ -24,6 +27,15 @@ export interface Profile {
   [key: string]: unknown;
 }
 
+interface SessionUser {
+  uid: string;
+  phone: string | null;
+  email: string | null;
+  displayName: string;
+  role: TrustedRole;
+  accountStatus: 'active' | 'pending' | 'suspended' | 'disabled';
+}
+
 interface AuthContextType {
   user: AppUser | null;
   role: TrustedRole | null;
@@ -34,142 +46,71 @@ interface AuthContextType {
   refresh: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  role: null,
-  profile: null,
-  loading: true,
-  authError: null,
-  signOut: async () => undefined,
-  refresh: async () => undefined,
-});
+const AuthContext = createContext<AuthContextType>({ user: null, role: null, profile: null, loading: true, authError: null, signOut: async () => undefined, refresh: async () => undefined });
 
-function isTrustedRole(value: unknown): value is TrustedRole {
-  return value === 'customer' || value === 'worker' || value === 'admin';
-}
-
-async function loadIdentity(firebaseUser: User) {
-  const token = await firebaseUser.getIdTokenResult();
-  const claimRole = token.claims.role;
-  const role: TrustedRole | null = isTrustedRole(claimRole)
-    ? claimRole
-    : token.claims.admin === true
-      ? 'admin'
-      : null;
-
-  if (!role) return { role: null, profile: null };
-
-  const collectionName = role === 'worker' ? 'workers' : 'customers';
-  const snapshot = await getDoc(doc(db, collectionName, firebaseUser.uid));
-  const data = snapshot.data() ?? {};
-  const privateData = role === 'worker'
-    ? (await getDoc(doc(db, 'workerPrivate', firebaseUser.uid))).data() ?? {}
-    : {};
-  const workerStatus = typeof data.status === 'string' ? data.status : undefined;
-
-  const profile: Profile = {
-    id: firebaseUser.uid,
-    role: role === 'customer' ? 'user' : role,
-    status:
-      role === 'worker' && ['draft', 'pendingVerification', 'rejected'].includes(workerStatus ?? '')
-        ? 'pending_approval'
-        : workerStatus === 'suspended'
-          ? 'suspended'
-          : 'active',
-    display_name:
-      (typeof data.fullName === 'string' && data.fullName) ||
-      (typeof data.name === 'string' && data.name) ||
-      firebaseUser.displayName || undefined,
-    avatar_url:
-      (typeof data.avatarUrl === 'string' && data.avatarUrl) ||
-      (typeof data.avatarBase64 === 'string' && data.avatarBase64) ||
-      firebaseUser.photoURL || undefined,
-    email: (typeof data.email === 'string' && data.email) || firebaseUser.email || undefined,
-    phone: (typeof data.phone === 'string' && data.phone) || firebaseUser.phoneNumber || undefined,
-    worker_data: role === 'worker' ? { ...data, ...privateData } : undefined,
+function mapSession(identity: SessionUser) {
+  const user: AppUser = {
+    id: identity.uid,
+    uid: identity.uid,
+    email: identity.email,
+    phone: identity.phone,
+    displayName: identity.displayName,
+    photoURL: null,
+    user_metadata: { name: identity.displayName, full_name: identity.displayName },
   };
-
-  return { role, profile };
+  const profile: Profile = {
+    id: identity.uid,
+    role: identity.role === 'customer' ? 'user' : identity.role,
+    status: identity.accountStatus === 'pending' ? 'pending_approval' : identity.accountStatus === 'active' ? 'active' : 'suspended',
+    display_name: identity.displayName,
+    email: identity.email || undefined,
+    phone: identity.phone || undefined,
+  };
+  return { user, profile };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<AppUser | null>(null);
   const [role, setRole] = useState<TrustedRole | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const hydrate = useCallback(async (firebaseUser: User | null) => {
-    if (firebaseUser) {
-      const compatibleUser = firebaseUser as AppUser;
-      if (!(compatibleUser as any).id) {
-        Object.defineProperty(compatibleUser, 'id', { configurable: true, value: firebaseUser.uid });
-      }
-      if (!(compatibleUser as any).user_metadata) {
-        Object.defineProperty(compatibleUser, 'user_metadata', {
-          configurable: true,
-          value: { name: firebaseUser.displayName, full_name: firebaseUser.displayName, avatar_url: firebaseUser.photoURL },
-        });
-      }
-      setUser(compatibleUser);
-    } else {
-      setUser(null);
-    }
-    setAuthError(null);
-    if (!firebaseUser) {
-      setRole(null);
-      setProfile(null);
-      return;
-    }
+  const refresh = useCallback(async () => {
+    setLoading(true);
     try {
-      const identity = await loadIdentity(firebaseUser);
-      setRole(identity.role);
-      setProfile(identity.profile);
-      if (!identity.role) setAuthError('This account does not have a trusted GO_REPIREO role.');
+      const response = await fetch('/api/auth/session', { cache: 'no-store', credentials: 'include' });
+      if (response.status === 401) {
+        setUser(null); setRole(null); setProfile(null); setAuthError(null);
+        return;
+      }
+      const result = await response.json();
+      if (!response.ok || !result.user) throw new Error(result.error || 'Unable to load your account.');
+      const identity = result.user as SessionUser;
+      const mapped = mapSession(identity);
+      setUser(mapped.user); setRole(identity.role); setProfile(mapped.profile); setAuthError(null);
     } catch (error) {
-      console.error('Unable to load the authenticated profile.', error);
-      setRole(null);
-      setProfile(null);
-      setAuthError('We could not verify your account permissions. Please sign in again.');
+      console.error('Unable to load the Turso session.', error);
+      setUser(null); setRole(null); setProfile(null);
+      setAuthError('We could not verify your account session. Please sign in again.');
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!firebaseConfigured) {
-      setLoading(false);
-      return;
-    }
-    return onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
-      await hydrate(firebaseUser);
-      setLoading(false);
-    });
-  }, [hydrate]);
-
-  const refresh = useCallback(async () => {
-    if (!firebaseConfigured) return;
-    if (!auth.currentUser) return;
-    await auth.currentUser.getIdToken(true);
-    await hydrate(auth.currentUser);
-  }, [hydrate]);
+    const timeout = window.setTimeout(() => { void refresh(); }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [refresh]);
 
   const signOut = useCallback(async () => {
-    if (!firebaseConfigured) {
-      window.location.assign('/maintenance');
-      return;
-    }
-    await firebaseSignOut(auth);
-    setUser(null);
-    setRole(null);
-    setProfile(null);
-    window.location.assign('/login');
-  }, []);
+    await fetch('/api/auth/session', { method: 'DELETE', credentials: 'include' });
+    setUser(null); setRole(null); setProfile(null);
+    router.replace('/login');
+  }, [router]);
 
-  const value = useMemo(
-    () => ({ user, role, profile, loading, authError, signOut, refresh }),
-    [user, role, profile, loading, authError, signOut, refresh],
-  );
-
+  const value = useMemo(() => ({ user, role, profile, loading, authError, signOut, refresh }), [user, role, profile, loading, authError, signOut, refresh]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

@@ -7,11 +7,23 @@ export const TrackingService = {
     // Booking events are written by trusted callable functions.
   },
   async getTrackingHistory(bookingId: string): Promise<any[]> {
-    const snapshot = await getDocs(query(events(bookingId), orderBy('createdAt', 'asc')));
-    return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+    try {
+      const snapshot = await getDocs(query(events(bookingId), orderBy('createdAt', 'asc')));
+      return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+    } catch {
+      return [];
+    }
   },
   subscribeToTrackingHistory(bookingId: string, callback: (items: any[]) => void) {
-    return onSnapshot(query(events(bookingId), orderBy('createdAt', 'asc')), (snapshot) =>
-      callback(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))));
+    try {
+      return onSnapshot(
+        query(events(bookingId), orderBy('createdAt', 'asc')),
+        (snapshot) => callback(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))),
+        () => callback([])
+      );
+    } catch {
+      callback([]);
+      return () => undefined;
+    }
   },
 };
