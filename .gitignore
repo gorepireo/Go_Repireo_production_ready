@@ -1,5 +1,6 @@
 # next.js
 /.next/
+/.vercel/
 /.open-next/
 /out/
 
