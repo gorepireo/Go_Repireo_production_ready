@@ -129,8 +129,6 @@ export default function RegisterPage() {
           <HeroPanel accountType={accountType} />
 
           <section className={`relative bg-white px-5 py-6 sm:px-10 lg:mb-4 lg:mr-4 lg:mt-2 lg:min-h-0 lg:rounded-[28px] lg:px-8 lg:shadow-[0_20px_50px_rgba(29,96,168,0.12)] xl:px-12 ${accountType === 'partner' ? 'lg:overflow-hidden lg:py-2' : 'lg:overflow-y-auto lg:py-5'}`}>
-            {accountType === 'customer' && <Progress current={step} accountType={accountType} />}
-
             <form onSubmit={step === 1 ? sendCode : finishRegistration} className={`mx-auto max-w-4xl ${accountType === 'customer' ? 'mt-4' : ''}`}>
               {step === 1 ? <>
                 <div className={accountType === 'partner' ? 'lg:grid lg:grid-cols-[245px_minmax(0,1fr)] lg:items-center lg:gap-4' : ''}>
@@ -194,13 +192,6 @@ function HeroPanel({ accountType }: { accountType: AccountType }) {
     </div>
     <Image src={customer ? '/login_mechanic_3d.png' : '/custom_service_mechanic_3d.png'} alt="Go_Repireo service professional" width={520} height={520} className={`absolute z-[1] object-contain mix-blend-multiply ${customer ? '-bottom-20 right-[-54px] w-[230px] sm:right-5 lg:-bottom-12 lg:left-1/2 lg:w-[390px] lg:-translate-x-1/2' : '-bottom-16 right-[-45px] w-[220px] sm:right-4 lg:bottom-3 lg:left-1/2 lg:w-[300px] lg:-translate-x-1/2'}`} priority />
   </aside>;
-}
-
-function Progress({ current, accountType }: { current: 1 | 2; accountType: AccountType }) {
-  const labels = accountType === 'partner' ? ['Basic Details', 'Service Details', 'Review & Submit'] : ['Basic Details', 'Additional Details', 'Review & Submit'];
-  return <div className="flex items-center justify-between border-b border-slate-100 pb-5">
-    {labels.map((label, index) => <div key={label} className="contents"><div className="flex items-center gap-2"><span className={`flex size-7 items-center justify-center rounded-full text-xs font-black ${index + 1 <= current ? 'bg-[#0874ef] text-white' : 'border border-slate-200 text-slate-500'}`}>{index + 1}</span><span className={`text-[9px] font-semibold sm:text-[11px] ${index + 1 <= current ? 'text-[#071631]' : 'text-slate-400'}`}><span className="sm:hidden">{index === 0 ? 'Basic' : index === 1 ? 'Details' : 'Review'}</span><span className="hidden sm:inline">{label}</span></span></div>{index < 2 && <span className="mx-2 h-px flex-1 bg-slate-200" />}</div>)}
-  </div>;
 }
 
 function AccountChoices({ accountType, onChoose, compact = false }: { accountType: AccountType; onChoose: (type: AccountType) => void; compact?: boolean }) {
