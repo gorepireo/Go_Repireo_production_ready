@@ -79,7 +79,6 @@ export default function ServiceBooking() {
   const handleEstimate = async () => {
     if (!formData.description?.trim()) {
       setFieldErrors(prev => ({ ...prev, description: true }));
-      showToast("Please enter a brief description of the problem first.", "error");
       descriptionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       descriptionRef.current?.focus();
       return;
@@ -192,7 +191,6 @@ export default function ServiceBooking() {
 
     if (!formData.description?.trim()) {
       setFieldErrors(prev => ({ ...prev, description: true }));
-      showToast("Please enter a brief description of the problem first.", "error");
       descriptionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       descriptionRef.current?.focus();
       return;
@@ -200,7 +198,6 @@ export default function ServiceBooking() {
 
     if (!formData.address?.trim()) {
       setFieldErrors(prev => ({ ...prev, address: true }));
-      showToast("Please provide your service address.", "error");
       addressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       addressRef.current?.focus();
       return;

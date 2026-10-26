@@ -40,7 +40,6 @@ export default function InstallationFlow() {
 
     if (!address.trim()) {
       setAddressError(true);
-      showToast('Please enter your installation address.', 'error');
       addressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       addressRef.current?.focus();
       return;
