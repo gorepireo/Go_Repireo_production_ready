@@ -67,7 +67,7 @@ async function ensureOtpTable() {
 async function sendRenflairOtp(phone: string, otp: string) {
   const apiKey = process.env.RENFLAIR_API_KEY?.trim();
   if (!apiKey) throw new Error('RENFLAIR_API_KEY is not configured.');
-  const query = new URLSearchParams({ API: apiKey, PHONE: phone.replace(/^\+/, ''), OTP: otp });
+  const query = new URLSearchParams({ API: apiKey, PHONE: phone.replace(/^\+91/, ''), OTP: otp });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10_000);
   try {
