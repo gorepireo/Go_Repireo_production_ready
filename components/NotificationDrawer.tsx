@@ -172,7 +172,7 @@ export default function NotificationDrawer({ isOpen, onClose }: NotificationDraw
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: -10 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="absolute right-3 top-13 z-50 w-[92vw] max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-100/90 overflow-hidden flex flex-col max-h-[380px]"
+            className="fixed left-2 right-2 top-[4.25rem] z-50 max-w-sm mx-auto bg-white rounded-2xl min-[375px]:rounded-3xl shadow-2xl border border-slate-100/90 overflow-hidden flex flex-col max-h-[min(380px,calc(100dvh-5.25rem))] sm:absolute sm:left-auto sm:right-3 sm:top-13 sm:w-[92vw] sm:mx-0"
           >
             {/* Header Bar */}
             <div className="px-4 py-3 bg-[#F8FAFC] border-b border-slate-100 flex items-center justify-between shrink-0">

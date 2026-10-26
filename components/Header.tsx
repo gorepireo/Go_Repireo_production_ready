@@ -200,22 +200,22 @@ export default function Header({
     <div className="relative z-40">
       <NotificationToastBanner />
 
-      <header className="bg-white border-b border-slate-100 px-4 py-2.5 sticky top-0 z-40 flex items-center justify-between shadow-xs">
+      <header className="sticky top-0 z-40 grid min-h-[58px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 border-b border-slate-100 bg-white px-2.5 py-2.5 shadow-xs min-[375px]:gap-2 min-[375px]:px-4">
         
         {/* Left: Location Dropdown */}
         {showLocation ? (
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <button
               onClick={handleLocationClick}
               disabled={isLocating}
-              className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-bold border border-slate-200/60 transition-colors active:scale-95 disabled:opacity-80"
+              className="inline-flex min-w-0 max-w-full items-center gap-1 bg-slate-50 px-2 py-1 text-[10px] font-bold text-slate-700 transition-colors hover:bg-slate-100 active:scale-95 disabled:opacity-80 min-[375px]:gap-1.5 min-[375px]:px-3 min-[375px]:text-xs border border-slate-200/60 rounded-full"
             >
               {isLocating && currentLocation === 'Detecting location...' ? (
                 <Loader2 size={13} className="text-[#007AFF] animate-spin shrink-0" />
               ) : (
                 <MapPin size={13} className="text-[#007AFF] shrink-0" />
               )}
-              <span className="truncate max-w-[100px] sm:max-w-[140px]">{currentLocation}</span>
+              <span className="max-w-[72px] truncate min-[375px]:max-w-[100px] sm:max-w-[140px]">{currentLocation}</span>
               <ChevronDown size={12} className="text-slate-400 shrink-0" />
             </button>
           </div>
@@ -224,24 +224,24 @@ export default function Header({
         )}
 
         {/* Center: Greeting / Custom Title */}
-        <div className="text-center">
+        <div className="min-w-0 px-1 text-center">
           {customTitle ? (
             <div>
-              <h1 className="text-sm font-black text-slate-900 tracking-tight">{customTitle}</h1>
-              {customSubtitle && <p className="text-[10px] text-slate-400 font-medium">{customSubtitle}</p>}
+              <h1 className="truncate text-xs font-black tracking-tight text-slate-900 min-[375px]:text-sm">{customTitle}</h1>
+              {customSubtitle && <p className="hidden truncate text-[10px] font-medium text-slate-400 min-[390px]:block">{customSubtitle}</p>}
             </div>
           ) : showGreeting ? (
             <div>
-              <h1 className="text-sm font-bold text-slate-900 flex items-center justify-center gap-1">
+              <h1 className="flex items-center justify-center gap-1 truncate text-xs font-bold text-slate-900 min-[375px]:text-sm">
                 Hi, {displayName} <span className="text-base">👋</span>
               </h1>
-              <p className="text-[10px] text-slate-400 font-medium">What can we help you with today?</p>
+              <p className="hidden truncate text-[10px] font-medium text-slate-400 min-[390px]:block">What can we help you with today?</p>
             </div>
           ) : null}
         </div>
 
         {/* Right: Notification Bell (DYNAMIC BADGE) */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-1 min-[375px]:gap-2">
           <button
             onClick={() => setIsNotifOpen(true)}
             className="relative p-2 text-slate-700 hover:bg-slate-50 rounded-full transition-all active:scale-95"

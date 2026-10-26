@@ -742,7 +742,7 @@ function TrackContent() {
 
           {/* Telemetry Metrics Row */}
           <div className="pt-1">
-            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-center">
+            <div className="grid grid-cols-2 min-[390px]:grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-center">
               <div className="space-y-0.5">
                 <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
                   <Navigation size={15} />

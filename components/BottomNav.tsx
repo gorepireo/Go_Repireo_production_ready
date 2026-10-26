@@ -63,16 +63,16 @@ export default function BottomNav() {
 
       {/* Bottom Navigation Bar Centered for Desktop & Mobile */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-100 pb-safe pt-2 shadow-[0_-10px_25px_rgba(0,0,0,0.05)]">
-        <nav className="w-full max-w-2xl lg:max-w-3xl mx-auto px-4 flex items-center justify-between pb-2">
+        <nav className="mx-auto flex w-full max-w-2xl items-center justify-between px-1 pb-2 min-[375px]:px-3 sm:px-4 lg:max-w-3xl">
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
             return (
               <Link 
                 key={item.name} 
                 href={item.path}
-                className="flex-1 flex items-center justify-center py-1.5"
+                className="flex min-w-0 flex-1 items-center justify-center py-1.5"
               >
-                <div className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 w-full max-w-[120px] mx-1 py-1.5 rounded-2xl ${isActive ? 'bg-[#F0F5FF]' : 'hover:bg-slate-50'}`}>
+                <div className={`mx-0.5 flex w-full max-w-[120px] flex-col items-center justify-center gap-1 rounded-xl py-1.5 transition-all duration-300 min-[375px]:mx-1 min-[375px]:rounded-2xl ${isActive ? 'bg-[#F0F5FF]' : 'hover:bg-slate-50'}`}>
                   <div className="relative z-10 flex items-center justify-center min-h-[22px]">
                     {item.name === 'Profile' ? (
                       <Avatar 
@@ -90,7 +90,7 @@ export default function BottomNav() {
                     )}
                   </div>
                   
-                  <span className={`text-[10px] font-bold z-10 transition-colors duration-300 ${isActive ? 'text-[#007AFF]' : 'text-slate-400'}`}>
+                  <span className={`z-10 max-w-full truncate text-[8px] font-bold transition-colors duration-300 min-[360px]:text-[9px] min-[390px]:text-[10px] ${isActive ? 'text-[#007AFF]' : 'text-slate-400'}`}>
                     {item.name}
                   </span>
                 </div>
