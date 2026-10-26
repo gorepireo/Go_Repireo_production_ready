@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, ShoppingCart, ArrowRight, ShieldCheck, Truck, MapPin, Search, LayoutGrid } from 'lucide-react';
+import { Plus, ShoppingCart, ArrowRight, ShieldCheck, Truck, MapPin, Search, LayoutGrid, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import SkeletonLoader from '@/components/SkeletonLoader';
@@ -13,9 +14,12 @@ import Script from 'next/script';
 export default function InstallationFlow() {
   const { cart, total, clearCart } = useCart();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [address, setAddress] = useState('');
+  const [addressError, setAddressError] = useState(false);
+  const addressRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -26,6 +30,19 @@ export default function InstallationFlow() {
   const handleBookInstallation = async () => {
     if (!user) {
       router.push('/login?redirect=/services/installation');
+      return;
+    }
+
+    if (cart.length === 0) {
+      showToast('Please select products to install first.', 'warning');
+      return;
+    }
+
+    if (!address.trim()) {
+      setAddressError(true);
+      showToast('Please enter your installation address.', 'error');
+      addressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      addressRef.current?.focus();
       return;
     }
     
@@ -53,44 +70,46 @@ export default function InstallationFlow() {
         order_id: data.orderId,
         handler: async function (response: any) {
           try {
-            const { data: orderData, error } = await (null as any)
-              .from('orders')
-              .insert([{
-                user_email: user.email,
-                service_name: 'Installation',
-                status: 'pending',
-                payment_status: 'paid',
-                payment_id: response.razorpay_payment_id,
-                total_price: total + 1500,
-                details: { address, items: cart },
-                lat: 12.9492,
-                lng: 77.6412,
-                order_type: 'installation'
-              }])
-              .select();
+            const { OrderService } = await import('@/lib/services/order.service');
+            const { TrackingService } = await import('@/lib/services/tracking.service');
+            const { orderId } = await OrderService.createOrder({
+              serviceId: 'installation',
+              serviceName: 'Installation',
+              description: `Installation for ${cart.map(c => `${c.name} (x${c.quantity})`).join(', ')}`,
+              formattedAddress: address,
+              latitude: 12.9492,
+              longitude: 77.6412,
+              scheduleType: 'immediate',
+              scheduledAt: null,
+              paymentMethod: 'razorpay',
+              amountPaise: Math.round((total + 1500) * 100),
+              paymentReference: response.razorpay_payment_id || null,
+            });
 
-            if (orderData) {
-              await (null as any)
-                .from('order_tracking')
-                .insert([{
-                  order_id: orderData[0].id,
-                  status: 'pending',
-                  lat: orderData[0].lat - (Math.random() * 0.1),
-                  lng: orderData[0].lng - (Math.random() * 0.1),
-                  note: 'Logistic unit assigned. Initialising signal...'
-                }]);
+            await TrackingService.addTrackingEvent(orderId, {
+              workerId: null,
+              status: 'pending',
+              lat: 12.9492,
+              lng: 77.6412,
+              note: 'Installation order received and paid online. Logistic unit assigned...'
+            });
 
-              clearCart();
-              router.push(`/track?id=${orderData[0].id}`);
-            }
+            clearCart();
+            showToast('Installation order placed successfully!', 'success');
+            router.push(`/track?orderId=${orderId}`);
           } catch (err) {
             console.error('Database save error:', err);
-            alert("Payment successful, but failed to save order details.");
+            showToast("Payment successful, but failed to save order details. Our team will contact you.", "warning");
+          } finally {
+            setLoading(false);
           }
         },
         modal: {
           handleback: true,
-          backdropclose: true
+          backdropclose: true,
+          ondismiss: function() {
+            setLoading(false);
+          }
         },
         prefill: {
           name: user.email?.split('@')[0] || 'User',
@@ -107,12 +126,13 @@ export default function InstallationFlow() {
       
       paymentObject.on('payment.failed', function (response: any) {
         console.error(response.error);
-        alert("Payment failed: " + response.error.description);
+        showToast("Payment failed: " + (response.error?.description || 'Transaction unsuccessful'), "error");
+        setLoading(false);
       });
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Installation error:', err);
-      alert("Something went wrong during checkout.");
+      showToast(err.message || "Something went wrong during checkout.", "error");
     } finally {
       setLoading(false);
     }
@@ -180,17 +200,33 @@ export default function InstallationFlow() {
             
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Installation Address</label>
+                <label className={`text-xs font-bold uppercase tracking-widest ${addressError ? 'text-rose-500' : 'text-gray-400'}`}>
+                  Installation Address *
+                </label>
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <MapPin className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${addressError ? 'text-rose-500' : 'text-gray-400'}`} />
                   <input 
+                    ref={addressRef}
                     required 
                     value={address}
-                    onChange={e => setAddress(e.target.value)}
-                    className="input-field w-full pl-12" 
+                    onChange={e => {
+                      setAddress(e.target.value);
+                      if (addressError) setAddressError(false);
+                    }}
+                    className={`input-field w-full pl-12 transition-all ${
+                      addressError 
+                        ? 'border-rose-500 ring-2 ring-rose-400/30 bg-rose-50/10 text-rose-500 placeholder:text-rose-300' 
+                        : ''
+                    }`} 
                     placeholder="Where should we come?" 
                   />
                 </div>
+                {addressError && (
+                  <p className="text-[11px] text-rose-500 font-bold flex items-center gap-1.5 pt-1 animate-pulse">
+                    <AlertCircle size={13} className="shrink-0" />
+                    Please enter your installation address.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-3 bg-white/5 p-4 rounded-2xl">
@@ -210,7 +246,7 @@ export default function InstallationFlow() {
             </div>
 
             <button 
-              disabled={loading || cart.length === 0 || !address}
+              disabled={loading || cart.length === 0}
               onClick={handleBookInstallation}
               className="btn-primary w-full py-5 text-xl font-bold flex items-center justify-center gap-3 disabled:opacity-50"
             >

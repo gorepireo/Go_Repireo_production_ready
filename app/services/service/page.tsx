@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,7 +25,8 @@ import {
   X,
   Map as MapIcon,
   Banknote,
-  CreditCard
+  CreditCard,
+  AlertCircle
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { isServiceMatching } from '@/lib/serviceMatcher';
@@ -34,7 +36,13 @@ const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelect
 
 export default function ServiceBooking() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
+
+  const descriptionRef = useRef<HTMLInputElement>(null);
+  const addressRef = useRef<HTMLInputElement>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ description?: boolean; address?: boolean }>({});
+
   const [loading, setLoading] = useState(false);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
@@ -69,8 +77,11 @@ export default function ServiceBooking() {
   };
 
   const handleEstimate = async () => {
-    if (!formData.description) {
-      alert("Please enter a brief description of the problem first.");
+    if (!formData.description?.trim()) {
+      setFieldErrors(prev => ({ ...prev, description: true }));
+      showToast("Please enter a brief description of the problem first.", "error");
+      descriptionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      descriptionRef.current?.focus();
       return;
     }
     setIsEstimating(true);
@@ -95,11 +106,11 @@ export default function ServiceBooking() {
       if (res.ok) {
         setEstimation(data);
       } else {
-        alert(data.error || "Failed to generate estimate");
+        showToast(data.error || "Failed to generate estimate", "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to calculate estimate");
+      showToast("Failed to calculate estimate", "error");
     } finally {
       setIsEstimating(false);
     }
@@ -178,6 +189,22 @@ export default function ServiceBooking() {
       router.push('/login?redirect=/services/service');
       return;
     }
+
+    if (!formData.description?.trim()) {
+      setFieldErrors(prev => ({ ...prev, description: true }));
+      showToast("Please enter a brief description of the problem first.", "error");
+      descriptionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      descriptionRef.current?.focus();
+      return;
+    }
+
+    if (!formData.address?.trim()) {
+      setFieldErrors(prev => ({ ...prev, address: true }));
+      showToast("Please provide your service address.", "error");
+      addressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      addressRef.current?.focus();
+      return;
+    }
     
     setLoading(true);
     try {
@@ -208,7 +235,7 @@ export default function ServiceBooking() {
               await createOrderRecord('paid', 'online', response.razorpay_payment_id);
             } catch (err) {
               console.error('Database save error:', err);
-              alert("Payment successful, but failed to save order details. Our team will contact you.");
+              showToast("Payment successful, but failed to save order details. Our team will contact you.", "warning");
             } finally {
               setLoading(false);
             }
@@ -236,7 +263,7 @@ export default function ServiceBooking() {
 
     } catch (err: any) {
       console.error('Booking error:', err);
-      alert(err.message || 'Error processing request');
+      showToast(err.message || 'Error processing request', "error");
       setLoading(false);
     }
   };
@@ -357,26 +384,44 @@ export default function ServiceBooking() {
           </div>
 
           {/* STEP 2: Describe Your Issue */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3">
+          <div className={`bg-white rounded-3xl p-4 sm:p-5 border shadow-xs space-y-3 transition-colors ${
+            fieldErrors.description ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-100'
+          }`}>
             <div className="flex items-center gap-2">
-              <span className="bg-blue-100 text-[#007AFF] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full">
+              <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+                fieldErrors.description ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-[#007AFF]'
+              }`}>
                 STEP 2
               </span>
-              <h2 className="text-xs font-bold text-slate-900">Describe Your Issue</h2>
+              <h2 className={`text-xs font-bold ${fieldErrors.description ? 'text-rose-900' : 'text-slate-900'}`}>Describe Your Issue</h2>
             </div>
 
             <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+              <div className={`absolute left-4 top-1/2 -translate-y-1/2 ${fieldErrors.description ? 'text-rose-500' : 'text-slate-400'}`}>
                  <MessageSquare size={16} />
               </div>
               <input 
+                ref={descriptionRef}
                 required
                 value={formData.description}
-                onChange={e => setFormData({ ...formData, description: e.target.value })}
-                className="w-full h-12 bg-white border border-slate-200/80 rounded-2xl pl-11 pr-4 text-xs font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all placeholder:text-slate-400"
+                onChange={e => {
+                  setFormData({ ...formData, description: e.target.value });
+                  if (fieldErrors.description) setFieldErrors(prev => ({ ...prev, description: false }));
+                }}
+                className={`w-full h-12 bg-white rounded-2xl pl-11 pr-4 text-xs font-medium outline-none transition-all placeholder:text-slate-400 border ${
+                  fieldErrors.description 
+                    ? 'border-rose-500 ring-2 ring-rose-400/30 bg-rose-50/20 text-rose-900 placeholder:text-rose-300' 
+                    : 'border-slate-200/80 text-slate-900 focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]'
+                }`}
                 placeholder="E.g. Kitchen tap is leaking or bathroom drain is clogged..."
               />
             </div>
+            {fieldErrors.description && (
+              <p className="text-[11px] text-rose-600 font-bold flex items-center gap-1.5 pt-0.5 animate-in fade-in slide-in-from-top-1">
+                <AlertCircle size={13} className="shrink-0 text-rose-600" />
+                Please enter a brief description of the problem first.
+              </p>
+            )}
           </div>
 
           {/* STEP 3: Choose Service Timing */}
@@ -450,26 +495,38 @@ export default function ServiceBooking() {
           </div>
 
           {/* STEP 4: Service Address & Location */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-3">
+          <div className={`bg-white rounded-3xl p-4 sm:p-5 border shadow-xs space-y-3 transition-colors ${
+            fieldErrors.address ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-100'
+          }`}>
             <div className="flex items-center gap-2">
-              <span className="bg-blue-100 text-[#007AFF] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full">
+              <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+                fieldErrors.address ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-[#007AFF]'
+              }`}>
                 STEP 4
               </span>
-              <h2 className="text-xs font-bold text-slate-900">Service Address & Location</h2>
+              <h2 className={`text-xs font-bold ${fieldErrors.address ? 'text-rose-900' : 'text-slate-900'}`}>Service Address & Location</h2>
             </div>
 
             <div className="relative flex items-center gap-2">
               <div className="relative flex-1">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <div className={`absolute left-4 top-1/2 -translate-y-1/2 ${fieldErrors.address ? 'text-rose-500' : 'text-slate-400'}`}>
                   <MapPin size={16} />
                 </div>
                 <input 
+                  ref={addressRef}
                   required 
                   value={formData.address}
                   onFocus={() => setShowAddressDropdown(true)}
                   onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
-                  onChange={e => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full h-12 bg-white border border-slate-200/80 rounded-2xl pl-11 pr-4 text-xs font-medium text-slate-900 outline-none focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF] transition-all placeholder:text-slate-400"
+                  onChange={e => {
+                    setFormData({ ...formData, address: e.target.value });
+                    if (fieldErrors.address) setFieldErrors(prev => ({ ...prev, address: false }));
+                  }}
+                  className={`w-full h-12 bg-white rounded-2xl pl-11 pr-4 text-xs font-medium outline-none transition-all placeholder:text-slate-400 border ${
+                    fieldErrors.address
+                      ? 'border-rose-500 ring-2 ring-rose-400/30 bg-rose-50/20 text-rose-900 placeholder:text-rose-300'
+                      : 'border-slate-200/80 text-slate-900 focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]'
+                  }`}
                   placeholder="Enter your address or select saved location"
                 />
               </div>
@@ -506,6 +563,12 @@ export default function ServiceBooking() {
                 <LocateFixed size={18} />
               </button>
             </div>
+            {fieldErrors.address && (
+              <p className="text-[11px] text-rose-600 font-bold flex items-center gap-1.5 pt-1 animate-pulse">
+                <AlertCircle size={13} className="shrink-0" />
+                Please enter or select a valid service address.
+              </p>
+            )}
           </div>
 
           {/* OPTIONAL: Attach Photos or Videos */}

@@ -28,6 +28,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { useCall } from '@/context/CallContext';
+import { useToast } from '@/context/ToastContext';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { predictTelemetry } from '@/lib/telemetryModel';
 import Header from '@/components/Header';
@@ -48,6 +49,7 @@ const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoo
 function TrackContent() {
   const { user, profile } = useAuth();
   const { startCall } = useCall();
+  const { showToast } = useToast();
   const searchParams = useSearchParams();
   const paramOrderId = searchParams.get('orderId') || searchParams.get('order_id') || searchParams.get('id');
   const isReviewParam = searchParams.get('review') === 'true';
@@ -230,7 +232,7 @@ function TrackContent() {
     try {
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        alert('Razorpay Payment Gateway failed to load. Please check your internet connection.');
+        showToast('Razorpay Payment Gateway failed to load. Please check your internet connection.', 'error');
         setIsPayingOnline(false);
         return;
       }
@@ -264,6 +266,8 @@ function TrackContent() {
               } as any);
             }
             setOrder((prev: any) => ({ ...prev, payment_status: 'paid', payment_method: 'online', payment_id: response.razorpay_payment_id }));
+
+            showToast('Payment received! Completion OTP is now unlocked.', 'success');
 
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('repireo_toast', {
@@ -303,7 +307,7 @@ function TrackContent() {
 
     } catch (err: any) {
       console.error('Online payment error:', err);
-      alert(err.message || 'Error initializing Razorpay payment gateway');
+      showToast(err.message || 'Error initializing Razorpay payment gateway', 'error');
       setIsPayingOnline(false);
     }
   };

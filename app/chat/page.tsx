@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Send, ArrowLeft, Loader2, Phone, MessageCircle, ChevronRight, ClipboardList, Wrench, Home, Calendar, Headphones, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -133,6 +134,7 @@ function ChatList() {
 
 function ChatContent() {
   const { user, role } = useAuth();
+  const { showToast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams.get('orderId');
@@ -188,7 +190,7 @@ function ChatContent() {
       });
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('Failed to send message.');
+      showToast('Failed to send message. Please retry.', 'error');
     }
   };
 
@@ -237,7 +239,7 @@ function ChatContent() {
           </div>
         </div>
         <button 
-          onClick={() => alert("Call functionality requires 3rd party integration (Twilio) and is currently on hold.")}
+          onClick={() => showToast("Voice call support is currently undergoing maintenance. Please use chat messages.", "info")}
           className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-[#007AFF] hover:bg-blue-50 transition border border-blue-100"
         >
           <Phone size={18} />

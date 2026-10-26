@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { Save, Camera, Loader2, User, Phone, Mail, CreditCard, LogOut, Pencil, Lock, Landmark, Banknote } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 import { useRouter } from 'next/navigation';
@@ -13,6 +14,7 @@ import { WorkerService } from '@/lib/services/worker.service';
 
 export default function WorkerSettings() {
   const { user, profile, refresh, loading: authLoading, signOut } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   
   const [loading, setLoading] = useState(false);
@@ -47,11 +49,16 @@ export default function WorkerSettings() {
     if (!user) return;
     setLoading(true);
     
-    await WorkerService.updateSettings(formData.name, formData.upi_id, formData.bank_details);
-      
-    await refresh();
-    setLoading(false);
-    alert('Profile updated successfully!');
+    try {
+      await WorkerService.updateSettings(formData.name, formData.upi_id, formData.bank_details);
+      await refresh();
+      showToast('Profile updated successfully!', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || 'Failed to update profile.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,9 +88,9 @@ export default function WorkerSettings() {
       if (!croppedBlob) throw new Error("Failed to crop image");
       
       throw new Error('Worker avatar uploads require the verified Cloudinary backend.');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to crop and upload image.");
+      showToast(err.message || "Failed to crop and upload image.", "error");
     }
     setLoading(false);
   };

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { ArrowLeft, Save, Plus, MapPin, Trash2, Camera, Loader2, X, User, Phone, Mail, LogOut, Pencil, Lock } from 'lucide-react';
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
@@ -15,11 +16,13 @@ const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelect
 
 export default function UserSettings() {
   const { user, profile, refresh, signOut } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   
   const [loading, setLoading] = useState(false);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [deletingAddressId, setDeletingAddressId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: ''
@@ -72,10 +75,10 @@ export default function UserSettings() {
       });
       if (!res.ok) throw new Error('Failed to update profile');
       await refresh();
-      alert('Profile updated successfully!');
-    } catch (err) {
+      showToast('Profile updated successfully!', 'success');
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to update profile.');
+      showToast(err.message || 'Failed to update profile.', 'error');
     } finally {
       setLoading(false);
     }
@@ -121,9 +124,10 @@ export default function UserSettings() {
         credentials: 'include',
       });
       await refresh();
-    } catch (err) {
+      showToast("Profile avatar updated successfully!", "success");
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to crop and upload image.");
+      showToast(err.message || "Failed to crop and upload image.", "error");
     }
     setLoading(false);
   };
@@ -149,26 +153,28 @@ export default function UserSettings() {
       setNewAddress({ name: '', address_text: '', lat: 0, lng: 0 });
       setIsAddingAddress(false);
       await fetchAddresses();
-    } catch (err) {
+      showToast('Address saved successfully!', 'success');
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to save address.');
+      showToast(err.message || 'Failed to save address.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteAddress = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this address?')) return;
+  const confirmDeleteAddress = async (id: string) => {
     setLoading(true);
+    setDeletingAddressId(null);
     try {
       await fetch(`/api/addresses?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       await fetchAddresses();
-    } catch (err) {
+      showToast('Address deleted successfully.', 'info');
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to delete address.');
+      showToast(err.message || 'Failed to delete address.', 'error');
     } finally {
       setLoading(false);
     }
@@ -399,7 +405,7 @@ export default function UserSettings() {
                       <p className="text-[10px] font-medium text-slate-500 line-clamp-1 pr-4 mt-0.5">{addr.formattedAddress}</p>
                     </div>
                   </div>
-                  <button onClick={() => handleDeleteAddress(addr.id)} className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">
+                  <button onClick={() => setDeletingAddressId(addr.id)} className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -407,6 +413,37 @@ export default function UserSettings() {
             )}
           </div>
         </div>
+
+        {/* Delete Address In-App Confirmation Modal */}
+        {deletingAddressId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4 border border-slate-100">
+              <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-500 mx-auto flex items-center justify-center">
+                <Trash2 size={22} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Delete Saved Address?</h3>
+                <p className="text-xs text-slate-500 mt-1">Are you sure you want to remove this address? This action cannot be undone.</p>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  disabled={loading}
+                  onClick={() => confirmDeleteAddress(deletingAddressId)}
+                  className="flex-1 h-11 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 active:scale-95 transition-all shadow-md"
+                >
+                  {loading ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+                <button
+                  disabled={loading}
+                  onClick={() => setDeletingAddressId(null)}
+                  className="flex-1 h-11 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Logout Button */}
         <div className="pt-2">

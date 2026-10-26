@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { ToastProvider } from "@/context/ToastContext";
 import { CartProvider } from "@/context/CartContext";
 import { CallProvider } from "@/context/CallContext";
 import WebRTCCallModal from "@/components/WebRTCCallModal";
@@ -209,16 +210,18 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-white text-slate-950`} data-deploy-v="REPIREO-ALPHA-1.2" suppressHydrationWarning>
-        <AuthProvider>
-          <CartProvider>
-            <CallProvider>
-              <LayoutWrapper>
-                {children}
-              </LayoutWrapper>
-              <WebRTCCallModal />
-            </CallProvider>
-          </CartProvider>
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <CartProvider>
+              <CallProvider>
+                <LayoutWrapper>
+                  {children}
+                </LayoutWrapper>
+                <WebRTCCallModal />
+              </CallProvider>
+            </CartProvider>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );
