@@ -1,7 +1,7 @@
 'use client';
 
-import { FormEvent, Suspense, useEffect, useRef, useState } from 'react';
-import { ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { FormEvent, Suspense, useState } from 'react';
+import { signInWithCustomToken } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -29,25 +29,26 @@ function LoginContent() {
   const router = useRouter();
   const search = useSearchParams();
   const { refresh } = useAuth();
-  const verifier = useRef<RecaptchaVerifier | null>(null);
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+  const [challengeId, setChallengeId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => () => verifier.current?.clear(), []);
 
   async function requestCode(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError('');
     try {
-      if (!verifier.current) verifier.current = new RecaptchaVerifier(auth, 'phone-recaptcha', { size: 'normal' });
-      setConfirmation(await signInWithPhoneNumber(auth, normalizeIndianPhone(phone), verifier.current));
+      const response = await fetch('/api/auth/phone-otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: normalizeIndianPhone(phone), purpose: 'login' }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to send the verification code.');
+      setChallengeId(result.challengeId);
     } catch (cause) {
-      verifier.current?.clear();
-      verifier.current = null;
       setError(loginErrorMessage(cause));
     } finally {
       setBusy(false);
@@ -56,14 +57,21 @@ function LoginContent() {
 
   async function verifyCode(event: FormEvent) {
     event.preventDefault();
-    if (!confirmation || !/^\d{6}$/.test(code)) {
+    if (!challengeId || !/^\d{6}$/.test(code)) {
       setError('Enter the six-digit verification code.');
       return;
     }
     setBusy(true);
     setError('');
     try {
-      const credential = await confirmation.confirm(code);
+      const verifyResponse = await fetch('/api/auth/phone-otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengeId, phone: normalizeIndianPhone(phone), code, purpose: 'login' }),
+      });
+      const verification = await verifyResponse.json();
+      if (!verifyResponse.ok || !verification.customToken) throw new Error(verification.error || 'The verification code is invalid or expired.');
+      const credential = await signInWithCustomToken(auth, verification.customToken);
       const idToken = await credential.user.getIdToken(true);
       const sessionResponse = await fetch('/api/auth/session', {
         headers: { Authorization: `Bearer ${idToken}` },
@@ -117,8 +125,8 @@ function LoginContent() {
 
           <section className="relative z-20 px-3 pb-8 min-[375px]:px-4 sm:px-10 lg:flex lg:translate-y-20 lg:flex-col lg:justify-center lg:px-12 lg:pb-20 lg:pt-24">
             <div className="mx-auto w-full max-w-[610px] rounded-[24px] border border-white bg-white/95 p-4 shadow-[0_22px_60px_rgba(28,91,158,0.13)] backdrop-blur-xl min-[375px]:rounded-[32px] min-[375px]:p-6 sm:p-8 lg:p-9">
-              <form onSubmit={confirmation ? verifyCode : requestCode} className="space-y-4">
-              {!confirmation ? (
+              <form onSubmit={challengeId ? verifyCode : requestCode} className="space-y-4">
+              {!challengeId ? (
                 <div className="space-y-1.5">
                   <label htmlFor="phone" className="ml-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Mobile number</label>
                   <div className="flex h-14 items-center rounded-2xl border border-[#a9d1ff] bg-[#f8fbff] shadow-[0_7px_18px_rgba(31,133,242,0.08)] transition focus-within:border-[#0874ef] focus-within:ring-2 focus-within:ring-blue-100">
@@ -135,15 +143,14 @@ function LoginContent() {
                 </div>
               )}
 
-              <div id="phone-recaptcha" className="overflow-hidden rounded-xl" />
               {error && <p role="alert" className="rounded-xl border border-red-100 bg-red-50 p-3 text-[10px] font-bold uppercase tracking-wider text-[#FF3B30]">{error}</p>}
 
               <button disabled={busy} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#081832] px-3 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-[0_12px_25px_rgba(8,24,50,0.14)] transition hover:bg-black active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 min-[375px]:h-14 min-[375px]:gap-3 min-[375px]:text-[10px] min-[375px]:tracking-[0.12em]">
-                {busy ? 'Please wait…' : confirmation ? 'Verify and continue' : 'Send verification code'} <ArrowRight size={14} />
+                {busy ? 'Please wait…' : challengeId ? 'Verify and continue' : 'Send verification code'} <ArrowRight size={14} />
               </button>
 
-              {confirmation && (
-                <button type="button" onClick={() => { setConfirmation(null); setCode(''); setError(''); }} className="w-full text-[10px] font-bold uppercase tracking-widest text-[#007AFF] hover:underline">
+              {challengeId && (
+                <button type="button" onClick={() => { setChallengeId(''); setCode(''); setError(''); }} className="w-full text-[10px] font-bold uppercase tracking-widest text-[#007AFF] hover:underline">
                   Use another number
                 </button>
               )}

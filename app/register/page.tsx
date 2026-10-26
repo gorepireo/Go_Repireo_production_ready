@@ -1,10 +1,10 @@
 'use client';
 
-import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import { FormEvent, ReactNode, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { signInWithCustomToken } from 'firebase/auth';
 import {
   ArrowRight, BriefcaseBusiness, Check, ChevronDown, Hammer, LockKeyhole,
   Mail, MapPin, Phone, ShieldCheck, Sparkles, UserRound, Wrench, Zap,
@@ -34,10 +34,9 @@ function friendlyError(cause: unknown) {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const verifier = useRef<RecaptchaVerifier | null>(null);
   const [accountType, setAccountType] = useState<AccountType>('customer');
   const [step, setStep] = useState<1 | 2>(1);
-  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+  const [challengeId, setChallengeId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [services, setServices] = useState<string[]>([]);
@@ -45,8 +44,6 @@ export default function RegisterPage() {
     displayName: '', email: '', phone: '', state: '', district: '', pincode: '', area: '',
     experienceYears: '0', description: '', code: '',
   });
-
-  useEffect(() => () => verifier.current?.clear(), []);
 
   function update(name: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [name]: value }));
@@ -67,12 +64,16 @@ export default function RegisterPage() {
 
     setBusy(true);
     try {
-      if (!verifier.current) verifier.current = new RecaptchaVerifier(auth, 'register-recaptcha', { size: 'normal' });
-      setConfirmation(await signInWithPhoneNumber(auth, `+91${form.phone}`, verifier.current));
+      const response = await fetch('/api/auth/phone-otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: `+91${form.phone}`, purpose: 'register' }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to send the verification code.');
+      setChallengeId(result.challengeId);
       setStep(2);
     } catch (cause) {
-      verifier.current?.clear();
-      verifier.current = null;
       setError(friendlyError(cause));
     } finally {
       setBusy(false);
@@ -82,10 +83,17 @@ export default function RegisterPage() {
   async function finishRegistration(event: FormEvent) {
     event.preventDefault();
     setError('');
-    if (!confirmation || !/^\d{6}$/.test(form.code)) return setError('Enter the six-digit verification code.');
+    if (!challengeId || !/^\d{6}$/.test(form.code)) return setError('Enter the six-digit verification code.');
     setBusy(true);
     try {
-      const credential = await confirmation.confirm(form.code);
+      const verifyResponse = await fetch('/api/auth/phone-otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengeId, phone: `+91${form.phone}`, code: form.code, purpose: 'register' }),
+      });
+      const verification = await verifyResponse.json();
+      if (!verifyResponse.ok || !verification.customToken) throw new Error(verification.error || 'The verification code is invalid or expired.');
+      const credential = await signInWithCustomToken(auth, verification.customToken);
       const idToken = await credential.user.getIdToken(true);
       const response = await fetch('/api/auth/register-user', {
         method: 'POST',
@@ -157,7 +165,6 @@ export default function RegisterPage() {
 
                 {accountType === 'partner' && <PartnerFields form={form} update={update} services={services} setServices={setServices} />}
 
-                <div id="register-recaptcha" className="mt-4 overflow-hidden rounded-xl" />
               </> : <OtpStep phone={form.phone} code={form.code} onChange={(value) => update('code', value)} />}
 
               {error && <p role="alert" className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3 text-xs font-semibold text-red-600">{error}</p>}
@@ -166,7 +173,7 @@ export default function RegisterPage() {
                 {busy ? 'Please wait…' : step === 2 ? 'Verify and Create Account' : accountType === 'customer' ? 'Create Customer Account' : 'Submit Partner Application'} <ArrowRight size={18} />
               </button>
 
-              {step === 2 && <button type="button" onClick={() => { setStep(1); setConfirmation(null); update('code', ''); verifier.current?.clear(); verifier.current = null; }} className="mt-4 w-full text-center text-xs font-bold text-[#0874ef]">Change account details</button>}
+              {step === 2 && <button type="button" onClick={() => { setStep(1); setChallengeId(''); update('code', ''); }} className="mt-4 w-full text-center text-xs font-bold text-[#0874ef]">Change account details</button>}
 
               <div className={`flex flex-col items-center gap-0.5 text-center text-[10px] text-slate-500 ${accountType === 'partner' ? 'mt-2' : 'mt-3'}`}>
                 <p className="flex items-center gap-2"><LockKeyhole size={13} />Your information is secure and verified through Firebase.</p>

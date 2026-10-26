@@ -103,6 +103,7 @@ export async function POST(request: Request) {
     }
 
     await db.batch(statements, 'write');
+    await getFirebaseAdminAuth().setCustomUserClaims(decoded.uid, { role });
     return NextResponse.json({
       user: { uid: decoded.uid, phone: decoded.phone_number || null, email, displayName, role, accountStatus },
     }, { status: existing.rows[0] ? 200 : 201 });
