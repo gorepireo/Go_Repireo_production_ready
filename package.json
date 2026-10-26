@@ -7,7 +7,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "node build.js",
+    "build": "next build",
+    "build:cloudflare": "node build.js",
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "node scripts/migrate-turso.mjs"
@@ -20,7 +21,7 @@
     "autoprefixer": "^10.5.0",
     "clsx": "^2.1.1",
     "firebase": "^12.17.1",
-    "firebase-admin": "^14.5.0",
+    "firebase-admin": "13.10.0",
     "framer-motion": "^12.38.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.8.0",
