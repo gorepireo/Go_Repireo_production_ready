@@ -5,7 +5,7 @@ import { ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber } from 'fi
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, CheckCircle2, Headphones, Home, Phone, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowRight, Home, Phone } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 
@@ -107,22 +107,15 @@ function LoginContent() {
               <h1 className="mt-3 text-[42px] font-black leading-[0.94] tracking-[-0.045em] sm:text-5xl lg:text-[58px]">Welcome<br /><span className="text-[#0874ef]">Back.</span></h1>
               <p className="mt-4 max-w-[330px] text-sm font-medium leading-6 text-[#5a7190]">Sign in securely with the mobile number connected to your Go_Repireo account.</p>
 
-              <div className="mt-6 hidden space-y-4 lg:block">
-                {[
-                  { Icon: ShieldCheck, title: 'Secure & Trusted', text: 'Your data is protected', color: 'bg-blue-50 text-[#0874ef]' },
-                  { Icon: Zap, title: 'Fast & Reliable', text: 'Quick and easy access', color: 'bg-orange-50 text-[#ff9900]' },
-                  { Icon: Headphones, title: 'Support', text: 'Help whenever you need', color: 'bg-purple-50 text-purple-500' },
-                ].map(({ Icon, title, text, color }) => <div key={title} className="flex items-center gap-4"><span className={`flex size-11 items-center justify-center rounded-2xl ${color}`}><Icon size={21} /></span><span><strong className="block text-sm">{title}</strong><small className="text-[11px] text-slate-500">{text}</small></span></div>)}
-              </div>
             </div>
           </section>
 
-          <div className="pointer-events-none relative order-first h-[245px] overflow-hidden lg:absolute lg:inset-x-[31%] lg:top-0 lg:order-none lg:h-[360px]">
+          <div className="pointer-events-none relative z-10 order-first h-[245px] overflow-hidden lg:absolute lg:left-[42%] lg:right-0 lg:top-0 lg:order-none lg:h-[340px] lg:overflow-visible">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#d8efff_0%,transparent_68%)]" />
-            <Image src="/login_mechanic_3d.png" alt="Go_Repireo service professional" width={520} height={520} className="absolute left-1/2 top-0 h-[120%] w-auto -translate-x-1/2 object-contain mix-blend-multiply" priority />
+            <Image src="/login_mechanic_3d.png" alt="Go_Repireo service professional" width={520} height={520} className="absolute left-1/2 top-[-5%] h-[118%] w-auto -translate-x-1/2 rounded-[42%] object-contain lg:top-[-24%]" priority />
           </div>
 
-          <section className="relative z-20 px-4 pb-8 sm:px-10 lg:flex lg:flex-col lg:justify-center lg:px-12 lg:pb-20 lg:pt-24">
+          <section className="relative z-20 px-4 pb-8 sm:px-10 lg:flex lg:translate-y-20 lg:flex-col lg:justify-center lg:px-12 lg:pb-20 lg:pt-24">
             <div className="mx-auto w-full max-w-[610px] rounded-[32px] border border-white bg-white/95 p-6 shadow-[0_22px_60px_rgba(28,91,158,0.13)] backdrop-blur-xl sm:p-8 lg:p-9">
               <form onSubmit={confirmation ? verifyCode : requestCode} className="space-y-4">
               {!confirmation ? (
@@ -169,21 +162,6 @@ function LoginContent() {
             <Link href="/" className="mx-auto mt-6 flex w-fit items-center gap-2 text-xs font-bold text-[#0874ef] hover:underline"><Home size={15} /> Return to Home</Link>
           </section>
 
-          <section className="hide-scrollbar relative z-20 col-span-full overflow-x-auto px-5 pb-7 lg:absolute lg:bottom-5 lg:left-[35%] lg:right-8 lg:px-0 lg:pb-0">
-            <div className="flex min-w-max justify-center gap-3 lg:justify-end">
-            {[
-              { Icon: ShieldCheck, title: 'Secure & Trusted', text: 'Firebase protected', color: 'bg-blue-50 text-[#007AFF]' },
-              { Icon: Zap, title: 'Fast & Reliable', text: 'Quick account access', color: 'bg-orange-50 text-[#FF9500]' },
-              { Icon: Headphones, title: 'Support', text: 'Help when needed', color: 'bg-purple-50 text-purple-500' },
-              { Icon: CheckCircle2, title: 'Verified Platform', text: 'Trusted by thousands', color: 'bg-green-50 text-green-500' },
-            ].map(({ Icon, title, text, color }, index) => (
-              <div key={title} className={`flex items-center gap-2 px-2 pr-4 ${index < 3 ? 'border-r border-slate-200' : ''}`}>
-                <div className={`flex size-8 items-center justify-center rounded-full ${color}`}><Icon size={16} /></div>
-                <div><h2 className="text-[8px] font-black uppercase tracking-tight text-slate-900">{title}</h2><p className="text-[7px] text-slate-500">{text}</p></div>
-              </div>
-            ))}
-            </div>
-          </section>
         </div>
       </div>
     </main>
