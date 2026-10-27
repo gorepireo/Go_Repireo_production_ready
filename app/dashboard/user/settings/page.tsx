@@ -15,9 +15,15 @@ import dynamic from 'next/dynamic';
 const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelector'), { ssr: false });
 
 export default function UserSettings() {
-  const { user, profile, refresh, signOut } = useAuth();
+  const { user, profile, role, refresh, signOut } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    if (role === 'worker') {
+      router.replace('/dashboard/worker/settings');
+    }
+  }, [role, router]);
   
   const [loading, setLoading] = useState(false);
   const [addresses, setAddresses] = useState<any[]>([]);

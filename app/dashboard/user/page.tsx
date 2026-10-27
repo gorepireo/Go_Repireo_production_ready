@@ -15,12 +15,22 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { UserDashboardSkeleton } from '@/components/SkeletonLoader';
 import { OrderService } from '@/lib/services/order.service';
 
 function UserDashboardContent() {
-  const { user, profile } = useAuth();
+  const { user, profile, role } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (role === 'worker') {
+      router.replace('/dashboard/worker');
+    } else if (role === 'admin') {
+      router.replace('/admin');
+    }
+  }, [role, router]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalSpent, setTotalSpent] = useState(0);

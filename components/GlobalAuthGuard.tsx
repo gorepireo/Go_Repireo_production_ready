@@ -26,9 +26,17 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
       return;
     }
     if (user && role && authRoute) {
+      if (role === 'admin') {
+        router.replace('/admin');
+        return;
+      }
+      if (role === 'worker') {
+        router.replace('/dashboard/worker');
+        return;
+      }
       const requested = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('next');
-      const safeNext = requested?.startsWith('/') && !requested.startsWith('//') ? requested : null;
-      router.replace(safeNext || (role === 'admin' ? '/admin' : role === 'worker' ? '/dashboard/worker' : '/dashboard/user'));
+      const safeNext = requested?.startsWith('/') && !requested.startsWith('//') && !requested.startsWith('/dashboard/worker') ? requested : null;
+      router.replace(safeNext || '/dashboard/user');
     }
   }, [authRoute, loading, pathname, publicRoute, role, router, user]);
 

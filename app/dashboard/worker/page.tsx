@@ -50,10 +50,18 @@ const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoo
 });
 
 function WorkerDashboardContent() {
-  const { user, profile: rawProfile } = useAuth();
+  const { user, role, profile: rawProfile } = useAuth();
   const { startCall } = useCall();
   const profile = rawProfile as any;
   const router = useRouter();
+
+  useEffect(() => {
+    if (role === 'customer') {
+      router.replace('/dashboard/user');
+    } else if (role === 'admin') {
+      router.replace('/admin');
+    }
+  }, [role, router]);
 
   const [activeJob, setActiveJob] = useState<any>(null);
   const [completedJobs, setCompletedJobs] = useState<any[]>([]);

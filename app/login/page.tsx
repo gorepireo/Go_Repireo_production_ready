@@ -108,9 +108,17 @@ function LoginContent() {
         throw new Error('Your service partner application is awaiting administrator approval.');
       }
       await refresh();
+      if (role === 'admin') {
+        router.replace('/admin');
+        return;
+      }
+      if (role === 'worker') {
+        router.replace('/dashboard/worker');
+        return;
+      }
       const requested = search.get('next');
-      const safeNext = requested?.startsWith('/') && !requested.startsWith('//') ? requested : null;
-      router.replace(safeNext || (role === 'admin' ? '/admin' : role === 'worker' ? '/dashboard/worker' : '/dashboard/user'));
+      const safeNext = requested?.startsWith('/') && !requested.startsWith('//') && !requested.startsWith('/dashboard/worker') ? requested : null;
+      router.replace(safeNext || '/dashboard/user');
     } catch (cause) {
       setError(loginErrorMessage(cause) || 'The verification code is invalid or expired.');
     } finally {

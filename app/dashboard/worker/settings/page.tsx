@@ -13,9 +13,15 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { WorkerService } from '@/lib/services/worker.service';
 
 export default function WorkerSettings() {
-  const { user, profile, refresh, loading: authLoading, signOut } = useAuth();
+  const { user, profile, role, refresh, loading: authLoading, signOut } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    if (role === 'customer') {
+      router.replace('/dashboard/user/settings');
+    }
+  }, [role, router]);
   
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
