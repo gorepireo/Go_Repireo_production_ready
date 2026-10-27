@@ -45,21 +45,18 @@ export default function WebRTCCallModal() {
 
   return (
     <>
-      {/* HTML5 Remote Audio Element ALWAYS Mounted in DOM (Opacity 0.01 to prevent iOS/Android autoplay throttling) */}
+      {/* HTML5 Remote Audio Element ALWAYS Mounted in DOM for low-latency WebRTC playback */}
       <audio
         ref={remoteAudioRef}
         autoPlay
         playsInline
-        muted={false}
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '1px',
-          height: '1px',
-          opacity: 0.01,
+          top: '-9999px',
+          left: '-9999px',
+          width: '10px',
+          height: '10px',
           pointerEvents: 'none',
-          zIndex: -1
         }}
       />
 

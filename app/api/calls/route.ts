@@ -134,11 +134,36 @@ export async function GET(req: Request) {
 
       let sdpOffer = null;
       let sdpAnswer = null;
-      let iceCandidates = [];
+      let iceCandidates: any[] = [];
 
       try { if (row.sdp_offer) sdpOffer = JSON.parse(String(row.sdp_offer)); } catch {}
       try { if (row.sdp_answer) sdpAnswer = JSON.parse(String(row.sdp_answer)); } catch {}
-      try { if (row.ice_candidates_json) iceCandidates = JSON.parse(String(row.ice_candidates_json)); } catch {}
+
+      // Prefer atomic call_ice_candidates table to prevent any dropped candidates
+      try {
+        const iceRows = await db.execute({
+          sql: `SELECT role, user_id, candidate_json FROM call_ice_candidates WHERE call_id = ? ORDER BY id ASC`,
+          args: [sessionId],
+        });
+        if (iceRows.rows.length > 0) {
+          iceCandidates = iceRows.rows.map((r) => {
+            let parsed = null;
+            try { parsed = JSON.parse(String(r.candidate_json)); } catch {}
+            return {
+              role: String(r.role),
+              userId: r.user_id ? String(r.user_id) : undefined,
+              candidate: parsed,
+            };
+          }).filter((c) => c.candidate);
+        }
+      } catch (err) {
+        console.warn('[api/calls] Failed to query call_ice_candidates table:', err);
+      }
+
+      // Fallback to legacy column if table empty
+      if (iceCandidates.length === 0) {
+        try { if (row.ice_candidates_json) iceCandidates = JSON.parse(String(row.ice_candidates_json)); } catch {}
+      }
 
       return NextResponse.json({
         session: {
@@ -219,7 +244,7 @@ export async function PATCH(req: Request) {
   try {
     const identity = await requireIdentity(req);
     const body = await req.json().catch(() => ({}));
-    const { call_id, status, ended_by, sdp_answer, candidate, role, userId } = body;
+    const { call_id, status, ended_by, sdp_answer, candidate, candidates, role, userId } = body;
 
     if (!call_id) {
       return NextResponse.json({ error: 'call_id is required' }, { status: 400 });
@@ -228,29 +253,54 @@ export async function PATCH(req: Request) {
     const db = getTurso();
     const now = new Date().toISOString();
 
-    // Candidate addition
-    if (candidate) {
-      const existingRes = await db.execute({
-        sql: `SELECT ice_candidates_json FROM call_sessions WHERE id = ? LIMIT 1`,
-        args: [call_id],
-      });
-      const row = existingRes.rows[0];
-      if (row) {
-        let list: any[] = [];
+    // Atomic ICE candidate addition (supports both single candidate and candidate arrays)
+    const candidatesToInsert: any[] = Array.isArray(candidates) 
+      ? candidates 
+      : (candidate ? [candidate] : []);
+
+    if (candidatesToInsert.length > 0) {
+      const candRole = role || (identity.role === 'worker' ? 'worker' : 'customer');
+      const candUserId = userId || identity.uid;
+
+      for (const cand of candidatesToInsert) {
+        if (!cand) continue;
         try {
-          if (row.ice_candidates_json) list = JSON.parse(String(row.ice_candidates_json));
-        } catch {}
-        list.push({
-          candidate,
-          role: role || (identity.role === 'worker' ? 'worker' : 'customer'),
-          userId: userId || identity.uid,
-        });
-        await db.execute({
-          sql: `UPDATE call_sessions SET ice_candidates_json = ? WHERE id = ?`,
-          args: [JSON.stringify(list), call_id],
-        });
+          await db.execute({
+            sql: `INSERT INTO call_ice_candidates (call_id, role, user_id, candidate_json) VALUES (?, ?, ?, ?)`,
+            args: [call_id, candRole, candUserId, JSON.stringify(cand)],
+          });
+        } catch (insertErr) {
+          console.warn('[api/calls] Failed to insert candidate to call_ice_candidates:', insertErr);
+        }
       }
-      return NextResponse.json({ success: true, candidateAdded: true });
+
+      // Also update call_sessions.ice_candidates_json for backwards compatibility
+      try {
+        const existingRes = await db.execute({
+          sql: `SELECT ice_candidates_json FROM call_sessions WHERE id = ? LIMIT 1`,
+          args: [call_id],
+        });
+        const row = existingRes.rows[0];
+        if (row) {
+          let list: any[] = [];
+          try {
+            if (row.ice_candidates_json) list = JSON.parse(String(row.ice_candidates_json));
+          } catch {}
+          for (const cand of candidatesToInsert) {
+            list.push({
+              candidate: cand,
+              role: candRole,
+              userId: candUserId,
+            });
+          }
+          await db.execute({
+            sql: `UPDATE call_sessions SET ice_candidates_json = ? WHERE id = ?`,
+            args: [JSON.stringify(list), call_id],
+          });
+        }
+      } catch {}
+
+      return NextResponse.json({ success: true, count: candidatesToInsert.length });
     }
 
     if (status === 'accepted') {

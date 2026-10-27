@@ -40,7 +40,7 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-// WebRTC STUN & TURN Relay Server Config for cellular NAT & symmetric firewall traversal
+// WebRTC STUN & TURN Relay Server Config with verified active endpoints
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -48,11 +48,13 @@ const rtcConfig: RTCConfiguration = {
     { urls: 'stun:stun2.l.google.com:19302' },
     { urls: 'stun:stun3.l.google.com:19302' },
     { urls: 'stun:stun4.l.google.com:19302' },
+    { urls: 'stun:stun.cloudflare.com:3478' },
     {
       urls: [
-        'turn:openrelay.metered.ca:80',
-        'turn:openrelay.metered.ca:443',
-        'turn:openrelay.metered.ca:443?transport=tcp',
+        'turn:staticauth.openrelay.metered.ca:80',
+        'turn:staticauth.openrelay.metered.ca:443',
+        'turn:staticauth.openrelay.metered.ca:443?transport=tcp',
+        'turns:staticauth.openrelay.metered.ca:443?transport=tcp',
       ],
       username: 'openrelayproject',
       credential: 'openrelayproject',
@@ -61,7 +63,7 @@ const rtcConfig: RTCConfiguration = {
   iceCandidatePoolSize: 10,
 };
 
-// Helper: Wait briefly for ICE candidates to gather so they are embedded directly in the SDP
+// Helper: Wait briefly for initial ICE candidates to gather so they are embedded directly in the SDP
 const waitForIceGathering = (pc: RTCPeerConnection, timeoutMs = 800): Promise<void> => {
   return new Promise<void>((resolve) => {
     if (pc.iceGatheringState === 'complete') {
@@ -99,15 +101,17 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const ringtoneTimerRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
-  // ICE Candidate Queues & Guard Refs
+  // Candidate Batching & Guard Refs
   const addedCandidatesRef = useRef<Set<string>>(new Set());
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const remoteDescriptionSetRef = useRef<boolean>(false);
   const myCallRoleRef = useRef<'caller' | 'callee'>('caller');
+  const candidateBatchRef = useRef<RTCIceCandidateInit[]>([]);
+  const candidateBatchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeSessionIdRef = useRef<string | null>(null);
 
-  // Resume or Initialize Web Audio Context
+  // Initialize or resume Web Audio Context for Ringtone synthesis
   const getAudioContext = useCallback(() => {
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -123,7 +127,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Play synthetic Ringtone via Web Audio API
+  // Play synthetic pleasant Ringtone via Web Audio API
   const playRingtone = useCallback(() => {
     try {
       const ctx = getAudioContext();
@@ -133,12 +137,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(440, ctx.currentTime);
-      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 1.2);
+      osc.stop(ctx.currentTime + 1.0);
     } catch {
       // AudioContext unavailable
     }
@@ -156,6 +160,34 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Flush batched candidates to server
+  const flushCandidateBatch = useCallback(() => {
+    if (!activeSessionIdRef.current || candidateBatchRef.current.length === 0) return;
+    const toSend = [...candidateBatchRef.current];
+    candidateBatchRef.current = [];
+
+    fetch('/api/calls', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        call_id: activeSessionIdRef.current,
+        candidates: toSend,
+        role: myCallRoleRef.current,
+      }),
+    }).catch(() => {});
+  }, []);
+
+  const queueCandidateToSend = useCallback((cand: RTCIceCandidateInit) => {
+    candidateBatchRef.current.push(cand);
+    if (!candidateBatchTimerRef.current) {
+      candidateBatchTimerRef.current = setTimeout(() => {
+        candidateBatchTimerRef.current = null;
+        flushCandidateBatch();
+      }, 200);
+    }
+  }, [flushCandidateBatch]);
+
   // Cleanup WebRTC & Streams
   const cleanupCall = useCallback(() => {
     stopRingtoneLoop();
@@ -165,16 +197,16 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       timerIntervalRef.current = null;
     }
 
+    if (candidateBatchTimerRef.current) {
+      clearTimeout(candidateBatchTimerRef.current);
+      candidateBatchTimerRef.current = null;
+    }
+    candidateBatchRef.current = [];
+    activeSessionIdRef.current = null;
+
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
-    }
-
-    if (mediaStreamSourceRef.current) {
-      try {
-        mediaStreamSourceRef.current.disconnect();
-      } catch {}
-      mediaStreamSourceRef.current = null;
     }
 
     if (peerConnectionRef.current) {
@@ -182,6 +214,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         peerConnectionRef.current.close();
       } catch {}
       peerConnectionRef.current = null;
+    }
+
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
     }
 
     remoteDescriptionSetRef.current = false;
@@ -228,7 +264,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Request Microphone Stream safely
+  // Request Microphone Stream safely with optimal voice parameters
   const getMicrophoneStream = async (): Promise<MediaStream | null> => {
     try {
       setMicPermissionError(null);
@@ -237,43 +273,53 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 48000,
         },
+        video: false,
       });
+
+      // Ensure every audio track is fully enabled
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = true;
+      });
+
       localStreamRef.current = stream;
       return stream;
     } catch (err: unknown) {
       const error = err as { name?: string };
       const msg =
         error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError'
-          ? 'Microphone permission denied. Please allow microphone access in your browser settings to make voice calls.'
-          : 'Microphone is unavailable on your device.';
+          ? 'Microphone permission denied. Please allow microphone access in your browser settings to make in-app voice calls.'
+          : 'Microphone is unavailable or busy on your device.';
       setMicPermissionError(msg);
       return null;
     }
   };
 
-  // Route remote stream to HTML5 Audio element and Web Audio API destination for guaranteed playback
+  // Route remote stream directly to HTML5 Audio element with robust play & unblock logic
   const setupRemoteAudio = useCallback((remoteStream: MediaStream) => {
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = remoteStream;
-      remoteAudioRef.current.muted = false;
-      remoteAudioRef.current.volume = 1.0;
-      remoteAudioRef.current.play().catch(() => {});
-    }
+    if (!remoteAudioRef.current) return;
+    const audioEl = remoteAudioRef.current;
+    
+    audioEl.srcObject = remoteStream;
+    audioEl.muted = false;
+    audioEl.volume = 1.0;
 
-    try {
-      const ctx = getAudioContext();
-      if (ctx) {
-        if (!mediaStreamSourceRef.current) {
-          const source = ctx.createMediaStreamSource(remoteStream);
-          mediaStreamSourceRef.current = source;
-          source.connect(ctx.destination);
-        }
-      }
-    } catch (err) {
-      console.warn('[CallContext] Web Audio bridge failed:', err);
+    const playPromise = audioEl.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        console.warn('[CallContext] Autoplay policy prevented playback, attaching tap unblocker:', err);
+        const unblock = () => {
+          audioEl.play().catch(() => {});
+          window.removeEventListener('click', unblock);
+          window.removeEventListener('touchstart', unblock);
+        };
+        window.addEventListener('click', unblock, { once: true });
+        window.addEventListener('touchstart', unblock, { once: true });
+      });
     }
-  }, [getAudioContext]);
+  }, []);
 
   // 1. INITIATE CALL (OUTGOING)
   const startCall = async (
@@ -287,10 +333,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     remoteDescriptionSetRef.current = false;
     pendingCandidatesRef.current = [];
     addedCandidatesRef.current.clear();
+    candidateBatchRef.current = [];
 
-    // Unlock Web Audio and remote audio element during user click gesture
+    // Prime Web Audio and remote audio element during user click gesture to bypass mobile autoplay blockers
     getAudioContext();
     if (remoteAudioRef.current) {
+      remoteAudioRef.current.muted = false;
       remoteAudioRef.current.volume = 1.0;
       remoteAudioRef.current.play().catch(() => {});
     }
@@ -317,34 +365,19 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (remoteAudioRef.current) {
             remoteAudioRef.current.play().catch(() => {});
           }
+          stopRingtoneLoop();
+          setCallStatus('connected');
         };
       };
 
-      // Early candidate buffer for candidates discovered before session ID is confirmed
-      let activeSessionId: string | null = null;
-      const earlyCandidates: RTCIceCandidateInit[] = [];
-
+      // Candidate handling
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          const candJson = event.candidate.toJSON();
-          if (activeSessionId) {
-            fetch('/api/calls', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({
-                call_id: activeSessionId,
-                candidate: candJson,
-                role: 'caller',
-              }),
-            }).catch(() => {});
-          } else {
-            earlyCandidates.push(candJson);
-          }
+          queueCandidateToSend(event.candidate.toJSON());
         }
       };
 
-      // Connection status listeners
+      // Real connection status listeners
       const handleConnected = () => {
         stopRingtoneLoop();
         setCallStatus('connected');
@@ -366,12 +399,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
-      // Create and set local SDP Offer
-      const offer = await pc.createOffer();
+      // Create local SDP Offer with explicit audio reception intent
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: false,
+      });
       await pc.setLocalDescription(offer);
 
-      // Wait briefly for ICE candidates to gather so they are baked into the offer SDP
-      await waitForIceGathering(pc, 800);
+      // Wait briefly for initial candidates to gather into the SDP
+      await waitForIceGathering(pc, 600);
       const offerToSend = pc.localDescription || offer;
 
       // Post offer to server
@@ -394,24 +430,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const session = data.callSession;
-      activeSessionId = session.id;
+      activeSessionIdRef.current = session.id;
       const targetParticipant = participantOverride || session.participant;
 
-      // Flush any early candidates
-      if (earlyCandidates.length > 0) {
-        for (const cand of earlyCandidates) {
-          fetch('/api/calls', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              call_id: session.id,
-              candidate: cand,
-              role: 'caller',
-            }),
-          }).catch(() => {});
-        }
-      }
+      // Flush any initial gathered candidates
+      flushCandidateBatch();
 
       setCallData({
         sessionId: session.id,
@@ -435,14 +458,18 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!callData || callStatus !== 'incoming') return;
 
     myCallRoleRef.current = 'callee';
+    activeSessionIdRef.current = callData.sessionId;
     remoteDescriptionSetRef.current = false;
     pendingCandidatesRef.current = [];
     addedCandidatesRef.current.clear();
+    candidateBatchRef.current = [];
 
     stopRingtoneLoop();
     getAudioContext();
 
+    // Prime audio playback during user accept click
     if (remoteAudioRef.current) {
+      remoteAudioRef.current.muted = false;
       remoteAudioRef.current.volume = 1.0;
       remoteAudioRef.current.play().catch(() => {});
     }
@@ -478,21 +505,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (remoteAudioRef.current) {
             remoteAudioRef.current.play().catch(() => {});
           }
+          stopRingtoneLoop();
+          setCallStatus('connected');
         };
       };
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          fetch('/api/calls', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              call_id: callData.sessionId,
-              candidate: event.candidate.toJSON(),
-              role: 'callee',
-            }),
-          }).catch(() => {});
+          queueCandidateToSend(event.candidate.toJSON());
         }
       };
 
@@ -526,8 +546,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
-      // Wait briefly for ICE candidates to gather into answer SDP
-      await waitForIceGathering(pc, 800);
+      // Wait briefly for initial candidates to gather into answer SDP
+      await waitForIceGathering(pc, 600);
       const answerToSend = pc.localDescription || answer;
 
       // Send Answer to Server
@@ -542,12 +562,13 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }),
       });
 
-      setCallStatus('connected');
+      // Flush gathered candidates
+      flushCandidateBatch();
 
       // Process any already recorded caller ICE candidates
       if (Array.isArray(data.session.iceCandidates)) {
         for (const c of data.session.iceCandidates) {
-          if (c.candidate && c.role === 'caller') {
+          if (c.candidate && (c.role === 'caller' || c.userId !== user?.uid)) {
             await addIceCandidateSafely(c.candidate);
           }
         }
@@ -577,7 +598,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 1500);
+    }, 1200);
   };
 
   // 4. END ACTIVE CALL
@@ -597,7 +618,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 1500);
+    }, 1200);
   };
 
   // Toggle Mute Local Mic
@@ -613,12 +634,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Toggle Speakerphone
+  // Toggle Speakerphone (Volume boost)
   const toggleSpeaker = async () => {
     const nextState = !isSpeakerOn;
     setIsSpeakerOn(nextState);
     if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = nextState ? 1.0 : 0.6;
+      remoteAudioRef.current.volume = nextState ? 1.0 : 0.7;
     }
   };
 
@@ -630,8 +651,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (!user) return;
 
-    // Use 700ms polling during handshake / ringing, 1500ms when idle or connected
-    const pollInterval = ['outgoing', 'incoming'].includes(callStatus) ? 700 : 1500;
+    // Fast 500ms polling during handshake / ringing, 1500ms when connected
+    const pollInterval = ['outgoing', 'incoming'].includes(callStatus) ? 500 : 1500;
 
     const interval = setInterval(async () => {
       try {
@@ -650,7 +671,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setTimeout(() => {
                 setCallStatus('idle');
                 setCallData(null);
-              }, 1500);
+              }, 1200);
               return;
             }
 
@@ -665,7 +686,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(session.sdpAnswer));
                   remoteDescriptionSetRef.current = true;
                   stopRingtoneLoop();
-                  setCallStatus('connected');
                   await flushPendingCandidates();
 
                   if (remoteAudioRef.current) {
@@ -682,7 +702,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (Array.isArray(session.iceCandidates)) {
               const targetRole = myCallRoleRef.current === 'caller' ? 'callee' : 'caller';
               for (const candItem of session.iceCandidates) {
-                // If candidate is from remote peer (by role or non-matching userId)
                 if (candItem.candidate && (candItem.role === targetRole || (!candItem.role && candItem.userId !== user.uid))) {
                   await addIceCandidateSafely(candItem.candidate);
                 }
@@ -711,7 +730,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       } catch {
-        // Polling loop error ignored
+        // Polling loop network blip ignored
       }
     }, pollInterval);
 
