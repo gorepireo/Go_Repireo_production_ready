@@ -11,7 +11,7 @@ import {
   Volume2, 
   VolumeX,
   AlertTriangle, 
-  Lock
+  ShieldCheck
 } from 'lucide-react';
 
 export default function WebRTCCallModal() {
@@ -21,6 +21,7 @@ export default function WebRTCCallModal() {
     durationSeconds,
     isMuted,
     isSpeakerOn,
+    isRemoteSpeaking,
     micPermissionError,
     remoteAudioRef,
     acceptCall,
@@ -38,10 +39,10 @@ export default function WebRTCCallModal() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const participantName = callData?.participant?.name || 'Service Expert';
-  const participantRole = callData?.participant?.role || 'Assigned Expert';
+  const participantName = callData?.participant?.name || 'Service Partner';
+  const participantRole = callData?.participant?.role || 'Service Specialist';
   const participantAvatar = callData?.participant?.avatar || '/hero_technician_banner.png';
-  const orderIdText = callData?.orderId ? `#GR-${callData.orderId.slice(0, 4).toUpperCase()}` : 'Order Communication';
+  const orderIdText = callData?.orderId ? `#GR-${callData.orderId.slice(0, 4).toUpperCase()}` : 'Order VoIP';
 
   return (
     <>
@@ -91,27 +92,41 @@ export default function WebRTCCallModal() {
 
         {/* 2. Active Voice Call Screen Overlay */}
         {callStatus !== 'idle' && (
-          <div className="fixed inset-0 z-[400] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md">
+          <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 40, scale: 0.95 }}
-              className="bg-white/95 rounded-[2.5rem] max-w-md w-full p-6 sm:p-8 border border-white/40 shadow-2xl space-y-6 text-center overflow-hidden relative"
+              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="bg-gradient-to-b from-white via-white to-slate-50 rounded-[2.5rem] max-w-sm w-full p-6 sm:p-8 border border-white/60 shadow-2xl space-y-6 text-center overflow-hidden relative"
             >
-              {/* Private Phone Security Badge */}
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-50 text-[#007AFF] border border-blue-100 text-[9px] font-black uppercase tracking-widest mx-auto">
-                <Lock size={11} />
-                <span>Private In-App Voice Call (No Phone Numbers Exposed)</span>
+              {/* Private In-App Call Security Badge */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50/90 text-[#007AFF] border border-blue-100 text-[9.5px] font-black uppercase tracking-wider mx-auto">
+                <ShieldCheck size={12} className="text-[#007AFF]" />
+                <span>Private In-App Call &middot; No Numbers Shared</span>
               </div>
 
-              {/* Profile Avatar with Pulsing Rings */}
-              <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
-                {['outgoing', 'incoming', 'connected'].includes(callStatus) && (
-                  <div className={`absolute inset-0 rounded-full border-2 ${
-                    callStatus === 'connected' ? 'border-emerald-500/40 animate-ping' : 'border-[#007AFF]/40 animate-ping'
-                  }`} />
+              {/* Profile Avatar with Real Voice Wave Pulse */}
+              <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
+                {/* Outgoing or Incoming Ringing Ripple */}
+                {['outgoing', 'incoming'].includes(callStatus) && (
+                  <>
+                    <div className="absolute inset-0 rounded-full border-2 border-[#007AFF]/40 animate-ping" />
+                    <div className="absolute inset-[-8px] rounded-full border border-blue-300/30 animate-pulse" />
+                  </>
                 )}
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-xl relative z-10 bg-slate-100">
+
+                {/* Live Speaking Voice Wave Animation */}
+                {callStatus === 'connected' && isRemoteSpeaking && (
+                  <>
+                    <div className="absolute inset-[-10px] rounded-full bg-emerald-400/25 animate-ping" />
+                    <div className="absolute inset-[-4px] rounded-full border-2 border-emerald-500 animate-pulse" />
+                  </>
+                )}
+
+                <div className={`w-28 h-28 rounded-full overflow-hidden border-4 shadow-xl relative z-10 bg-slate-100 transition-all ${
+                  callStatus === 'connected' && isRemoteSpeaking ? 'border-emerald-500 scale-105' : 'border-white'
+                }`}>
                   <img 
                     src={participantAvatar} 
                     alt={participantName} 
@@ -128,12 +143,12 @@ export default function WebRTCCallModal() {
                 <p className="text-[10px] font-medium text-slate-400">{orderIdText}</p>
               </div>
 
-              {/* Call Status / Timer Display */}
-              <div className="py-2">
+              {/* Call Status & Live Speech Feedback */}
+              <div className="py-1">
                 {callStatus === 'outgoing' && (
                   <div className="flex items-center justify-center gap-2 text-xs font-black text-slate-600 uppercase tracking-widest">
-                    <span className="w-2 h-2 rounded-full bg-[#007AFF] animate-pulse" />
-                    <span>Calling technician...</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#007AFF] animate-ping" />
+                    <span>Calling...</span>
                   </div>
                 )}
 
@@ -145,13 +160,25 @@ export default function WebRTCCallModal() {
                 )}
 
                 {callStatus === 'connected' && (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <div className="text-3xl font-black text-slate-900 tracking-tight font-mono">
                       {formatTimer(durationSeconds)}
                     </div>
-                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest block">
-                      ● Encrypted 2-Way Voice Connected
-                    </span>
+                    {isRemoteSpeaking ? (
+                      <div className="flex items-center justify-center gap-1.5 text-emerald-600 font-extrabold text-xs">
+                        <span className="flex items-center gap-0.5">
+                          <span className="w-1 h-3 bg-emerald-500 rounded-full animate-bounce" />
+                          <span className="w-1 h-4 bg-emerald-500 rounded-full animate-bounce [animation-delay:150ms]" />
+                          <span className="w-1 h-2.5 bg-emerald-500 rounded-full animate-bounce [animation-delay:300ms]" />
+                        </span>
+                        <span>Speaking...</span>
+                      </div>
+                    ) : (
+                      <div className="text-[10px] font-bold text-slate-400 flex items-center justify-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span>HD Voice Connected</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -162,77 +189,100 @@ export default function WebRTCCallModal() {
                 )}
               </div>
 
-              {/* Interactive Call Controls */}
-              <div className="pt-2 flex items-center justify-center gap-4">
+              {/* Interactive Telephony Action Controls */}
+              <div className="pt-2">
                 {/* Outgoing State Controls */}
                 {callStatus === 'outgoing' && (
-                  <button
-                    onClick={endCall}
-                    className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30 active:scale-95 transition-all"
-                    aria-label="Cancel Call"
-                  >
-                    <PhoneOff size={24} />
-                  </button>
+                  <div className="flex flex-col items-center gap-1.5">
+                    <button
+                      onClick={endCall}
+                      className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30 active:scale-95 transition-all"
+                      aria-label="Cancel Call"
+                    >
+                      <PhoneOff size={24} />
+                    </button>
+                    <span className="text-[10px] font-bold text-slate-500">Cancel</span>
+                  </div>
                 )}
 
                 {/* Incoming State Controls */}
                 {callStatus === 'incoming' && (
-                  <>
-                    <button
-                      onClick={declineCall}
-                      className="w-16 h-16 rounded-full bg-slate-100 hover:bg-red-50 text-red-600 border border-slate-200 flex items-center justify-center shadow-md active:scale-95 transition-all"
-                      aria-label="Decline Call"
-                    >
-                      <PhoneOff size={24} />
-                    </button>
-                    <button
-                      onClick={acceptCall}
-                      className="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 active:scale-95 transition-all animate-bounce"
-                      aria-label="Accept Call"
-                    >
-                      <Phone size={24} className="fill-current" />
-                    </button>
-                  </>
+                  <div className="flex items-center justify-around px-4">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <button
+                        onClick={declineCall}
+                        className="w-16 h-16 rounded-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 flex items-center justify-center shadow-md active:scale-95 transition-all"
+                        aria-label="Decline Call"
+                      >
+                        <PhoneOff size={24} />
+                      </button>
+                      <span className="text-[10px] font-bold text-slate-500">Decline</span>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1.5">
+                      <button
+                        onClick={acceptCall}
+                        className="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-xl shadow-emerald-500/40 active:scale-95 transition-all animate-bounce"
+                        aria-label="Accept Call"
+                      >
+                        <Phone size={24} className="fill-current" />
+                      </button>
+                      <span className="text-[10px] font-bold text-emerald-700">Accept</span>
+                    </div>
+                  </div>
                 )}
 
                 {/* Connected Active Call Controls */}
                 {callStatus === 'connected' && (
-                  <>
-                    <button
-                      onClick={toggleMute}
-                      className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all ${
-                        isMuted 
-                          ? 'bg-amber-500 text-white shadow-amber-500/30' 
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                      aria-label={isMuted ? 'Unmute' : 'Mute'}
-                      title={isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
-                    >
-                      {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
-                    </button>
+                  <div className="flex items-center justify-around px-2">
+                    {/* Mute Button */}
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        onClick={toggleMute}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all ${
+                          isMuted 
+                            ? 'bg-amber-500 text-white shadow-amber-500/30' 
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                        }`}
+                        aria-label={isMuted ? 'Unmute' : 'Mute'}
+                      >
+                        {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
+                      </button>
+                      <span className="text-[9.5px] font-bold text-slate-500">
+                        {isMuted ? 'Muted' : 'Mute'}
+                      </span>
+                    </div>
 
-                    <button
-                      onClick={endCall}
-                      className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30 active:scale-95 transition-all"
-                      aria-label="End Call"
-                      title="End Call"
-                    >
-                      <PhoneOff size={24} />
-                    </button>
+                    {/* End Call Button */}
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        onClick={endCall}
+                        className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-xl shadow-red-500/40 active:scale-95 transition-all"
+                        aria-label="End Call"
+                      >
+                        <PhoneOff size={24} />
+                      </button>
+                      <span className="text-[9.5px] font-black text-red-600">End</span>
+                    </div>
 
-                    <button
-                      onClick={toggleSpeaker}
-                      className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all ${
-                        isSpeakerOn 
-                          ? 'bg-blue-600 text-white shadow-blue-500/30' 
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                      aria-label={isSpeakerOn ? 'Loudspeaker On' : 'Loudspeaker Off'}
-                      title={isSpeakerOn ? 'Loudspeaker On' : 'Earpiece / Soft Mode'}
-                    >
-                      {isSpeakerOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
-                    </button>
-                  </>
+                    {/* Speaker Button */}
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        onClick={toggleSpeaker}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all ${
+                          isSpeakerOn 
+                            ? 'bg-blue-600 text-white shadow-blue-500/30' 
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                        }`}
+                        aria-label={isSpeakerOn ? 'Loudspeaker On' : 'Loudspeaker Off'}
+                      >
+                        {isSpeakerOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                      </button>
+                      <span className="text-[9.5px] font-bold text-slate-500">
+                        {isSpeakerOn ? 'Speaker' : 'Earpiece'}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
             </motion.div>

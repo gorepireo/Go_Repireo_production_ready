@@ -27,6 +27,7 @@ interface CallContextType {
   durationSeconds: number;
   isMuted: boolean;
   isSpeakerOn: boolean;
+  isRemoteSpeaking: boolean;
   micPermissionError: string | null;
   remoteAudioRef: React.RefObject<HTMLAudioElement | null>;
   startCall: (orderId: string, callerRole?: 'customer' | 'worker', participantOverride?: CallParticipant) => Promise<void>;
@@ -40,7 +41,7 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-// Streamlined, ultra-fast STUN & TURN config (removes bloated servers that delay ICE checks)
+// Streamlined, ultra-fast STUN & TURN config
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -73,6 +74,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [durationSeconds, setDurationSeconds] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(false);
+  const [isRemoteSpeaking, setIsRemoteSpeaking] = useState(false);
   const [micPermissionError, setMicPermissionError] = useState<string | null>(null);
 
   // WebRTC & Audio Refs
@@ -83,6 +85,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const ringtoneTimerRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const vadCleanupRef = useRef<(() => void) | null>(null);
 
   // Candidate Batching & Guard Refs
   const addedCandidatesRef = useRef<Set<string>>(new Set());
@@ -93,7 +96,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const candidateBatchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeSessionIdRef = useRef<string | null>(null);
 
-  // Initialize or resume Web Audio Context for Ringtone synthesis
+  // Initialize or resume Web Audio Context
   const getAudioContext = useCallback(() => {
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -109,31 +112,143 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Play synthetic pleasant Ringtone
-  const playRingtone = useCallback(() => {
+  // 1. REAL OUTGOING RINGBACK TONE (Dual-frequency telecom standard: 440Hz + 480Hz)
+  const playRingbackTone = useCallback(() => {
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
 
-      const osc = ctx.createOscillator();
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      gain.gain.setValueAtTime(0.06, ctx.currentTime);
 
-      osc.connect(gain);
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+      osc1.frequency.value = 440;
+      osc2.frequency.value = 480;
+
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.06, now + 0.08);
+      gain.gain.setValueAtTime(0.06, now + 1.4);
+      gain.gain.linearRampToValueAtTime(0, now + 1.5);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
       gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 1.0);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 1.55);
+      osc2.stop(now + 1.55);
     } catch {}
   }, [getAudioContext]);
 
-  const startRingtoneLoop = useCallback(() => {
-    playRingtone();
-    ringtoneTimerRef.current = setInterval(playRingtone, 2200);
-  }, [playRingtone]);
+  // 2. REAL INCOMING SMARTPHONE RINGTONE (Harmonic chime arpeggio + physical mobile vibration)
+  const playIncomingRingtone = useCallback(() => {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
 
-  const stopRingtoneLoop = useCallback(() => {
+      const notes = [659.25, 830.61, 987.77, 1318.51]; // E5, G#5, B5, E6
+      const now = ctx.currentTime;
+
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const startTime = now + idx * 0.12;
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.09, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.38);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.4);
+      });
+
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([400, 250, 400, 900]);
+      }
+    } catch {}
+  }, [getAudioContext]);
+
+  // 3. CALL CONNECTED SOUND (Crisp positive double-chirp + soft haptic)
+  const playConnectedChime = useCallback(() => {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const notes = [587.33, 880]; // D5 -> A5
+      const now = ctx.currentTime;
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const startTime = now + idx * 0.08;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.08, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.14);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.15);
+      });
+
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(60);
+      }
+    } catch {}
+  }, [getAudioContext]);
+
+  // 4. CALL ENDED / HANGUP SOUND (Telephone busy disconnect beeps + haptic)
+  const playEndedChime = useCallback(() => {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const freqs = [620, 480];
+      const now = ctx.currentTime;
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const startTime = now + idx * 0.11;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.07, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.16);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.17);
+      });
+
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([80, 50, 80]);
+      }
+    } catch {}
+  }, [getAudioContext]);
+
+  const startRingLoop = useCallback((type: 'outgoing' | 'incoming') => {
+    if (ringtoneTimerRef.current) clearInterval(ringtoneTimerRef.current);
+    if (type === 'outgoing') {
+      playRingbackTone();
+      ringtoneTimerRef.current = setInterval(playRingbackTone, 3200);
+    } else {
+      playIncomingRingtone();
+      ringtoneTimerRef.current = setInterval(playIncomingRingtone, 2200);
+    }
+  }, [playRingbackTone, playIncomingRingtone]);
+
+  const stopRingLoop = useCallback(() => {
     if (ringtoneTimerRef.current) {
       clearInterval(ringtoneTimerRef.current);
       ringtoneTimerRef.current = null;
@@ -164,13 +279,62 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       candidateBatchTimerRef.current = setTimeout(() => {
         candidateBatchTimerRef.current = null;
         flushCandidateBatch();
-      }, 100); // Super responsive 100ms trickle flush
+      }, 100);
     }
   }, [flushCandidateBatch]);
 
+  // Clean Voice Activity Detector (VAD)
+  const stopVoiceActivityDetection = useCallback(() => {
+    if (vadCleanupRef.current) {
+      vadCleanupRef.current();
+      vadCleanupRef.current = null;
+    }
+    setIsRemoteSpeaking(false);
+  }, []);
+
+  // Attach non-destructive Voice Activity Detector to remote stream
+  const startVoiceActivityDetection = useCallback((stream: MediaStream) => {
+    stopVoiceActivityDetection();
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.2;
+      source.connect(analyser); // Note: NOT connected to destination to avoid AEC conflict!
+
+      const buffer = new Uint8Array(analyser.frequencyBinCount);
+      let animId: number;
+      let active = true;
+
+      const checkVolume = () => {
+        if (!active) return;
+        analyser.getByteFrequencyData(buffer);
+        let sum = 0;
+        for (let i = 0; i < buffer.length; i++) {
+          sum += buffer[i];
+        }
+        const avg = sum / buffer.length;
+        setIsRemoteSpeaking(avg > 18);
+        animId = requestAnimationFrame(checkVolume);
+      };
+
+      checkVolume();
+
+      vadCleanupRef.current = () => {
+        active = false;
+        cancelAnimationFrame(animId);
+        try { source.disconnect(); } catch {}
+      };
+    } catch {}
+  }, [getAudioContext, stopVoiceActivityDetection]);
+
   // Instant local teardown
   const cleanupCall = useCallback(() => {
-    stopRingtoneLoop();
+    stopRingLoop();
+    stopVoiceActivityDetection();
 
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -211,7 +375,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     pendingCandidatesRef.current = [];
     addedCandidatesRef.current.clear();
     setIsMuted(false);
-  }, [stopRingtoneLoop]);
+  }, [stopRingLoop, stopVoiceActivityDetection]);
 
   // Flush any ICE candidates that arrived before remoteDescription was set
   const flushPendingCandidates = useCallback(async () => {
@@ -258,7 +422,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         channelCount: 1,
         sampleRate: 48000,
       };
-      // Request low-latency hardware buffer on supported engines
       (audioConstraints as any).latency = 0;
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -286,7 +449,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Route remote stream to HTML5 Audio element and configure zero-delay receiver
   const setupRemoteAudio = useCallback((remoteStream: MediaStream, pc?: RTCPeerConnection) => {
     if (pc) {
-      // Force WebRTC audio receiver to use zero playout delay (no artificial jitter buffer lag)
       try {
         pc.getReceivers().forEach((receiver) => {
           if (receiver.track && receiver.track.kind === 'audio') {
@@ -298,6 +460,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       } catch {}
     }
+
+    startVoiceActivityDetection(remoteStream);
 
     if (!remoteAudioRef.current) return;
     const audioEl = remoteAudioRef.current;
@@ -318,18 +482,19 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         window.addEventListener('touchstart', unblock, { once: true });
       });
     }
-  }, []);
+  }, [startVoiceActivityDetection]);
 
   // Instant remote hangup handler (triggered via DataChannel in 1ms)
   const handleRemoteHangup = useCallback(() => {
-    stopRingtoneLoop();
+    stopRingLoop();
+    playEndedChime();
     setCallStatus('ended');
     cleanupCall();
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 400); // Snappy 400ms dismissal
-  }, [stopRingtoneLoop, cleanupCall]);
+    }, 450);
+  }, [stopRingLoop, playEndedChime, cleanupCall]);
 
   // Set up Instant DataChannel for 0-latency call control signaling
   const setupDataChannel = (pc: RTCPeerConnection) => {
@@ -356,7 +521,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addedCandidatesRef.current.clear();
     candidateBatchRef.current = [];
 
-    // Prime Web Audio and remote audio element during user click
     getAudioContext();
     if (remoteAudioRef.current) {
       remoteAudioRef.current.muted = false;
@@ -372,13 +536,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       peerConnectionRef.current = pc;
       setupDataChannel(pc);
 
-      // Add local microphone audio tracks
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
         pc.addTrack(track, stream);
       });
 
-      // Receive remote audio track
       pc.ontrack = (event) => {
         const remoteStream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
         setupRemoteAudio(remoteStream, pc);
@@ -387,21 +549,21 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (remoteAudioRef.current) {
             remoteAudioRef.current.play().catch(() => {});
           }
-          stopRingtoneLoop();
+          stopRingLoop();
+          playConnectedChime();
           setCallStatus('connected');
         };
       };
 
-      // Candidate handling - trickle immediately
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           queueCandidateToSend(event.candidate.toJSON());
         }
       };
 
-      // Connection status listeners
       const handleConnected = () => {
-        stopRingtoneLoop();
+        stopRingLoop();
+        playConnectedChime();
         setCallStatus('connected');
         if (remoteAudioRef.current) {
           remoteAudioRef.current.volume = 1.0;
@@ -421,18 +583,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
-      // Create local SDP Offer with low-latency audio intent
       const offer = await pc.createOffer({
         offerToReceiveAudio: true,
         offerToReceiveVideo: false,
       });
 
-      // Optimize Opus parameters in SDP
       const optimizedSdp = optimizeAudioSdp(offer.sdp || '');
       const localDesc = new RTCSessionDescription({ type: 'offer', sdp: optimizedSdp });
       await pc.setLocalDescription(localDesc);
 
-      // Post offer to server WITHOUT BLOCKING - trickle ICE handles candidate delivery
       const res = await fetch('/api/calls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -455,7 +614,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       activeSessionIdRef.current = session.id;
       const targetParticipant = participantOverride || session.participant;
 
-      // Flush any gathered candidates
       flushCandidateBatch();
 
       setCallData({
@@ -467,7 +625,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       setCallStatus('outgoing');
-      startRingtoneLoop();
+      startRingLoop('outgoing'); // Plays dual-tone telecom ringback
     } catch (err) {
       console.error('[CallContext] startCall failed:', err);
       setMicPermissionError('In-app call failed to connect.');
@@ -486,7 +644,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addedCandidatesRef.current.clear();
     candidateBatchRef.current = [];
 
-    stopRingtoneLoop();
+    stopRingLoop();
     getAudioContext();
 
     if (remoteAudioRef.current) {
@@ -512,7 +670,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       peerConnectionRef.current = pc;
       setupDataChannel(pc);
 
-      // Add local microphone audio tracks
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
         pc.addTrack(track, stream);
@@ -526,7 +683,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (remoteAudioRef.current) {
             remoteAudioRef.current.play().catch(() => {});
           }
-          stopRingtoneLoop();
+          stopRingLoop();
+          playConnectedChime();
           setCallStatus('connected');
         };
       };
@@ -538,7 +696,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       const handleConnected = () => {
-        stopRingtoneLoop();
+        stopRingLoop();
+        playConnectedChime();
         setCallStatus('connected');
         if (remoteAudioRef.current) {
           remoteAudioRef.current.volume = 1.0;
@@ -558,18 +717,16 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
-      // Set Remote Description from Caller's Offer
       await pc.setRemoteDescription(new RTCSessionDescription(data.session.sdpOffer));
       remoteDescriptionSetRef.current = true;
       await flushPendingCandidates();
 
-      // Create local SDP Answer
       const answer = await pc.createAnswer();
       const optimizedSdp = optimizeAudioSdp(answer.sdp || '');
       const localAnswer = new RTCSessionDescription({ type: 'answer', sdp: optimizedSdp });
       await pc.setLocalDescription(localAnswer);
 
-      // SEND ANSWER IMMEDIATELY TO SERVER - ZERO PICKUP DELAY
+      // Instant answer broadcast
       fetch('/api/calls', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -583,7 +740,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       flushCandidateBatch();
 
-      // Process any already recorded caller ICE candidates
       if (Array.isArray(data.session.iceCandidates)) {
         for (const c of data.session.iceCandidates) {
           if (c.candidate && (c.role === 'caller' || c.userId !== user?.uid)) {
@@ -610,25 +766,25 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }).catch(() => {});
     }
 
-    stopRingtoneLoop();
+    stopRingLoop();
+    playEndedChime();
     setCallStatus('ended');
     cleanupCall();
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 400);
+    }, 450);
   };
 
-  // 4. END ACTIVE CALL (INSTANT VIA DATA CHANNEL + HTTP)
+  // 4. END ACTIVE CALL
   const endCall = async () => {
-    // A: Instantly notify other peer over WebRTC DataChannel (0ms delay)
+    // Notify peer immediately over DataChannel
     if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
       try {
         dataChannelRef.current.send('HANGUP');
       } catch {}
     }
 
-    // B: Update server in background
     if (callData?.sessionId) {
       fetch('/api/calls', {
         method: 'PATCH',
@@ -638,16 +794,17 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }).catch(() => {});
     }
 
-    stopRingtoneLoop();
+    stopRingLoop();
+    playEndedChime();
     setCallStatus('ended');
     cleanupCall();
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 400); // Fast 400ms dismissal
+    }, 450);
   };
 
-  // Toggle Mute Local Mic
+  // Toggle Mute
   const toggleMute = () => {
     if (localStreamRef.current) {
       const audioTracks = localStreamRef.current.getAudioTracks();
@@ -657,15 +814,21 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         track.enabled = nextEnabled;
       });
       setIsMuted(!nextEnabled);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(40);
+      }
     }
   };
 
-  // Toggle Speakerphone
+  // Toggle Speakerphone (Volume boost)
   const toggleSpeaker = async () => {
     const nextState = !isSpeakerOn;
     setIsSpeakerOn(nextState);
     if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = nextState ? 1.0 : 0.7;
+      remoteAudioRef.current.volume = nextState ? 1.0 : 0.65;
+    }
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(40);
     }
   };
 
@@ -673,16 +836,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMicPermissionError(null);
   };
 
-  // Dynamic Signaling Polling Loop - Ultra-Responsive Handshake
+  // Dynamic Signaling Polling Loop
   useEffect(() => {
     if (!user) return;
 
-    // 250ms polling during handshake (detects pickup in ~125ms), 1000ms when connected
     const pollInterval = ['outgoing', 'incoming'].includes(callStatus) ? 250 : 1000;
 
     const interval = setInterval(async () => {
       try {
-        // A: If in active call, poll session for answer, remote candidates, or termination
         if (callData?.sessionId && ['outgoing', 'incoming', 'connected'].includes(callStatus)) {
           const res = await fetch(`/api/calls?sessionId=${callData.sessionId}`, { credentials: 'include' });
           if (res.ok) {
@@ -695,7 +856,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
               return;
             }
 
-            // Caller side: check if receiver accepted call and provided SDP answer
             if (myCallRoleRef.current === 'caller' && session.status === 'accepted' && session.sdpAnswer) {
               if (
                 peerConnectionRef.current &&
@@ -705,7 +865,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 try {
                   await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(session.sdpAnswer));
                   remoteDescriptionSetRef.current = true;
-                  stopRingtoneLoop();
+                  stopRingLoop();
                   await flushPendingCandidates();
 
                   if (remoteAudioRef.current) {
@@ -718,7 +878,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             }
 
-            // Process remote ICE Candidates
             if (Array.isArray(session.iceCandidates)) {
               const targetRole = myCallRoleRef.current === 'caller' ? 'callee' : 'caller';
               for (const candItem of session.iceCandidates) {
@@ -730,7 +889,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // B: If idle, check if an incoming call is ringing for this user (fast 800ms check)
         if (callStatus === 'idle') {
           const res = await fetch('/api/calls?checkIncoming=true', { credentials: 'include' });
           if (res.ok) {
@@ -745,7 +903,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 participant: incoming.participant,
               });
               setCallStatus('incoming');
-              startRingtoneLoop();
+              startRingLoop('incoming'); // Plays melodic smartphone chime + vibration
             }
           }
         }
@@ -757,15 +915,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     callStatus,
     callData?.sessionId,
-    startRingtoneLoop,
-    stopRingtoneLoop,
+    startRingLoop,
+    stopRingLoop,
     cleanupCall,
     handleRemoteHangup,
     addIceCandidateSafely,
     flushPendingCandidates,
   ]);
 
-  // Handle Call Duration Timer
+  // Duration Timer
   useEffect(() => {
     if (callStatus === 'connected') {
       setDurationSeconds(0);
@@ -791,6 +949,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         durationSeconds,
         isMuted,
         isSpeakerOn,
+        isRemoteSpeaking,
         micPermissionError,
         remoteAudioRef,
         startCall,
