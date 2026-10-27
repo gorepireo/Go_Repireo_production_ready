@@ -987,10 +987,10 @@ function WorkerDashboardContent() {
 
             <div>
               <button 
-                onClick={() => router.push('/services')}
+                onClick={() => router.push('/dashboard/worker/scheduled')}
                 className="bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-xs py-2.5 px-5 rounded-full shadow-md flex items-center gap-1.5 active:scale-95 transition-all"
               >
-                <span>Explore Jobs</span>
+                <span>Scheduled Jobs</span>
                 <ChevronRight size={14} />
               </button>
             </div>

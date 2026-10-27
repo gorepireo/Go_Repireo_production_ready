@@ -34,6 +34,7 @@ export default function BottomNav() {
 
   const navItems = isWorker ? [
     { name: 'Dashboard', path: '/dashboard/worker', icon: LayoutGrid },
+    { name: 'Scheduled Jobs', path: '/dashboard/worker/scheduled', icon: Calendar },
     { name: 'Chats', path: '/chat', icon: MessageCircle },
     { name: 'Profile', path: '/dashboard/worker/settings', icon: User },
   ] : [
@@ -65,7 +66,7 @@ export default function BottomNav() {
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-100 pb-safe pt-2 shadow-[0_-10px_25px_rgba(0,0,0,0.05)]">
         <nav className="mx-auto flex w-full max-w-2xl items-center justify-between px-1 pb-2 min-[375px]:px-3 sm:px-4 lg:max-w-3xl">
           {navItems.map((item) => {
-            const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
+            const isActive = pathname === item.path || (item.path !== '/' && item.path !== '/dashboard/worker' && pathname.startsWith(`${item.path}/`));
             return (
               <Link 
                 key={item.name} 
