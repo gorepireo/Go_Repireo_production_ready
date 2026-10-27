@@ -13,25 +13,29 @@ import {
   Zap, 
   Map, 
   MessageCircle, 
-  X,
-  Compass,
-  ArrowRight,
-  Clock,
-  LayoutGrid,
-  User,
-  Phone,
-  CheckCircle2,
-  Lock,
-  ExternalLink,
-  Check,
-  Banknote,
-  Loader2,
-  ClipboardList,
-  ChevronDown,
-  Snowflake,
-  Eye,
-  FileText,
-  ImageIcon
+  X, 
+  Compass, 
+  ArrowRight, 
+  Clock, 
+  LayoutGrid, 
+  User, 
+  Phone, 
+  CheckCircle2, 
+  Lock, 
+  ExternalLink, 
+  Check, 
+  Banknote, 
+  Loader2, 
+  ClipboardList, 
+  ChevronDown, 
+  Snowflake, 
+  Eye, 
+  FileText, 
+  ImageIcon,
+  Bell,
+  Box,
+  Home,
+  Calendar
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -541,19 +545,45 @@ function WorkerDashboardContent() {
   const mediaAttachments: string[] = Array.isArray(rawAttachments) ? rawAttachments.filter((url: any) => typeof url === 'string' && url.length > 0) : [];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-32 font-sans">
+    <div className="min-h-screen bg-[#F4F7FC] text-[#0F172A] pb-32 font-sans">
       
-      {/* 1. Global Header Bar */}
-      <Header />
+      {/* 1. Worker Dedicated Top Bar (Location Pill, Greeting, Notification Bell) */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100/80 px-4 py-3 shadow-2xs">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          {/* Location Pill */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/90 text-slate-800 text-xs font-bold shadow-2xs">
+            <MapPin size={13} className="text-[#007AFF] fill-[#007AFF]" />
+            <span className="text-[11px] font-extrabold text-slate-800">Etawah, UP</span>
+            <ChevronDown size={13} className="text-slate-400" />
+          </div>
+
+          {/* User Greeting */}
+          <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight flex items-center gap-1">
+            <span>Hi, {displayName.split(' ')[0]}</span>
+            <span className="text-base">👋</span>
+          </h2>
+
+          {/* Notification Bell with Red Dot */}
+          <div className="relative">
+            <button
+              className="w-9 h-9 rounded-full bg-white hover:bg-slate-50 border border-slate-200/90 flex items-center justify-center text-slate-800 transition-colors shadow-2xs"
+              aria-label="Notifications"
+            >
+              <Bell size={17} />
+            </button>
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+          </div>
+        </div>
+      </header>
 
       <main className="px-4 mt-4 space-y-4 max-w-2xl mx-auto">
 
         {/* 2. Welcome Back Hero Banner */}
-        <section className="relative bg-gradient-to-r from-[#EBF3FE] via-[#E6F0FA] to-[#DCEBFF] rounded-3xl p-5 sm:p-6 border border-blue-100/80 shadow-xs flex items-center justify-between overflow-hidden">
+        <section className="relative bg-gradient-to-r from-[#EBF5FE] via-[#E2EFFF] to-[#D5E8FD] rounded-3xl p-5 sm:p-6 border border-blue-100/70 shadow-xs flex items-center justify-between overflow-hidden">
           <div className="space-y-1 z-10 max-w-[210px] sm:max-w-xs">
-            <span className="text-[11px] font-medium text-slate-500 block">Welcome back,</span>
+            <span className="text-[11px] font-semibold text-slate-600 block">Welcome back,</span>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight flex items-center gap-1.5">
-              <span>{displayName}!</span>
+              <span>{displayName.split(' ')[0]}!</span>
               <span className="text-xl">👋</span>
             </h1>
             <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed pt-0.5">
@@ -561,10 +591,10 @@ function WorkerDashboardContent() {
             </p>
           </div>
 
-          <div className="w-28 sm:w-40 h-28 sm:h-40 shrink-0 relative pointer-events-none drop-shadow-lg flex items-center justify-end -mr-2">
+          <div className="w-28 sm:w-36 h-28 sm:h-36 shrink-0 relative pointer-events-none drop-shadow-md flex items-center justify-end -mr-2">
             <img 
               src="/hero_house_3d.png" 
-              alt="3D House & Toolbox" 
+              alt="3D House & Services" 
               className="w-full h-full object-contain"
             />
           </div>
@@ -572,20 +602,26 @@ function WorkerDashboardContent() {
 
         {/* 3. Stats 2-Column Row (STATUS & LIFETIME EARNINGS) */}
         <section className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs flex flex-col justify-between space-y-3">
+          {/* Card 1: Status */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                STATUS
-              </span>
-              <span className={`w-2.5 h-2.5 rounded-full ${isAvailable ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-7 h-7 rounded-full bg-[#007AFF] text-white flex items-center justify-center shadow-xs">
+                  <Clock size={15} />
+                </div>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">
+                  STATUS
+                </span>
+              </div>
+              <span className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
             </div>
 
             <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-none">
               {isAvailable ? 'Online' : 'Offline'}
             </h3>
 
-            <div className="bg-slate-50 rounded-2xl p-2 flex items-center justify-between border border-slate-100">
-              <span className="text-[10px] font-extrabold text-slate-600 pl-1">Go Online</span>
+            <div className="bg-slate-50/90 rounded-2xl p-2 px-3 flex items-center justify-between border border-slate-100">
+              <span className="text-[11px] font-bold text-slate-600">Go Online</span>
               <button
                 onClick={handleToggleOnline}
                 className={`relative w-11 h-6 rounded-full transition-colors duration-300 p-0.5 ${
@@ -602,9 +638,10 @@ function WorkerDashboardContent() {
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs flex flex-col justify-between space-y-2 relative overflow-hidden">
+          {/* Card 2: Lifetime Earnings */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-2 relative overflow-hidden">
             <div className="space-y-1 z-10">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">
                 LIFETIME EARNINGS
               </span>
               <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -622,7 +659,7 @@ function WorkerDashboardContent() {
               </Link>
             </div>
 
-            <div className="absolute -right-2 -bottom-2 w-16 sm:w-20 h-16 sm:h-20 pointer-events-none opacity-90">
+            <div className="absolute -right-2 -bottom-2 w-16 sm:w-20 h-16 sm:h-20 pointer-events-none opacity-95">
               <img 
                 src="/wallet_coins_3d.png" 
                 alt="3D Wallet" 
@@ -633,21 +670,21 @@ function WorkerDashboardContent() {
         </section>
 
         {/* 4. CURRENT ORDER TRACKING SECTION */}
-        <section className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-4">
+        <section className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
           
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
-              <Compass size={16} className="text-[#007AFF]" />
+              <div className="w-6 h-6 rounded-lg bg-blue-50 text-[#007AFF] flex items-center justify-center font-bold text-xs">
+                <Box size={16} />
+              </div>
               <h3 className="text-xs sm:text-sm font-black text-[#007AFF] uppercase tracking-tight">
-                {activeJob ? 'CURRENT ORDER TRACKING' : completedJobs.length > 0 ? 'PREVIOUS COMPLETED ORDERS' : 'SERVICE ORDERS'}
+                CURRENT ORDER TRACKING
               </h3>
             </div>
 
-            <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border flex items-center gap-1.5 ${
-              activeJob ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-200'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${activeJob ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
-              {activeJob ? (isPendingJob ? 'Awaiting Acceptance' : 'Live Tracking') : `${completedJobs.length} Orders Completed`}
+            <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full px-3 py-1 text-[10px] font-black flex items-center gap-1.5 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Live Tracking</span>
             </span>
           </div>
 
@@ -671,7 +708,7 @@ function WorkerDashboardContent() {
                   <span>{activeJob.service_name || 'AC Repair & Service'}</span>
                   <span className="text-[#007AFF] font-black text-sm">₹{activeJob.total_price || activeJob.price || 499}</span>
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium">Customer Location: Etawah, UP (5.2 km away)</p>
+                <p className="text-[10px] text-slate-500 font-medium">Customer Location: Etawah, UP ({approxDistanceKm} km away)</p>
 
                 {/* Client Written Description */}
                 <div className="pt-2 border-t border-slate-100">
@@ -730,212 +767,99 @@ function WorkerDashboardContent() {
 
             </div>
           ) : activeJob ? (
-            /* SCENARIO B: ACCEPTED LIVE ORDER IN PROGRESS */
+            /* SCENARIO B: ACCEPTED LIVE ORDER IN PROGRESS (MATCHES MOCKUP EXACTLY) */
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch">
-                <div className="md:col-span-6 space-y-4 flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-[10px] font-medium text-slate-400 block">Order ID</span>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <h4 className="text-lg font-black text-slate-900 tracking-tight">{activeOrderIdText}</h4>
-                        <span className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full border ${
-                          isWorking ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                        }`}>
-                          {isWorking ? 'Work In Progress' : 'In Progress'}
-                        </span>
-                      </div>
-                    </div>
+              {/* Order ID & Status Badge */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-medium text-slate-400 block">Order ID</span>
+                  <h4 className="text-lg font-black text-slate-900 tracking-tight leading-tight">{activeOrderIdText}</h4>
+                </div>
+                <span className="bg-amber-50 text-amber-700 border border-amber-200/80 rounded-full px-3 py-1 text-[10px] font-extrabold shadow-2xs">
+                  {isWorking ? 'Work In Progress' : 'In Progress'}
+                </span>
+              </div>
 
-                    <div className="space-y-3 pt-1 pl-1">
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center text-white shrink-0 mt-0.5 shadow-xs">
-                          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                        </div>
-                        <div>
-                          <h5 className="text-xs font-bold text-slate-900">Customer Location</h5>
-                          <p className="text-[10px] text-slate-400 font-medium">{approxDistanceKm} km away</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white shrink-0 mt-0.5 shadow-xs">
-                          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                        </div>
-                        <div>
-                          <h5 className="text-xs font-bold text-slate-900">En Route</h5>
-                          <p className="text-[10px] text-slate-400 font-medium">On the way to customer</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-4 h-4 bg-slate-200 rounded-full flex items-center justify-center text-slate-400 shrink-0 mt-0.5">
-                          <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
-                        </div>
-                        <div>
-                          <h5 className="text-xs font-bold text-slate-700">Expected Arrival</h5>
-                          <p className="text-[10px] text-slate-400 font-medium">~{approxEtaMins} mins</p>
-                        </div>
-                      </div>
-                    </div>
+              {/* 3-Step Vertical Stepper */}
+              <div className="space-y-3.5 pl-1">
+                {/* Step 1: Customer Location */}
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-[#007AFF] text-white flex items-center justify-center text-[10px] font-black shadow-xs shrink-0 mt-0.5">
+                    <Check size={11} strokeWidth={3} />
                   </div>
-
-                  <div className="pt-2 flex items-center gap-2">
-                    <button
-                      onClick={handleGetRoute}
-                      className="flex-1 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs py-3 px-3 rounded-2xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-                    >
-                      <Navigation size={14} />
-                      <span>Get Route</span>
-                      <ExternalLink size={12} className="opacity-80" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (!activeJob?.id) return;
-                        startCall(activeJob.id, 'worker', {
-                          id: activeJob.customer_id || activeJob.user_id || 'customer',
-                          name: activeJob.customer_name || activeJob.user_name || 'Customer',
-                          avatar: activeJob.customer_avatar || '/customer_3d.png',
-                          role: 'Customer'
-                        });
-                      }}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs py-3 px-4 rounded-2xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-                      title="In-App Voice Call Customer"
-                    >
-                      <Phone size={14} className="fill-current" />
-                      <span>Call Customer</span>
-                    </button>
+                  <div>
+                    <h5 className="text-xs font-bold text-slate-900 leading-tight">Customer Location</h5>
+                    <p className="text-[10.5px] text-slate-400 font-medium pt-0.5">{approxDistanceKm} km away</p>
                   </div>
                 </div>
 
-                <div className="md:col-span-6 relative h-48 sm:h-56 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60 shadow-inner">
-                  <LiveTrackingGoogleMap
-                    technicianLat={workerLat}
-                    technicianLng={workerLng}
-                    userLat={customerLat}
-                    userLng={customerLng}
-                    technicianName={displayName}
-                    technicianAvatar={(profile as any)?.avatar_url || (profile as any)?.avatar || activeJob?.worker_avatar}
-                    distanceKm={`${approxDistanceKm} km`}
-                  />
+                {/* Step 2: En Route */}
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shadow-xs shrink-0 mt-0.5">
+                    <Check size={11} strokeWidth={3} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-slate-900 leading-tight">En Route</h5>
+                    <p className="text-[10.5px] text-slate-400 font-medium pt-0.5">On the way to customer</p>
+                  </div>
+                </div>
+
+                {/* Step 3: Expected Arrival */}
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-300 text-slate-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-slate-700 leading-tight">Expected Arrival</h5>
+                    <p className="text-[10.5px] text-slate-400 font-medium pt-0.5">~{approxEtaMins} mins</p>
+                  </div>
                 </div>
               </div>
 
-              {/* INLINE OTP VERIFICATION CARD */}
-              <div className="pt-3 border-t border-slate-100">
-                {isCompletedJob ? (
-                  <div className="bg-emerald-50/90 rounded-2xl p-4 border border-emerald-200 space-y-2 text-center">
-                    <div className="w-9 h-9 bg-emerald-500 text-white rounded-full mx-auto flex items-center justify-center shadow-xs">
-                      <Check size={18} strokeWidth={3} />
-                    </div>
-                    <h4 className="text-xs font-black text-emerald-900">Order Completed & Verified ✓</h4>
-                    <p className="text-[10.5px] text-emerald-700 font-medium max-w-sm mx-auto">
-                      Verification OTP confirmed. Order {activeOrderIdText} has been marked completed and payment recorded in your wallet.
-                    </p>
-                  </div>
-                ) : !isWorking ? (
-                  <form onSubmit={handleVerifyStartOtp} className="bg-amber-50/80 rounded-2xl p-4 border border-amber-200/80 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck size={16} className="text-amber-600" />
-                        <h4 className="text-xs font-black text-amber-900 uppercase tracking-tight">VERIFY START WORK OTP</h4>
-                      </div>
-                      <span className="text-[8.5px] font-extrabold bg-amber-200/60 text-amber-800 px-2.5 py-0.5 rounded-full">Phase 1</span>
-                    </div>
+              {/* Action Buttons: Get Route & Call Customer */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button
+                  onClick={handleGetRoute}
+                  className="w-full bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs py-3.5 px-3 rounded-full shadow-md shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                >
+                  <Navigation size={15} />
+                  <span>Get Route</span>
+                  <ExternalLink size={12} className="opacity-80" />
+                </button>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                      <input
-                        type="text"
-                        maxLength={4}
-                        value={startOtpInput}
-                        onChange={(e) => setStartOtpInput(e.target.value)}
-                        placeholder="Enter 4-digit Start OTP"
-                        className="flex-1 bg-white border border-amber-200 text-slate-900 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/40 text-center tracking-[0.2em]"
-                        required
-                      />
-                      <button
-                        type="submit"
-                        disabled={verifyingOtp || startOtpInput.length < 4}
-                        className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition-all whitespace-nowrap ${
-                          startOtpInput.length === 4 ? 'bg-amber-500 hover:bg-amber-600 text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {verifyingOtp ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Verify Start OTP'}
-                      </button>
-                    </div>
+                <button
+                  onClick={() => {
+                    if (!activeJob?.id) return;
+                    startCall(activeJob.id, 'worker', {
+                      id: activeJob.customer_id || activeJob.user_id || 'customer',
+                      name: activeJob.customer_name || activeJob.user_name || 'Customer',
+                      avatar: activeJob.customer_avatar || '/customer_3d.png',
+                      role: 'Customer'
+                    });
+                  }}
+                  className="w-full bg-[#10B981] hover:bg-emerald-600 text-white font-extrabold text-xs py-3.5 px-3 rounded-full shadow-md shadow-emerald-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                  title="In-App Voice Call Customer"
+                >
+                  <Phone size={14} className="fill-current" />
+                  <span>Call Customer</span>
+                </button>
+              </div>
 
-                    {otpError && <p className="text-[10px] font-bold text-red-600">{otpError}</p>}
-                  </form>
-                ) : (
-                  <div className="bg-blue-50/80 rounded-2xl p-4 border border-blue-200/80 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck size={16} className="text-[#007AFF]" />
-                        <h4 className="text-xs font-black text-blue-900 uppercase tracking-tight">WORK IN PROGRESS & COMPLETION</h4>
-                      </div>
-                      <span className="text-[8.5px] font-extrabold bg-blue-200/60 text-blue-800 px-2.5 py-0.5 rounded-full">Phase 2</span>
-                    </div>
-
-                    {!isPaid && (
-                      <div className="bg-white p-3 rounded-xl border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs">
-                        <div className="flex items-center gap-2">
-                          <Banknote size={18} className="text-emerald-600 shrink-0" />
-                          <div>
-                            <span className="text-xs font-black text-slate-900 block">Cash Payment Required</span>
-                            <span className="text-[9.5px] text-slate-500">Collect ₹499 cash from customer upon service completion</span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleConfirmCashPaid}
-                          className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[9.5px] px-3 py-2 rounded-xl shadow-sm active:scale-95 transition-all shrink-0 whitespace-nowrap"
-                        >
-                          Customer Paid Cash (₹499) 💵
-                        </button>
-                      </div>
-                    )}
-
-                    <form onSubmit={handleVerifyCompletionOtp} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-extrabold text-slate-700 uppercase">
-                          Enter Work Completion OTP (Given by Customer):
-                        </label>
-                        {isPaid && (
-                          <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                            Payment Verified ✓
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <input
-                          type="text"
-                          maxLength={4}
-                          value={completionOtpInput}
-                          onChange={(e) => setCompletionOtpInput(e.target.value)}
-                          placeholder="Enter 4-digit Completion OTP"
-                          className="flex-1 bg-white border border-blue-200 text-slate-900 text-xs font-bold px-3 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/40 text-center tracking-[0.2em]"
-                          required
-                        />
-                        <button
-                          type="submit"
-                          disabled={verifyingOtp || completionOtpInput.length < 4}
-                          className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition-all whitespace-nowrap ${
-                            completionOtpInput.length === 4 ? 'bg-[#007AFF] hover:bg-blue-600 text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                          }`}
-                        >
-                          {verifyingOtp ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Verify Completion'}
-                        </button>
-                      </div>
-
-                      {otpError && <p className="text-[10px] font-bold text-red-600">{otpError}</p>}
-                    </form>
-                  </div>
-                )}
+              {/* Clean Turn-by-Turn Road Map Container */}
+              <div className="relative w-full h-56 sm:h-64 rounded-3xl overflow-hidden bg-slate-100 border border-slate-200/60 shadow-inner mt-2">
+                <LiveTrackingGoogleMap
+                  technicianLat={workerLat}
+                  technicianLng={workerLng}
+                  userLat={customerLat}
+                  userLng={customerLng}
+                  technicianName={displayName}
+                  technicianAvatar={(profile as any)?.avatar_url || (profile as any)?.avatar || activeJob?.worker_avatar}
+                  distanceKm={`${approxDistanceKm} km`}
+                />
               </div>
             </div>
           ) : completedJobs.length > 0 ? (
-            /* SCENARIO B: NO ACTIVE ORDER, BUT PREVIOUS COMPLETED ORDERS EXIST */
+            /* SCENARIO C: NO ACTIVE ORDER, SHOW PREVIOUS COMPLETED ORDERS */
             <div className="space-y-3">
               <p className="text-[10.5px] text-slate-500 font-medium">
                 Showing your completed service orders history:
@@ -985,7 +909,7 @@ function WorkerDashboardContent() {
               )}
             </div>
           ) : (
-            /* SCENARIO C: NO ORDERS AT ALL */
+            /* SCENARIO D: NO ORDERS AT ALL */
             <div className="py-8 text-center space-y-3">
               <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-full mx-auto flex items-center justify-center">
                 <ClipboardList size={24} />
@@ -1001,12 +925,131 @@ function WorkerDashboardContent() {
 
         </section>
 
-        {/* 5. More Jobs. More Earnings Banner Card */}
-        <section className="relative bg-gradient-to-r from-[#0B1736] via-[#102A6B] to-[#0F172A] rounded-3xl p-6 text-white overflow-hidden shadow-xl min-h-[170px] flex items-center justify-between">
+        {/* 5. VERIFY START WORK OTP CARD (PHASE 1) / COMPLETION CARD */}
+        {activeJob && !isPendingJob && (
+          <section className="bg-[#FFF9EE] rounded-3xl p-5 border border-[#FFE8BF] shadow-xs space-y-3">
+            {isCompletedJob ? (
+              <div className="bg-emerald-50/90 rounded-2xl p-4 border border-emerald-200 space-y-2 text-center">
+                <div className="w-9 h-9 bg-emerald-500 text-white rounded-full mx-auto flex items-center justify-center shadow-xs">
+                  <Check size={18} strokeWidth={3} />
+                </div>
+                <h4 className="text-xs font-black text-emerald-900">Order Completed & Verified ✓</h4>
+                <p className="text-[10.5px] text-emerald-700 font-medium max-w-sm mx-auto">
+                  Verification OTP confirmed. Order {activeOrderIdText} has been marked completed and payment recorded in your wallet.
+                </p>
+              </div>
+            ) : !isWorking ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                      <ShieldCheck size={14} />
+                    </div>
+                    <h4 className="text-xs font-black text-amber-950 uppercase tracking-tight">VERIFY START WORK OTP</h4>
+                  </div>
+                  <span className="text-[9.5px] font-black bg-[#FFE2AA] text-amber-900 px-3 py-0.5 rounded-full shadow-2xs">Phase 1</span>
+                </div>
+
+                <form onSubmit={handleVerifyStartOtp} className="space-y-2.5">
+                  <input
+                    type="text"
+                    maxLength={4}
+                    value={startOtpInput}
+                    onChange={(e) => setStartOtpInput(e.target.value)}
+                    placeholder="Enter 4-digit Start OTP"
+                    className="w-full bg-white border border-[#FFE8BF] text-slate-900 text-xs font-bold py-3 px-4 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500/40 text-center tracking-[0.2em] shadow-2xs placeholder:text-slate-400 placeholder:tracking-normal placeholder:font-medium"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={verifyingOtp || startOtpInput.length < 4}
+                    className={`w-full py-3 rounded-2xl text-xs font-black shadow-xs transition-all ${
+                      startOtpInput.length === 4
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/25 active:scale-95'
+                        : 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {verifyingOtp ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Verify Start OTP'}
+                  </button>
+                  {otpError && <p className="text-[10px] font-bold text-red-600 text-center">{otpError}</p>}
+                </form>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#007AFF] text-white flex items-center justify-center shadow-xs">
+                      <ShieldCheck size={14} />
+                    </div>
+                    <h4 className="text-xs font-black text-blue-950 uppercase tracking-tight">WORK IN PROGRESS & COMPLETION</h4>
+                  </div>
+                  <span className="text-[9.5px] font-black bg-blue-100 text-blue-900 px-3 py-0.5 rounded-full shadow-2xs">Phase 2</span>
+                </div>
+
+                {!isPaid && (
+                  <div className="bg-white p-3 rounded-xl border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs">
+                    <div className="flex items-center gap-2">
+                      <Banknote size={18} className="text-emerald-600 shrink-0" />
+                      <div>
+                        <span className="text-xs font-black text-slate-900 block">Cash Payment Required</span>
+                        <span className="text-[9.5px] text-slate-500">Collect ₹499 cash from customer upon service completion</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleConfirmCashPaid}
+                      className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[9.5px] px-3 py-2 rounded-xl shadow-sm active:scale-95 transition-all shrink-0 whitespace-nowrap"
+                    >
+                      Customer Paid Cash (₹499) 💵
+                    </button>
+                  </div>
+                )}
+
+                <form onSubmit={handleVerifyCompletionOtp} className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-extrabold text-slate-700 uppercase">
+                      Enter Work Completion OTP (Given by Customer):
+                    </label>
+                    {isPaid && (
+                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Payment Verified ✓
+                      </span>
+                    )}
+                  </div>
+
+                  <input
+                    type="text"
+                    maxLength={4}
+                    value={completionOtpInput}
+                    onChange={(e) => setCompletionOtpInput(e.target.value)}
+                    placeholder="Enter 4-digit Completion OTP"
+                    className="w-full bg-white border border-blue-200 text-slate-900 text-xs font-bold py-3 px-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/40 text-center tracking-[0.2em] shadow-2xs placeholder:text-slate-400 placeholder:tracking-normal placeholder:font-medium"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={verifyingOtp || completionOtpInput.length < 4}
+                    className={`w-full py-3 rounded-2xl text-xs font-black shadow-xs transition-all ${
+                      completionOtpInput.length === 4
+                        ? 'bg-[#007AFF] hover:bg-blue-600 text-white shadow-md shadow-blue-500/25 active:scale-95'
+                        : 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {verifyingOtp ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Verify Completion'}
+                  </button>
+                  {otpError && <p className="text-[10px] font-bold text-red-600 text-center">{otpError}</p>}
+                </form>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* 6. More Jobs. More Earnings Promo Banner Card */}
+        <section className="relative bg-gradient-to-r from-[#071330] via-[#0D2359] to-[#0A1A40] rounded-3xl p-6 text-white overflow-hidden shadow-lg min-h-[160px] flex items-center justify-between">
           <div className="space-y-3 z-10 max-w-[210px] sm:max-w-xs">
             <div>
               <h3 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
-                More <span className="text-[#38BDF8]">Jobs.</span><br />
+                More Jobs.<br />
                 More <span className="text-[#38BDF8]">Earnings.</span>
               </h3>
               <p className="text-[10px] sm:text-xs text-slate-300 font-medium leading-relaxed mt-1">
@@ -1017,24 +1060,24 @@ function WorkerDashboardContent() {
             <div>
               <button 
                 onClick={() => router.push('/dashboard/worker/scheduled')}
-                className="bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-xs py-2.5 px-5 rounded-full shadow-md flex items-center gap-1.5 active:scale-95 transition-all"
+                className="bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-xs py-2 px-4 rounded-full shadow-md flex items-center gap-1.5 active:scale-95 transition-all"
               >
                 <span>Scheduled Jobs</span>
-                <ChevronRight size={14} />
+                <ChevronRight size={13} />
               </button>
             </div>
           </div>
 
-          <div className="w-32 sm:w-44 h-32 sm:h-44 shrink-0 relative pointer-events-none drop-shadow-2xl flex items-center justify-end -mr-2">
+          <div className="w-32 sm:w-40 h-32 sm:h-40 shrink-0 relative pointer-events-none drop-shadow-2xl flex items-center justify-end -mr-2">
             <img 
               src="/bottom_toolbox_3d.png" 
-              alt="3D Blue Toolbox" 
+              alt="3D Orange Toolbox" 
               className="w-full h-full object-contain"
             />
           </div>
 
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
-            <div className="w-2 h-2 rounded-full bg-white"></div>
+            <div className="w-4 h-1.5 rounded-full bg-white"></div>
             <div className="w-1.5 h-1.5 rounded-full bg-white/40"></div>
             <div className="w-1.5 h-1.5 rounded-full bg-white/40"></div>
           </div>
@@ -1042,7 +1085,7 @@ function WorkerDashboardContent() {
 
       </main>
 
-      {/* 6. Customer Uploaded Media Lightbox Modal */}
+      {/* 7. Customer Uploaded Media Lightbox Modal */}
       <AnimatePresence>
         {selectedMediaUrl && (
           <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -1076,30 +1119,40 @@ function WorkerDashboardContent() {
         )}
       </AnimatePresence>
 
-      {/* 7. Worker Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-6 py-2 flex items-center justify-around shadow-2xl max-w-2xl mx-auto">
+      {/* 8. Worker Bottom Navigation Bar (Matches Mockup Exactly) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-100 px-4 py-2 flex items-center justify-around shadow-2xl max-w-2xl mx-auto rounded-t-3xl">
         <Link 
           href="/dashboard/worker" 
-          className="flex flex-col items-center gap-1 text-[#007AFF] bg-blue-50/90 px-5 py-1.5 rounded-2xl font-bold"
+          className="flex flex-col items-center gap-0.5 text-[#007AFF] bg-blue-50/90 px-4 py-1.5 rounded-2xl font-bold"
         >
-          <LayoutGrid size={18} />
-          <span className="text-[10px] font-black tracking-tight">Dashboard</span>
+          <Home size={18} />
+          <span className="text-[9.5px] font-black tracking-tight">Dashboard</span>
+        </Link>
+
+        <Link 
+          href="/dashboard/worker/scheduled" 
+          className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 font-medium transition-colors px-3 py-1"
+        >
+          <Calendar size={18} />
+          <span className="text-[9.5px] font-bold">Scheduled Jobs</span>
         </Link>
 
         <Link 
           href="/chat" 
-          className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-700 font-medium transition-colors px-4 py-1"
+          className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 font-medium transition-colors px-3 py-1"
         >
           <MessageCircle size={18} />
-          <span className="text-[10px] font-bold">Chats</span>
+          <span className="text-[9.5px] font-bold">Chats</span>
         </Link>
 
         <Link 
           href="/dashboard/worker/settings" 
-          className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-700 font-medium transition-colors px-4 py-1"
+          className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-700 font-medium transition-colors px-3 py-1"
         >
-          <User size={18} />
-          <span className="text-[10px] font-bold">Profile</span>
+          <div className="w-6 h-6 rounded-full bg-[#A855F7] text-white flex items-center justify-center text-xs font-black shadow-xs">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <span className="text-[9.5px] font-bold">Profile</span>
         </Link>
       </nav>
 

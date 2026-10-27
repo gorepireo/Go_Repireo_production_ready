@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Crosshair } from 'lucide-react';
 
 interface LiveTrackingProps {
   technicianLat: number;
@@ -286,6 +286,20 @@ export default function LiveTrackingGoogleMap({
 
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
+
+      {/* Floating GPS Recenter Button */}
+      <button
+        onClick={() => {
+          if (leafletMapRef.current && mainRouteRef.current) {
+            leafletMapRef.current.fitBounds(mainRouteRef.current.getBounds(), { padding: [50, 50], maxZoom: 16 });
+          }
+        }}
+        className="absolute bottom-3 right-3 z-10 w-9 h-9 bg-white text-[#007AFF] hover:bg-slate-50 rounded-full flex items-center justify-center shadow-md border border-slate-100 active:scale-95 transition-all"
+        title="Recenter Map"
+        aria-label="Recenter Map"
+      >
+        <Crosshair size={18} />
+      </button>
     </div>
   );
 }
