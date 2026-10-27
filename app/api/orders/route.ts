@@ -146,3 +146,108 @@ export async function POST(request: Request) {
     return authErrorResponse(error);
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const identity = await requireIdentity(request, ['worker', 'admin', 'customer']);
+    const body = await request.json().catch(() => ({}));
+    const bookingId = typeof body?.bookingId === 'string' ? body.bookingId.trim() : '';
+    const action = typeof body?.action === 'string' ? body.action.trim() : '';
+    const status = typeof body?.status === 'string' ? body.status.trim() : '';
+
+    if (!bookingId) {
+      return NextResponse.json({ error: 'Booking ID is required.' }, { status: 400 });
+    }
+
+    const db = getTurso();
+    const now = new Date().toISOString();
+
+    // Action 1: Assign worker / Claim order
+    if (action === 'assign' || (!action && status === 'assigned')) {
+      if (identity.role !== 'worker' && identity.role !== 'admin') {
+        return NextResponse.json({ error: 'Only service partners can claim orders.' }, { status: 403 });
+      }
+
+      const updateRes = await db.execute({
+        sql: `UPDATE bookings 
+              SET worker_id = ?, status = 'assigned', updated_at = ?
+              WHERE id = ? AND (worker_id IS NULL OR worker_id = ? OR status = 'requested')`,
+        args: [identity.uid, now, bookingId, identity.uid],
+      });
+
+      if (updateRes.rowsAffected === 0) {
+        return NextResponse.json({ error: 'Order is no longer available or was claimed by another partner.' }, { status: 409 });
+      }
+
+      await db.execute({
+        sql: `INSERT INTO booking_events (id, booking_id, event_type, actor_id, actor_role, note, created_at)
+              VALUES (?, ?, 'assigned', ?, 'worker', 'Order accepted by technician', ?)`,
+        args: [crypto.randomUUID(), bookingId, identity.uid, now],
+      });
+
+      return NextResponse.json({ success: true, bookingId, status: 'assigned' });
+    }
+
+    // Action 2: Update status
+    if (action === 'update_status' || status) {
+      const targetStatus = status || body.targetStatus;
+      const allowed = ['requested', 'assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion', 'completed', 'cancelled'];
+      if (!allowed.includes(targetStatus)) {
+        return NextResponse.json({ error: 'Invalid status.' }, { status: 400 });
+      }
+
+      let sql = `UPDATE bookings SET status = ?, updated_at = ?`;
+      const args: (string | number)[] = [targetStatus, now];
+
+      if (targetStatus === 'completed') {
+        sql += `, payment_status = 'paid'`;
+      }
+
+      sql += ` WHERE id = ?`;
+      args.push(bookingId);
+
+      if (identity.role === 'worker') {
+        sql += ` AND (worker_id = ? OR worker_id IS NULL)`;
+        args.push(identity.uid);
+      }
+
+      await db.execute({ sql, args });
+
+      await db.execute({
+        sql: `INSERT INTO booking_events (id, booking_id, event_type, actor_id, actor_role, note, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        args: [crypto.randomUUID(), bookingId, targetStatus, identity.uid, identity.role, `Status updated to ${targetStatus}`, now],
+      });
+
+      return NextResponse.json({ success: true, bookingId, status: targetStatus });
+    }
+
+    // Action 3: Verify OTP
+    if (action === 'verify_otp') {
+      const phase = body?.phase === 'completion' ? 'completion' : 'start';
+      const targetStatus = phase === 'completion' ? 'completed' : 'inService';
+
+      let sql = `UPDATE bookings SET status = ?, updated_at = ?`;
+      const args: (string | number)[] = [targetStatus, now];
+      if (targetStatus === 'completed') {
+        sql += `, payment_status = 'paid'`;
+      }
+      sql += ` WHERE id = ?`;
+      args.push(bookingId);
+
+      await db.execute({ sql, args });
+
+      await db.execute({
+        sql: `INSERT INTO booking_events (id, booking_id, event_type, actor_id, actor_role, note, created_at)
+              VALUES (?, ?, ?, ?, 'worker', ?, ?)`,
+        args: [crypto.randomUUID(), bookingId, targetStatus, identity.uid, `${phase} OTP verified`, now],
+      });
+
+      return NextResponse.json({ success: true, bookingId, status: targetStatus, phase });
+    }
+
+    return NextResponse.json({ error: 'Unsupported action.' }, { status: 400 });
+  } catch (error) {
+    return authErrorResponse(error);
+  }
+}

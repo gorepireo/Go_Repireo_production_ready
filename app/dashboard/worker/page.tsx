@@ -83,6 +83,7 @@ function WorkerDashboardContent() {
   const [completionOtpInput, setCompletionOtpInput] = useState('');
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [otpError, setOtpError] = useState('');
+  const [isAccepting, setIsAccepting] = useState(false);
   const [cashCollected, setCashCollected] = useState(false);
 
   const displayName = (profile as any)?.full_name || (profile as any)?.name || profile?.display_name || user?.email?.split('@')[0] || 'Prithibi Mandi';
@@ -278,6 +279,7 @@ function WorkerDashboardContent() {
     const workerPhone = (profile as any)?.phone || '+918679245568';
     const nowIso = new Date().toISOString();
 
+    setIsAccepting(true);
     try {
       const { OrderService } = await import('@/lib/services/order.service');
       const { TrackingService } = await import('@/lib/services/tracking.service');
@@ -338,8 +340,11 @@ function WorkerDashboardContent() {
         status: 'worker_assigned'
       });
 
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Accept job error:', err);
+      alert(err instanceof Error ? err.message : 'Failed to accept order.');
+    } finally {
+      setIsAccepting(false);
     }
   };
 
@@ -676,10 +681,11 @@ function WorkerDashboardContent() {
               <div className="flex items-center gap-2 pt-1">
                 <button
                   onClick={() => handleAcceptJob(activeJob.id)}
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs py-3 rounded-xl shadow-md shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                  disabled={isAccepting}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs py-3 rounded-xl shadow-md shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   <Check size={16} />
-                  <span>Accept Order</span>
+                  <span>{isAccepting ? 'Accepting…' : 'Accept Order'}</span>
                 </button>
                 <button
                   onClick={() => setActiveJob(null)}

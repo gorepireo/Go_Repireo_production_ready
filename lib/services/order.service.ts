@@ -107,15 +107,42 @@ export const OrderService = {
   },
 
   async assignWorker(bookingId: string): Promise<void> {
-    console.info('Worker claimed booking:', bookingId);
+    const res = await fetch('/api/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ bookingId, action: 'assign' }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to accept order.');
+    }
   },
 
   async updateOrderStatus(bookingId: string, updates: Record<string, unknown>): Promise<void> {
-    console.info('Order status updated:', bookingId, updates);
+    const res = await fetch('/api/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ bookingId, action: 'update_status', ...updates }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update order status.');
+    }
   },
 
   async verifyOtp(bookingId: string, phase: 'start' | 'completion', otp: string): Promise<void> {
-    console.info('Verify OTP:', bookingId, phase, otp);
+    const res = await fetch('/api/orders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ bookingId, action: 'verify_otp', phase, otp }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Invalid verification OTP.');
+    }
   },
 
   async getWorkerActiveOrder(workerId: string): Promise<BookingRecord | null> {
