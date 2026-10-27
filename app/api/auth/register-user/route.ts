@@ -50,8 +50,11 @@ export async function POST(request: Request) {
     if (pincode && !/^\d{6}$/.test(pincode)) {
       return NextResponse.json({ error: 'Pincode must contain six digits.' }, { status: 400 });
     }
-    if (accountType === 'partner' && (!email || !state || !district || !pincode || !area || !description)) {
-      return NextResponse.json({ error: 'Partners must complete their contact, location, and skills details.' }, { status: 400 });
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
+    }
+    if (accountType === 'partner' && (!state || !district || !pincode || !area || !description)) {
+      return NextResponse.json({ error: 'Partners must complete their location and skills details.' }, { status: 400 });
     }
     if (accountType === 'partner' && (!Number.isInteger(experienceYears) || experienceYears < 0 || experienceYears > 70 || serviceCategories.length === 0)) {
       return NextResponse.json({ error: 'Partners must provide valid experience and at least one service category.' }, { status: 400 });

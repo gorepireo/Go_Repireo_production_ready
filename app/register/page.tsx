@@ -79,7 +79,7 @@ export default function RegisterPage() {
   function handleNextToLocation() {
     const errors: Record<string, boolean> = {};
     if (form.displayName.trim().length < 2) errors.displayName = true;
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = true;
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = true;
     if (!/^\d{10}$/.test(form.phone.trim())) errors.phone = true;
 
     if (Object.keys(errors).length > 0) {
@@ -120,7 +120,7 @@ export default function RegisterPage() {
       if (!form.experienceYears.trim()) errors.experienceYears = true;
     } else {
       if (form.displayName.trim().length < 2) errors.displayName = true;
-      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = true;
+      if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = true;
       if (!/^\d{10}$/.test(form.phone.trim())) errors.phone = true;
     }
 
@@ -296,13 +296,13 @@ export default function RegisterPage() {
                         errorMsg="Please enter your full name."
                       />
                       <Field
-                        label="Email Address"
+                        label="Email Address (Optional)"
                         value={form.email}
                         onChange={(val) => update('email', val)}
-                        placeholder="name@example.com"
+                        placeholder="name@example.com (optional)"
                         icon={<Mail size={18} />}
                         type="email"
-                        required
+                        required={false}
                         error={fieldErrors.email}
                         errorMsg="Please enter a valid email address."
                       />
