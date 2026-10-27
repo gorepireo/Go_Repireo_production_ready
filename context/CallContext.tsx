@@ -41,16 +41,92 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-// Verified active, ultra-fast STUN configuration (all endpoints tested live)
-const rtcConfig: RTCConfiguration = {
-  iceServers: [
+// Verified active, ultra-fast STUN & optional TURN configuration
+const getRtcConfig = (): RTCConfiguration => {
+  const servers: RTCIceServer[] = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
     { urls: 'stun:stun.cloudflare.com:3478' },
-  ],
-  iceCandidatePoolSize: 2,
+  ];
+
+  if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_TURN_URL) {
+    servers.push({
+      urls: process.env.NEXT_PUBLIC_TURN_URL,
+      username: process.env.NEXT_PUBLIC_TURN_USERNAME || undefined,
+      credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL || undefined,
+    });
+  }
+
+  return {
+    iceServers: servers,
+    iceCandidatePoolSize: 2,
+  };
 };
+
+const rtcConfig: RTCConfiguration = getRtcConfig();
+
+/**
+ * Optimizes Opus SDP parameters for crystal-clear HD audio, packet-loss recovery,
+ * and low jitter over long distances and cellular networks.
+ */
+function tuneOpusSdp(sdp: string): string {
+  if (!sdp) return sdp;
+
+  try {
+    const opusMatch = sdp.match(/a=rtpmap:(\d+)\s+opus\/48000/i);
+    if (!opusMatch) return sdp;
+
+    const opusPayload = opusMatch[1];
+    const fmtpRegex = new RegExp('a=fmtp:' + opusPayload + '([^\r\n]*)', 'i');
+    const fmtpMatch = sdp.match(fmtpRegex);
+
+    const desiredParams = [
+      'minptime=10',            // Low audio frame latency (10-20ms)
+      'useinbandfec=1',         // Opus In-band Forward Error Correction (recovers lost audio packets)
+      'usedtx=1',               // Discontinuous transmission saves bandwidth during silence
+      'maxaveragebitrate=32000',// 32kbps HD voice sweet-spot (prevents mobile congestion)
+      'stereo=0',               // Mono voice channel saves 50% packet bandwidth
+      'sprop-stereo=0'
+    ];
+
+    if (fmtpMatch) {
+      const line = fmtpMatch[0];
+      const spaceIdx = line.indexOf(' ');
+      const existingParams = spaceIdx !== -1 ? line.slice(spaceIdx + 1).split(';') : [];
+      const paramMap = new Map<string, string>();
+      existingParams.map(p => p.trim()).filter(Boolean).forEach(p => {
+        const [k, v] = p.split('=');
+        if (k) paramMap.set(k.trim().toLowerCase(), v ? v.trim() : '');
+      });
+
+      desiredParams.forEach(dp => {
+        const [k, v] = dp.split('=');
+        paramMap.set(k.toLowerCase(), v || '');
+      });
+
+      const newParamsStr = Array.from(paramMap.entries())
+        .map(([k, v]) => (v ? `${k}=${v}` : k))
+        .join(';');
+
+      return sdp.replace(fmtpRegex, `a=fmtp:${opusPayload} ${newParamsStr}`);
+    } else {
+      const rtpmapLine = `a=rtpmap:${opusPayload}`;
+      const insertIdx = sdp.indexOf(rtpmapLine);
+      if (insertIdx !== -1) {
+        const lineEnd = sdp.indexOf('\n', insertIdx);
+        if (lineEnd !== -1) {
+          const insertLine = `a=fmtp:${opusPayload} ${desiredParams.join(';')}\r\n`;
+          return sdp.slice(0, lineEnd + 1) + insertLine + sdp.slice(lineEnd + 1);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[WebRTC] tuneOpusSdp fallback:', err);
+  }
+
+  return sdp;
+}
 
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -349,18 +425,33 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {}
   }, []);
 
-  // Request Microphone Stream safely (Universal audio constraints)
+  // Request Microphone Stream safely (Universal audio constraints with low-bandwidth mono optimization)
   const getMicrophoneStream = async (): Promise<MediaStream | null> => {
     try {
       setMicPermissionError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-        video: false,
-      });
+      let stream: MediaStream;
+      try {
+        // High resilience constraints: mono voice channel saves 50% data over mobile & long distance
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+          video: false,
+        });
+      } catch {
+        // Safe fallback if browser does not accept channelCount constraint
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+          video: false,
+        });
+      }
 
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
@@ -480,10 +571,17 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       peerConnectionRef.current = pc;
       setupDataChannel(pc);
 
-      // Add local microphone audio track to WebRTC
+      // Add local microphone audio track to WebRTC with sender bitrate optimization
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
-        pc.addTrack(track, stream);
+        const sender = pc.addTrack(track, stream);
+        try {
+          const params = sender.getParameters();
+          if (params.encodings && params.encodings.length > 0) {
+            params.encodings[0].maxBitrate = 32000;
+            sender.setParameters(params).catch(() => {});
+          }
+        } catch {}
       });
 
       // Receive remote incoming audio track
@@ -529,8 +627,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
-      // Create browser-native Offer
-      const offer = await pc.createOffer();
+      // Create browser-native Offer with Opus long-distance packet loss resilience
+      const rawOffer = await pc.createOffer();
+      const offer = new RTCSessionDescription({
+        type: rawOffer.type,
+        sdp: tuneOpusSdp(rawOffer.sdp || ''),
+      });
       await pc.setLocalDescription(offer);
 
       const res = await fetch('/api/calls', {
@@ -614,10 +716,17 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       peerConnectionRef.current = pc;
       setupDataChannel(pc);
 
-      // Add local microphone audio track to WebRTC
+      // Add local microphone audio track to WebRTC with sender bitrate optimization
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
-        pc.addTrack(track, stream);
+        const sender = pc.addTrack(track, stream);
+        try {
+          const params = sender.getParameters();
+          if (params.encodings && params.encodings.length > 0) {
+            params.encodings[0].maxBitrate = 32000;
+            sender.setParameters(params).catch(() => {});
+          }
+        } catch {}
       });
 
       // Receive remote incoming audio track
@@ -668,8 +777,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       remoteDescriptionSetRef.current = true;
       await flushPendingCandidates();
 
-      // Create native local Answer
-      const answer = await pc.createAnswer();
+      // Create native local Answer with Opus long-distance packet loss resilience
+      const rawAnswer = await pc.createAnswer();
+      const answer = new RTCSessionDescription({
+        type: rawAnswer.type,
+        sdp: tuneOpusSdp(rawAnswer.sdp || ''),
+      });
       await pc.setLocalDescription(answer);
 
       // Broadcast Answer to Server
