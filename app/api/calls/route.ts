@@ -219,7 +219,7 @@ export async function PATCH(req: Request) {
   try {
     const identity = await requireIdentity(req);
     const body = await req.json().catch(() => ({}));
-    const { call_id, status, ended_by, sdp_answer, candidate, userId } = body;
+    const { call_id, status, ended_by, sdp_answer, candidate, role, userId } = body;
 
     if (!call_id) {
       return NextResponse.json({ error: 'call_id is required' }, { status: 400 });
@@ -240,7 +240,11 @@ export async function PATCH(req: Request) {
         try {
           if (row.ice_candidates_json) list = JSON.parse(String(row.ice_candidates_json));
         } catch {}
-        list.push({ candidate, userId: userId || identity.uid });
+        list.push({
+          candidate,
+          role: role || (identity.role === 'worker' ? 'worker' : 'customer'),
+          userId: userId || identity.uid,
+        });
         await db.execute({
           sql: `UPDATE call_sessions SET ice_candidates_json = ? WHERE id = ?`,
           args: [JSON.stringify(list), call_id],

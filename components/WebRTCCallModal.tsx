@@ -50,6 +50,7 @@ export default function WebRTCCallModal() {
         ref={remoteAudioRef}
         autoPlay
         playsInline
+        muted={false}
         style={{
           position: 'fixed',
           top: 0,
