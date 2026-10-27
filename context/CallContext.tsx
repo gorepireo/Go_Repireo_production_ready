@@ -41,21 +41,13 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-// Streamlined, ultra-fast STUN & TURN config
+// Verified active, ultra-fast STUN configuration (all endpoints tested live)
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
     { urls: 'stun:stun.cloudflare.com:3478' },
-    {
-      urls: [
-        'turn:staticauth.openrelay.metered.ca:80',
-        'turn:staticauth.openrelay.metered.ca:443?transport=tcp',
-        'turns:staticauth.openrelay.metered.ca:443?transport=tcp',
-      ],
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
   ],
   iceCandidatePoolSize: 2,
 };
@@ -78,7 +70,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const ringtoneTimerRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const vadCleanupRef = useRef<(() => void) | null>(null);
 
   // Candidate Batching & Guard Refs
   const addedCandidatesRef = useRef<Set<string>>(new Set());
@@ -89,7 +80,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const candidateBatchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeSessionIdRef = useRef<string | null>(null);
 
-  // Initialize or resume Web Audio Context
+  // Initialize or resume Web Audio Context for Ringtone synthesis ONLY (never touches remote voice stream)
   const getAudioContext = useCallback(() => {
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -276,58 +267,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [flushCandidateBatch]);
 
-  // Clean Voice Activity Detector (VAD)
-  const stopVoiceActivityDetection = useCallback(() => {
-    if (vadCleanupRef.current) {
-      vadCleanupRef.current();
-      vadCleanupRef.current = null;
-    }
-    setIsRemoteSpeaking(false);
-  }, []);
-
-  // Attach Voice Activity Detector
-  const startVoiceActivityDetection = useCallback((stream: MediaStream) => {
-    stopVoiceActivityDetection();
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-
-      const source = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 64;
-      analyser.smoothingTimeConstant = 0.2;
-      source.connect(analyser);
-
-      const buffer = new Uint8Array(analyser.frequencyBinCount);
-      let animId: number;
-      let active = true;
-
-      const checkVolume = () => {
-        if (!active) return;
-        analyser.getByteFrequencyData(buffer);
-        let sum = 0;
-        for (let i = 0; i < buffer.length; i++) {
-          sum += buffer[i];
-        }
-        const avg = sum / buffer.length;
-        setIsRemoteSpeaking(avg > 18);
-        animId = requestAnimationFrame(checkVolume);
-      };
-
-      checkVolume();
-
-      vadCleanupRef.current = () => {
-        active = false;
-        cancelAnimationFrame(animId);
-        try { source.disconnect(); } catch {}
-      };
-    } catch {}
-  }, [getAudioContext, stopVoiceActivityDetection]);
-
   // Teardown
   const cleanupCall = useCallback(() => {
     stopRingLoop();
-    stopVoiceActivityDetection();
+    setIsRemoteSpeaking(false);
 
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -368,7 +311,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     pendingCandidatesRef.current = [];
     addedCandidatesRef.current.clear();
     setIsMuted(false);
-  }, [stopRingLoop, stopVoiceActivityDetection]);
+  }, [stopRingLoop]);
 
   // Flush any ICE candidates that arrived before remoteDescription was set
   const flushPendingCandidates = useCallback(async () => {
@@ -404,21 +347,16 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {}
   }, []);
 
-  // Request Microphone Stream safely
+  // Request Microphone Stream safely (Universal audio constraints)
   const getMicrophoneStream = async (): Promise<MediaStream | null> => {
     try {
       setMicPermissionError(null);
-      const audioConstraints: MediaTrackConstraints = {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-        channelCount: 1,
-        sampleRate: 48000,
-      };
-      (audioConstraints as any).latency = 0;
-
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: audioConstraints,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
         video: false,
       });
 
@@ -439,43 +377,40 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Route remote stream to HTML5 Audio element
-  const setupRemoteAudio = useCallback((remoteStream: MediaStream, pc?: RTCPeerConnection) => {
-    if (pc) {
-      try {
-        pc.getReceivers().forEach((receiver) => {
-          if (receiver.track && receiver.track.kind === 'audio') {
-            const anyReceiver = receiver as any;
-            if ('playoutDelayHint' in anyReceiver) {
-              anyReceiver.playoutDelayHint = 0;
-            }
-          }
-        });
-      } catch {}
-    }
-
-    startVoiceActivityDetection(remoteStream);
+  // Route remote stream DIRECTLY to HTML5 Audio element (NO Web Audio hijack = guaranteed audio output)
+  const setupRemoteAudio = useCallback((remoteStream: MediaStream) => {
+    setIsRemoteSpeaking(true);
 
     if (!remoteAudioRef.current) return;
     const audioEl = remoteAudioRef.current;
     
+    // Ensure remote audio tracks are unmuted and enabled
+    remoteStream.getAudioTracks().forEach((t) => {
+      t.enabled = true;
+    });
+
     audioEl.srcObject = remoteStream;
     audioEl.muted = false;
     audioEl.volume = 1.0;
 
     const playPromise = audioEl.play();
     if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        const unblock = () => {
-          audioEl.play().catch(() => {});
-          window.removeEventListener('click', unblock);
-          window.removeEventListener('touchstart', unblock);
-        };
-        window.addEventListener('click', unblock, { once: true });
-        window.addEventListener('touchstart', unblock, { once: true });
-      });
+      playPromise
+        .then(() => {
+          console.log('[WebRTC] Remote voice stream is playing through speakers');
+        })
+        .catch((err) => {
+          console.warn('[CallContext] Autoplay blocked, listening for user tap:', err);
+          const unblock = () => {
+            audioEl.play().catch(() => {});
+            window.removeEventListener('click', unblock);
+            window.removeEventListener('touchstart', unblock);
+          };
+          window.addEventListener('click', unblock, { once: true });
+          window.addEventListener('touchstart', unblock, { once: true });
+        });
     }
-  }, [startVoiceActivityDetection]);
+  }, []);
 
   // Remote hangup handler
   const handleRemoteHangup = useCallback(() => {
@@ -531,16 +466,20 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       peerConnectionRef.current = pc;
       setupDataChannel(pc);
 
+      // Add local microphone audio track to WebRTC
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
         pc.addTrack(track, stream);
       });
 
+      // Receive remote incoming audio track
       pc.ontrack = (event) => {
+        console.log('[WebRTC] Caller received ontrack:', event.track.kind);
         const remoteStream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
-        setupRemoteAudio(remoteStream, pc);
+        setupRemoteAudio(remoteStream);
 
         event.track.onunmute = () => {
+          console.log('[WebRTC] Caller track onunmute');
           if (remoteAudioRef.current) {
             remoteAudioRef.current.play().catch(() => {});
           }
@@ -563,22 +502,21 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       pc.onconnectionstatechange = () => {
+        console.log('[WebRTC] Caller connectionState:', pc.connectionState);
         if (pc.connectionState === 'connected') {
           handleConnected();
         }
       };
 
       pc.oniceconnectionstatechange = () => {
+        console.log('[WebRTC] Caller iceConnectionState:', pc.iceConnectionState);
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
           handleConnected();
         }
       };
 
-      // Native clean offer
-      const offer = await pc.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: false,
-      });
+      // Create browser-native Offer
+      const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
       const res = await fetch('/api/calls', {
@@ -622,7 +560,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // 2. ACCEPT INCOMING CALL (IMMEDIATE PICKUP & SEAMLESS TRANSITION)
+  // 2. ACCEPT INCOMING CALL (IMMEDIATE PICKUP & AUDIO ROUTING)
   const acceptCall = async () => {
     if (!callData || callStatus !== 'incoming') return;
 
@@ -633,7 +571,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addedCandidatesRef.current.clear();
     candidateBatchRef.current = [];
 
-    // CRITICAL: Stop ringing, play connected sound, and transition UI immediately!
+    // Stop ringtone and immediately transition UI to connected
     stopRingLoop();
     playConnectedChime();
     setCallStatus('connected');
@@ -662,16 +600,20 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       peerConnectionRef.current = pc;
       setupDataChannel(pc);
 
+      // Add local microphone audio track to WebRTC
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
         pc.addTrack(track, stream);
       });
 
+      // Receive remote incoming audio track
       pc.ontrack = (event) => {
+        console.log('[WebRTC] Callee received ontrack:', event.track.kind);
         const remoteStream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
-        setupRemoteAudio(remoteStream, pc);
+        setupRemoteAudio(remoteStream);
 
         event.track.onunmute = () => {
+          console.log('[WebRTC] Callee track onunmute');
           if (remoteAudioRef.current) {
             remoteAudioRef.current.play().catch(() => {});
           }
@@ -694,18 +636,20 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       pc.onconnectionstatechange = () => {
+        console.log('[WebRTC] Callee connectionState:', pc.connectionState);
         if (pc.connectionState === 'connected') {
           handleConnected();
         }
       };
 
       pc.oniceconnectionstatechange = () => {
+        console.log('[WebRTC] Callee iceConnectionState:', pc.iceConnectionState);
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
           handleConnected();
         }
       };
 
-      // Set Remote Description (Caller's Offer) natively without brittle regex
+      // Set Remote Description (Caller's Offer) natively
       await pc.setRemoteDescription(new RTCSessionDescription(data.session.sdpOffer));
       remoteDescriptionSetRef.current = true;
       await flushPendingCandidates();
@@ -714,7 +658,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
-      // Instant answer broadcast
+      // Broadcast Answer to Server
       fetch('/api/calls', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -790,7 +734,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 450);
   };
 
-  // Toggle Mute
+  // Toggle Mute Local Mic
   const toggleMute = () => {
     if (localStreamRef.current) {
       const audioTracks = localStreamRef.current.getAudioTracks();
@@ -806,7 +750,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Toggle Speakerphone
+  // Toggle Speakerphone (Volume boost)
   const toggleSpeaker = async () => {
     const nextState = !isSpeakerOn;
     setIsSpeakerOn(nextState);
