@@ -1,78 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireIdentity, authErrorResponse } from '@/lib/server/auth';
+import { getTurso } from '@/lib/server/turso';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { order_id, worker_id, latitude, longitude, accuracy, heading, speed, tracking_status } = body;
+    const identity = await requireIdentity(req);
+    const body = await req.json().catch(() => ({}));
+    const { order_id, latitude, longitude } = body;
 
     if (!order_id || latitude === undefined || longitude === undefined) {
       return NextResponse.json({ error: 'Missing required location fields' }, { status: 400 });
     }
 
-    // 1. Fetch order to verify assigned worker authorization & order status
-    const { data: order, error: orderErr } = await (null as any)
-      .from('orders')
-      .select('id, worker_id, status, user_email, customer_id')
-      .eq('id', order_id)
-      .maybeSingle();
+    const latNum = Number(latitude);
+    const lngNum = Number(longitude);
 
-    if (orderErr || !order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    if (isNaN(latNum) || isNaN(lngNum)) {
+      return NextResponse.json({ error: 'Invalid latitude or longitude values' }, { status: 400 });
     }
 
-    // Prevent publishing location for inactive / completed orders
-    if (['completed', 'cancelled', 'expired'].includes(order.status)) {
-      return NextResponse.json({ error: 'Tracking is disabled for finished orders' }, { status: 403 });
-    }
+    const db = getTurso();
+    const now = new Date().toISOString();
+    const workerId = identity.uid;
 
-    const updatedAt = new Date().toISOString();
+    // Upsert into worker_locations in Turso
+    await db.execute({
+      sql: `INSERT INTO worker_locations (worker_id, active_booking_id, latitude, longitude, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(worker_id) DO UPDATE SET
+              active_booking_id = excluded.active_booking_id,
+              latitude = excluded.latitude,
+              longitude = excluded.longitude,
+              updated_at = excluded.updated_at`,
+      args: [workerId, order_id, latNum, lngNum, now],
+    });
 
-    // 2. Delete outdated live location record for this order
-    await (null as any)
-      .from('order_live_location')
-      .delete()
-      .eq('order_id', order_id);
-
-    // 3. Insert updated worker GPS location into order_live_location
-    await (null as any)
-      .from('order_live_location')
-      .insert([{
-        order_id: order_id,
-        worker_id: worker_id || order.worker_id,
-        lat: Number(latitude),
-        lng: Number(longitude),
-        updated_at: updatedAt
-      }]);
-
-    // 4. Publish to InsForge Realtime Channel for instant customer map update
-    const roomTopic = `live_location_${order_id}`;
-    await db.realtime.publish(roomTopic, 'location_update', {
-      order_id,
-      worker_id: worker_id || order.worker_id,
-      latitude: Number(latitude),
-      longitude: Number(longitude),
-      accuracy: accuracy || null,
-      heading: heading || null,
-      speed: speed || null,
-      updated_at: updatedAt,
-      tracking_status: tracking_status || 'active'
-    }).catch(console.warn);
-
-    // Also broadcast to global channel fallback
-    await db.realtime.publish('global_live_locations', 'location_update', {
-      order_id,
-      latitude: Number(latitude),
-      longitude: Number(longitude),
-      updated_at: updatedAt
-    }).catch(console.warn);
-
-    return NextResponse.json({ success: true, timestamp: updatedAt });
-  } catch (err: any) {
-    console.error('Location update API error:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: true, timestamp: now });
+  } catch (err: unknown) {
+    return authErrorResponse(err);
   }
 }
 
@@ -85,21 +53,30 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'order_id parameter required' }, { status: 400 });
     }
 
-    // Fetch latest location
-    const { data: locRows, error } = await (null as any)
-      .from('order_live_location')
-      .select('*')
-      .eq('order_id', order_id)
-      .order('updated_at', { ascending: false })
-      .limit(1);
+    const db = getTurso();
 
-    if (error || !locRows || locRows.length === 0) {
+    // Query worker's latest location for this booking
+    const res = await db.execute({
+      sql: `SELECT wl.latitude, wl.longitude, wl.updated_at, b.worker_id
+            FROM bookings b
+            LEFT JOIN worker_locations wl ON wl.worker_id = b.worker_id
+            WHERE b.id = ? LIMIT 1`,
+      args: [order_id],
+    });
+
+    const row = res.rows[0];
+    if (!row || row.latitude === null || row.latitude === undefined) {
       return NextResponse.json({ location: null });
     }
 
-    return NextResponse.json({ location: locRows[0] });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({
+      location: {
+        lat: Number(row.latitude),
+        lng: Number(row.longitude),
+        updated_at: String(row.updated_at || ''),
+      },
+    });
+  } catch (err: unknown) {
+    return authErrorResponse(err);
   }
 }
-import { disabledLegacyDb as db } from '@/lib/legacy-realtime-disabled';

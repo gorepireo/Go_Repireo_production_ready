@@ -144,13 +144,13 @@ function TrackContent() {
         }
 
         // Set customer coordinates based on order
-        const orderLat = currentOrder.lat || currentOrder.address?.latitude || 12.9716;
-        const orderLng = currentOrder.lng || currentOrder.address?.longitude || 77.5946;
+        const orderLat = Number(currentOrder.latitude ?? currentOrder.lat ?? currentOrder.address?.latitude ?? 22.5726);
+        const orderLng = Number(currentOrder.longitude ?? currentOrder.lng ?? currentOrder.address?.longitude ?? 88.3639);
         setCustomerCoord({ lat: orderLat, lng: orderLng });
         
         // Start worker coord slightly offset if no tracking data yet
         if (!liveLocationRef.current) {
-          const initLoc = { lat: orderLat - 0.005, lng: orderLng - 0.005, timestamp: Date.now() };
+          const initLoc = { lat: orderLat - 0.0072, lng: orderLng - 0.0068, timestamp: Date.now() };
           liveLocationRef.current = initLoc;
           setWorkerCoord({ lat: initLoc.lat, lng: initLoc.lng });
           setLiveLocation(initLoc);
@@ -195,21 +195,39 @@ function TrackContent() {
     };
   }, [user, profile, paramOrderId, isReviewParam]);
 
-  // Firebase worker-location snapshot; access is restricted to booking participants.
+  // Poll Turso /api/location for live technician GPS
   useEffect(() => {
-    const workerId = order?.workerId;
-    if (!workerId) return;
-    return onSnapshot(doc(db, collections.workerLocations, workerId), (snapshot) => {
-      if (!snapshot.exists()) return;
-      const location = snapshot.data();
-      if (location.activeBookingId !== order.id) return;
-      setLiveLocation({
-        lat: Number(location.latitude), lng: Number(location.longitude),
-        accuracy: location.accuracy ?? null, heading: location.heading ?? null,
-        speed: location.speed ?? null, timestamp: location.updatedAt?.toMillis?.() || Date.now(),
-      });
-    }, () => undefined);
-  }, [order?.id, order?.workerId]);
+    const orderId = order?.id;
+    if (!orderId) return;
+
+    let isMounted = true;
+    const fetchLocation = async () => {
+      try {
+        const res = await fetch(`/api/location?order_id=${orderId}`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.location?.lat && data?.location?.lng && isMounted) {
+            setPrevLocation(liveLocationRef.current);
+            const newLoc = {
+              lat: Number(data.location.lat),
+              lng: Number(data.location.lng),
+              timestamp: Date.now(),
+            };
+            liveLocationRef.current = newLoc;
+            setWorkerCoord({ lat: newLoc.lat, lng: newLoc.lng });
+            setLiveLocation(newLoc);
+          }
+        }
+      } catch {}
+    };
+
+    fetchLocation();
+    const interval = setInterval(fetchLocation, 4000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [order?.id]);
 
   // Helper to load Razorpay Checkout Script
   const loadRazorpayScript = () => {
@@ -441,21 +459,21 @@ function TrackContent() {
   const orderPrice = order?.total_price || order?.price || 499;
 
   // Destination Coordinates
-  const userLat = order?.lat ? Number(order.lat) : 26.7810;
-  const userLng = order?.lng ? Number(order.lng) : 79.0120;
+  const userLat = Number(order?.latitude ?? order?.lat ?? customerCoord?.lat ?? 22.5726);
+  const userLng = Number(order?.longitude ?? order?.lng ?? customerCoord?.lng ?? 88.3639);
 
   // Worker Coordinates (Uses real liveLocation from DB or order.worker_lat/lng fallback)
   const workerLat = liveLocation?.lat 
     ? Number(liveLocation.lat) 
     : order?.worker_lat 
     ? Number(order.worker_lat) 
-    : userLat;
+    : userLat - 0.0072;
 
   const workerLng = liveLocation?.lng 
     ? Number(liveLocation.lng) 
     : order?.worker_lng 
     ? Number(order.worker_lng) 
-    : userLng;
+    : userLng - 0.0068;
 
   const prevWorkerLat = prevLocation?.lat ? Number(prevLocation.lat) : null;
   const prevWorkerLng = prevLocation?.lng ? Number(prevLocation.lng) : null;

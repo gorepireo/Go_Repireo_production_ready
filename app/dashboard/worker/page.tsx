@@ -116,8 +116,16 @@ function WorkerDashboardContent() {
 
     const sendLocationPayload = async (lat: number, lng: number, accuracy?: number, heading?: number | null, speed?: number | null) => {
       try {
-        const { WorkerService } = await import('@/lib/services/worker.service');
-        await WorkerService.updateLocation(lat, lng, rawOrderId);
+        await fetch('/api/location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            order_id: rawOrderId,
+            latitude: lat,
+            longitude: lng,
+          }),
+        });
       } catch (err) {
         console.warn('Location API post error:', err);
       }
@@ -149,10 +157,10 @@ function WorkerDashboardContent() {
         },
         (err) => {
           console.warn('Worker GPS watchPosition error:', err);
-          const custLat = activeJob?.lat ? Number(activeJob.lat) : 26.7990;
-          const custLng = activeJob?.lng ? Number(activeJob.lng) : 75.8869;
-          const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : custLat - 0.027;
-          const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : custLng - 0.025;
+          const custLat = Number(activeJob?.latitude ?? activeJob?.lat ?? 22.5726);
+          const custLng = Number(activeJob?.longitude ?? activeJob?.lng ?? 88.3639);
+          const fallbackLat = activeJob?.worker_lat ? Number(activeJob.worker_lat) : custLat - 0.0072;
+          const fallbackLng = activeJob?.worker_lng ? Number(activeJob.worker_lng) : custLng - 0.0068;
           sendLocationPayload(fallbackLat, fallbackLng);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
@@ -379,8 +387,8 @@ function WorkerDashboardContent() {
 
   // Trigger Get Route with Worker's Live Device GPS Coordinates
   const handleGetRoute = async () => {
-    const cLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
-    const cLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
+    const cLat = Number(activeJob?.latitude ?? activeJob?.lat ?? 22.5726);
+    const cLng = Number(activeJob?.longitude ?? activeJob?.lng ?? 88.3639);
 
     const recordLocation = async (lat: number, lng: number) => {
       if (activeJob?.id) {
@@ -389,8 +397,16 @@ function WorkerDashboardContent() {
             await OrderService.updateOrderStatus(activeJob.id, { status: 'enRoute' });
             setActiveJob((previous: any) => ({ ...previous, status: 'enRoute' }));
           }
-          const { TrackingService } = await import('@/lib/services/tracking.service');
-          await TrackingService.addTrackingEvent(activeJob.id, { lat, lng, workerName: displayName, status: 'worker_assigned' });
+          await fetch('/api/location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              order_id: activeJob.id,
+              latitude: lat,
+              longitude: lng,
+            }),
+          });
         } catch (e) {
           console.warn('Upsert location error:', e);
         }
@@ -411,15 +427,15 @@ function WorkerDashboardContent() {
         },
         (err) => {
           console.warn('GPS error fallback:', err);
-          const fallbackLat = profile?.lat ? Number(profile.lat) : 26.7620;
-          const fallbackLng = profile?.lng ? Number(profile.lng) : 79.0320;
+          const fallbackLat = cLat - 0.0072;
+          const fallbackLng = cLng - 0.0068;
           openNativeGoogleMapsApp(fallbackLat, fallbackLng, cLat, cLng);
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
-      const fallbackLat = profile?.lat ? Number(profile.lat) : 26.7620;
-      const fallbackLng = profile?.lng ? Number(profile.lng) : 79.0320;
+      const fallbackLat = cLat - 0.0072;
+      const fallbackLng = cLng - 0.0068;
       openNativeGoogleMapsApp(fallbackLat, fallbackLng, cLat, cLng);
     }
   };
@@ -490,10 +506,18 @@ function WorkerDashboardContent() {
   if (loading) return <WorkerDashboardSkeleton />;
 
   // Worker Live Device Coordinates for Tracking Map
-  const workerLat = liveDeviceGps?.lat ? liveDeviceGps.lat : (profile?.lat ? Number(profile.lat) : 26.7620);
-  const workerLng = liveDeviceGps?.lng ? liveDeviceGps.lng : (profile?.lng ? Number(profile.lng) : 79.0320);
-  const customerLat = activeJob?.lat ? Number(activeJob.lat) : 26.7810;
-  const customerLng = activeJob?.lng ? Number(activeJob.lng) : 79.0120;
+  const customerLat = Number(activeJob?.latitude ?? activeJob?.lat ?? 22.5726);
+  const customerLng = Number(activeJob?.longitude ?? activeJob?.lng ?? 88.3639);
+  const workerLat = liveDeviceGps?.lat
+    ? liveDeviceGps.lat
+    : activeJob?.worker_lat
+    ? Number(activeJob.worker_lat)
+    : customerLat - 0.0072;
+  const workerLng = liveDeviceGps?.lng
+    ? liveDeviceGps.lng
+    : activeJob?.worker_lng
+    ? Number(activeJob.worker_lng)
+    : customerLng - 0.0068;
   const activeOrderIdText = activeJob?.id ? `#GR-${activeJob.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
   
   const currentStatus = (activeJob?.status || '').toLowerCase();
