@@ -758,15 +758,16 @@ function WorkerDashboardContent() {
                     </button>
                     <button
                       onClick={() => {
-                        const custPhone = activeJob?.customer_phone || activeJob?.customer?.phone || activeJob?.phone;
-                        if (custPhone) {
-                          window.location.href = `tel:${custPhone}`;
-                        } else {
-                          alert('Customer phone number is not available for this booking.');
-                        }
+                        if (!activeJob?.id) return;
+                        startCall(activeJob.id, 'worker', {
+                          id: activeJob.customer_id || activeJob.user_id || 'customer',
+                          name: activeJob.customer_name || activeJob.user_name || 'Customer',
+                          avatar: activeJob.customer_avatar || '/customer_3d.png',
+                          role: 'Customer'
+                        });
                       }}
                       className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs py-3 px-4 rounded-2xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-                      title="Call Customer"
+                      title="In-App Voice Call Customer"
                     >
                       <Phone size={14} className="fill-current" />
                       <span>Call Customer</span>

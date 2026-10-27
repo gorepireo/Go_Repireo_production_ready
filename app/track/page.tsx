@@ -654,16 +654,20 @@ function TrackContent() {
 
                 <button 
                   onClick={() => {
-                    const phone = workerData?.phone || order?.worker_phone;
-                    if (phone) {
-                      window.location.href = `tel:${phone}`;
-                    } else {
-                      showToast('Technician phone number will be available upon dispatch.', 'info');
+                    if (!order?.id) {
+                      showToast('Order details are still loading.', 'info');
+                      return;
                     }
+                    startCall(order.id, 'customer', {
+                      id: workerData.id || order.worker_id || 'worker',
+                      name: workerData.name || order.worker_name || 'Assigned Expert',
+                      avatar: workerData.avatar || order.worker_avatar || '/hero_technician_banner.png',
+                      role: 'Assigned Expert'
+                    });
                   }}
                   className="w-10 h-10 bg-[#007AFF] hover:bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
-                  aria-label="Call Expert"
-                  title="Call Expert"
+                  aria-label="In-App Voice Call"
+                  title="In-App Voice Call"
                 >
                   <Phone size={16} className="fill-current" />
                 </button>

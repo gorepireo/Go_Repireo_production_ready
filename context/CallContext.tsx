@@ -1,22 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { disabledLegacyDb as db } from '@/lib/legacy-realtime-disabled';
-
-const dummyQuery: any = {
-  from: () => dummyQuery,
-  select: () => dummyQuery,
-  insert: () => dummyQuery,
-  update: () => dummyQuery,
-  eq: () => dummyQuery,
-  or: () => dummyQuery,
-  order: () => dummyQuery,
-  limit: () => dummyQuery,
-  single: async () => ({ data: null, error: null }),
-  then: (resolve: (val: any) => void) => resolve({ data: [], error: null }),
-};
-const dummyDb: any = dummyQuery;
 
 export interface CallParticipant {
   id: string;
@@ -55,6 +40,34 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
+// WebRTC STUN & TURN Relay Server Config for 4G/5G Cellular NAT Traversal
+const rtcConfig: RTCConfiguration = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    { urls: 'stun:global.stun.twilio.com:3478' },
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
+
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [callStatus, setCallStatus] = useState<CallStatus>('idle');
@@ -73,39 +86,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const audioCtxRef = useRef<AudioContext | null>(null);
   const addedCandidatesRef = useRef<Set<string>>(new Set());
 
-  // WebRTC STUN & TURN Relay Server Config for 4G/5G Cellular NAT Traversal
-  const rtcConfig: RTCConfiguration = {
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun3.l.google.com:19302' },
-      { urls: 'stun:stun4.l.google.com:19302' },
-      { urls: 'stun:global.stun.twilio.com:3478' },
-      {
-        urls: 'turn:openrelay.metered.ca:80',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turn:openrelay.metered.ca:443',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      },
-      {
-        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      }
-    ],
-    iceCandidatePoolSize: 10
-  };
-
   // Play synthetic Ringtone via Web Audio API
-  const playRingtone = () => {
+  const playRingtone = useCallback(() => {
     try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioCtxRef.current = new AudioCtx();
       }
       const ctx = audioCtxRef.current;
       if (ctx.state === 'suspended') ctx.resume();
@@ -120,25 +106,25 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 1.2);
-    } catch (e) {
-      console.warn('Ringtone sound error:', e);
+    } catch {
+      // AudioContext unavailable
     }
-  };
+  }, []);
 
-  const startRingtoneLoop = () => {
+  const startRingtoneLoop = useCallback(() => {
     playRingtone();
     ringtoneTimerRef.current = setInterval(playRingtone, 2500);
-  };
+  }, [playRingtone]);
 
-  const stopRingtoneLoop = () => {
+  const stopRingtoneLoop = useCallback(() => {
     if (ringtoneTimerRef.current) {
       clearInterval(ringtoneTimerRef.current);
       ringtoneTimerRef.current = null;
     }
-  };
+  }, []);
 
   // Cleanup WebRTC & Streams
-  const cleanupCall = () => {
+  const cleanupCall = useCallback(() => {
     stopRingtoneLoop();
 
     if (timerIntervalRef.current) {
@@ -147,23 +133,23 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
     }
 
     if (peerConnectionRef.current) {
       try {
         peerConnectionRef.current.close();
-      } catch (e) {}
+      } catch {}
       peerConnectionRef.current = null;
     }
 
     addedCandidatesRef.current.clear();
     setIsMuted(false);
-  };
+  }, [stopRingtoneLoop]);
 
   // Safe ICE Candidate Addition
-  const addIceCandidateSafely = async (candidateData: any) => {
+  const addIceCandidateSafely = useCallback(async (candidateData: RTCIceCandidateInit) => {
     if (!peerConnectionRef.current || !candidateData) return;
     const key = JSON.stringify(candidateData);
     if (addedCandidatesRef.current.has(key)) return;
@@ -171,72 +157,305 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidateData));
-    } catch (e) {
-      console.warn('ICE candidate addition error:', e);
+    } catch {
+      // Candidate rejected
+    }
+  }, []);
+
+  // Request Microphone Stream safely
+  const getMicrophoneStream = async (): Promise<MediaStream | null> => {
+    try {
+      setMicPermissionError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      localStreamRef.current = stream;
+      return stream;
+    } catch (err: unknown) {
+      const error = err as { name?: string };
+      const msg =
+        error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError'
+          ? 'Microphone permission denied. Please allow microphone access in your browser settings to make voice calls.'
+          : 'Microphone is unavailable on your device.';
+      setMicPermissionError(msg);
+      return null;
     }
   };
 
-  // InsForge Realtime Subscription & High-Frequency DB Polling
-  useEffect(() => {
-    if (!user?.id && !user?.email) return;
+  // 1. INITIATE CALL (OUTGOING)
+  const startCall = async (
+    orderId: string,
+    callerRole: 'customer' | 'worker' = 'customer',
+    participantOverride?: CallParticipant
+  ) => {
+    if (callStatus !== 'idle') return;
 
-    const userKey = user?.id || user?.email;
-    const globalTopic = 'global_voice_calls';
+    // Unblock Audio Element Playback in click gesture
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = 1.0;
+      remoteAudioRef.current.play().catch(() => {});
+    }
 
-    db.realtime.subscribe(globalTopic).catch(console.warn);
+    const stream = await getMicrophoneStream();
+    if (!stream) return;
 
-    const handleIncomingCall = (msg: any) => {
-      if (msg?.channel === globalTopic && msg?.payload) {
-        const data = msg.payload;
-        if (data.targetUserId === userKey || data.targetEmail === user?.email) {
-          if (callStatus === 'idle') {
-            setCallData({
-              sessionId: data.sessionId,
-              orderId: data.orderId,
-              roomId: data.roomId,
-              initiatedBy: data.initiatedBy,
-              participant: data.callerParticipant
-            });
-            setCallStatus('incoming');
-            startRingtoneLoop();
+    try {
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnectionRef.current = pc;
+
+      // Add sendrecv transceiver for 2-way audio
+      pc.addTransceiver('audio', { direction: 'sendrecv' });
+
+      // Attach microphone tracks
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      // Receive remote audio track
+      pc.ontrack = (event) => {
+        const remoteStream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.volume = 1.0;
+          remoteAudioRef.current.play().catch(() => {});
+        }
+      };
+
+      // Create SDP Offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const res = await fetch('/api/calls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          order_id: orderId,
+          caller_role: callerRole,
+          sdp_offer: offer,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setMicPermissionError(data.error || 'Unable to start in-app voice call.');
+        cleanupCall();
+        return;
+      }
+
+      const session = data.callSession;
+      const targetParticipant = participantOverride || session.participant;
+
+      setCallData({
+        sessionId: session.id,
+        orderId: session.order_id,
+        roomId: session.room_id,
+        initiatedBy: callerRole,
+        participant: targetParticipant,
+      });
+
+      setCallStatus('outgoing');
+      startRingtoneLoop();
+
+      // Handle ICE Candidates
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          fetch('/api/calls', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              call_id: session.id,
+              candidate: event.candidate,
+            }),
+          }).catch(() => {});
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
+          stopRingtoneLoop();
+          setCallStatus('connected');
+          if (remoteAudioRef.current) {
+            remoteAudioRef.current.volume = 1.0;
+            remoteAudioRef.current.play().catch(() => {});
           }
         }
-      }
-    };
+      };
+    } catch {
+      setMicPermissionError('In-app call failed to connect.');
+      cleanupCall();
+    }
+  };
 
-    const handleCallEnded = (msg: any) => {
-      if (msg?.channel === globalTopic && msg?.payload) {
-        const data = msg.payload;
-        if (data?.sessionId && callData?.sessionId === data.sessionId) {
+  // 2. ACCEPT INCOMING CALL
+  const acceptCall = async () => {
+    if (!callData || callStatus !== 'incoming') return;
+
+    stopRingtoneLoop();
+
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = 1.0;
+      remoteAudioRef.current.play().catch(() => {});
+    }
+
+    const stream = await getMicrophoneStream();
+    if (!stream) {
+      declineCall();
+      return;
+    }
+
+    try {
+      // Fetch session offer from API
+      const res = await fetch(`/api/calls?sessionId=${callData.sessionId}`, { credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok || !data.session?.sdpOffer) {
+        throw new Error('Call offer is no longer valid');
+      }
+
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnectionRef.current = pc;
+
+      pc.addTransceiver('audio', { direction: 'sendrecv' });
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      pc.ontrack = (event) => {
+        const remoteStream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.volume = 1.0;
+          remoteAudioRef.current.play().catch(() => {});
+        }
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          fetch('/api/calls', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              call_id: callData.sessionId,
+              candidate: event.candidate,
+            }),
+          }).catch(() => {});
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
           stopRingtoneLoop();
-          setCallStatus('ended');
-          cleanupCall();
-          setTimeout(() => {
-            setCallStatus('idle');
-            setCallData(null);
-          }, 1500);
+          setCallStatus('connected');
+        }
+      };
+
+      await pc.setRemoteDescription(new RTCSessionDescription(data.session.sdpOffer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      await fetch('/api/calls', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          call_id: callData.sessionId,
+          status: 'accepted',
+          sdp_answer: answer,
+        }),
+      });
+
+      setCallStatus('connected');
+
+      // Add already generated ICE candidates
+      if (Array.isArray(data.session.iceCandidates)) {
+        for (const c of data.session.iceCandidates) {
+          if (c.candidate) addIceCandidateSafely(c.candidate);
         }
       }
-    };
+    } catch {
+      cleanupCall();
+      setCallStatus('idle');
+      setCallData(null);
+    }
+  };
 
-    db.realtime.on('incoming_call', handleIncomingCall);
-    db.realtime.on('call_ended', handleCallEnded);
+  // 3. DECLINE INCOMING CALL
+  const declineCall = async () => {
+    if (callData?.sessionId) {
+      fetch('/api/calls', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ call_id: callData.sessionId, status: 'declined' }),
+      }).catch(() => {});
+    }
 
-    // High-Frequency 1-Second DB Sync for Call State & ICE Candidate Sync
-    const dbPollInterval = setInterval(async () => {
-      if (!userKey) return;
+    stopRingtoneLoop();
+    setCallStatus('ended');
+    cleanupCall();
+    setTimeout(() => {
+      setCallStatus('idle');
+      setCallData(null);
+    }, 1500);
+  };
 
+  // 4. END ACTIVE CALL
+  const endCall = async () => {
+    if (callData?.sessionId) {
+      fetch('/api/calls', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ call_id: callData.sessionId, status: 'ended' }),
+      }).catch(() => {});
+    }
+
+    stopRingtoneLoop();
+    setCallStatus('ended');
+    cleanupCall();
+    setTimeout(() => {
+      setCallStatus('idle');
+      setCallData(null);
+    }, 1500);
+  };
+
+  // Toggle Mute Local Mic
+  const toggleMute = () => {
+    if (localStreamRef.current) {
+      const audioTrack = localStreamRef.current.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMuted(!audioTrack.enabled);
+      }
+    }
+  };
+
+  // Toggle Speakerphone
+  const toggleSpeaker = async () => {
+    const nextState = !isSpeakerOn;
+    setIsSpeakerOn(nextState);
+  };
+
+  const dismissError = () => {
+    setMicPermissionError(null);
+  };
+
+  // Signaling Polling Loop
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(async () => {
       try {
-        // 1. Check active session status when in call
+        // A: If in active call, poll session for answer, remote candidates, or termination
         if (callData?.sessionId && ['outgoing', 'incoming', 'connected'].includes(callStatus)) {
-          const { data: session } = await dummyDb
-            .from('call_sessions')
-            .select('status, sdp_answer, sdp_offer, ice_candidates')
-            .eq('id', callData.sessionId)
-            .single();
+          const res = await fetch(`/api/calls?sessionId=${callData.sessionId}`, { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            const session = data.session;
+            if (!session) return;
 
-          if (session) {
-            // Check if opponent hung up or declined
             if (['ended', 'declined', 'cancelled'].includes(session.status)) {
               stopRingtoneLoop();
               setCallStatus('ended');
@@ -253,80 +472,65 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
               stopRingtoneLoop();
               setCallStatus('connected');
 
-              if (session.sdp_answer && peerConnectionRef.current && peerConnectionRef.current.signalingState !== 'stable') {
+              if (
+                session.sdpAnswer &&
+                peerConnectionRef.current &&
+                peerConnectionRef.current.signalingState !== 'stable'
+              ) {
                 try {
-                  await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(session.sdp_answer));
+                  await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(session.sdpAnswer));
                   if (remoteAudioRef.current) {
                     remoteAudioRef.current.volume = 1.0;
-                    remoteAudioRef.current.play().catch(console.warn);
+                    remoteAudioRef.current.play().catch(() => {});
                   }
-                } catch (e) {
-                  console.warn('Set sdp_answer error:', e);
-                }
+                } catch {}
               }
             }
 
-            // Process remote ICE Candidates stored in DB
-            if (Array.isArray(session.ice_candidates)) {
-              for (const candItem of session.ice_candidates) {
-                if (candItem.userId !== userKey) {
-                  await addIceCandidateSafely(candItem.candidate);
+            // Process remote ICE Candidates
+            if (Array.isArray(session.iceCandidates)) {
+              for (const candItem of session.iceCandidates) {
+                if (candItem.candidate && candItem.userId !== user.uid) {
+                  addIceCandidateSafely(candItem.candidate);
                 }
               }
             }
           }
         }
 
-        // 2. Check for incoming call if currently idle
+        // B: If idle, check if an incoming call is ringing for this user
         if (callStatus === 'idle') {
-          const { data: ringingSessions } = await dummyDb
-            .from('call_sessions')
-            .select('*')
-            .eq('status', 'ringing')
-            .or(`customer_id.eq.${userKey},worker_id.eq.${userKey}`)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          if (ringingSessions && ringingSessions.length > 0) {
-            const session = ringingSessions[0];
-            const isCaller = session.initiated_by === 'customer' ? (userKey === session.customer_id) : (userKey === session.worker_id);
-            if (!isCaller) {
+          const res = await fetch('/api/calls?checkIncoming=true', { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.incomingCall) {
+              const incoming = data.incomingCall;
               setCallData({
-                sessionId: session.id,
-                orderId: session.order_id,
-                roomId: session.room_id,
-                initiatedBy: session.initiated_by,
-                participant: {
-                  id: session.initiated_by === 'customer' ? session.customer_id : session.worker_id,
-                  name: session.initiated_by === 'customer' ? 'Customer' : 'Assigned Expert',
-                  avatar: session.initiated_by === 'customer' ? '/customer_3d.png' : '/hero_technician_banner.png',
-                  role: session.initiated_by === 'customer' ? 'Customer' : 'Assigned Expert'
-                }
+                sessionId: incoming.sessionId,
+                orderId: incoming.orderId,
+                roomId: incoming.roomId,
+                initiatedBy: incoming.initiatedBy,
+                participant: incoming.participant,
               });
               setCallStatus('incoming');
               startRingtoneLoop();
             }
           }
         }
-      } catch (err) {
-        console.warn('Call DB sync error:', err);
+      } catch {
+        // Polling loop error ignored
       }
-    }, 1000);
+    }, 1500);
 
-    return () => {
-      clearInterval(dbPollInterval);
-      db.realtime.off('incoming_call', handleIncomingCall);
-      db.realtime.off('call_ended', handleCallEnded);
-      db.realtime.unsubscribe(globalTopic);
-    };
-  }, [user, callStatus, callData?.sessionId]);
+    return () => clearInterval(interval);
+  }, [user, callStatus, callData?.sessionId, startRingtoneLoop, stopRingtoneLoop, cleanupCall, addIceCandidateSafely]);
 
   // Handle Call Timer on Connect
   useEffect(() => {
     if (callStatus === 'connected') {
       setDurationSeconds(0);
       timerIntervalRef.current = setInterval(() => {
-        setDurationSeconds(prev => prev + 1);
+        setDurationSeconds((prev) => prev + 1);
       }, 1000);
     } else {
       if (timerIntervalRef.current) {
@@ -334,414 +538,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         timerIntervalRef.current = null;
       }
     }
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
   }, [callStatus]);
-
-  // Request Microphone Stream safely
-  const getMicrophoneStream = async (): Promise<MediaStream | null> => {
-    try {
-      setMicPermissionError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        },
-        video: false
-      });
-      localStreamRef.current = stream;
-      return stream;
-    } catch (err: any) {
-      console.error('Microphone access error:', err);
-      const msg = err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'
-        ? 'Microphone permission denied. Please allow microphone access in your browser settings to make voice calls.'
-        : 'Microphone is missing or unavailable on your device.';
-      setMicPermissionError(msg);
-      return null;
-    }
-  };
-
-  // Helper to append ICE candidate to DB session
-  const saveIceCandidateToDb = async (sessionId: string, candidate: any) => {
-    const userKey = user?.id || user?.email;
-    try {
-      const { data: existing } = await dummyDb
-        .from('call_sessions')
-        .select('ice_candidates')
-        .eq('id', sessionId)
-        .single();
-
-      const currentList = Array.isArray(existing?.ice_candidates) ? existing.ice_candidates : [];
-      const updatedList = [...currentList, { userId: userKey, candidate }];
-
-      await dummyDb
-        .from('call_sessions')
-        .update({ ice_candidates: updatedList })
-        .eq('id', sessionId);
-    } catch (e) {
-      console.warn('Save ICE to DB error:', e);
-    }
-  };
-
-  // 1. INITIATE CALL (OUTGOING)
-  const startCall = async (orderId: string, callerRole: 'customer' | 'worker' = 'customer', participantOverride?: CallParticipant) => {
-    if (process.env.NEXT_PUBLIC_ENABLE_LEGACY_CALLS !== 'true') {
-      setMicPermissionError('In-app calling is temporarily unavailable while signaling is moved to a secured Firebase backend.');
-      return;
-    }
-    if (callStatus !== 'idle') return;
-
-    // Unblock Audio Element Playback in click gesture
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = 1.0;
-      remoteAudioRef.current.play().catch(console.warn);
-    }
-
-    const stream = await getMicrophoneStream();
-    if (!stream) return;
-
-    try {
-      const pc = new RTCPeerConnection(rtcConfig);
-      peerConnectionRef.current = pc;
-
-      // Add sendrecv transceiver for guaranteed 2-way audio
-      pc.addTransceiver('audio', { direction: 'sendrecv' });
-
-      // Attach microphone tracks
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
-
-      // Receive remote audio track
-      pc.ontrack = (event) => {
-        let remoteStream: MediaStream;
-        if (event.streams && event.streams[0]) {
-          remoteStream = event.streams[0];
-        } else {
-          remoteStream = new MediaStream([event.track]);
-        }
-
-        if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.volume = 1.0;
-          remoteAudioRef.current.play().catch(err => console.warn('Remote audio play error:', err));
-        }
-      };
-
-      // Create SDP Offer
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      const res = await fetch('/api/calls', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          order_id: orderId,
-          caller_id: user?.id || user?.email,
-          caller_role: callerRole,
-          sdp_offer: offer
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setMicPermissionError(data.error || 'Unable to start voice call');
-        cleanupCall();
-        return;
-      }
-
-      const session = data.callSession;
-      const targetParticipant = participantOverride || session.participant;
-
-      setCallData({
-        sessionId: session.id,
-        orderId: session.order_id,
-        roomId: session.room_id,
-        initiatedBy: callerRole,
-        participant: targetParticipant
-      });
-
-      setCallStatus('outgoing');
-      startRingtoneLoop();
-
-      // Handle ICE Candidates
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          saveIceCandidateToDb(session.id, event.candidate);
-          db.realtime.publish(`call_room_${session.id}`, 'ice_candidate', {
-            candidate: event.candidate,
-            userId: user?.id || user?.email
-          }).catch(console.warn);
-        }
-      };
-
-      pc.onconnectionstatechange = () => {
-        console.log('Caller WebRTC Connection State:', pc.connectionState);
-        if (pc.connectionState === 'connected') {
-          stopRingtoneLoop();
-          setCallStatus('connected');
-          if (remoteAudioRef.current) {
-            remoteAudioRef.current.volume = 1.0;
-            remoteAudioRef.current.play().catch(console.warn);
-          }
-        }
-      };
-
-      // Broadcast incoming call event via Realtime
-      db.realtime.publish('global_voice_calls', 'incoming_call', {
-        sessionId: session.id,
-        orderId: session.order_id,
-        roomId: session.room_id,
-        initiatedBy: callerRole,
-        targetUserId: targetParticipant.id,
-        callerParticipant: {
-          id: user?.id || user?.email,
-          name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Customer',
-          avatar: user?.user_metadata?.avatar_url || '/customer_3d.png',
-          role: callerRole === 'customer' ? 'Customer' : 'Assigned Expert'
-        }
-      }).catch(console.warn);
-
-      // Subscribe to session room
-      const roomTopic = `call_room_${session.id}`;
-      db.realtime.subscribe(roomTopic).catch(console.warn);
-
-      const handleSdpAnswer = (msg: any) => {
-        if (msg?.channel === roomTopic && msg?.payload?.answer && pc.signalingState !== 'stable') {
-          pc.setRemoteDescription(new RTCSessionDescription(msg.payload.answer)).then(() => {
-            stopRingtoneLoop();
-            setCallStatus('connected');
-            if (remoteAudioRef.current) {
-              remoteAudioRef.current.volume = 1.0;
-              remoteAudioRef.current.play().catch(console.warn);
-            }
-          }).catch(console.warn);
-        }
-      };
-
-      const handleIceCandidate = (msg: any) => {
-        if (msg?.channel === roomTopic && msg?.payload?.candidate && msg.payload.userId !== (user?.id || user?.email)) {
-          addIceCandidateSafely(msg.payload.candidate);
-        }
-      };
-
-      db.realtime.on('sdp_answer', handleSdpAnswer);
-      db.realtime.on('ice_candidate', handleIceCandidate);
-
-    } catch (err: any) {
-      console.error('Call initiation failure:', err);
-      setMicPermissionError('Call failed to connect');
-      cleanupCall();
-    }
-  };
-
-  // 2. ACCEPT INCOMING CALL
-  const acceptCall = async () => {
-    if (!callData || callStatus !== 'incoming') return;
-
-    stopRingtoneLoop();
-
-    // Unblock Audio Element Playback in click gesture
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = 1.0;
-      remoteAudioRef.current.play().catch(console.warn);
-    }
-
-    const stream = await getMicrophoneStream();
-    if (!stream) {
-      declineCall();
-      return;
-    }
-
-    try {
-      // Fetch sdp_offer from DB session
-      const { data: dbSession } = await dummyDb
-        .from('call_sessions')
-        .select('sdp_offer, ice_candidates')
-        .eq('id', callData.sessionId)
-        .single();
-
-      const pc = new RTCPeerConnection(rtcConfig);
-      peerConnectionRef.current = pc;
-
-      // Add sendrecv transceiver for guaranteed 2-way audio
-      pc.addTransceiver('audio', { direction: 'sendrecv' });
-
-      // Attach microphone tracks
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
-
-      // Receive remote audio track
-      pc.ontrack = (event) => {
-        let remoteStream: MediaStream;
-        if (event.streams && event.streams[0]) {
-          remoteStream = event.streams[0];
-        } else {
-          remoteStream = new MediaStream([event.track]);
-        }
-
-        if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.volume = 1.0;
-          remoteAudioRef.current.play().catch(err => console.warn('Remote audio play error:', err));
-        }
-      };
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          saveIceCandidateToDb(callData.sessionId, event.candidate);
-          db.realtime.publish(`call_room_${callData.sessionId}`, 'ice_candidate', {
-            candidate: event.candidate,
-            userId: user?.id || user?.email
-          }).catch(console.warn);
-        }
-      };
-
-      pc.onconnectionstatechange = () => {
-        console.log('Receiver WebRTC Connection State:', pc.connectionState);
-        if (pc.connectionState === 'connected') {
-          stopRingtoneLoop();
-          setCallStatus('connected');
-          if (remoteAudioRef.current) {
-            remoteAudioRef.current.volume = 1.0;
-            remoteAudioRef.current.play().catch(console.warn);
-          }
-        }
-      };
-
-      const roomTopic = `call_room_${callData.sessionId}`;
-      db.realtime.subscribe(roomTopic).catch(console.warn);
-
-      if (dbSession?.sdp_offer) {
-        await pc.setRemoteDescription(new RTCSessionDescription(dbSession.sdp_offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-
-        await fetch('/api/calls', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ call_id: callData.sessionId, status: 'accepted', sdp_answer: answer })
-        });
-
-        db.realtime.publish(roomTopic, 'sdp_answer', { answer }).catch(console.warn);
-      } else {
-        await fetch('/api/calls', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ call_id: callData.sessionId, status: 'accepted' })
-        });
-      }
-
-      // Add existing ICE Candidates from DB
-      if (Array.isArray(dbSession?.ice_candidates)) {
-        for (const candItem of dbSession.ice_candidates) {
-          if (candItem.userId !== (user?.id || user?.email)) {
-            await addIceCandidateSafely(candItem.candidate);
-          }
-        }
-      }
-
-      const handleIceCandidate = (msg: any) => {
-        if (msg?.channel === roomTopic && msg?.payload?.candidate && msg.payload.userId !== (user?.id || user?.email)) {
-          addIceCandidateSafely(msg.payload.candidate);
-        }
-      };
-
-      db.realtime.on('ice_candidate', handleIceCandidate);
-
-      stopRingtoneLoop();
-      setCallStatus('connected');
-    } catch (err) {
-      console.error('Accept call error:', err);
-      cleanupCall();
-    }
-  };
-
-  // 3. DECLINE INCOMING CALL
-  const declineCall = async () => {
-    if (!callData) return;
-
-    stopRingtoneLoop();
-    try {
-      await fetch('/api/calls', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ call_id: callData.sessionId, status: 'declined', ended_by: user?.id || user?.email })
-      });
-
-      db.realtime.publish('global_voice_calls', 'call_ended', { sessionId: callData.sessionId }).catch(console.warn);
-    } catch (e) {
-      console.warn('Decline error:', e);
-    } finally {
-      cleanupCall();
-      setCallStatus('idle');
-      setCallData(null);
-    }
-  };
-
-  // 4. END ACTIVE CALL
-  const endCall = async () => {
-    if (!callData) return;
-
-    try {
-      await fetch('/api/calls', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ call_id: callData.sessionId, status: 'ended', ended_by: user?.id || user?.email })
-      });
-
-      db.realtime.publish('global_voice_calls', 'call_ended', { sessionId: callData.sessionId }).catch(console.warn);
-    } catch (e) {
-      console.warn('End call error:', e);
-    } finally {
-      cleanupCall();
-      setCallStatus('ended');
-      setTimeout(() => {
-        setCallStatus('idle');
-        setCallData(null);
-      }, 1500);
-    }
-  };
-
-  // 5. TOGGLE MUTE
-  const toggleMute = () => {
-    if (localStreamRef.current) {
-      const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsMuted(!audioTrack.enabled);
-      }
-    }
-  };
-
-  // 6. TOGGLE LOUDSPEAKER
-  const toggleSpeaker = async () => {
-    const nextState = !isSpeakerOn;
-    setIsSpeakerOn(nextState);
-
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = nextState ? 1.0 : 0.6;
-      remoteAudioRef.current.play().catch(console.warn);
-
-      try {
-        if ('setSinkId' in (remoteAudioRef.current as any)) {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const outputs = devices.filter(d => d.kind === 'audiooutput');
-          if (outputs.length > 0) {
-            const target = nextState 
-              ? (outputs.find(d => d.label.toLowerCase().includes('speaker') || d.label.toLowerCase().includes('loudspeaker')) || outputs[0])
-              : (outputs.find(d => d.label.toLowerCase().includes('earpiece') || d.label.toLowerCase().includes('headset')) || outputs[0]);
-
-            if (target && target.deviceId) {
-              await (remoteAudioRef.current as any).setSinkId(target.deviceId);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Toggle speaker warning:', e);
-      }
-    }
-  };
-
-  const dismissError = () => {
-    setMicPermissionError(null);
-  };
 
   return (
     <CallContext.Provider
@@ -759,7 +559,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         endCall,
         toggleMute,
         toggleSpeaker,
-        dismissError
+        dismissError,
       }}
     >
       {children}
