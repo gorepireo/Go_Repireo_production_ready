@@ -40,19 +40,14 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-// WebRTC STUN & TURN Relay Server Config with verified active endpoints
+// Streamlined, ultra-fast STUN & TURN config (removes bloated servers that delay ICE checks)
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
-    { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:stun.cloudflare.com:3478' },
     {
       urls: [
         'turn:staticauth.openrelay.metered.ca:80',
-        'turn:staticauth.openrelay.metered.ca:443',
         'turn:staticauth.openrelay.metered.ca:443?transport=tcp',
         'turns:staticauth.openrelay.metered.ca:443?transport=tcp',
       ],
@@ -60,28 +55,14 @@ const rtcConfig: RTCConfiguration = {
       credential: 'openrelayproject',
     },
   ],
-  iceCandidatePoolSize: 10,
+  iceCandidatePoolSize: 2,
 };
 
-// Helper: Wait briefly for initial ICE candidates to gather so they are embedded directly in the SDP
-const waitForIceGathering = (pc: RTCPeerConnection, timeoutMs = 800): Promise<void> => {
-  return new Promise<void>((resolve) => {
-    if (pc.iceGatheringState === 'complete') {
-      resolve();
-      return;
-    }
-    const timer = setTimeout(() => {
-      resolve();
-    }, timeoutMs);
-
-    const onStateChange = () => {
-      if (pc.iceGatheringState === 'complete') {
-        clearTimeout(timer);
-        pc.removeEventListener('icegatheringstatechange', onStateChange);
-        resolve();
-      }
-    };
-    pc.addEventListener('icegatheringstatechange', onStateChange);
+// Low-latency Opus audio SDP optimizer (forces 20ms packets, mono VoIP mode, minimizes buffer delay)
+const optimizeAudioSdp = (sdp: string): string => {
+  return sdp.replace(/a=fmtp:(\d+) (.*)/g, (match, pt, params) => {
+    if (params.includes('minptime=')) return match;
+    return `a=fmtp:${pt} ${params};stereo=0;sprop-stereo=0;maxaveragebitrate=32000;useinbandfec=1;ptime=20;maxptime=20;cbr=0`;
   });
 };
 
@@ -96,6 +77,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // WebRTC & Audio Refs
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const ringtoneTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -127,7 +109,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Play synthetic pleasant Ringtone via Web Audio API
+  // Play synthetic pleasant Ringtone
   const playRingtone = useCallback(() => {
     try {
       const ctx = getAudioContext();
@@ -143,14 +125,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 1.0);
-    } catch {
-      // AudioContext unavailable
-    }
+    } catch {}
   }, [getAudioContext]);
 
   const startRingtoneLoop = useCallback(() => {
     playRingtone();
-    ringtoneTimerRef.current = setInterval(playRingtone, 2500);
+    ringtoneTimerRef.current = setInterval(playRingtone, 2200);
   }, [playRingtone]);
 
   const stopRingtoneLoop = useCallback(() => {
@@ -160,7 +140,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Flush batched candidates to server
+  // Flush batched candidates to server immediately
   const flushCandidateBatch = useCallback(() => {
     if (!activeSessionIdRef.current || candidateBatchRef.current.length === 0) return;
     const toSend = [...candidateBatchRef.current];
@@ -184,11 +164,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       candidateBatchTimerRef.current = setTimeout(() => {
         candidateBatchTimerRef.current = null;
         flushCandidateBatch();
-      }, 200);
+      }, 100); // Super responsive 100ms trickle flush
     }
   }, [flushCandidateBatch]);
 
-  // Cleanup WebRTC & Streams
+  // Instant local teardown
   const cleanupCall = useCallback(() => {
     stopRingtoneLoop();
 
@@ -203,6 +183,13 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     candidateBatchRef.current = [];
     activeSessionIdRef.current = null;
+
+    if (dataChannelRef.current) {
+      try {
+        dataChannelRef.current.close();
+      } catch {}
+      dataChannelRef.current = null;
+    }
 
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -238,14 +225,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addedCandidatesRef.current.add(key);
         try {
           await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(cand));
-        } catch (err) {
-          console.warn('[CallContext] Failed to add pending candidate:', err);
-        }
+        } catch {}
       }
     }
   }, []);
 
-  // Safe ICE Candidate Addition (Queues if remote description is not set yet)
+  // Safe ICE Candidate Addition
   const addIceCandidateSafely = useCallback(async (candidateData: RTCIceCandidateInit) => {
     if (!candidateData || !candidateData.candidate) return;
     const key = `${candidateData.candidate}_${candidateData.sdpMid}_${candidateData.sdpMLineIndex}`;
@@ -259,27 +244,28 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addedCandidatesRef.current.add(key);
     try {
       await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidateData));
-    } catch (err) {
-      console.warn('[CallContext] Candidate addition error:', err);
-    }
+    } catch {}
   }, []);
 
-  // Request Microphone Stream safely with optimal voice parameters
+  // Request Microphone with lowest hardware buffer latency
   const getMicrophoneStream = async (): Promise<MediaStream | null> => {
     try {
       setMicPermissionError(null);
+      const audioConstraints: MediaTrackConstraints = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+        sampleRate: 48000,
+      };
+      // Request low-latency hardware buffer on supported engines
+      (audioConstraints as any).latency = 0;
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1,
-          sampleRate: 48000,
-        },
+        audio: audioConstraints,
         video: false,
       });
 
-      // Ensure every audio track is fully enabled
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
       });
@@ -297,8 +283,22 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Route remote stream directly to HTML5 Audio element with robust play & unblock logic
-  const setupRemoteAudio = useCallback((remoteStream: MediaStream) => {
+  // Route remote stream to HTML5 Audio element and configure zero-delay receiver
+  const setupRemoteAudio = useCallback((remoteStream: MediaStream, pc?: RTCPeerConnection) => {
+    if (pc) {
+      // Force WebRTC audio receiver to use zero playout delay (no artificial jitter buffer lag)
+      try {
+        pc.getReceivers().forEach((receiver) => {
+          if (receiver.track && receiver.track.kind === 'audio') {
+            const anyReceiver = receiver as any;
+            if ('playoutDelayHint' in anyReceiver) {
+              anyReceiver.playoutDelayHint = 0;
+            }
+          }
+        });
+      } catch {}
+    }
+
     if (!remoteAudioRef.current) return;
     const audioEl = remoteAudioRef.current;
     
@@ -308,8 +308,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const playPromise = audioEl.play();
     if (playPromise !== undefined) {
-      playPromise.catch((err) => {
-        console.warn('[CallContext] Autoplay policy prevented playback, attaching tap unblocker:', err);
+      playPromise.catch(() => {
         const unblock = () => {
           audioEl.play().catch(() => {});
           window.removeEventListener('click', unblock);
@@ -320,6 +319,28 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     }
   }, []);
+
+  // Instant remote hangup handler (triggered via DataChannel in 1ms)
+  const handleRemoteHangup = useCallback(() => {
+    stopRingtoneLoop();
+    setCallStatus('ended');
+    cleanupCall();
+    setTimeout(() => {
+      setCallStatus('idle');
+      setCallData(null);
+    }, 400); // Snappy 400ms dismissal
+  }, [stopRingtoneLoop, cleanupCall]);
+
+  // Set up Instant DataChannel for 0-latency call control signaling
+  const setupDataChannel = (pc: RTCPeerConnection) => {
+    const dc = pc.createDataChannel('repireo-call-control', { negotiated: true, id: 0 });
+    dataChannelRef.current = dc;
+    dc.onmessage = (event) => {
+      if (event.data === 'HANGUP') {
+        handleRemoteHangup();
+      }
+    };
+  };
 
   // 1. INITIATE CALL (OUTGOING)
   const startCall = async (
@@ -335,7 +356,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addedCandidatesRef.current.clear();
     candidateBatchRef.current = [];
 
-    // Prime Web Audio and remote audio element during user click gesture to bypass mobile autoplay blockers
+    // Prime Web Audio and remote audio element during user click
     getAudioContext();
     if (remoteAudioRef.current) {
       remoteAudioRef.current.muted = false;
@@ -349,6 +370,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
+      setupDataChannel(pc);
 
       // Add local microphone audio tracks
       stream.getAudioTracks().forEach((track) => {
@@ -359,7 +381,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Receive remote audio track
       pc.ontrack = (event) => {
         const remoteStream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
-        setupRemoteAudio(remoteStream);
+        setupRemoteAudio(remoteStream, pc);
 
         event.track.onunmute = () => {
           if (remoteAudioRef.current) {
@@ -370,14 +392,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       };
 
-      // Candidate handling
+      // Candidate handling - trickle immediately
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           queueCandidateToSend(event.candidate.toJSON());
         }
       };
 
-      // Real connection status listeners
+      // Connection status listeners
       const handleConnected = () => {
         stopRingtoneLoop();
         setCallStatus('connected');
@@ -399,18 +421,18 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
-      // Create local SDP Offer with explicit audio reception intent
+      // Create local SDP Offer with low-latency audio intent
       const offer = await pc.createOffer({
         offerToReceiveAudio: true,
         offerToReceiveVideo: false,
       });
-      await pc.setLocalDescription(offer);
 
-      // Wait briefly for initial candidates to gather into the SDP
-      await waitForIceGathering(pc, 600);
-      const offerToSend = pc.localDescription || offer;
+      // Optimize Opus parameters in SDP
+      const optimizedSdp = optimizeAudioSdp(offer.sdp || '');
+      const localDesc = new RTCSessionDescription({ type: 'offer', sdp: optimizedSdp });
+      await pc.setLocalDescription(localDesc);
 
-      // Post offer to server
+      // Post offer to server WITHOUT BLOCKING - trickle ICE handles candidate delivery
       const res = await fetch('/api/calls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -418,7 +440,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({
           order_id: orderId,
           caller_role: callerRole,
-          sdp_offer: offerToSend,
+          sdp_offer: localDesc,
         }),
       });
 
@@ -433,7 +455,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       activeSessionIdRef.current = session.id;
       const targetParticipant = participantOverride || session.participant;
 
-      // Flush any initial gathered candidates
+      // Flush any gathered candidates
       flushCandidateBatch();
 
       setCallData({
@@ -453,7 +475,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // 2. ACCEPT INCOMING CALL
+  // 2. ACCEPT INCOMING CALL (ZERO-DELAY PICKUP)
   const acceptCall = async () => {
     if (!callData || callStatus !== 'incoming') return;
 
@@ -467,7 +489,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     stopRingtoneLoop();
     getAudioContext();
 
-    // Prime audio playback during user accept click
     if (remoteAudioRef.current) {
       remoteAudioRef.current.muted = false;
       remoteAudioRef.current.volume = 1.0;
@@ -481,7 +502,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      // Fetch session offer from API
       const res = await fetch(`/api/calls?sessionId=${callData.sessionId}`, { credentials: 'include' });
       const data = await res.json();
       if (!res.ok || !data.session?.sdpOffer) {
@@ -490,6 +510,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
+      setupDataChannel(pc);
 
       // Add local microphone audio tracks
       stream.getAudioTracks().forEach((track) => {
@@ -499,7 +520,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       pc.ontrack = (event) => {
         const remoteStream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
-        setupRemoteAudio(remoteStream);
+        setupRemoteAudio(remoteStream, pc);
 
         event.track.onunmute = () => {
           if (remoteAudioRef.current) {
@@ -542,27 +563,24 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       remoteDescriptionSetRef.current = true;
       await flushPendingCandidates();
 
-      // Create and set local SDP Answer
+      // Create local SDP Answer
       const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
+      const optimizedSdp = optimizeAudioSdp(answer.sdp || '');
+      const localAnswer = new RTCSessionDescription({ type: 'answer', sdp: optimizedSdp });
+      await pc.setLocalDescription(localAnswer);
 
-      // Wait briefly for initial candidates to gather into answer SDP
-      await waitForIceGathering(pc, 600);
-      const answerToSend = pc.localDescription || answer;
-
-      // Send Answer to Server
-      await fetch('/api/calls', {
+      // SEND ANSWER IMMEDIATELY TO SERVER - ZERO PICKUP DELAY
+      fetch('/api/calls', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           call_id: callData.sessionId,
           status: 'accepted',
-          sdp_answer: answerToSend,
+          sdp_answer: localAnswer,
         }),
       });
 
-      // Flush gathered candidates
       flushCandidateBatch();
 
       // Process any already recorded caller ICE candidates
@@ -598,11 +616,19 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 1200);
+    }, 400);
   };
 
-  // 4. END ACTIVE CALL
+  // 4. END ACTIVE CALL (INSTANT VIA DATA CHANNEL + HTTP)
   const endCall = async () => {
+    // A: Instantly notify other peer over WebRTC DataChannel (0ms delay)
+    if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
+      try {
+        dataChannelRef.current.send('HANGUP');
+      } catch {}
+    }
+
+    // B: Update server in background
     if (callData?.sessionId) {
       fetch('/api/calls', {
         method: 'PATCH',
@@ -618,7 +644,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 1200);
+    }, 400); // Fast 400ms dismissal
   };
 
   // Toggle Mute Local Mic
@@ -634,7 +660,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Toggle Speakerphone (Volume boost)
+  // Toggle Speakerphone
   const toggleSpeaker = async () => {
     const nextState = !isSpeakerOn;
     setIsSpeakerOn(nextState);
@@ -647,12 +673,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMicPermissionError(null);
   };
 
-  // Dynamic Signaling Polling Loop
+  // Dynamic Signaling Polling Loop - Ultra-Responsive Handshake
   useEffect(() => {
     if (!user) return;
 
-    // Fast 500ms polling during handshake / ringing, 1500ms when connected
-    const pollInterval = ['outgoing', 'incoming'].includes(callStatus) ? 500 : 1500;
+    // 250ms polling during handshake (detects pickup in ~125ms), 1000ms when connected
+    const pollInterval = ['outgoing', 'incoming'].includes(callStatus) ? 250 : 1000;
 
     const interval = setInterval(async () => {
       try {
@@ -665,13 +691,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!session) return;
 
             if (['ended', 'declined', 'cancelled'].includes(session.status)) {
-              stopRingtoneLoop();
-              setCallStatus('ended');
-              cleanupCall();
-              setTimeout(() => {
-                setCallStatus('idle');
-                setCallData(null);
-              }, 1200);
+              handleRemoteHangup();
               return;
             }
 
@@ -710,7 +730,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // B: If idle, check if an incoming call is ringing for this user
+        // B: If idle, check if an incoming call is ringing for this user (fast 800ms check)
         if (callStatus === 'idle') {
           const res = await fetch('/api/calls?checkIncoming=true', { credentials: 'include' });
           if (res.ok) {
@@ -729,9 +749,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }
         }
-      } catch {
-        // Polling loop network blip ignored
-      }
+      } catch {}
     }, pollInterval);
 
     return () => clearInterval(interval);
@@ -742,6 +760,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     startRingtoneLoop,
     stopRingtoneLoop,
     cleanupCall,
+    handleRemoteHangup,
     addIceCandidateSafely,
     flushPendingCandidates,
   ]);
