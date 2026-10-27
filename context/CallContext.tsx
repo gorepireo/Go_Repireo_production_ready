@@ -79,6 +79,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const candidateBatchRef = useRef<RTCIceCandidateInit[]>([]);
   const candidateBatchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeSessionIdRef = useRef<string | null>(null);
+  const endedSessionIdsRef = useRef<Set<string>>(new Set());
+  const isCallEndingRef = useRef<boolean>(false);
 
   // Initialize or resume Web Audio Context for Ringtone synthesis ONLY (never touches remote voice stream)
   const getAudioContext = useCallback(() => {
@@ -412,17 +414,29 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Remote hangup handler
+  // Remote hangup handler (instant and loop-free)
   const handleRemoteHangup = useCallback(() => {
+    if (isCallEndingRef.current) return;
+    isCallEndingRef.current = true;
+
+    const currentSessionId = callData?.sessionId || activeSessionIdRef.current;
+    if (currentSessionId) {
+      endedSessionIdsRef.current.add(currentSessionId);
+    }
+
     stopRingLoop();
     playEndedChime();
     setCallStatus('ended');
     cleanupCall();
+
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 450);
-  }, [stopRingLoop, playEndedChime, cleanupCall]);
+      setTimeout(() => {
+        isCallEndingRef.current = false;
+      }, 1500);
+    }, 600);
+  }, [callData?.sessionId, stopRingLoop, playEndedChime, cleanupCall]);
 
   // DataChannel for 0-latency call control
   const setupDataChannel = (pc: RTCPeerConnection) => {
@@ -688,12 +702,17 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 3. DECLINE INCOMING CALL
   const declineCall = async () => {
-    if (callData?.sessionId) {
+    if (isCallEndingRef.current) return;
+    isCallEndingRef.current = true;
+
+    const currentSessionId = callData?.sessionId || activeSessionIdRef.current;
+    if (currentSessionId) {
+      endedSessionIdsRef.current.add(currentSessionId);
       fetch('/api/calls', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ call_id: callData.sessionId, status: 'declined' }),
+        body: JSON.stringify({ call_id: currentSessionId, status: 'declined' }),
       }).catch(() => {});
     }
 
@@ -704,23 +723,34 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 450);
+      setTimeout(() => {
+        isCallEndingRef.current = false;
+      }, 1500);
+    }, 600);
   };
 
   // 4. END ACTIVE CALL
   const endCall = async () => {
+    if (isCallEndingRef.current) return;
+    isCallEndingRef.current = true;
+
+    const currentSessionId = callData?.sessionId || activeSessionIdRef.current;
+    if (currentSessionId) {
+      endedSessionIdsRef.current.add(currentSessionId);
+    }
+
     if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
       try {
         dataChannelRef.current.send('HANGUP');
       } catch {}
     }
 
-    if (callData?.sessionId) {
+    if (currentSessionId) {
       fetch('/api/calls', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ call_id: callData.sessionId, status: 'ended' }),
+        body: JSON.stringify({ call_id: currentSessionId, status: 'ended' }),
       }).catch(() => {});
     }
 
@@ -731,7 +761,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
-    }, 450);
+      setTimeout(() => {
+        isCallEndingRef.current = false;
+      }, 1500);
+    }, 600);
   };
 
   // Toggle Mute Local Mic
@@ -822,21 +855,24 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        if (callStatus === 'idle') {
+        if (callStatus === 'idle' && !isCallEndingRef.current) {
           const res = await fetch('/api/calls?checkIncoming=true', { credentials: 'include' });
           if (res.ok) {
             const data = await res.json();
             if (data.incomingCall) {
               const incoming = data.incomingCall;
-              setCallData({
-                sessionId: incoming.sessionId,
-                orderId: incoming.orderId,
-                roomId: incoming.roomId,
-                initiatedBy: incoming.initiatedBy,
-                participant: incoming.participant,
-              });
-              setCallStatus('incoming');
-              startRingLoop('incoming');
+              // Guard: Only handle if not previously ended or declined
+              if (!endedSessionIdsRef.current.has(incoming.sessionId)) {
+                setCallData({
+                  sessionId: incoming.sessionId,
+                  orderId: incoming.orderId,
+                  roomId: incoming.roomId,
+                  initiatedBy: incoming.initiatedBy,
+                  participant: incoming.participant,
+                });
+                setCallStatus('incoming');
+                startRingLoop('incoming');
+              }
             }
           }
         }

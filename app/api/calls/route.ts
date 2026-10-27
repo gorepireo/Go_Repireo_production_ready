@@ -184,6 +184,16 @@ export async function GET(req: Request) {
     // 2. Check for incoming call ringing for this user
     if (checkIncoming) {
       const myId = identity.uid;
+
+      // Automatically expire old ringing sessions older than 45 seconds
+      const now = new Date();
+      const staleCutoff = new Date(now.getTime() - 45000).toISOString();
+      await db.execute({
+        sql: `UPDATE call_sessions SET status = 'missed', ended_at = ? 
+              WHERE status = 'ringing' AND created_at < ?`,
+        args: [now.toISOString(), staleCutoff],
+      }).catch(() => {});
+
       const res = await db.execute({
         sql: `SELECT cs.*, b.service_name,
                      cu.display_name as customer_name,
@@ -195,10 +205,11 @@ export async function GET(req: Request) {
               LEFT JOIN users wu ON wu.id = cs.worker_id
               LEFT JOIN worker_profiles wp ON wp.user_id = cs.worker_id
               WHERE cs.status = 'ringing'
+                AND cs.created_at >= ?
                 AND ((cs.customer_id = ? AND cs.initiated_by = 'worker')
                      OR (cs.worker_id = ? AND cs.initiated_by = 'customer'))
               ORDER BY cs.created_at DESC LIMIT 1`,
-        args: [myId, myId],
+        args: [staleCutoff, myId, myId],
       });
 
       const row = res.rows[0];
@@ -315,11 +326,12 @@ export async function PATCH(req: Request) {
 
     if (['ended', 'declined', 'cancelled', 'missed'].includes(status)) {
       const existingRes = await db.execute({
-        sql: `SELECT accepted_at FROM call_sessions WHERE id = ? LIMIT 1`,
+        sql: `SELECT order_id, accepted_at FROM call_sessions WHERE id = ? LIMIT 1`,
         args: [call_id],
       });
       let duration = 0;
-      const acceptedAt = existingRes.rows[0]?.accepted_at;
+      const row = existingRes.rows[0];
+      const acceptedAt = row?.accepted_at;
       if (acceptedAt) {
         duration = Math.max(0, Math.floor((Date.now() - new Date(String(acceptedAt)).getTime()) / 1000));
       }
@@ -330,6 +342,17 @@ export async function PATCH(req: Request) {
               WHERE id = ?`,
         args: [status, now, ended_by || identity.uid, duration, call_id],
       });
+
+      // Also clean up any lingering ringing sessions for this order to prevent looping
+      if (row?.order_id) {
+        await db.execute({
+          sql: `UPDATE call_sessions 
+                SET status = 'ended', ended_at = ? 
+                WHERE order_id = ? AND status = 'ringing'`,
+          args: [now, String(row.order_id)],
+        }).catch(() => {});
+      }
+
       return NextResponse.json({ success: true, status, duration });
     }
 
