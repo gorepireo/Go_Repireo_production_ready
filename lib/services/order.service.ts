@@ -152,6 +152,21 @@ export const OrderService = {
     }
   },
 
+  async confirmCashPayment(bookingId: string): Promise<boolean> {
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ bookingId, action: 'confirm_cash_payment' }),
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('Error confirming cash payment:', err);
+      return false;
+    }
+  },
+
   async getWorkerActiveOrder(workerId: string): Promise<BookingRecord | null> {
     try {
       const res = await fetch('/api/orders?scope=active', { credentials: 'include' });

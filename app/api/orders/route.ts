@@ -253,6 +253,24 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: true, bookingId, status: targetStatus, phase });
     }
 
+    // Action 4: Confirm Cash Payment
+    if (action === 'confirm_cash_payment' || action === 'cash_paid') {
+      await db.execute({
+        sql: `UPDATE bookings 
+              SET payment_status = 'paid', payment_method = 'cash', updated_at = ? 
+              WHERE id = ?`,
+        args: [now, bookingId],
+      });
+
+      await db.execute({
+        sql: `INSERT INTO booking_events (id, booking_id, event_type, actor_id, actor_role, note, created_at)
+              VALUES (?, ?, 'payment_received', ?, 'worker', 'Customer paid cash to technician', ?)`,
+        args: [crypto.randomUUID(), bookingId, identity.uid, now],
+      });
+
+      return NextResponse.json({ success: true, bookingId, payment_status: 'paid', payment_method: 'cash' });
+    }
+
     return NextResponse.json({ error: 'Unsupported action.' }, { status: 400 });
   } catch (error) {
     return authErrorResponse(error);
