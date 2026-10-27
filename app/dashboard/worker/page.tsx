@@ -520,6 +520,15 @@ function WorkerDashboardContent() {
     : customerLng - 0.0068;
   const activeOrderIdText = activeJob?.id ? `#GR-${activeJob.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
   
+  const approxDistanceKm = Math.max(0.5, Math.round(
+    6371 * 2 * Math.asin(Math.sqrt(
+      Math.sin(((customerLat - workerLat) * Math.PI / 180) / 2) ** 2 +
+      Math.cos(workerLat * Math.PI / 180) * Math.cos(customerLat * Math.PI / 180) *
+      Math.sin(((customerLng - workerLng) * Math.PI / 180) / 2) ** 2
+    )) * 10
+  ) / 10);
+  const approxEtaMins = Math.max(2, Math.round(approxDistanceKm * 2.5));
+  
   const currentStatus = (activeJob?.status || '').toLowerCase();
   const isPendingJob = ['pending', 'requested'].includes(currentStatus);
   const isWorking = ['inservice', 'awaitingcompletion'].includes(currentStatus);
@@ -745,7 +754,7 @@ function WorkerDashboardContent() {
                         </div>
                         <div>
                           <h5 className="text-xs font-bold text-slate-900">Customer Location</h5>
-                          <p className="text-[10px] text-slate-400 font-medium">5.2 km away</p>
+                          <p className="text-[10px] text-slate-400 font-medium">{approxDistanceKm} km away</p>
                         </div>
                       </div>
 
@@ -765,7 +774,7 @@ function WorkerDashboardContent() {
                         </div>
                         <div>
                           <h5 className="text-xs font-bold text-slate-700">Expected Arrival</h5>
-                          <p className="text-[10px] text-slate-400 font-medium">18 mins</p>
+                          <p className="text-[10px] text-slate-400 font-medium">~{approxEtaMins} mins</p>
                         </div>
                       </div>
                     </div>
@@ -807,7 +816,7 @@ function WorkerDashboardContent() {
                     userLng={customerLng}
                     technicianName={displayName}
                     technicianAvatar={(profile as any)?.avatar_url || (profile as any)?.avatar || activeJob?.worker_avatar}
-                    distanceKm="5.2 km"
+                    distanceKm={`${approxDistanceKm} km`}
                   />
                 </div>
               </div>
