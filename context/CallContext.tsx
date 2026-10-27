@@ -45,6 +45,7 @@ const CallContext = createContext<CallContextType | undefined>(undefined);
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun.cloudflare.com:3478' },
     {
       urls: [
@@ -57,14 +58,6 @@ const rtcConfig: RTCConfiguration = {
     },
   ],
   iceCandidatePoolSize: 2,
-};
-
-// Low-latency Opus audio SDP optimizer (forces 20ms packets, mono VoIP mode, minimizes buffer delay)
-const optimizeAudioSdp = (sdp: string): string => {
-  return sdp.replace(/a=fmtp:(\d+) (.*)/g, (match, pt, params) => {
-    if (params.includes('minptime=')) return match;
-    return `a=fmtp:${pt} ${params};stereo=0;sprop-stereo=0;maxaveragebitrate=32000;useinbandfec=1;ptime=20;maxptime=20;cbr=0`;
-  });
 };
 
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -207,7 +200,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {}
   }, [getAudioContext]);
 
-  // 4. CALL ENDED / HANGUP SOUND (Telephone busy disconnect beeps + haptic)
+  // 4. CALL ENDED / HANGUP SOUND (Telephone disconnect beeps + haptic)
   const playEndedChime = useCallback(() => {
     try {
       const ctx = getAudioContext();
@@ -292,7 +285,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsRemoteSpeaking(false);
   }, []);
 
-  // Attach non-destructive Voice Activity Detector to remote stream
+  // Attach Voice Activity Detector
   const startVoiceActivityDetection = useCallback((stream: MediaStream) => {
     stopVoiceActivityDetection();
     try {
@@ -303,7 +296,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 64;
       analyser.smoothingTimeConstant = 0.2;
-      source.connect(analyser); // Note: NOT connected to destination to avoid AEC conflict!
+      source.connect(analyser);
 
       const buffer = new Uint8Array(analyser.frequencyBinCount);
       let animId: number;
@@ -331,7 +324,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {}
   }, [getAudioContext, stopVoiceActivityDetection]);
 
-  // Instant local teardown
+  // Teardown
   const cleanupCall = useCallback(() => {
     stopRingLoop();
     stopVoiceActivityDetection();
@@ -411,7 +404,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {}
   }, []);
 
-  // Request Microphone with lowest hardware buffer latency
+  // Request Microphone Stream safely
   const getMicrophoneStream = async (): Promise<MediaStream | null> => {
     try {
       setMicPermissionError(null);
@@ -446,7 +439,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Route remote stream to HTML5 Audio element and configure zero-delay receiver
+  // Route remote stream to HTML5 Audio element
   const setupRemoteAudio = useCallback((remoteStream: MediaStream, pc?: RTCPeerConnection) => {
     if (pc) {
       try {
@@ -484,7 +477,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [startVoiceActivityDetection]);
 
-  // Instant remote hangup handler (triggered via DataChannel in 1ms)
+  // Remote hangup handler
   const handleRemoteHangup = useCallback(() => {
     stopRingLoop();
     playEndedChime();
@@ -496,15 +489,17 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 450);
   }, [stopRingLoop, playEndedChime, cleanupCall]);
 
-  // Set up Instant DataChannel for 0-latency call control signaling
+  // DataChannel for 0-latency call control
   const setupDataChannel = (pc: RTCPeerConnection) => {
-    const dc = pc.createDataChannel('repireo-call-control', { negotiated: true, id: 0 });
-    dataChannelRef.current = dc;
-    dc.onmessage = (event) => {
-      if (event.data === 'HANGUP') {
-        handleRemoteHangup();
-      }
-    };
+    try {
+      const dc = pc.createDataChannel('repireo-call-control', { negotiated: true, id: 0 });
+      dataChannelRef.current = dc;
+      dc.onmessage = (event) => {
+        if (event.data === 'HANGUP') {
+          handleRemoteHangup();
+        }
+      };
+    } catch {}
   };
 
   // 1. INITIATE CALL (OUTGOING)
@@ -549,9 +544,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (remoteAudioRef.current) {
             remoteAudioRef.current.play().catch(() => {});
           }
-          stopRingLoop();
-          playConnectedChime();
-          setCallStatus('connected');
         };
       };
 
@@ -563,7 +555,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const handleConnected = () => {
         stopRingLoop();
-        playConnectedChime();
         setCallStatus('connected');
         if (remoteAudioRef.current) {
           remoteAudioRef.current.volume = 1.0;
@@ -583,14 +574,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
+      // Native clean offer
       const offer = await pc.createOffer({
         offerToReceiveAudio: true,
         offerToReceiveVideo: false,
       });
-
-      const optimizedSdp = optimizeAudioSdp(offer.sdp || '');
-      const localDesc = new RTCSessionDescription({ type: 'offer', sdp: optimizedSdp });
-      await pc.setLocalDescription(localDesc);
+      await pc.setLocalDescription(offer);
 
       const res = await fetch('/api/calls', {
         method: 'POST',
@@ -599,7 +588,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({
           order_id: orderId,
           caller_role: callerRole,
-          sdp_offer: localDesc,
+          sdp_offer: offer,
         }),
       });
 
@@ -625,7 +614,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       setCallStatus('outgoing');
-      startRingLoop('outgoing'); // Plays dual-tone telecom ringback
+      startRingLoop('outgoing');
     } catch (err) {
       console.error('[CallContext] startCall failed:', err);
       setMicPermissionError('In-app call failed to connect.');
@@ -633,7 +622,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // 2. ACCEPT INCOMING CALL (ZERO-DELAY PICKUP)
+  // 2. ACCEPT INCOMING CALL (IMMEDIATE PICKUP & SEAMLESS TRANSITION)
   const acceptCall = async () => {
     if (!callData || callStatus !== 'incoming') return;
 
@@ -644,9 +633,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addedCandidatesRef.current.clear();
     candidateBatchRef.current = [];
 
+    // CRITICAL: Stop ringing, play connected sound, and transition UI immediately!
     stopRingLoop();
-    getAudioContext();
+    playConnectedChime();
+    setCallStatus('connected');
 
+    getAudioContext();
     if (remoteAudioRef.current) {
       remoteAudioRef.current.muted = false;
       remoteAudioRef.current.volume = 1.0;
@@ -655,7 +647,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const stream = await getMicrophoneStream();
     if (!stream) {
-      declineCall();
+      endCall();
       return;
     }
 
@@ -683,9 +675,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (remoteAudioRef.current) {
             remoteAudioRef.current.play().catch(() => {});
           }
-          stopRingLoop();
-          playConnectedChime();
-          setCallStatus('connected');
         };
       };
 
@@ -697,7 +686,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const handleConnected = () => {
         stopRingLoop();
-        playConnectedChime();
         setCallStatus('connected');
         if (remoteAudioRef.current) {
           remoteAudioRef.current.volume = 1.0;
@@ -717,14 +705,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       };
 
+      // Set Remote Description (Caller's Offer) natively without brittle regex
       await pc.setRemoteDescription(new RTCSessionDescription(data.session.sdpOffer));
       remoteDescriptionSetRef.current = true;
       await flushPendingCandidates();
 
+      // Create native local Answer
       const answer = await pc.createAnswer();
-      const optimizedSdp = optimizeAudioSdp(answer.sdp || '');
-      const localAnswer = new RTCSessionDescription({ type: 'answer', sdp: optimizedSdp });
-      await pc.setLocalDescription(localAnswer);
+      await pc.setLocalDescription(answer);
 
       // Instant answer broadcast
       fetch('/api/calls', {
@@ -734,12 +722,13 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({
           call_id: callData.sessionId,
           status: 'accepted',
-          sdp_answer: localAnswer,
+          sdp_answer: answer,
         }),
       });
 
       flushCandidateBatch();
 
+      // Process any already recorded caller ICE candidates
       if (Array.isArray(data.session.iceCandidates)) {
         for (const c of data.session.iceCandidates) {
           if (c.candidate && (c.role === 'caller' || c.userId !== user?.uid)) {
@@ -749,9 +738,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.error('[CallContext] acceptCall failed:', err);
-      cleanupCall();
-      setCallStatus('idle');
-      setCallData(null);
+      endCall();
     }
   };
 
@@ -778,7 +765,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 4. END ACTIVE CALL
   const endCall = async () => {
-    // Notify peer immediately over DataChannel
     if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
       try {
         dataChannelRef.current.send('HANGUP');
@@ -820,7 +806,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Toggle Speakerphone (Volume boost)
+  // Toggle Speakerphone
   const toggleSpeaker = async () => {
     const nextState = !isSpeakerOn;
     setIsSpeakerOn(nextState);
@@ -856,6 +842,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
               return;
             }
 
+            // Caller receives Callee's SDP Answer
             if (myCallRoleRef.current === 'caller' && session.status === 'accepted' && session.sdpAnswer) {
               if (
                 peerConnectionRef.current &&
@@ -866,6 +853,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(session.sdpAnswer));
                   remoteDescriptionSetRef.current = true;
                   stopRingLoop();
+                  playConnectedChime();
+                  setCallStatus('connected');
                   await flushPendingCandidates();
 
                   if (remoteAudioRef.current) {
@@ -903,7 +892,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 participant: incoming.participant,
               });
               setCallStatus('incoming');
-              startRingLoop('incoming'); // Plays melodic smartphone chime + vibration
+              startRingLoop('incoming');
             }
           }
         }
@@ -919,6 +908,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     stopRingLoop,
     cleanupCall,
     handleRemoteHangup,
+    playConnectedChime,
     addIceCandidateSafely,
     flushPendingCandidates,
   ]);
