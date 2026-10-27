@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight, ArrowLeft, BriefcaseBusiness, Check, ChevronDown, Hammer, LockKeyhole,
-  Mail, MapPin, Phone, ShieldCheck, Sparkles, UserRound, Wrench, Zap, AlertCircle
+  Mail, MapPin, Phone, ShieldCheck, Sparkles, UserRound, Wrench, Zap, AlertCircle, Loader2
 } from 'lucide-react';
 
 type AccountType = 'customer' | 'partner';
@@ -55,9 +55,12 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [services, setServices] = useState<string[]>([]);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeMessage, setPincodeMessage] = useState('');
+  const [areaSuggestions, setAreaSuggestions] = useState<string[]>([]);
   const [form, setForm] = useState({
-    displayName: '', email: '', phone: '', state: 'Uttar Pradesh', district: 'Etawah', pincode: '206001', area: '',
-    experienceYears: '2', description: '', code: '',
+    displayName: '', email: '', phone: '', state: '', district: '', pincode: '', area: '',
+    experienceYears: '', description: '', code: '',
   });
 
   function update(name: keyof typeof form, value: string) {
@@ -67,12 +70,64 @@ export default function RegisterPage() {
     }
   }
 
+  // Auto-detect and populate District & State when 6-digit Pincode is entered
+  const handlePincodeChange = async (rawCode: string) => {
+    const cleanCode = rawCode.replace(/\D/g, '').slice(0, 6);
+    update('pincode', cleanCode);
+    setPincodeMessage('');
+    setAreaSuggestions([]);
+
+    if (cleanCode.length === 6) {
+      setPincodeLoading(true);
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${cleanCode}`);
+        const data = await res.json();
+        if (data && data[0]?.Status === 'Success' && data[0]?.PostOffice?.length > 0) {
+          const postOffice = data[0].PostOffice[0];
+          const detectedDistrict = postOffice.District || '';
+          const detectedState = postOffice.State || '';
+
+          setForm((prev) => ({
+            ...prev,
+            pincode: cleanCode,
+            district: detectedDistrict,
+            state: detectedState,
+          }));
+
+          setFieldErrors((prev) => ({
+            ...prev,
+            pincode: false,
+            district: false,
+            state: false,
+          }));
+
+          const localities = Array.from(new Set(
+            data[0].PostOffice
+              .map((po: any) => po.Name)
+              .filter(Boolean)
+          )).slice(0, 8) as string[];
+
+          setAreaSuggestions(localities);
+          setPincodeMessage(`✓ Auto-detected: ${detectedDistrict}, ${detectedState}`);
+        } else {
+          setPincodeMessage('Could not auto-detect address. Please enter district and state manually.');
+        }
+      } catch (err) {
+        console.warn('Pincode lookup error:', err);
+      } finally {
+        setPincodeLoading(false);
+      }
+    }
+  };
+
   function chooseAccountType(type: AccountType) {
     setAccountType(type);
     setPartnerStep(1);
     setIsOtpStep(false);
     setError('');
     setFieldErrors({});
+    setPincodeMessage('');
+    setAreaSuggestions([]);
   }
 
   // Step 1 Validation -> Proceed to Step 2
@@ -94,9 +149,9 @@ export default function RegisterPage() {
   // Step 2 Validation -> Proceed to Step 3
   function handleNextToServices() {
     const errors: Record<string, boolean> = {};
-    if (form.state.trim().length < 2) errors.state = true;
-    if (form.district.trim().length < 2) errors.district = true;
     if (!/^\d{6}$/.test(form.pincode.trim())) errors.pincode = true;
+    if (form.district.trim().length < 2) errors.district = true;
+    if (form.state.trim().length < 2) errors.state = true;
     if (form.area.trim().length < 2) errors.area = true;
 
     if (Object.keys(errors).length > 0) {
@@ -354,41 +409,54 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-4 space-y-4">
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <Field
-                          label="State"
-                          value={form.state}
-                          onChange={(val) => update('state', val)}
-                          placeholder="e.g. Uttar Pradesh"
-                          icon={<MapPin size={17} />}
-                          required
-                          error={fieldErrors.state}
-                          errorMsg="Please enter state."
-                        />
-                        <Field
-                          label="District / City"
-                          value={form.district}
-                          onChange={(val) => update('district', val)}
-                          placeholder="e.g. Etawah"
-                          icon={<BriefcaseBusiness size={17} />}
-                          required
-                          error={fieldErrors.district}
-                          errorMsg="Please enter district or city."
-                        />
-                      </div>
-
-                      <div className="grid sm:grid-cols-2 gap-4">
+                      {/* Pincode with Auto-Detect */}
+                      <div>
                         <Field
                           label="Pincode"
                           value={form.pincode}
-                          onChange={(val) => update('pincode', val.replace(/\D/g, '').slice(0, 6))}
-                          placeholder="e.g. 206001"
-                          icon={<BriefcaseBusiness size={17} />}
+                          onChange={handlePincodeChange}
+                          placeholder="Enter 6-digit Pincode (e.g. 206001)"
+                          icon={pincodeLoading ? <Loader2 size={17} className="animate-spin text-[#0874ef]" /> : <MapPin size={17} />}
                           inputMode="numeric"
                           required
                           error={fieldErrors.pincode}
                           errorMsg="Please enter a valid 6-digit pincode."
                         />
+                        {pincodeMessage && (
+                          <p className={`mt-1.5 text-xs font-bold flex items-center gap-1.5 ${
+                            pincodeMessage.startsWith('✓') ? 'text-emerald-700' : 'text-slate-500'
+                          }`}>
+                            {pincodeMessage}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* District / City & State (Auto-filled from Pincode) */}
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <Field
+                          label="District / City"
+                          value={form.district}
+                          onChange={(val) => update('district', val)}
+                          placeholder="District / City (auto-fills from pincode)"
+                          icon={<BriefcaseBusiness size={17} />}
+                          required
+                          error={fieldErrors.district}
+                          errorMsg="Please enter district or city."
+                        />
+                        <Field
+                          label="State"
+                          value={form.state}
+                          onChange={(val) => update('state', val)}
+                          placeholder="State (auto-fills from pincode)"
+                          icon={<MapPin size={17} />}
+                          required
+                          error={fieldErrors.state}
+                          errorMsg="Please enter state."
+                        />
+                      </div>
+
+                      {/* Specific Service Area / Localities */}
+                      <div>
                         <Field
                           label="Specific Service Area / Localities"
                           value={form.area}
@@ -399,6 +467,29 @@ export default function RegisterPage() {
                           error={fieldErrors.area}
                           errorMsg="Please enter service localities."
                         />
+                        {areaSuggestions.length > 0 && (
+                          <div className="mt-2.5">
+                            <p className="text-[10px] font-bold text-slate-500 mb-1.5">Suggested areas for this pincode (tap to add):</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {areaSuggestions.map((loc) => (
+                                <button
+                                  key={loc}
+                                  type="button"
+                                  onClick={() => {
+                                    const current = form.area ? form.area.split(',').map((s) => s.trim()).filter(Boolean) : [];
+                                    if (!current.includes(loc)) {
+                                      const next = current.length > 0 ? `${form.area}, ${loc}` : loc;
+                                      update('area', next);
+                                    }
+                                  }}
+                                  className="text-[10px] font-bold bg-white border border-blue-200 text-[#0874ef] hover:bg-blue-50 px-2.5 py-1 rounded-full transition-all active:scale-95 shadow-2xs"
+                                >
+                                  + {loc}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
