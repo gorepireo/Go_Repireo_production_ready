@@ -37,6 +37,7 @@ function formatBooking(row: Record<string, unknown>) {
     created_at: row.created_at ? String(row.created_at) : new Date().toISOString(),
     worker_name: row.worker_name ? String(row.worker_name) : null,
     worker_avatar: row.worker_avatar ? String(row.worker_avatar) : null,
+    worker_phone: row.worker_phone ? String(row.worker_phone) : null,
     customer_name: row.customer_name ? String(row.customer_name) : null,
     customer_phone: row.customer_phone ? String(row.customer_phone) : null,
   };
@@ -81,6 +82,7 @@ export async function GET(request: Request) {
     const result = await db.execute({
       sql: `SELECT b.*, 
                    w.display_name as worker_name, 
+                   w.phone as worker_phone,
                    wp.avatar_url as worker_avatar,
                    u.display_name as customer_name,
                    u.phone as customer_phone

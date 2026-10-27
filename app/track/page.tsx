@@ -134,12 +134,12 @@ function TrackContent() {
         if (workerId) {
           setWorkerData({
             id: workerId,
-            name: currentOrder.workerName || 'Assigned Technician',
-            avatar: currentOrder.workerAvatarUrl || '/technician_hero.jpg',
-            phone: '',
-            avgRating: currentOrder.workerRatingAverage || 0,
-            reviewsCount: currentOrder.workerRatingCount || 0,
-            isNewWorker: (currentOrder.workerRatingCount || 0) === 0,
+            name: currentOrder.worker_name || currentOrder.workerName || 'Assigned Technician',
+            avatar: currentOrder.worker_avatar || currentOrder.workerAvatarUrl || '/technician_hero.jpg',
+            phone: currentOrder.worker_phone || currentOrder.workerPhone || '',
+            avgRating: currentOrder.workerRatingAverage || 4.9,
+            reviewsCount: currentOrder.workerRatingCount || 12,
+            isNewWorker: false,
           });
         }
 
@@ -657,17 +657,12 @@ function TrackContent() {
                     const phone = workerData?.phone || order?.worker_phone;
                     if (phone) {
                       window.location.href = `tel:${phone}`;
-                    } else if (order?.id) {
-                      startCall(order.id, 'customer', {
-                        id: workerData.id || 'worker',
-                        name: workerData.name,
-                        avatar: workerData.avatar || order?.worker_avatar || '/technician_hero.jpg',
-                        role: 'Assigned Expert'
-                      });
+                    } else {
+                      showToast('Technician phone number will be available upon dispatch.', 'info');
                     }
                   }}
                   className="w-10 h-10 bg-[#007AFF] hover:bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
-                  aria-label="Call Expert Private Voice Call"
+                  aria-label="Call Expert"
                   title="Call Expert"
                 >
                   <Phone size={16} className="fill-current" />

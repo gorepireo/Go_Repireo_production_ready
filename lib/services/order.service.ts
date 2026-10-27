@@ -26,6 +26,7 @@ const adapt = (item: Record<string, any>): BookingRecord => ({
   payment_method: item.payment_method || item.paymentMethod || 'cash',
   status: (item.status || 'requested') as BookingStatus,
   worker_name: item.worker_name || item.workerName || null,
+  worker_phone: item.worker_phone || item.workerPhone || null,
   worker_avatar: item.worker_avatar || item.workerAvatarUrl || null,
   customer_name: item.customer_name || item.customerName || null,
   customer_phone: item.customer_phone || item.customerPhone || null,
