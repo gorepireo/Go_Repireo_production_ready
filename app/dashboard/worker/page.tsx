@@ -758,18 +758,21 @@ function WorkerDashboardContent() {
                     </button>
                     <button
                       onClick={() => {
-                        if (activeJob?.id) {
+                        const custPhone = activeJob?.customer_phone || activeJob?.customer?.phone || activeJob?.phone;
+                        if (custPhone) {
+                          window.location.href = `tel:${custPhone}`;
+                        } else if (activeJob?.id) {
                           const custAvatar = activeJob.user_avatar || activeJob.customer_avatar || activeJob.user_photo || '/customer_3d.png';
                           startCall(activeJob.id, 'worker', {
                             id: activeJob.user_id || 'customer',
-                            name: activeJob.user_name || activeJob.user_email?.split('@')[0] || 'Customer',
+                            name: activeJob.customer_name || activeJob.user_name || activeJob.user_email?.split('@')[0] || 'Customer',
                             avatar: custAvatar,
                             role: 'Customer'
                           });
                         }
                       }}
                       className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs py-3 px-4 rounded-2xl shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-                      title="Private In-App Voice Call to Customer"
+                      title="Call Customer"
                     >
                       <Phone size={14} className="fill-current" />
                       <span>Call Customer</span>

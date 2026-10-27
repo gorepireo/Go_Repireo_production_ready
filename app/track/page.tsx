@@ -654,7 +654,10 @@ function TrackContent() {
 
                 <button 
                   onClick={() => {
-                    if (order?.id) {
+                    const phone = workerData?.phone || order?.worker_phone;
+                    if (phone) {
+                      window.location.href = `tel:${phone}`;
+                    } else if (order?.id) {
                       startCall(order.id, 'customer', {
                         id: workerData.id || 'worker',
                         name: workerData.name,
@@ -665,7 +668,7 @@ function TrackContent() {
                   }}
                   className="w-10 h-10 bg-[#007AFF] hover:bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
                   aria-label="Call Expert Private Voice Call"
-                  title="Private In-App Voice Call"
+                  title="Call Expert"
                 >
                   <Phone size={16} className="fill-current" />
                 </button>

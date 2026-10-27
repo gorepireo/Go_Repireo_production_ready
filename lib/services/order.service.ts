@@ -27,6 +27,12 @@ const adapt = (item: Record<string, any>): BookingRecord => ({
   status: (item.status || 'requested') as BookingStatus,
   worker_name: item.worker_name || item.workerName || null,
   worker_avatar: item.worker_avatar || item.workerAvatarUrl || null,
+  customer_name: item.customer_name || item.customerName || null,
+  customer_phone: item.customer_phone || item.customerPhone || null,
+  customer: {
+    name: item.customer_name || item.customerName || 'Customer',
+    phone: item.customer_phone || item.customerPhone || '',
+  },
   createdAt: item.createdAt || item.created_at || new Date().toISOString(),
   created_at: item.created_at || item.createdAt || new Date().toISOString(),
 } as unknown as BookingRecord);

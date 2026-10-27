@@ -37,6 +37,8 @@ function formatBooking(row: Record<string, unknown>) {
     created_at: row.created_at ? String(row.created_at) : new Date().toISOString(),
     worker_name: row.worker_name ? String(row.worker_name) : null,
     worker_avatar: row.worker_avatar ? String(row.worker_avatar) : null,
+    customer_name: row.customer_name ? String(row.customer_name) : null,
+    customer_phone: row.customer_phone ? String(row.customer_phone) : null,
   };
 }
 
@@ -49,7 +51,7 @@ export async function GET(request: Request) {
 
     if (identity.role === 'worker' && scope === 'available') {
       const result = await db.execute({
-        sql: `SELECT b.*, u.display_name as customer_name
+        sql: `SELECT b.*, u.display_name as customer_name, u.phone as customer_phone
               FROM bookings b
               LEFT JOIN users u ON u.id = b.customer_id
               WHERE b.status = 'requested' AND b.worker_id IS NULL
@@ -61,7 +63,7 @@ export async function GET(request: Request) {
 
     if (identity.role === 'worker' && scope === 'active') {
       const result = await db.execute({
-        sql: `SELECT b.*, u.display_name as customer_name
+        sql: `SELECT b.*, u.display_name as customer_name, u.phone as customer_phone
               FROM bookings b
               LEFT JOIN users u ON u.id = b.customer_id
               WHERE b.worker_id = ? AND b.status IN ('assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion')
@@ -79,10 +81,13 @@ export async function GET(request: Request) {
     const result = await db.execute({
       sql: `SELECT b.*, 
                    w.display_name as worker_name, 
-                   wp.avatar_url as worker_avatar
+                   wp.avatar_url as worker_avatar,
+                   u.display_name as customer_name,
+                   u.phone as customer_phone
             FROM bookings b
             LEFT JOIN users w ON w.id = b.worker_id
             LEFT JOIN worker_profiles wp ON wp.user_id = b.worker_id
+            LEFT JOIN users u ON u.id = b.customer_id
             WHERE ${idColumn} = ?
             ORDER BY b.created_at DESC LIMIT 50`,
       args: [identity.uid],
