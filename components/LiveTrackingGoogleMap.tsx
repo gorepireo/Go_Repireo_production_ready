@@ -286,25 +286,6 @@ export default function LiveTrackingGoogleMap({
 
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
-
-      {/* Direction Pill Badge */}
-      <div className="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-100 text-slate-900 text-[10px] font-extrabold shadow-md flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-[#007AFF] animate-pulse"></span>
-        <span>Real-Time Turn-by-Turn Navigation</span>
-      </div>
-
-      {/* ETA & Distance Pill Badge */}
-      <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-slate-100 text-slate-900 shadow-md flex items-center gap-2">
-        <Clock size={14} className="text-[#007AFF]" />
-        <div>
-          <span className="text-xs font-black text-slate-900 block leading-tight">
-            {etaText}
-          </span>
-          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block">
-            {distText}
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

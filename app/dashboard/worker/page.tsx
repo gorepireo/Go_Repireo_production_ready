@@ -809,14 +809,6 @@ function WorkerDashboardContent() {
                     technicianAvatar={(profile as any)?.avatar_url || (profile as any)?.avatar || activeJob?.worker_avatar}
                     distanceKm="5.2 km"
                   />
-
-                  <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-lg border border-slate-100 flex items-center gap-2 z-20">
-                    <Clock size={14} className="text-[#007AFF]" />
-                    <div>
-                      <span className="text-xs font-black text-slate-900 block leading-none">18 mins</span>
-                      <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-wider block pt-0.5">ETA</span>
-                    </div>
-                  </div>
                 </div>
               </div>
 

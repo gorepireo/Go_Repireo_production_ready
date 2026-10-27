@@ -764,40 +764,40 @@ function TrackContent() {
             </div>
           )}
 
-          {/* Telemetry Metrics Row */}
-          <div className="pt-1">
-            <div className="grid grid-cols-2 min-[390px]:grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-center">
-              <div className="space-y-0.5">
-                <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
-                  <Navigation size={15} />
+          {/* Estimated Time to Reach Card */}
+          <div className="pt-2 border-t border-slate-100">
+            <div className="bg-gradient-to-r from-blue-50/90 via-sky-50/50 to-blue-50/90 rounded-2xl p-4 border border-blue-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-[#007AFF] text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                  <Clock size={22} />
                 </div>
-                <span className="text-[10px] font-black text-slate-900 block pt-0.5">{telemetry.distanceKmText}</span>
-                <span className="text-[8px] text-slate-400 font-medium block">Distance</span>
+                <div>
+                  <span className="text-[10px] font-extrabold text-[#007AFF] uppercase tracking-wider block">
+                    {isCompleted ? 'Service Status' : isWorking ? 'Current Status' : 'Estimated Time to Reach'}
+                  </span>
+                  <h4 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
+                    {isCompleted
+                      ? 'Arrived & Service Completed'
+                      : isWorking
+                      ? 'Expert is at your doorstep'
+                      : `${telemetry.etaText || '12 mins'} to reach`}
+                  </h4>
+                  {!isCompleted && !isWorking && (
+                    <p className="text-[11px] font-medium text-slate-500 pt-0.5">
+                      {workerData.name || 'Expert'} is on the way ({telemetry.distanceKmText || '1.8 km'} away)
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-0.5">
-                <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
-                  <Clock size={15} />
+              {!isCompleted && !isWorking && (
+                <div className="text-right shrink-0 pl-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 text-xs font-black">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>On Time</span>
+                  </span>
                 </div>
-                <span className="text-[10px] font-black text-slate-900 block pt-0.5">{isCompleted ? '0 mins' : telemetry.etaText}</span>
-                <span className="text-[8px] text-slate-400 font-medium block">ETA</span>
-              </div>
-
-              <div className="space-y-0.5">
-                <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
-                  <Target size={15} />
-                </div>
-                <span className="text-[10px] font-black text-slate-900 block pt-0.5">{isCompleted ? '0 km/h' : telemetry.speedText}</span>
-                <span className="text-[8px] text-slate-400 font-medium block">Speed</span>
-              </div>
-
-              <div className="space-y-0.5">
-                <div className="w-8 h-8 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
-                  <Activity size={15} />
-                </div>
-                <span className="text-[10px] font-black text-slate-900 block pt-0.5">{isCompleted ? '100%' : isWorking ? '90%' : `${telemetry.completionPercentage}%`}</span>
-                <span className="text-[8px] text-slate-400 font-medium block">Complete</span>
-              </div>
+              )}
             </div>
           </div>
 
