@@ -33,7 +33,7 @@ function UserDashboardContent() {
   }, [role, router]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalSpent, setTotalSpent] = useState(0);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -42,10 +42,10 @@ function UserDashboardContent() {
       try {
         const data = user?.uid ? await OrderService.getUserOrders(user.uid, 'customer') : [];
         if (isMounted) {
-          const finalOrders = data;
-          setOrders(finalOrders);
-          const total = finalOrders.reduce((sum: number, order: any) => sum + (Number(order.quotedAmountPaise || order.amountPaise) || 0) / 100, 0);
-          setTotalSpent(total);
+          setOrders(data);
+          // Only show actual money added to wallet balance (defaults to 0 in this unreleased coming-soon phase)
+          const addedMoney = Number((profile as any)?.wallet_balance ?? (profile as any)?.walletBalance ?? 0);
+          setWalletBalance(addedMoney);
         }
       } catch (err) {
         console.error('Fetch orders error:', err);
@@ -155,7 +155,7 @@ function UserDashboardContent() {
             </span>
             
             <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight pt-0.5">
-              ₹{totalSpent.toFixed(2)}
+              ₹{walletBalance.toFixed(2)}
             </h2>
 
             <div className="pt-2">
