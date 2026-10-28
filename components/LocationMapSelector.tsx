@@ -90,11 +90,11 @@ export default function LocationMapSelector({
           zoomControl: false,
         });
 
-        // High-DPI CartoDB Voyager Tiles (Ultra-fast, never blocked on mobile)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19,
-          subdomains: 'abcd',
-          attribution: '&copy; OpenStreetMap &copy; CARTO',
+        // Google Maps Clean Standard Tiles (No watermark, crisp street view)
+        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+          attribution: '&copy; Google Maps',
         }).addTo(map);
 
         map.on('move', () => {
@@ -228,7 +228,7 @@ export default function LocationMapSelector({
         <div className="px-5 py-2.5 flex items-center justify-between bg-white z-10 shrink-0 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#EBF3FF] flex items-center justify-center text-[#007AFF] shrink-0">
-              <MapPin size={20} className="fill-[#007AFF]" />
+              <MapPin size={20} className="text-[#007AFF]" strokeWidth={2.5} />
             </div>
             <div>
               <h3 className="text-lg font-extrabold text-[#0B1736] tracking-tight">
@@ -302,7 +302,7 @@ export default function LocationMapSelector({
           {/* Dynamic Full Address Display Box */}
           <div className="bg-[#F8FAFC] p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 flex items-start gap-3 shadow-2xs">
             <div className="w-9 h-9 rounded-full bg-[#EBF3FF] text-[#007AFF] flex items-center justify-center shrink-0 mt-0.5">
-              <MapPin size={18} className="fill-[#007AFF]" />
+              <MapPin size={18} className="text-[#007AFF]" strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0 pr-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">
@@ -336,13 +336,11 @@ export default function LocationMapSelector({
               onConfirm({ lat: center.lat, lng: center.lng, address });
               onClose();
             }}
-            className="w-full h-13 bg-[#007AFF] hover:bg-[#0066D6] active:scale-[0.98] text-white rounded-full font-bold text-sm sm:text-base flex items-center justify-between px-6 shadow-md shadow-blue-500/20 transition-all"
+            className="w-full py-3.5 sm:py-4 bg-[#007AFF] hover:bg-[#0066D6] active:scale-[0.98] text-white rounded-full font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md shadow-blue-500/25 transition-all"
           >
-            <div className="flex items-center gap-2">
-              <MapPin size={18} className="fill-white" />
-              <span>Set This Location</span>
-            </div>
-            <ArrowRight size={20} />
+            <MapPin size={19} className="text-white shrink-0" strokeWidth={2.5} />
+            <span>Set This Location</span>
+            <ArrowRight size={18} className="text-white/80 shrink-0" />
           </button>
 
           {/* Helper Hint Pill */}
