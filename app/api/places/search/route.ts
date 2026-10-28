@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const query = (searchParams.get('q') || '').trim();
+    const latParam = searchParams.get('lat') || '22.57';
+    const lngParam = searchParams.get('lng') || '88.36';
 
     if (!query || query.length < 2) {
       return NextResponse.json({ results: [] });
@@ -22,10 +24,10 @@ export async function GET(req: NextRequest) {
 
     const results: PlaceResult[] = [];
 
-    // 1. Try Photon Komoot API (Fast autocomplete, 100ms)
+    // 1. Try Photon Komoot API with location bias near user
     try {
       const photonRes = await fetch(
-        `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6&lang=en`,
+        `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=${latParam}&lon=${lngParam}&limit=8&lang=en`,
         { headers: { 'User-Agent': 'RepireoApp/1.0 (info@repireo.com)' } }
       );
 
@@ -61,6 +63,13 @@ export async function GET(req: NextRequest) {
     } catch (err) {
       console.warn('Photon places search error:', err);
     }
+
+    // Prioritize Indian results first
+    results.sort((a, b) => {
+      const aIn = a.subtitle.toLowerCase().includes('india') ? 0 : 1;
+      const bIn = b.subtitle.toLowerCase().includes('india') ? 0 : 1;
+      return aIn - bIn;
+    });
 
     // 2. Fallback to OpenStreetMap Nominatim if Photon returned fewer than 2 results
     if (results.length < 2) {

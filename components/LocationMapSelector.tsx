@@ -239,7 +239,7 @@ export default function LocationMapSelector({
     setIsSearching(true);
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/places/search?q=${encodeURIComponent(query.trim())}`);
+        const res = await fetch(`/api/places/search?q=${encodeURIComponent(query.trim())}&lat=${center.lat}&lng=${center.lng}`);
         if (res.ok) {
           const data = await res.json();
           setSearchResults(data.results || []);
@@ -306,7 +306,7 @@ export default function LocationMapSelector({
         </div>
 
         {/* Search Bar Input */}
-        <div className="px-4 pt-2.5 pb-1.5 relative z-30 shrink-0">
+        <div className="px-4 pt-2.5 pb-1.5 relative z-50 shrink-0">
           <div className="relative flex items-center">
             <Search size={15} className="absolute left-3.5 text-slate-400" />
             <input
@@ -339,7 +339,7 @@ export default function LocationMapSelector({
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="absolute left-4 right-4 top-[48px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[500] max-h-60 overflow-y-auto divide-y divide-slate-100"
+                className="absolute left-4 right-4 top-[50px] bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden z-[999] max-h-64 overflow-y-auto divide-y divide-slate-100"
               >
                 {searchResults.map((item) => (
                   <button
@@ -396,7 +396,7 @@ export default function LocationMapSelector({
         )}
 
         {/* Rounded Framed Map Area */}
-        <div className="px-4 pt-2.5 pb-2 flex-1 min-h-[160px] relative">
+        <div className="px-4 pt-2.5 pb-2 flex-1 min-h-[160px] relative z-10 isolate">
           <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200/90 relative shadow-xs bg-slate-100">
             <div
               ref={mapContainerRef}
