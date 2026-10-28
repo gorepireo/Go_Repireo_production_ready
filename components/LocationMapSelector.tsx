@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, MapPin, Loader2, Crosshair, Copy, ArrowRight, Compass } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { X, MapPin, Loader2, Crosshair, Copy, ArrowRight, Compass, Search, Home as HomeIcon, Briefcase, Bookmark } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LocationMapSelectorProps {
   initialLat?: number;
@@ -26,6 +26,15 @@ export default function LocationMapSelector({
   const [isLocating, setIsLocating] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Search Autocomplete State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Saved Addresses State
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
 
@@ -41,6 +50,16 @@ export default function LocationMapSelector({
         document.head.appendChild(link);
       }
     }
+
+    // Fetch user's saved addresses for quick 1-click selection
+    fetch('/api/addresses', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : { addresses: [] }))
+      .then((data) => {
+        if (Array.isArray(data.addresses) && data.addresses.length > 0) {
+          setSavedAddresses(data.addresses);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // 1. Detect user's current GPS location on mount
@@ -207,6 +226,43 @@ export default function LocationMapSelector({
     }
   };
 
+  const handleSearchInput = (query: string) => {
+    setSearchQuery(query);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    if (!query || query.trim().length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/places/search?q=${encodeURIComponent(query.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.results || []);
+        }
+      } catch (err) {
+        console.warn('Place search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 280);
+  };
+
+  const handleSelectSearchResult = (item: { lat: number; lng: number; title: string; subtitle: string }) => {
+    setSearchQuery(item.title);
+    setSearchResults([]);
+    setCenter({ lat: item.lat, lng: item.lng });
+    setCityTag(item.title);
+    if (leafletMapRef.current) {
+      leafletMapRef.current.setView([item.lat, item.lng], 16);
+      leafletMapRef.current.invalidateSize();
+    }
+  };
+
   if (!mounted) return null;
 
   const content = (
@@ -235,7 +291,7 @@ export default function LocationMapSelector({
                 Pin Your Location
               </h3>
               <p className="text-xs text-slate-400 font-medium mt-0.5">
-                Drag the map under the pin to choose exact address
+                Search or move pin to choose exact address
               </p>
             </div>
           </div>
@@ -248,6 +304,96 @@ export default function LocationMapSelector({
             <X size={18} />
           </button>
         </div>
+
+        {/* Search Bar Input */}
+        <div className="px-4 pt-2.5 pb-1.5 relative z-30 shrink-0">
+          <div className="relative flex items-center">
+            <Search size={15} className="absolute left-3.5 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchInput(e.target.value)}
+              placeholder="Search area, landmark, street, city..."
+              className="w-full bg-[#F8FAFC] hover:bg-[#F1F5F9] focus:bg-white border border-slate-200/90 rounded-2xl pl-10 pr-9 py-2.5 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#007AFF] focus:ring-2 focus:ring-blue-100 transition-all shadow-2xs"
+            />
+            {isSearching ? (
+              <Loader2 size={14} className="absolute right-3.5 text-[#007AFF] animate-spin" />
+            ) : searchQuery ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                }}
+                className="absolute right-3 text-slate-400 hover:text-slate-600 p-0.5"
+              >
+                <X size={14} />
+              </button>
+            ) : null}
+          </div>
+
+          {/* Autocomplete Suggestions Dropdown */}
+          <AnimatePresence>
+            {searchResults.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="absolute left-4 right-4 top-[48px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[500] max-h-60 overflow-y-auto divide-y divide-slate-100"
+              >
+                {searchResults.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleSelectSearchResult(item)}
+                    className="w-full px-4 py-3 text-left hover:bg-blue-50/70 active:bg-blue-100/60 flex items-start gap-3 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-50 text-[#007AFF] flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-[#007AFF] group-hover:text-white transition-colors">
+                      <MapPin size={15} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
+                      <p className="text-[11px] text-slate-500 truncate mt-0.5">{item.subtitle}</p>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Saved Addresses Quick Selection Pills */}
+        {savedAddresses.length > 0 && (
+          <div className="px-4 pt-0.5 pb-2 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0 z-20">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0">Saved:</span>
+            {savedAddresses.map((addr) => {
+              const labelLower = (addr.label || addr.name || '').toLowerCase();
+              const isHome = labelLower.includes('home');
+              const isWork = labelLower.includes('work') || labelLower.includes('office');
+              const Icon = isHome ? HomeIcon : isWork ? Briefcase : Bookmark;
+              return (
+                <button
+                  key={addr.id}
+                  type="button"
+                  onClick={() => {
+                    const lat = Number(addr.latitude || addr.lat || 0);
+                    const lng = Number(addr.longitude || addr.lng || 0);
+                    const formatted = addr.formatted_address || addr.address_text || addr.label;
+                    if (lat && lng) {
+                      onConfirm({ lat, lng, address: formatted });
+                      onClose();
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-blue-50 border border-slate-200/90 rounded-full text-xs font-semibold text-slate-700 hover:text-[#007AFF] shrink-0 shadow-2xs transition-all active:scale-95"
+                  title={addr.formatted_address || addr.address_text}
+                >
+                  <Icon size={12} className="text-[#007AFF]" />
+                  <span>{addr.label || addr.name || 'Saved'}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Rounded Framed Map Area */}
         <div className="px-4 pt-2.5 pb-2 flex-1 min-h-[160px] relative">

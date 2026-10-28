@@ -53,32 +53,27 @@ export async function GET(req: NextRequest) {
     });
 
     const rows = res.rows;
-    const RADIUS_KM = 10.0;
+    const RADIUS_KM = 35.0;
     let minDistance = Infinity;
     let nearbyWorkerCount = 0;
 
     for (const row of rows) {
-      // Prefer registered base latitude/longitude from worker application, then live location
-      const wLat = row.latitude !== null && row.latitude !== undefined 
-        ? Number(row.latitude) 
-        : row.live_latitude !== null && row.live_latitude !== undefined 
-        ? Number(row.live_latitude) 
-        : null;
+      // Check distance against registered base location OR live location (whichever is closer)
+      const baseDist = (row.latitude !== null && row.latitude !== undefined && row.longitude !== null && row.longitude !== undefined)
+        ? calculateDistanceKm(customerLat, customerLng, Number(row.latitude), Number(row.longitude))
+        : Infinity;
 
-      const wLng = row.longitude !== null && row.longitude !== undefined 
-        ? Number(row.longitude) 
-        : row.live_longitude !== null && row.live_longitude !== undefined 
-        ? Number(row.live_longitude) 
-        : null;
+      const liveDist = (row.live_latitude !== null && row.live_latitude !== undefined && row.live_longitude !== null && row.live_longitude !== undefined)
+        ? calculateDistanceKm(customerLat, customerLng, Number(row.live_latitude), Number(row.live_longitude))
+        : Infinity;
 
-      if (wLat !== null && wLng !== null && !isNaN(wLat) && !isNaN(wLng)) {
-        const dist = calculateDistanceKm(customerLat, customerLng, wLat, wLng);
-        if (dist < minDistance) {
-          minDistance = dist;
-        }
-        if (dist <= RADIUS_KM) {
-          nearbyWorkerCount++;
-        }
+      const dist = Math.min(baseDist, liveDist);
+
+      if (dist < minDistance) {
+        minDistance = dist;
+      }
+      if (dist <= RADIUS_KM) {
+        nearbyWorkerCount++;
       }
     }
 
