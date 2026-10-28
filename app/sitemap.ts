@@ -2,23 +2,22 @@ import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://gorepireo.in';
-  const lastContentUpdate = new Date('2026-08-09');
+  const lastContentUpdate = new Date();
 
-  // Only list canonical public landing pages. Account, dashboard, and
-  // order-tracking routes are intentionally excluded because they are noindex.
+  // Static canonical public pages
   const staticPages: MetadataRoute.Sitemap = [
-    { url: baseUrl,                        lastModified: lastContentUpdate, changeFrequency: 'weekly',  priority: 1.0 },
-    { url: `${baseUrl}/services`,          lastModified: lastContentUpdate, changeFrequency: 'weekly',  priority: 0.9 },
-    { url: `${baseUrl}/services/service`,  lastModified: lastContentUpdate, changeFrequency: 'weekly',  priority: 0.9 },
-    { url: `${baseUrl}/about`,             lastModified: lastContentUpdate, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${baseUrl}/contact`,           lastModified: lastContentUpdate, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${baseUrl}/privacy`,           lastModified: lastContentUpdate, changeFrequency: 'yearly',  priority: 0.2 },
-    { url: `${baseUrl}/terms`,             lastModified: lastContentUpdate, changeFrequency: 'yearly',  priority: 0.2 },
-    { url: `${baseUrl}/refund-policy`,     lastModified: lastContentUpdate, changeFrequency: 'yearly',  priority: 0.2 },
+    { url: baseUrl,                              lastModified: lastContentUpdate, changeFrequency: 'daily',   priority: 1.0 },
+    { url: `${baseUrl}/services`,                lastModified: lastContentUpdate, changeFrequency: 'daily',   priority: 0.95 },
+    { url: `${baseUrl}/services/service`,        lastModified: lastContentUpdate, changeFrequency: 'daily',   priority: 0.95 },
+    { url: `${baseUrl}/services/installation`,   lastModified: lastContentUpdate, changeFrequency: 'weekly',  priority: 0.9 },
+    { url: `${baseUrl}/about`,                   lastModified: lastContentUpdate, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/contact`,                 lastModified: lastContentUpdate, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/privacy`,                 lastModified: lastContentUpdate, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${baseUrl}/terms`,                   lastModified: lastContentUpdate, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${baseUrl}/refund-policy`,           lastModified: lastContentUpdate, changeFrequency: 'yearly',  priority: 0.3 },
   ];
 
-  // ─── Near-Me Pages (high-intent local searches) ──────────────────────
-  // These target searches like "plumber near me etawah", "ac repair near me"
+  // Near-Me Pages (high-intent local searches)
   const nearMeServices = [
     'electrician-near-me',
     'plumber-near-me',
@@ -44,13 +43,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${baseUrl}/near-me/${service}`,
     lastModified: lastContentUpdate,
     changeFrequency: 'weekly',
-    priority: 0.95,
+    priority: 0.9,
   }));
 
-  // ─── Etawah Service + Category Pages ─────────────────────────────────
-  // These target searches like "best plumber in etawah", "ac repair etawah"
-  // Add more cities here when expanding: ['etawah', 'lucknow', ...]
-  const activeCities = ['etawah'];
   const categories = [
     'plumbing',
     'electrical',
@@ -66,6 +61,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     'deep-cleaning',
   ];
 
+  // Category Hub Pages (/services/plumbing, etc.)
+  const categoryPages: MetadataRoute.Sitemap = categories.map(cat => ({
+    url: `${baseUrl}/services/${cat}`,
+    lastModified: lastContentUpdate,
+    changeFrequency: 'weekly',
+    priority: 0.9,
+  }));
+
+  // Etawah Service + Category Pages
+  const activeCities = ['etawah'];
   const cityServicePages: MetadataRoute.Sitemap = [];
   categories.forEach(cat => {
     activeCities.forEach(city => {
@@ -73,10 +78,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
         url: `${baseUrl}/services/${cat}/${city}`,
         lastModified: lastContentUpdate,
         changeFrequency: 'weekly',
-        priority: 0.9,
+        priority: 0.85,
       });
     });
   });
 
-  return [...staticPages, ...nearMePages, ...cityServicePages];
+  return [...staticPages, ...categoryPages, ...nearMePages, ...cityServicePages];
 }

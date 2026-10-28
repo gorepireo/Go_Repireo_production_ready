@@ -26,12 +26,12 @@ export default function SchemaData({
   city = 'Etawah',
   minPrice = 199,
   maxPrice = 2499,
-  ratingValue = 4.8,
-  reviewCount = 2450,
+  ratingValue,
+  reviewCount,
   faqs = []
 }: SchemaDataProps) {
 
-  const serviceSchema = {
+  const serviceSchema: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': 'Service',
     '@id': `${url}#service`,
@@ -59,13 +59,6 @@ export default function SchemaData({
       'addressCountry': 'IN'
     },
     'description': description,
-    'aggregateRating': {
-      '@type': 'AggregateRating',
-      'ratingValue': ratingValue.toFixed(1),
-      'reviewCount': String(reviewCount),
-      'bestRating': '5',
-      'worstRating': '1'
-    },
     'offers': {
       '@type': 'AggregateOffer',
       'url': url,
@@ -75,6 +68,16 @@ export default function SchemaData({
       'offerCount': '12'
     }
   };
+
+  if (ratingValue && reviewCount && reviewCount > 0) {
+    serviceSchema['aggregateRating'] = {
+      '@type': 'AggregateRating',
+      'ratingValue': ratingValue.toFixed(1),
+      'reviewCount': String(reviewCount),
+      'bestRating': '5',
+      'worstRating': '1'
+    };
+  }
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',

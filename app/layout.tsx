@@ -201,13 +201,6 @@ export default function RootLayout({
                 '@type': 'City',
                 'name': 'Etawah'
               },
-              'aggregateRating': {
-                '@type': 'AggregateRating',
-                'ratingValue': '4.8',
-                'reviewCount': '2450',
-                'bestRating': '5',
-                'worstRating': '1'
-              },
               'hasOfferCatalog': {
                 '@type': 'OfferCatalog',
                 'name': 'Go_Repireo Home Services',
