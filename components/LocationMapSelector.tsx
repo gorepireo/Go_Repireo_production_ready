@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, MapPin, Loader2, Crosshair, Copy, ArrowRight, Compass } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -17,6 +18,7 @@ export default function LocationMapSelector({
   onConfirm,
   onClose,
 }: LocationMapSelectorProps) {
+  const [mounted, setMounted] = useState(false);
   const [center, setCenter] = useState({ lat: initialLat, lng: initialLng });
   const [address, setAddress] = useState('Detecting location...');
   const [cityTag, setCityTag] = useState('Kolkata');
@@ -26,6 +28,20 @@ export default function LocationMapSelector({
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof document !== 'undefined') {
+      const linkId = 'leaflet-css';
+      if (!document.getElementById(linkId)) {
+        const link = document.createElement('link');
+        link.id = linkId;
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+      }
+    }
+  }, []);
 
   // 1. Detect user's current GPS location on mount
   useEffect(() => {
@@ -38,6 +54,7 @@ export default function LocationMapSelector({
           setCenter({ lat, lng });
           if (leafletMapRef.current) {
             leafletMapRef.current.setView([lat, lng], 16);
+            leafletMapRef.current.invalidateSize();
           }
           setIsLocating(false);
         },
@@ -45,37 +62,39 @@ export default function LocationMapSelector({
           console.warn('GPS detection error:', err);
           setIsLocating(false);
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 8000 }
       );
     }
   }, []);
 
   // 2. Initialize Leaflet Map dynamically
   useEffect(() => {
-    let isMounted = true;
-    if (typeof window === 'undefined' || !mapContainerRef.current) return;
+    if (!mounted || typeof window === 'undefined') return;
+    let isSubscribed = true;
 
-    import('leaflet').then((L) => {
-      if (!isMounted || !mapContainerRef.current) return;
+    const timer = setTimeout(() => {
+      if (!isSubscribed || !mapContainerRef.current || leafletMapRef.current) return;
 
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-      });
+      import('leaflet').then((L) => {
+        if (!isSubscribed || !mapContainerRef.current || leafletMapRef.current) return;
 
-      if (!leafletMapRef.current) {
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+        });
+
         const map = L.map(mapContainerRef.current, {
           center: [center.lat, center.lng],
           zoom: 16,
           zoomControl: false,
         });
 
-        // Google Maps Clean Standard Tiles
-        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-          attribution: '&copy; Google Maps',
+        // High-DPI CartoDB Voyager Tiles (Ultra-fast, never blocked on mobile)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          subdomains: 'abcd',
+          attribution: '&copy; OpenStreetMap &copy; CARTO',
         }).addTo(map);
 
         map.on('move', () => {
@@ -84,17 +103,29 @@ export default function LocationMapSelector({
         });
 
         leafletMapRef.current = map;
-      }
-    });
+
+        // Force Leaflet to re-calculate container dimensions and paint tiles
+        requestAnimationFrame(() => {
+          if (leafletMapRef.current) leafletMapRef.current.invalidateSize();
+        });
+        setTimeout(() => {
+          if (leafletMapRef.current) leafletMapRef.current.invalidateSize();
+        }, 150);
+        setTimeout(() => {
+          if (leafletMapRef.current) leafletMapRef.current.invalidateSize();
+        }, 400);
+      });
+    }, 60);
 
     return () => {
-      isMounted = false;
+      isSubscribed = false;
+      clearTimeout(timer);
       if (leafletMapRef.current) {
         leafletMapRef.current.remove();
         leafletMapRef.current = null;
       }
     };
-  }, []);
+  }, [mounted]);
 
   // 3. Reverse Geocode address when map center changes (Debounced)
   useEffect(() => {
@@ -119,7 +150,7 @@ export default function LocationMapSelector({
           }
         }
 
-        // Fallback OpenStreetMap Nominatim Geocoding
+        // OpenStreetMap Nominatim Geocoding
         const res = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${center.lat}&lon=${center.lng}&format=json&email=info@repireo.com`
         );
@@ -158,6 +189,7 @@ export default function LocationMapSelector({
           setCenter({ lat, lng });
           if (leafletMapRef.current) {
             leafletMapRef.current.setView([lat, lng], 16);
+            leafletMapRef.current.invalidateSize();
           }
           setIsLocating(false);
         },
@@ -175,8 +207,10 @@ export default function LocationMapSelector({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+  if (!mounted) return null;
+
+  const content = (
+    <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Include Leaflet CSS */}
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -184,20 +218,20 @@ export default function LocationMapSelector({
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-        className="bg-white rounded-t-[2.5rem] sm:rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[94vh] sm:h-[680px] pb-3.5 relative"
+        transition={{ type: 'spring', damping: 28, stiffness: 340 }}
+        className="bg-white rounded-t-[2.2rem] sm:rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col h-[88dvh] max-h-[88dvh] sm:h-[680px] relative z-[99999]"
       >
         {/* Top Handle Bar */}
         <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mt-2.5 mb-1 shrink-0" />
 
         {/* Top Header */}
-        <div className="px-5 py-2.5 flex items-center justify-between bg-white z-10 shrink-0">
+        <div className="px-5 py-2.5 flex items-center justify-between bg-white z-10 shrink-0 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-[#EBF3FF] flex items-center justify-center text-[#007AFF] shrink-0">
-              <MapPin size={22} className="fill-[#007AFF]" />
+            <div className="w-10 h-10 rounded-full bg-[#EBF3FF] flex items-center justify-center text-[#007AFF] shrink-0">
+              <MapPin size={20} className="fill-[#007AFF]" />
             </div>
             <div>
-              <h3 className="text-lg sm:text-xl font-extrabold text-[#0B1736] tracking-tight">
+              <h3 className="text-lg font-extrabold text-[#0B1736] tracking-tight">
                 Pin Your Location
               </h3>
               <p className="text-xs text-slate-400 font-medium mt-0.5">
@@ -216,9 +250,13 @@ export default function LocationMapSelector({
         </div>
 
         {/* Rounded Framed Map Area */}
-        <div className="px-4 pt-1 pb-3 flex-1 min-h-[260px] sm:min-h-[310px] relative">
-          <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200/90 relative shadow-xs">
-            <div ref={mapContainerRef} className="w-full h-full z-0" />
+        <div className="px-4 pt-2.5 pb-2 flex-1 min-h-[160px] relative">
+          <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200/90 relative shadow-xs bg-slate-100">
+            <div
+              ref={mapContainerRef}
+              className="w-full h-full z-0"
+              style={{ width: '100%', height: '100%', minHeight: '160px' }}
+            />
 
             {/* FIXED CENTER PIN WITH FLOATING CITY LABEL */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-[400]">
@@ -258,45 +296,47 @@ export default function LocationMapSelector({
           </div>
         </div>
 
-        {/* Dynamic Full Address Display Box */}
-        <div className="mx-4 mb-3 bg-[#F8FAFC] p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 flex items-start gap-3 shadow-2xs shrink-0">
-          <div className="w-9 h-9 rounded-full bg-[#EBF3FF] text-[#007AFF] flex items-center justify-center shrink-0 mt-0.5">
-            <MapPin size={18} className="fill-[#007AFF]" />
-          </div>
-          <div className="flex-1 min-w-0 pr-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">
-              FULL DETECTED <span className="text-[#007AFF]">ADDRESS</span>
-            </span>
-            <p className="text-xs sm:text-[13px] font-bold text-slate-900 leading-snug line-clamp-3">
-              {isFetchingAddress ? (
-                <span className="flex items-center gap-1.5 text-slate-400">
-                  <Loader2 size={12} className="animate-spin" /> Resolving address...
-                </span>
-              ) : (
-                address
-              )}
-            </p>
+        {/* Bottom Section (Address Box + CTA + Helper) */}
+        <div className="shrink-0 flex flex-col gap-2.5 px-4 pt-2 pb-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] bg-white z-10 border-t border-slate-100">
+          
+          {/* Dynamic Full Address Display Box */}
+          <div className="bg-[#F8FAFC] p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 flex items-start gap-3 shadow-2xs">
+            <div className="w-9 h-9 rounded-full bg-[#EBF3FF] text-[#007AFF] flex items-center justify-center shrink-0 mt-0.5">
+              <MapPin size={18} className="fill-[#007AFF]" />
+            </div>
+            <div className="flex-1 min-w-0 pr-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">
+                FULL DETECTED <span className="text-[#007AFF]">ADDRESS</span>
+              </span>
+              <p className="text-xs sm:text-[13px] font-bold text-slate-900 leading-snug line-clamp-2">
+                {isFetchingAddress ? (
+                  <span className="flex items-center gap-1.5 text-slate-400">
+                    <Loader2 size={12} className="animate-spin" /> Resolving address...
+                  </span>
+                ) : (
+                  address
+                )}
+              </p>
+            </div>
+
+            <button
+              onClick={handleCopy}
+              type="button"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl shrink-0 shadow-2xs transition-all active:scale-95"
+              title="Copy address"
+            >
+              <Copy size={13} className="text-slate-500" />
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
           </div>
 
-          <button
-            onClick={handleCopy}
-            type="button"
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl shrink-0 shadow-2xs transition-all active:scale-95"
-            title="Copy address"
-          >
-            <Copy size={13} className="text-slate-500" />
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-        </div>
-
-        {/* Primary Set Location Button */}
-        <div className="mx-4 mb-2.5 shrink-0">
+          {/* Primary Set Location Button */}
           <button
             onClick={() => {
               onConfirm({ lat: center.lat, lng: center.lng, address });
               onClose();
             }}
-            className="w-full h-13 sm:h-14 bg-[#007AFF] hover:bg-[#0066D6] active:scale-[0.98] text-white rounded-full font-bold text-sm sm:text-base flex items-center justify-between px-6 shadow-md shadow-blue-500/20 transition-all"
+            className="w-full h-13 bg-[#007AFF] hover:bg-[#0066D6] active:scale-[0.98] text-white rounded-full font-bold text-sm sm:text-base flex items-center justify-between px-6 shadow-md shadow-blue-500/20 transition-all"
           >
             <div className="flex items-center gap-2">
               <MapPin size={18} className="fill-white" />
@@ -304,11 +344,9 @@ export default function LocationMapSelector({
             </div>
             <ArrowRight size={20} />
           </button>
-        </div>
 
-        {/* Helper Hint Pill */}
-        <div className="mx-4 shrink-0">
-          <div className="w-full bg-[#F1F5F9]/80 rounded-full py-2 px-4 flex items-center justify-center gap-2 text-center text-[11px] text-slate-400 font-medium select-none">
+          {/* Helper Hint Pill */}
+          <div className="w-full bg-[#F1F5F9]/80 rounded-full py-1.5 px-4 flex items-center justify-center gap-2 text-center text-[11px] text-slate-400 font-medium select-none">
             <Compass size={13} className="text-slate-400 shrink-0" />
             <span>Move the map to adjust the pin for more accurate location.</span>
           </div>
@@ -317,4 +355,6 @@ export default function LocationMapSelector({
       </motion.div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : null;
 }
