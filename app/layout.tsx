@@ -13,13 +13,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://gorepireo.in"),
   title: {
-    default: "Go_Repireo: Trusted Home Services, Electricians, Plumbers, AC & Appliance Repair in Etawah",
-    template: "%s | Go_Repireo"
+    default: "Go_Repireo (GoRepireo): Trusted Home Services, Electricians, Plumbers, AC & Appliance Repair in Etawah",
+    template: "%s | Go_Repireo (GoRepireo)"
   },
-  description: "Etawah's #1 on-demand home services platform. Book verified plumbers, electricians, AC technicians, appliance repair and cleaning experts with live technician tracking, upfront pricing and 30-day warranty.",
+  description: "Go_Repireo (gorepireo.in) is Etawah's #1 on-demand home services platform. Book verified plumbers, electricians, AC technicians, appliance repair and cleaning experts with live technician tracking, upfront pricing and 30-day warranty.",
   keywords: [
-    "Go Repireo", "Go_Repireo", "GoRepireo", "Repireo", "GoRepireo.in",
-    "Go-Repireo", "go repireo", "go_repireo", "gorepireo",
+    "gorepireo", "GoRepireo", "Go_Repireo", "Go Repireo", "Repireo", "gorepireo.in",
+    "GoRepireo.in", "Go-Repireo", "go repireo", "go_repireo",
     "Go Repiero", "Go Repiro", "Go Reperio", "Go Repario", "Go Repairio",
     "Plumber in Etawah", "Electrician in Etawah", "AC Repair in Etawah",
     "Appliance Repair in Etawah", "Cleaning Services in Etawah",
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
   category: "Home Services",
   applicationName: "Go_Repireo",
   openGraph: {
-    title: "Home Repair Services in Etawah | Go_Repireo",
-    description: "Go_Repireo is Etawah's on-demand home services platform. Book verified plumbers, electricians, AC technicians, and appliance repair experts with live tracking and secure UPI payments.",
+    title: "Go_Repireo (GoRepireo) | Home Repair & Appliance Services in Etawah",
+    description: "Go_Repireo (gorepireo.in / gorepireo) is Etawah's on-demand home services platform. Book verified plumbers, electricians, AC technicians, and appliance repair experts with live tracking and secure UPI payments.",
     url: "https://gorepireo.in",
     siteName: "Go_Repireo",
     locale: "en_IN",

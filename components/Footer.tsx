@@ -14,9 +14,9 @@ export default function Footer() {
           {/* Column 1: Brand & Contact */}
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-black text-slate-900 tracking-tight">Go_Repireo</p>
+              <p className="text-sm font-black text-slate-900 tracking-tight">Go_Repireo (GoRepireo)</p>
               <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                Etawah&apos;s trusted on-demand home repair and appliance services. Doorstep service with live technician tracking and 30-day warranty.
+                Go_Repireo (gorepireo.in / gorepireo) is Etawah&apos;s trusted on-demand home repair and appliance services platform. Doorstep service with live technician tracking and 30-day warranty.
               </p>
             </div>
 
