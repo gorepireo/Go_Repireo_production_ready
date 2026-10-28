@@ -270,7 +270,7 @@ export default function RegisterPage() {
       <div className="mx-auto min-h-screen max-w-[1480px] overflow-hidden bg-[linear-gradient(135deg,#f8fcff_0%,#e7f4ff_48%,#f8fcff_100%)] shadow-[0_30px_90px_rgba(26,96,170,0.13)] lg:h-full lg:min-h-0 lg:rounded-[28px]">
         {/* Header */}
         <header className="flex h-[64px] items-center justify-between gap-2 px-3 min-[375px]:h-[76px] min-[375px]:px-5 sm:px-9 lg:h-[60px] lg:px-12">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/login" className="flex items-center gap-2.5">
             <Image src="/logo.png" alt="Go_Repireo" width={44} height={44} className="size-9 object-contain min-[375px]:size-10" priority />
             <span className="text-sm font-black uppercase min-[375px]:text-base"><span className="text-[#0874ef]">Go_</span><span className="text-[#ff8a00]">Repireo</span></span>
           </Link>

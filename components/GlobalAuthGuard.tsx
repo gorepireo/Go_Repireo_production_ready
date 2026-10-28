@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 const PUBLIC_ROUTES = [
-  '/',
   '/services',
   '/about',
   '/contact',

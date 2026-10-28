@@ -130,7 +130,7 @@ function LoginContent() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f9fcff_0%,#e7f4ff_58%,#f5faff_100%)] p-0 text-[#081832] lg:h-screen lg:overflow-hidden lg:p-4">
       <div className="relative mx-auto min-h-screen max-w-[1440px] overflow-hidden bg-white/75 shadow-[0_28px_90px_rgba(27,99,172,0.12)] lg:h-full lg:min-h-0 lg:rounded-[28px]">
         <header className="relative z-30 flex h-[64px] items-center justify-between gap-2 px-3 min-[375px]:h-[72px] min-[375px]:px-5 sm:px-10 lg:h-[70px] lg:px-16">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/login" className="flex items-center gap-2.5">
             <Image src="/logo.png" alt="Go_Repireo logo" width={44} height={44} className="size-9 object-contain min-[375px]:size-11" priority />
             <span className="text-sm font-black uppercase min-[375px]:text-base"><span className="text-[#0874ef]">Go_</span><span className="text-[#ff8a00]">Repireo</span></span>
           </Link>
