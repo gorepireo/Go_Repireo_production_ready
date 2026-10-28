@@ -35,15 +35,20 @@ export default function Header({
     return 'Detecting location...';
   });
 
-  const saveAndBroadcastLocation = (lat: number, lng: number, address: string) => {
+  const saveAndBroadcastLocation = (lat: number, lng: number, address: string, isManual = false) => {
     setCurrentLocation(address);
     if (typeof window !== 'undefined') {
       localStorage.setItem('repireo_detected_location', address);
       localStorage.setItem('repireo_customer_lat', String(lat));
       localStorage.setItem('repireo_customer_lng', String(lng));
+      if (isManual) {
+        localStorage.setItem('repireo_location_source', 'manual');
+      } else {
+        localStorage.setItem('repireo_location_source', 'gps');
+      }
       window.dispatchEvent(
         new CustomEvent('repireo_location_updated', {
-          detail: { lat, lng, address },
+          detail: { lat, lng, address, source: isManual ? 'manual' : 'gps' },
         })
       );
     }
@@ -86,20 +91,28 @@ export default function Header({
     }
   };
 
-  // Automatically detect live real GPS location on page load for client & worker
+  // Automatically detect live real GPS location on page load if not manually set by user
   useEffect(() => {
-    if (typeof window !== 'undefined' && navigator.geolocation) {
-      setIsLocating(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          fetchLiveAddress(pos.coords.latitude, pos.coords.longitude).finally(() => setIsLocating(false));
-        },
-        (err) => {
-          console.warn('Real GPS detection ungranted or timed out:', err.message);
-          setIsLocating(false);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-      );
+    if (typeof window !== 'undefined') {
+      const isManual = localStorage.getItem('repireo_location_source') === 'manual';
+      if (isManual) {
+        // User explicitly pinned or chose a delivery address! Preserve across reloads.
+        return;
+      }
+
+      if (navigator.geolocation) {
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            fetchLiveAddress(pos.coords.latitude, pos.coords.longitude).finally(() => setIsLocating(false));
+          },
+          (err) => {
+            console.warn('Real GPS detection ungranted or timed out:', err.message);
+            setIsLocating(false);
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      }
     }
   }, []);
 
@@ -110,25 +123,9 @@ export default function Header({
     return () => window.removeEventListener('repireo_open_location_modal', handleOpenModal);
   }, []);
 
-  // Handle location button click
+  // Handle location button click - Open map picker modal directly (Zomato / Swiggy behavior)
   const handleLocationClick = () => {
-    if (typeof window !== 'undefined' && navigator.geolocation) {
-      setIsLocating(true);
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          await fetchLiveAddress(pos.coords.latitude, pos.coords.longitude);
-          setIsLocating(false);
-        },
-        (err) => {
-          console.warn('GPS permission not granted, opening map picker modal:', err);
-          setIsLocating(false);
-          setIsLocationModalOpen(true);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-      );
-    } else {
-      setIsLocationModalOpen(true);
-    }
+    setIsLocationModalOpen(true);
   };
 
   // Dynamic calculation of unread notification count
@@ -275,7 +272,7 @@ export default function Header({
           onClose={() => setIsLocationModalOpen(false)}
           onConfirm={(loc) => {
             if (loc.address) {
-              saveAndBroadcastLocation(loc.lat, loc.lng, loc.address);
+              saveAndBroadcastLocation(loc.lat, loc.lng, loc.address, true);
             }
             setIsLocationModalOpen(false);
           }}

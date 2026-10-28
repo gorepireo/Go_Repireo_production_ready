@@ -118,6 +118,20 @@ export default function ServiceBooking() {
   const estimatedPrice = estimation ? estimation.totalMin : 500;
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedAddress = localStorage.getItem('repireo_detected_location');
+      const savedLat = localStorage.getItem('repireo_customer_lat');
+      const savedLng = localStorage.getItem('repireo_customer_lng');
+      if (savedAddress && (!formData.address || formData.address.trim() === '')) {
+        setFormData((prev) => ({
+          ...prev,
+          address: savedAddress,
+          lat: savedLat ? parseFloat(savedLat) : prev.lat,
+          lng: savedLng ? parseFloat(savedLng) : prev.lng,
+        }));
+      }
+    }
+
     if (user) {
       fetch('/api/addresses', { credentials: 'include' })
         .then((res) => (res.ok ? res.json() : { addresses: [] }))

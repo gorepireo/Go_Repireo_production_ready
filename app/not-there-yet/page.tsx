@@ -7,7 +7,7 @@ import NotServiceableYet from '@/components/NotServiceableYet';
 import LocationMapSelector from '@/components/LocationMapSelector';
 
 export default function NotThereYetPreviewPage() {
-  const [isMapOpen, setIsMapOpen] = useState(true);
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
@@ -16,7 +16,12 @@ export default function NotThereYetPreviewPage() {
         <NotServiceableYet
           currentLocationName="Mumbai, Maharashtra"
           onOpenLocationPicker={() => setIsMapOpen(true)}
-          onRefresh={() => {}}
+          onRefresh={() => {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('repireo_location_source');
+              window.location.href = '/';
+            }
+          }}
           isChecking={false}
         />
       </div>
@@ -28,8 +33,14 @@ export default function NotThereYetPreviewPage() {
           initialLng={88.3697}
           onClose={() => setIsMapOpen(false)}
           onConfirm={(loc) => {
-            console.log('Selected loc:', loc);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('repireo_detected_location', loc.address);
+              localStorage.setItem('repireo_customer_lat', String(loc.lat));
+              localStorage.setItem('repireo_customer_lng', String(loc.lng));
+              localStorage.setItem('repireo_location_source', 'manual');
+            }
             setIsMapOpen(false);
+            window.location.href = '/';
           }}
         />
       )}

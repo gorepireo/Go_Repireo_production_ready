@@ -135,6 +135,7 @@ export default function Home() {
     if (typeof window !== 'undefined' && navigator.geolocation) {
       setIsCheckingServiceability(true);
       setServiceStatus('checking');
+      localStorage.removeItem('repireo_location_source'); // reset manual choice back to live GPS
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           checkServiceability(pos.coords.latitude, pos.coords.longitude);
@@ -164,32 +165,38 @@ export default function Home() {
         return;
       }
 
+      const isManual = localStorage.getItem('repireo_location_source') === 'manual';
       const cachedLoc = localStorage.getItem('repireo_detected_location');
       const cachedLat = localStorage.getItem('repireo_customer_lat');
       const cachedLng = localStorage.getItem('repireo_customer_lng');
       if (cachedLoc) setDetectedLocationName(cachedLoc);
 
-      if (cachedLat && cachedLng) {
+      if (isManual && cachedLat && cachedLng) {
+        // User manually selected this address: evaluate serviceability for it and preserve across reloads
         checkServiceability(parseFloat(cachedLat), parseFloat(cachedLng), cachedLoc || undefined);
-      }
-
-      // Live device hardware GPS with fast 4-second timeout
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            checkServiceability(pos.coords.latitude, pos.coords.longitude);
-          },
-          (err) => {
-            console.warn('Real device GPS prompt or error:', err.message);
-            if (!cachedLat || !cachedLng) {
-              setServiceStatus('serviceable');
-            }
-          },
-          { enableHighAccuracy: true, timeout: 4000, maximumAge: 60000 }
-        );
       } else {
-        if (!cachedLat || !cachedLng) {
-          setServiceStatus('serviceable');
+        if (cachedLat && cachedLng) {
+          checkServiceability(parseFloat(cachedLat), parseFloat(cachedLng), cachedLoc || undefined);
+        }
+
+        // Live device hardware GPS with fast 4-second timeout if not manual
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              checkServiceability(pos.coords.latitude, pos.coords.longitude);
+            },
+            (err) => {
+              console.warn('Real device GPS prompt or error:', err.message);
+              if (!cachedLat || !cachedLng) {
+                setServiceStatus('serviceable');
+              }
+            },
+            { enableHighAccuracy: true, timeout: 4000, maximumAge: 60000 }
+          );
+        } else {
+          if (!cachedLat || !cachedLng) {
+            setServiceStatus('serviceable');
+          }
         }
       }
 
