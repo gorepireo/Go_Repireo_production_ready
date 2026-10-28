@@ -37,6 +37,7 @@ import { useAuth } from '@/context/AuthContext';
 import Avatar from '@/components/Avatar';
 import { OrderService } from '@/lib/services/order.service';
 import NotServiceableYet from '@/components/NotServiceableYet';
+import { HomePageSkeleton } from '@/components/SkeletonLoader';
 
 const categories = [
   { name: 'All Services', icon: LayoutGrid, color: 'text-[#007AFF]', bg: 'bg-[#EFF6FF] border-[#007AFF]/30', active: true },
@@ -79,22 +80,52 @@ export default function Home() {
   const [realBookings, setRealBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
 
-  // Serviceability check state (10 km radius from approved workers)
-  const [isServiceable, setIsServiceable] = useState<boolean>(true);
+  // Tri-state Serviceability: 'checking' | 'serviceable' | 'unserviceable'
+  // Read instant cached status so returning users NEVER experience a content flash
+  const [serviceStatus, setServiceStatus] = useState<'checking' | 'serviceable' | 'unserviceable'>(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('preview_unserviceable') === '1') return 'unserviceable';
+      const cached = localStorage.getItem('repireo_is_serviceable');
+      if (cached === 'true') return 'serviceable';
+      if (cached === 'false') return 'unserviceable';
+    }
+    return 'checking';
+  });
+
   const [isCheckingServiceability, setIsCheckingServiceability] = useState<boolean>(false);
-  const [detectedLocationName, setDetectedLocationName] = useState<string>('');
+  const [detectedLocationName, setDetectedLocationName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('repireo_detected_location') || '';
+    }
+    return '';
+  });
 
   const checkServiceability = async (lat: number, lng: number, addressName?: string) => {
     setIsCheckingServiceability(true);
-    if (addressName) setDetectedLocationName(addressName);
+    if (addressName) {
+      setDetectedLocationName(addressName);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('repireo_detected_location', addressName);
+      }
+    }
     try {
       const res = await fetch(`/api/serviceability?lat=${lat}&lng=${lng}`);
       if (res.ok) {
         const data = await res.json();
-        setIsServiceable(data.serviceable !== false);
+        const ok = data.serviceable !== false;
+        setServiceStatus(ok ? 'serviceable' : 'unserviceable');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('repireo_is_serviceable', ok ? 'true' : 'false');
+          localStorage.setItem('repireo_customer_lat', String(lat));
+          localStorage.setItem('repireo_customer_lng', String(lng));
+        }
+      } else {
+        setServiceStatus('serviceable');
       }
     } catch (err) {
       console.warn('Error checking serviceability:', err);
+      setServiceStatus('serviceable');
     } finally {
       setIsCheckingServiceability(false);
     }
@@ -103,14 +134,16 @@ export default function Home() {
   const handleRecheckGps = () => {
     if (typeof window !== 'undefined' && navigator.geolocation) {
       setIsCheckingServiceability(true);
+      setServiceStatus('checking');
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           checkServiceability(pos.coords.latitude, pos.coords.longitude);
         },
         () => {
           setIsCheckingServiceability(false);
+          setServiceStatus('serviceable');
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     }
   };
@@ -119,7 +152,7 @@ export default function Home() {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('preview_unserviceable') === '1') {
-        setIsServiceable(false);
+        setServiceStatus('unserviceable');
         setDetectedLocationName('Mumbai, Maharashtra');
         return;
       }
@@ -131,41 +164,39 @@ export default function Home() {
         return;
       }
 
-      // Always prioritize real device hardware GPS with high accuracy & zero cache age
+      const cachedLoc = localStorage.getItem('repireo_detected_location');
+      const cachedLat = localStorage.getItem('repireo_customer_lat');
+      const cachedLng = localStorage.getItem('repireo_customer_lng');
+      if (cachedLoc) setDetectedLocationName(cachedLoc);
+
+      if (cachedLat && cachedLng) {
+        checkServiceability(parseFloat(cachedLat), parseFloat(cachedLng), cachedLoc || undefined);
+      }
+
+      // Live device hardware GPS with fast 4-second timeout
       if (navigator.geolocation) {
-        setIsCheckingServiceability(true);
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             checkServiceability(pos.coords.latitude, pos.coords.longitude);
           },
           (err) => {
             console.warn('Real device GPS prompt or error:', err.message);
-            // Fallback to cached location only if live GPS is denied or unavailable
-            const cachedLoc = localStorage.getItem('repireo_detected_location');
-            const cachedLat = localStorage.getItem('repireo_customer_lat');
-            const cachedLng = localStorage.getItem('repireo_customer_lng');
-            if (cachedLoc) setDetectedLocationName(cachedLoc);
-            if (cachedLat && cachedLng) {
-              checkServiceability(parseFloat(cachedLat), parseFloat(cachedLng), cachedLoc || undefined);
-            } else {
-              setIsCheckingServiceability(false);
+            if (!cachedLat || !cachedLng) {
+              setServiceStatus('serviceable');
             }
           },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 4000, maximumAge: 60000 }
         );
       } else {
-        const cachedLoc = localStorage.getItem('repireo_detected_location');
-        const cachedLat = localStorage.getItem('repireo_customer_lat');
-        const cachedLng = localStorage.getItem('repireo_customer_lng');
-        if (cachedLoc) setDetectedLocationName(cachedLoc);
-        if (cachedLat && cachedLng) {
-          checkServiceability(parseFloat(cachedLat), parseFloat(cachedLng), cachedLoc || undefined);
+        if (!cachedLat || !cachedLng) {
+          setServiceStatus('serviceable');
         }
       }
 
       const handleLocationChange = (e: Event) => {
         const customEvent = e as CustomEvent<{ lat: number; lng: number; address: string }>;
         if (customEvent.detail?.lat && customEvent.detail?.lng) {
+          setServiceStatus('checking');
           checkServiceability(customEvent.detail.lat, customEvent.detail.lng, customEvent.detail.address);
         }
       };
@@ -254,7 +285,9 @@ export default function Home() {
       <Header />
 
       {/* Main Content Area Container for Desktop & Mobile */}
-      {!isServiceable ? (
+      {serviceStatus === 'checking' ? (
+        <HomePageSkeleton />
+      ) : serviceStatus === 'unserviceable' ? (
         <div className="flex-1 flex flex-col justify-center py-4 sm:py-8">
           <NotServiceableYet
             currentLocationName={detectedLocationName}

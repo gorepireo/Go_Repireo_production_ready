@@ -135,6 +135,40 @@ export function WorkerDashboardSkeleton() {
   );
 }
 
+// Home Page Serviceability Checking Skeleton
+export function HomePageSkeleton() {
+  return (
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4 pb-8 animate-pulse">
+      {/* Banner Skeleton */}
+      <SkeletonBox className="w-full aspect-[4/2] rounded-[20px] sm:rounded-[28px] bg-slate-200" />
+
+      {/* Categories Skeleton */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="flex flex-col items-center gap-2 p-3 bg-white rounded-2xl border border-slate-100">
+            <SkeletonBox className="w-10 h-10 rounded-xl" />
+            <SkeletonBox className="h-2.5 w-14" />
+          </div>
+        ))}
+      </div>
+
+      {/* Services Grid Skeleton */}
+      <div className="space-y-3">
+        <SkeletonBox className="h-5 w-36" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-2xl border border-slate-100 p-3 space-y-2">
+              <SkeletonBox className="w-full aspect-square rounded-xl" />
+              <SkeletonBox className="h-4 w-3/4" />
+              <SkeletonBox className="h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Generic Page Skeleton Fallback
 export default function SkeletonLoader() {
   return (
