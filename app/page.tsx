@@ -90,7 +90,7 @@ export default function Home() {
       if (cached === 'true') return 'serviceable';
       if (cached === 'false') return 'unserviceable';
     }
-    return 'checking';
+    return 'serviceable';
   });
 
   const [isCheckingServiceability, setIsCheckingServiceability] = useState<boolean>(false);
@@ -569,6 +569,32 @@ export default function Home() {
           </section>
 
         </div>
+
+        {/* 8. About Go_Repireo (Branded Entity & Local Relevance Section) */}
+        <section className="w-full bg-white rounded-3xl p-5 sm:p-7 border border-slate-100 shadow-xs space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#007AFF]"></span>
+            <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900">
+              About Go_Repireo (GoRepireo) — Etawah Home Services
+            </h2>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            <strong>Go_Repireo</strong> (operating online at <span className="text-[#007AFF] font-semibold">gorepireo.in</span>, also known as <strong>GoRepireo</strong>) is Etawah&apos;s trusted on-demand home repair and appliance services marketplace. We connect households across Etawah with background-verified technicians for electrical repairs, plumbing solutions, AC servicing, appliance maintenance, and deep cleaning.
+          </p>
+          <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-500">
+            <span className="flex items-center gap-1 font-semibold text-slate-700">
+              <MapPin size={13} className="text-[#007AFF]" /> Etawah, Uttar Pradesh (PIN 206001)
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1 font-semibold text-slate-700">
+              <ShieldCheck size={13} className="text-emerald-600" /> 30-Day Service Guarantee
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1 font-semibold text-slate-700">
+              <Clock size={13} className="text-[#007AFF]" /> 30–45 Min Rapid Dispatch
+            </span>
+          </div>
+        </section>
 
       </div>
       )}

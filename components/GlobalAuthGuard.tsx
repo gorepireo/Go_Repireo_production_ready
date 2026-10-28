@@ -4,10 +4,27 @@ import { useAuth } from '@/context/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/maintenance', '/privacy', '/terms', '/refund-policy', '/not-there-yet'];
+const PUBLIC_ROUTES = [
+  '/',
+  '/services',
+  '/about',
+  '/contact',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/maintenance',
+  '/privacy',
+  '/terms',
+  '/refund-policy',
+  '/not-there-yet'
+];
 
 function isPublicRoute(pathname: string) {
-  return PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/verify/certificate');
+  if (PUBLIC_ROUTES.includes(pathname)) return true;
+  if (pathname.startsWith('/services/')) return true;
+  if (pathname.startsWith('/near-me/')) return true;
+  if (pathname.startsWith('/verify/certificate')) return true;
+  return false;
 }
 
 export default function GlobalAuthGuard({ children }: { children: React.ReactNode }) {
@@ -40,7 +57,15 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
     }
   }, [authRoute, loading, pathname, publicRoute, role, router, user]);
 
-  if (loading || (!user && !publicRoute) || (user && role && authRoute)) {
+  if (!publicRoute && (loading || !user)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-6" role="status">
+        <p className="text-sm font-semibold text-slate-600">Checking your account…</p>
+      </div>
+    );
+  }
+
+  if (authRoute && user && role) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-6" role="status">
         <p className="text-sm font-semibold text-slate-600">Checking your account…</p>

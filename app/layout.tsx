@@ -13,10 +13,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://gorepireo.in"),
   title: {
-    default: "Go_Repireo (GoRepireo): Trusted Home Services, Electricians, Plumbers, AC & Appliance Repair in Etawah",
-    template: "%s | Go_Repireo (GoRepireo)"
+    default: "Go_Repireo (GoRepireo) | Home Repair Services in Etawah",
+    template: "%s | Go_Repireo"
   },
-  description: "Go_Repireo (gorepireo.in) is Etawah's #1 on-demand home services platform. Book verified plumbers, electricians, AC technicians, appliance repair and cleaning experts with live technician tracking, upfront pricing and 30-day warranty.",
+  description: "Go_Repireo (GoRepireo / gorepireo.in) is Etawah's #1 on-demand home repair and appliance services platform. Book verified plumbers, electricians, AC technicians, appliance repair, and cleaning experts with live technician tracking, upfront pricing, and 30-day warranty.",
   keywords: [
     "gorepireo", "GoRepireo", "Go_Repireo", "Go Repireo", "Repireo", "gorepireo.in",
     "GoRepireo.in", "Go-Repireo", "go repireo", "go_repireo",
@@ -110,7 +110,7 @@ export default function RootLayout({
               '@type': 'Organization',
               '@id': 'https://gorepireo.in/#organization',
               'name': 'Go_Repireo',
-              'alternateName': ['GoRepireo', 'Go Repireo', 'Repireo', 'Go_Repireo Technologies', 'gorepireo'],
+              'alternateName': ['GoRepireo', 'gorepireo', 'Go Repireo', 'Repireo', 'gorepireo.in', 'Go_Repireo Technologies'],
               'url': 'https://gorepireo.in',
               'logo': {
                 '@type': 'ImageObject',
@@ -119,7 +119,7 @@ export default function RootLayout({
                 'height': 512
               },
               'image': 'https://gorepireo.in/icon.png',
-              'description': 'Go_Repireo is Etawah\'s trusted on-demand home services marketplace. We connect customers with verified plumbers, electricians, AC technicians, and appliance repair experts with live tracking and secure payments.',
+              'description': 'Go_Repireo (GoRepireo / gorepireo.in) is Etawah\'s trusted on-demand home services marketplace. We connect customers with verified plumbers, electricians, AC technicians, and appliance repair experts with live tracking and secure payments.',
               'telephone': '+91-8679245568',
               'email': 'support@gorepireo.com',
               'foundingDate': '2025',
@@ -143,9 +143,9 @@ export default function RootLayout({
               '@type': 'WebSite',
               '@id': 'https://gorepireo.in/#website',
               'name': 'Go_Repireo',
-              'alternateName': ['GoRepireo', 'Go Repireo', 'Repireo', 'Go-Repireo'],
+              'alternateName': ['GoRepireo', 'gorepireo', 'Go Repireo', 'Repireo', 'gorepireo.in'],
               'url': 'https://gorepireo.in',
-              'description': 'Book verified home services - plumber, electrician, AC repair, appliance repair, cleaning in Etawah',
+              'description': 'Go_Repireo (GoRepireo / gorepireo.in) - Verified home services, plumber, electrician, AC repair, appliance repair, and cleaning in Etawah',
               'publisher': {
                 '@id': 'https://gorepireo.in/#organization'
               },
@@ -171,6 +171,7 @@ export default function RootLayout({
               '@type': 'LocalBusiness',
               '@id': 'https://gorepireo.in/#localbusiness',
               'name': 'Go_Repireo',
+              'alternateName': ['GoRepireo', 'gorepireo', 'Go Repireo', 'Repireo', 'gorepireo.in'],
               'image': 'https://gorepireo.in/icon.png',
               'telephone': '+91-8679245568',
               'email': 'support@gorepireo.com',
