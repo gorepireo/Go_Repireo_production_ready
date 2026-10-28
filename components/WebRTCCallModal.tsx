@@ -51,14 +51,8 @@ export default function WebRTCCallModal() {
         ref={remoteAudioRef}
         autoPlay
         playsInline
-        style={{
-          position: 'fixed',
-          top: '-9999px',
-          left: '-9999px',
-          width: '10px',
-          height: '10px',
-          pointerEvents: 'none',
-        }}
+        suppressHydrationWarning
+        className="fixed -top-[9999px] -left-[9999px] w-2.5 h-2.5 pointer-events-none opacity-0"
       />
 
       <AnimatePresence>
