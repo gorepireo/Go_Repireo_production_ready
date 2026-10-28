@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/maintenance', '/privacy', '/terms', '/refund-policy'];
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/maintenance', '/privacy', '/terms', '/refund-policy', '/not-there-yet'];
 
 function isPublicRoute(pathname: string) {
   return PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/verify/certificate');

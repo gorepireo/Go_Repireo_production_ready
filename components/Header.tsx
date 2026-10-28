@@ -35,6 +35,20 @@ export default function Header({
     return 'Detecting location...';
   });
 
+  const saveAndBroadcastLocation = (lat: number, lng: number, address: string) => {
+    setCurrentLocation(address);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('repireo_detected_location', address);
+      localStorage.setItem('repireo_customer_lat', String(lat));
+      localStorage.setItem('repireo_customer_lng', String(lng));
+      window.dispatchEvent(
+        new CustomEvent('repireo_location_updated', {
+          detail: { lat, lng, address },
+        })
+      );
+    }
+  };
+
   const fetchLiveAddress = async (lat: number, lng: number) => {
     try {
       // Provider 1: BigDataCloud Reverse Geocode API (Instant 100ms, free, no rate limits)
@@ -45,14 +59,10 @@ export default function Header({
         const city = bdcData.city || bdcData.principalSubdivision;
         
         if (locality && city && locality !== city) {
-          const locStr = `${locality}, ${city}`;
-          setCurrentLocation(locStr);
-          if (typeof window !== 'undefined') localStorage.setItem('repireo_detected_location', locStr);
+          saveAndBroadcastLocation(lat, lng, `${locality}, ${city}`);
           return;
         } else if (locality || city) {
-          const locStr = `${locality || city}`;
-          setCurrentLocation(locStr);
-          if (typeof window !== 'undefined') localStorage.setItem('repireo_detected_location', locStr);
+          saveAndBroadcastLocation(lat, lng, `${locality || city}`);
           return;
         }
       }
@@ -66,13 +76,9 @@ export default function Header({
         const city = addr.city || addr.town || addr.county || addr.state_district;
         
         if (area && city) {
-          const locStr = `${area}, ${city}`;
-          setCurrentLocation(locStr);
-          if (typeof window !== 'undefined') localStorage.setItem('repireo_detected_location', locStr);
+          saveAndBroadcastLocation(lat, lng, `${area}, ${city}`);
         } else if (city) {
-          const locStr = `${city}`;
-          setCurrentLocation(locStr);
-          if (typeof window !== 'undefined') localStorage.setItem('repireo_detected_location', locStr);
+          saveAndBroadcastLocation(lat, lng, `${city}`);
         }
       }
     } catch (err) {
@@ -80,7 +86,7 @@ export default function Header({
     }
   };
 
-  // Automatically detect live GPS location on page load for client & worker
+  // Automatically detect live real GPS location on page load for client & worker
   useEffect(() => {
     if (typeof window !== 'undefined' && navigator.geolocation) {
       setIsLocating(true);
@@ -89,20 +95,19 @@ export default function Header({
           fetchLiveAddress(pos.coords.latitude, pos.coords.longitude).finally(() => setIsLocating(false));
         },
         (err) => {
-          console.log('Mount GPS error or permission ungranted:', err.message);
+          console.warn('Real GPS detection ungranted or timed out:', err.message);
           setIsLocating(false);
-          // Only fallback to Etawah if no location was ever detected or cached
-          if (typeof window !== 'undefined' && !localStorage.getItem('repireo_detected_location')) {
-            setCurrentLocation('Etawah, UP');
-          }
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
-    } else {
-      if (typeof window !== 'undefined' && !localStorage.getItem('repireo_detected_location')) {
-        setCurrentLocation('Etawah, UP');
-      }
     }
+  }, []);
+
+  // Listen for programmatic location modal trigger
+  useEffect(() => {
+    const handleOpenModal = () => setIsLocationModalOpen(true);
+    window.addEventListener('repireo_open_location_modal', handleOpenModal);
+    return () => window.removeEventListener('repireo_open_location_modal', handleOpenModal);
   }, []);
 
   // Handle location button click
@@ -119,7 +124,7 @@ export default function Header({
           setIsLocating(false);
           setIsLocationModalOpen(true);
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     } else {
       setIsLocationModalOpen(true);
@@ -270,8 +275,7 @@ export default function Header({
           onClose={() => setIsLocationModalOpen(false)}
           onConfirm={(loc) => {
             if (loc.address) {
-              setCurrentLocation(loc.address);
-              if (typeof window !== 'undefined') localStorage.setItem('repireo_detected_location', loc.address);
+              saveAndBroadcastLocation(loc.lat, loc.lng, loc.address);
             }
             setIsLocationModalOpen(false);
           }}

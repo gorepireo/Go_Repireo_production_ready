@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, ReactNode, useState } from 'react';
+import { FormEvent, ReactNode, useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -58,6 +58,20 @@ export default function RegisterPage() {
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [pincodeMessage, setPincodeMessage] = useState('');
   const [areaSuggestions, setAreaSuggestions] = useState<string[]>([]);
+  const [deviceCoords, setDeviceCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setDeviceCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    }
+  }, []);
+
   const [form, setForm] = useState({
     displayName: '', email: '', phone: '', state: '', district: '', pincode: '', area: '',
     experienceYears: '', description: '', code: '',
@@ -237,6 +251,8 @@ export default function RegisterPage() {
           experienceYears: accountType === 'partner' ? Number(form.experienceYears) : 0,
           description: accountType === 'partner' ? form.description : '',
           serviceCategories: accountType === 'partner' ? services : [],
+          latitude: deviceCoords?.lat ?? null,
+          longitude: deviceCoords?.lng ?? null,
         }),
       });
       const result = await responseJson(response);

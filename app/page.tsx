@@ -36,6 +36,7 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
 import Avatar from '@/components/Avatar';
 import { OrderService } from '@/lib/services/order.service';
+import NotServiceableYet from '@/components/NotServiceableYet';
 
 const categories = [
   { name: 'All Services', icon: LayoutGrid, color: 'text-[#007AFF]', bg: 'bg-[#EFF6FF] border-[#007AFF]/30', active: true },
@@ -77,6 +78,102 @@ export default function Home() {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [realBookings, setRealBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
+
+  // Serviceability check state (10 km radius from approved workers)
+  const [isServiceable, setIsServiceable] = useState<boolean>(true);
+  const [isCheckingServiceability, setIsCheckingServiceability] = useState<boolean>(false);
+  const [detectedLocationName, setDetectedLocationName] = useState<string>('');
+
+  const checkServiceability = async (lat: number, lng: number, addressName?: string) => {
+    setIsCheckingServiceability(true);
+    if (addressName) setDetectedLocationName(addressName);
+    try {
+      const res = await fetch(`/api/serviceability?lat=${lat}&lng=${lng}`);
+      if (res.ok) {
+        const data = await res.json();
+        setIsServiceable(data.serviceable !== false);
+      }
+    } catch (err) {
+      console.warn('Error checking serviceability:', err);
+    } finally {
+      setIsCheckingServiceability(false);
+    }
+  };
+
+  const handleRecheckGps = () => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      setIsCheckingServiceability(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          checkServiceability(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => {
+          setIsCheckingServiceability(false);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('preview_unserviceable') === '1') {
+        setIsServiceable(false);
+        setDetectedLocationName('Mumbai, Maharashtra');
+        return;
+      }
+
+      const qLat = urlParams.get('lat');
+      const qLng = urlParams.get('lng');
+      if (qLat && qLng) {
+        checkServiceability(parseFloat(qLat), parseFloat(qLng), urlParams.get('area') || 'Selected Area');
+        return;
+      }
+
+      // Always prioritize real device hardware GPS with high accuracy & zero cache age
+      if (navigator.geolocation) {
+        setIsCheckingServiceability(true);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            checkServiceability(pos.coords.latitude, pos.coords.longitude);
+          },
+          (err) => {
+            console.warn('Real device GPS prompt or error:', err.message);
+            // Fallback to cached location only if live GPS is denied or unavailable
+            const cachedLoc = localStorage.getItem('repireo_detected_location');
+            const cachedLat = localStorage.getItem('repireo_customer_lat');
+            const cachedLng = localStorage.getItem('repireo_customer_lng');
+            if (cachedLoc) setDetectedLocationName(cachedLoc);
+            if (cachedLat && cachedLng) {
+              checkServiceability(parseFloat(cachedLat), parseFloat(cachedLng), cachedLoc || undefined);
+            } else {
+              setIsCheckingServiceability(false);
+            }
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      } else {
+        const cachedLoc = localStorage.getItem('repireo_detected_location');
+        const cachedLat = localStorage.getItem('repireo_customer_lat');
+        const cachedLng = localStorage.getItem('repireo_customer_lng');
+        if (cachedLoc) setDetectedLocationName(cachedLoc);
+        if (cachedLat && cachedLng) {
+          checkServiceability(parseFloat(cachedLat), parseFloat(cachedLng), cachedLoc || undefined);
+        }
+      }
+
+      const handleLocationChange = (e: Event) => {
+        const customEvent = e as CustomEvent<{ lat: number; lng: number; address: string }>;
+        if (customEvent.detail?.lat && customEvent.detail?.lng) {
+          checkServiceability(customEvent.detail.lat, customEvent.detail.lng, customEvent.detail.address);
+        }
+      };
+
+      window.addEventListener('repireo_location_updated', handleLocationChange);
+      return () => window.removeEventListener('repireo_location_updated', handleLocationChange);
+    }
+  }, []);
 
   // Auto-rotate hero banners every 2 seconds
   useEffect(() => {
@@ -157,7 +254,19 @@ export default function Home() {
       <Header />
 
       {/* Main Content Area Container for Desktop & Mobile */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4 pb-8">
+      {!isServiceable ? (
+        <div className="flex-1 flex flex-col justify-center py-4 sm:py-8">
+          <NotServiceableYet
+            currentLocationName={detectedLocationName}
+            isChecking={isCheckingServiceability}
+            onOpenLocationPicker={() => {
+              window.dispatchEvent(new Event('repireo_open_location_modal'));
+            }}
+            onRefresh={handleRecheckGps}
+          />
+        </div>
+      ) : (
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4 pb-8">
         
         {/* 2. Hero Banner Carousel (4:2 Aspect Ratio, 2-sec Rotation) */}
         <section className="w-full">
@@ -422,6 +531,7 @@ export default function Home() {
         </div>
 
       </div>
+      )}
 
       <Footer />
     </div>

@@ -18,6 +18,8 @@ interface RegistrationBody {
   experienceYears?: unknown;
   description?: unknown;
   serviceCategories?: unknown;
+  latitude?: unknown;
+  longitude?: unknown;
 }
 
 function text(value: unknown, max: number) {
@@ -43,6 +45,8 @@ export async function POST(request: Request) {
     const serviceCategories = Array.isArray(body.serviceCategories)
       ? body.serviceCategories.map((value) => text(value, 80)).filter(Boolean).slice(0, 20)
       : [];
+    const latitude = typeof body.latitude === 'number' && !isNaN(body.latitude) ? body.latitude : (body.latitude && !isNaN(parseFloat(String(body.latitude))) ? parseFloat(String(body.latitude)) : null);
+    const longitude = typeof body.longitude === 'number' && !isNaN(body.longitude) ? body.longitude : (body.longitude && !isNaN(parseFloat(String(body.longitude))) ? parseFloat(String(body.longitude)) : null);
 
     if (displayName.length < 2 || !accountType) {
       return NextResponse.json({ error: 'Name and account type are required.' }, { status: 400 });
@@ -88,11 +92,20 @@ export async function POST(request: Request) {
       });
     } else {
       statements.push({
-        sql: `INSERT INTO worker_profiles (user_id, full_name, experience_years, description, verification_status, approval_status, availability_status, accepting_jobs, state, district, pincode, area, service_categories_json, created_at, updated_at)
-              VALUES (?, ?, ?, ?, 'pending', 'pending', 'offline', 0, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(user_id) DO UPDATE SET full_name = excluded.full_name, experience_years = excluded.experience_years, description = excluded.description, state = excluded.state, district = excluded.district, pincode = excluded.pincode, area = excluded.area, service_categories_json = excluded.service_categories_json, verification_status = 'pending', approval_status = 'pending', updated_at = excluded.updated_at`,
-        args: [userId, displayName, experienceYears, description, state, district, pincode, area, JSON.stringify(serviceCategories), now, now],
+        sql: `INSERT INTO worker_profiles (user_id, full_name, experience_years, description, verification_status, approval_status, availability_status, accepting_jobs, state, district, pincode, area, service_categories_json, latitude, longitude, created_at, updated_at)
+              VALUES (?, ?, ?, ?, 'pending', 'pending', 'offline', 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(user_id) DO UPDATE SET full_name = excluded.full_name, experience_years = excluded.experience_years, description = excluded.description, state = excluded.state, district = excluded.district, pincode = excluded.pincode, area = excluded.area, service_categories_json = excluded.service_categories_json, latitude = COALESCE(excluded.latitude, worker_profiles.latitude), longitude = COALESCE(excluded.longitude, worker_profiles.longitude), verification_status = 'pending', approval_status = 'pending', updated_at = excluded.updated_at`,
+        args: [userId, displayName, experienceYears, description, state, district, pincode, area, JSON.stringify(serviceCategories), latitude, longitude, now, now],
       });
+
+      if (latitude !== null && longitude !== null) {
+        statements.push({
+          sql: `INSERT INTO worker_locations (worker_id, latitude, longitude, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(worker_id) DO UPDATE SET latitude = excluded.latitude, longitude = excluded.longitude, updated_at = excluded.updated_at`,
+          args: [userId, latitude, longitude, now],
+        });
+      }
     }
 
     await db.batch(statements, 'write');
