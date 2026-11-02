@@ -315,6 +315,16 @@ export async function PATCH(req: Request) {
     }
 
     if (status === 'accepted') {
+      // Guard: do not accept a call that has already been ended, declined, or cancelled
+      const currentSession = await db.execute({
+        sql: `SELECT status FROM call_sessions WHERE id = ? LIMIT 1`,
+        args: [call_id],
+      });
+      const currentStatus = String(currentSession.rows[0]?.status || '');
+      if (['ended', 'declined', 'cancelled', 'missed'].includes(currentStatus)) {
+        return NextResponse.json({ success: false, status: currentStatus, message: 'Call already terminated' });
+      }
+
       await db.execute({
         sql: `UPDATE call_sessions 
               SET status = 'accepted', sdp_answer = ?, accepted_at = ? 

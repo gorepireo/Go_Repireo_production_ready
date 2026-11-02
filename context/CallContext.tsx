@@ -389,12 +389,20 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch {}
+      });
       localStreamRef.current = null;
     }
 
     if (peerConnectionRef.current) {
       try {
+        peerConnectionRef.current.ontrack = null;
+        peerConnectionRef.current.onicecandidate = null;
+        peerConnectionRef.current.onconnectionstatechange = null;
+        peerConnectionRef.current.oniceconnectionstatechange = null;
         peerConnectionRef.current.close();
       } catch {}
       peerConnectionRef.current = null;
@@ -542,9 +550,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => {
       setCallStatus('idle');
       setCallData(null);
+      // Keep isCallEndingRef true for 3.5 seconds to ignore any remaining poll echoes
       setTimeout(() => {
         isCallEndingRef.current = false;
-      }, 1500);
+      }, 3500);
     }, 600);
   }, [callData?.sessionId, stopRingLoop, playEndedChime, cleanupCall]);
 
@@ -857,7 +866,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCallData(null);
       setTimeout(() => {
         isCallEndingRef.current = false;
-      }, 1500);
+      }, 3500);
     }, 600);
   };
 
@@ -895,7 +904,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCallData(null);
       setTimeout(() => {
         isCallEndingRef.current = false;
-      }, 1500);
+      }, 3500);
     }, 600);
   };
 
@@ -993,8 +1002,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const data = await res.json();
             if (data.incomingCall) {
               const incoming = data.incomingCall;
-              // Guard: Only handle if not previously ended or declined
-              if (!endedSessionIdsRef.current.has(incoming.sessionId)) {
+              // Guard: Only handle if not previously ended or declined, and not currently ending
+              if (!endedSessionIdsRef.current.has(incoming.sessionId) && !isCallEndingRef.current) {
                 setCallData({
                   sessionId: incoming.sessionId,
                   orderId: incoming.orderId,
