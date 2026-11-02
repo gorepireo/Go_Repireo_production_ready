@@ -41,13 +41,32 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-// Verified active, ultra-fast STUN & optional TURN configuration
+// Verified active, ultra-fast STUN & Metered.ca TURN configuration for 100% reliable cellular & firewall traversal
 const getRtcConfig = (): RTCConfiguration => {
   const servers: RTCIceServer[] = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun.cloudflare.com:3478' },
+    { urls: 'stun:stun.relay.metered.ca:80' },
+    {
+      urls: 'turn:global.relay.metered.ca:80',
+      username: '69b4b9dbf5da63053c47e6ad',
+      credential: 'rZwAFc8Nx4fPVgsL',
+    },
+    {
+      urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+      username: '69b4b9dbf5da63053c47e6ad',
+      credential: 'rZwAFc8Nx4fPVgsL',
+    },
+    {
+      urls: 'turn:global.relay.metered.ca:443',
+      username: '69b4b9dbf5da63053c47e6ad',
+      credential: 'rZwAFc8Nx4fPVgsL',
+    },
+    {
+      urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+      username: '69b4b9dbf5da63053c47e6ad',
+      credential: 'rZwAFc8Nx4fPVgsL',
+    },
   ];
 
   if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_TURN_URL) {
@@ -60,7 +79,7 @@ const getRtcConfig = (): RTCConfiguration => {
 
   return {
     iceServers: servers,
-    iceCandidatePoolSize: 2,
+    iceCandidatePoolSize: 4,
   };
 };
 
