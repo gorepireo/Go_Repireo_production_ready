@@ -30,11 +30,14 @@ export default function SchemaData({
   reviewCount,
   faqs = []
 }: SchemaDataProps) {
+  const canonicalUrl = url.startsWith('http') 
+    ? url 
+    : `https://gorepireo.in${url.startsWith('/') ? '' : '/'}${url}`;
 
   const serviceSchema: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': 'Service',
-    '@id': `${url}#service`,
+    '@id': `${canonicalUrl}#service`,
     'name': title,
     'serviceType': category,
     'provider': {
@@ -61,7 +64,7 @@ export default function SchemaData({
     'description': description,
     'offers': {
       '@type': 'AggregateOffer',
-      'url': url,
+      'url': canonicalUrl,
       'priceCurrency': 'INR',
       'lowPrice': minPrice,
       'highPrice': maxPrice,
@@ -99,7 +102,7 @@ export default function SchemaData({
         '@type': 'ListItem',
         'position': 3,
         'name': title,
-        'item': url
+        'item': canonicalUrl
       }
     ]
   };

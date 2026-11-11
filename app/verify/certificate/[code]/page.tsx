@@ -40,7 +40,7 @@ export default async function CertificateResultPage({ params }: { params: Promis
         <Link href="/verify/certificate" className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-700"><ArrowLeft size={16} /> Verify another certificate</Link>
         <section className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/60 shadow-[0_24px_80px_rgba(15,23,42,0.07)] backdrop-blur-2xl">
           <div className="border-b border-slate-200 px-6 py-5 sm:px-10">
-            <p className="text-sm font-semibold text-slate-700">Go_Repireo official credential registry</p>
+            <h1 className="text-sm font-semibold text-slate-700">Go_Repireo official credential registry</h1>
           </div>
 
           {result.state === 'found' && result.certificate.verified ? (
@@ -48,7 +48,7 @@ export default async function CertificateResultPage({ params }: { params: Promis
               <div className="mb-8 flex items-start gap-4 border-l-4 border-emerald-600 bg-emerald-50 p-4">
                 <BadgeCheck size={25} className="mt-0.5 shrink-0 text-emerald-700" />
                 <div>
-                  <h1 className="text-xl font-bold text-emerald-950">Certificate verified</h1>
+                  <h2 className="text-xl font-bold text-emerald-950">Certificate verified</h2>
                   <p className="mt-1 font-mono text-sm font-semibold text-emerald-800">{result.certificate.code}</p>
                 </div>
               </div>
@@ -61,9 +61,9 @@ export default async function CertificateResultPage({ params }: { params: Promis
               <p className="mt-6 text-sm leading-6 text-slate-500">This record is active and was verified against the official Go_Repireo registry.</p>
             </div>
           ) : result.state === 'unavailable' ? (
-            <div className="p-8 sm:p-10"><CircleAlert size={32} className="text-amber-600" /><h1 className="mt-4 text-2xl font-bold">Verification temporarily unavailable</h1><p className="mt-3 text-sm leading-6 text-slate-600">The official credential registry could not be reached. Please try again shortly. This does not mean the certificate is invalid.</p></div>
+            <div className="p-8 sm:p-10"><CircleAlert size={32} className="text-amber-600" /><h2 className="mt-4 text-2xl font-bold">Verification temporarily unavailable</h2><p className="mt-3 text-sm leading-6 text-slate-600">The official credential registry could not be reached. Please try again shortly. This does not mean the certificate is invalid.</p></div>
           ) : (
-            <div className="p-8 sm:p-10"><ShieldX size={32} className="text-red-600" /><h1 className="mt-4 text-2xl font-bold">Certificate not verified</h1><p className="mt-3 text-sm leading-6 text-slate-600">No valid certificate record was found for <span className="font-mono font-semibold text-slate-800">{code}</span>. Check the code and try again.</p></div>
+            <div className="p-8 sm:p-10"><ShieldX size={32} className="text-red-600" /><h2 className="mt-4 text-2xl font-bold">Certificate not verified</h2><p className="mt-3 text-sm leading-6 text-slate-600">No valid certificate record was found for <span className="font-mono font-semibold text-slate-800">{code}</span>. Check the code and try again.</p></div>
           )}
         </section>
       </div>

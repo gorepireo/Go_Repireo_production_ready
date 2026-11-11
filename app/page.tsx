@@ -308,6 +308,23 @@ export default function Home() {
       ) : (
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4 pb-8">
         
+        {/* SEO Main Heading & Local Service Context */}
+        <section className="w-full pt-1 pb-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                Doorstep Home &amp; Appliance Repair Services in Etawah
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                Verified electricians, plumbers, carpenters &amp; technicians delivered in 30–60 minutes with 30-day warranty.
+              </p>
+            </div>
+            <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 shrink-0">
+              <ShieldCheck size={16} /> 100% Verified Local Professionals
+            </div>
+          </div>
+        </section>
+
         {/* 2. Hero Banner Carousel (4:2 Aspect Ratio, 2-sec Rotation) */}
         <section className="w-full">
           <Link href={heroBanners[currentBanner].link} className="block group focus:outline-none">
@@ -531,9 +548,9 @@ export default function Home() {
             <div className="bg-gradient-to-r from-[#EFF6FF] to-[#E0EDFF] rounded-3xl p-5 sm:p-6 border border-blue-100/60 flex flex-col justify-between gap-4 h-full shadow-xs">
               <div className="space-y-2">
                 <div className="flex items-center -space-x-2">
-                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
-                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
-                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Go_Repireo Customer in Etawah" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Go_Repireo Verified Client" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Etawah Homeowner Reviewer" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
                   <span className="w-7 h-7 rounded-full bg-[#007AFF] text-white text-[9px] font-black flex items-center justify-center border-2 border-white">
                     10K+
                   </span>

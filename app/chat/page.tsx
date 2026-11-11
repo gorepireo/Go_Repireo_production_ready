@@ -231,10 +231,10 @@ function ChatContent() {
             <ArrowLeft size={20} className="text-slate-600" />
           </button>
           <div>
-            <h1 className="font-bold text-lg leading-tight uppercase tracking-tight flex items-center gap-2">
+            <h2 className="font-bold text-lg leading-tight uppercase tracking-tight flex items-center gap-2">
               Mission Chat
               {isActive && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>}
-            </h1>
+            </h2>
             <p className="text-xs text-slate-400 font-mono">ID: #{orderId?.slice(0, 6)}</p>
           </div>
         </div>
