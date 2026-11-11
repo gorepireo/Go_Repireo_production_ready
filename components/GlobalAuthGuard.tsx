@@ -3,6 +3,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import AuthLoadingScreen from './AuthLoadingScreen';
 
 const PUBLIC_ROUTES = [
   '/services',
@@ -27,7 +28,7 @@ function isPublicRoute(pathname: string) {
 }
 
 export default function GlobalAuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, authError, refresh } = useAuth();
   const pathname = usePathname() || '/';
   const router = useRouter();
   const publicRoute = isPublicRoute(pathname);
@@ -58,17 +59,18 @@ export default function GlobalAuthGuard({ children }: { children: React.ReactNod
 
   if (!publicRoute && (loading || !user)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-6" role="status">
-        <p className="text-sm font-semibold text-slate-600">Checking your account…</p>
-      </div>
+      <AuthLoadingScreen
+        error={authError}
+        onRetry={refresh}
+      />
     );
   }
 
   if (authRoute && user && role) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-6" role="status">
-        <p className="text-sm font-semibold text-slate-600">Checking your account…</p>
-      </div>
+      <AuthLoadingScreen
+        isComplete={true}
+      />
     );
   }
 

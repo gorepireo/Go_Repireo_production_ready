@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Phone } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import AuthLoadingScreen from '@/components/AuthLoadingScreen';
 
 function normalizeIndianPhone(value: string) {
   const digits = value.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
@@ -222,7 +223,7 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="flex min-h-screen items-center justify-center bg-[#F8FAFC]"><video src="/logeing.mp4" autoPlay loop muted playsInline className="size-24 rounded-3xl border border-blue-100/80 object-cover shadow-xl shadow-blue-500/20" /></main>}>
+    <Suspense fallback={<AuthLoadingScreen />}>
       <LoginContent />
     </Suspense>
   );
