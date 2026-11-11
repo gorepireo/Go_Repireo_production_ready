@@ -14,10 +14,11 @@ interface AuthLoadingScreenProps {
 
 /**
  * Ultra-minimal, premium branded authentication loading screen for Go_Repireo.
- * Perfectly mirrors the official design reference:
- * 1. Running repairman mascot at center with orange ground swoosh & subtle bouncing run
+ * Uses the authentic original master logo (/logo.png) directly from the project repository.
+ * 
+ * 1. Original running repairman mascot (/logo.png) centered with subtle running bounce
  * 2. Official Go_Repireo wordmark ("Go_" deep blue + "Repireo" orange) directly beneath
- * 3. Rounded blue loading progress bar (#0278FC on #E1E8F0) perfectly matched to logo width
+ * 3. Thin, elegant rounded blue loading progress bar (#0278FC on #E1E8F0)
  */
 export default function AuthLoadingScreen({
   error = null,
@@ -113,32 +114,28 @@ export default function AuthLoadingScreen({
       `}</style>
 
       <div className="flex w-full max-w-sm flex-col items-center justify-center text-center">
-        {/* 1. Running Repairman Mascot with Orange Swoosh */}
+        {/* 1. Original Master Running Repairman Mascot Logo */}
         <div className="repireo-mascot-animation relative flex items-center justify-center">
           <Image
-            src="/mascot.png"
-            alt="Go_Repireo Mascot"
-            width={260}
-            height={255}
+            src="/logo.png"
+            alt="Go_Repireo Original Logo"
+            width={320}
+            height={311}
             priority
-            className="h-auto w-44 sm:w-56 object-contain pointer-events-none select-none"
+            className="h-auto w-44 sm:w-56 object-contain pointer-events-none select-none drop-shadow-[0_8px_20px_rgba(0,122,255,0.08)]"
           />
         </div>
 
-        {/* 2. Go_Repireo Wordmark (Deep Blue + Orange) */}
-        <div className="repireo-logo-animation -mt-1 sm:-mt-2 flex items-center justify-center">
-          <Image
-            src="/brand-wordmark.png"
-            alt="Go_Repireo"
-            width={378}
-            height={68}
-            priority
-            className="h-auto w-56 sm:w-72 object-contain pointer-events-none select-none"
-          />
+        {/* 2. Official Go_Repireo Wordmark (Deep Blue + Vibrant Orange) */}
+        <div className="repireo-logo-animation mt-3 sm:mt-4 flex items-center justify-center select-none">
+          <span className="text-3xl sm:text-4xl font-black italic tracking-tight font-sans">
+            <span className="text-[#0047FF]">Go_</span>
+            <span className="text-[#FF6800]">Repireo</span>
+          </span>
         </div>
 
-        {/* 3. Rounded Blue Loading Progress Bar (exact width match & exact colors) */}
-        <div className="mt-7 sm:mt-9 w-56 sm:w-72">
+        {/* 3. Rounded Blue Loading Progress Bar */}
+        <div className="mt-7 sm:mt-8 w-56 sm:w-72">
           <div
             className="h-2 sm:h-2.5 w-full overflow-hidden rounded-full bg-[#E1E8F0]"
             role="progressbar"
