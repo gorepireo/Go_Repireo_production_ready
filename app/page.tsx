@@ -313,7 +313,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-                Doorstep Home &amp; Appliance Repair Services in Etawah
+                Go_Repireo: Doorstep Home &amp; Appliance Repair Services in Etawah
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
                 Verified electricians, plumbers, carpenters &amp; technicians delivered in 30–60 minutes with 30-day warranty.
