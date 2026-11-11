@@ -14,10 +14,10 @@ interface AuthLoadingScreenProps {
 
 /**
  * Ultra-minimal, premium branded authentication loading screen for Go_Repireo.
- * Strictly presents:
- * 1. Running repairman mascot at center with gentle floating motion
- * 2. Official Go_Repireo wordmark ("Go_" deep blue + "Repireo" orange)
- * 3. Thin, elegant rounded blue loading progress bar
+ * Perfectly mirrors the official design reference:
+ * 1. Running repairman mascot at center with orange ground swoosh & subtle bouncing run
+ * 2. Official Go_Repireo wordmark ("Go_" deep blue + "Repireo" orange) directly beneath
+ * 3. Rounded blue loading progress bar (#0278FC on #E1E8F0) perfectly matched to logo width
  */
 export default function AuthLoadingScreen({
   error = null,
@@ -25,7 +25,7 @@ export default function AuthLoadingScreen({
   isComplete = false
 }: AuthLoadingScreenProps) {
   // Real progress state connected to authentication lifecycle
-  const [progress, setProgress] = useState<number>(20);
+  const [progress, setProgress] = useState<number>(25);
 
   useEffect(() => {
     if (error) {
@@ -38,20 +38,20 @@ export default function AuthLoadingScreen({
       return;
     }
 
-    // Step 1: Handshake initiated
+    // Step 1: Handshake & credentials exchange
     const t1 = setTimeout(() => {
-      setProgress((p) => Math.max(p, 45));
-    }, 120);
+      setProgress((p) => Math.max(p, 50));
+    }, 100);
 
-    // Step 2: Session payload evaluation
+    // Step 2: Session verification & permissions lookup
     const t2 = setTimeout(() => {
-      setProgress((p) => Math.max(p, 78));
-    }, 380);
+      setProgress((p) => Math.max(p, 80));
+    }, 350);
 
-    // Step 3: Resolving account state
+    // Step 3: Preparing session environment
     const t3 = setTimeout(() => {
-      setProgress((p) => Math.max(p, 92));
-    }, 850);
+      setProgress((p) => Math.max(p, 95));
+    }, 750);
 
     return () => {
       clearTimeout(t1);
@@ -68,15 +68,15 @@ export default function AuthLoadingScreen({
       className="fixed inset-0 z-50 flex min-h-screen w-full flex-col items-center justify-center bg-white px-6 select-none"
     >
       <style jsx global>{`
-        @keyframes repireoMascotBounce {
+        @keyframes repireoRunningBounce {
           0%, 100% {
             transform: translate3d(0, 0, 0) rotate(0deg);
           }
           25% {
-            transform: translate3d(0, -5px, 0) rotate(-1deg);
+            transform: translate3d(0, -6px, 0) rotate(-0.8deg);
           }
           50% {
-            transform: translate3d(0, -9px, 0) rotate(0.6deg);
+            transform: translate3d(0, -10px, 0) rotate(0.6deg);
           }
           75% {
             transform: translate3d(0, -3px, 0) rotate(1.2deg);
@@ -86,7 +86,7 @@ export default function AuthLoadingScreen({
         @keyframes repireoFadeIn {
           0% {
             opacity: 0;
-            transform: translate3d(0, 3px, 0);
+            transform: translate3d(0, 4px, 0);
           }
           100% {
             opacity: 1;
@@ -94,23 +94,13 @@ export default function AuthLoadingScreen({
           }
         }
 
-        @keyframes repireoPulseGaze {
-          0%, 100% {
-            filter: drop-shadow(0 8px 24px rgba(0, 122, 255, 0.08));
-          }
-          50% {
-            filter: drop-shadow(0 14px 30px rgba(0, 122, 255, 0.15));
-          }
-        }
-
         .repireo-mascot-animation {
-          animation: repireoMascotBounce 1.9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
-                     repireoPulseGaze 3s ease-in-out infinite;
-          will-change: transform, filter;
+          animation: repireoRunningBounce 1.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+          will-change: transform;
         }
 
         .repireo-logo-animation {
-          animation: repireoFadeIn 0.6s ease-out forwards;
+          animation: repireoFadeIn 0.5s ease-out forwards;
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -118,40 +108,39 @@ export default function AuthLoadingScreen({
           .repireo-logo-animation {
             animation: none !important;
             transform: none !important;
-            filter: none !important;
           }
         }
       `}</style>
 
-      <div className="flex flex-col items-center justify-center text-center">
-        {/* 1. Running Repairman Mascot */}
+      <div className="flex w-full max-w-sm flex-col items-center justify-center text-center">
+        {/* 1. Running Repairman Mascot with Orange Swoosh */}
         <div className="repireo-mascot-animation relative flex items-center justify-center">
           <Image
             src="/mascot.png"
             alt="Go_Repireo Mascot"
-            width={170}
-            height={121}
+            width={260}
+            height={255}
             priority
-            className="h-auto w-32 sm:w-40 object-contain pointer-events-none select-none"
+            className="h-auto w-44 sm:w-56 object-contain pointer-events-none select-none"
           />
         </div>
 
-        {/* 2. Go_Repireo Wordmark */}
-        <div className="repireo-logo-animation mt-4 sm:mt-5 flex items-center justify-center">
+        {/* 2. Go_Repireo Wordmark (Deep Blue + Orange) */}
+        <div className="repireo-logo-animation -mt-1 sm:-mt-2 flex items-center justify-center">
           <Image
             src="/brand-wordmark.png"
             alt="Go_Repireo"
-            width={210}
-            height={38}
+            width={378}
+            height={68}
             priority
-            className="h-auto w-40 sm:w-48 object-contain pointer-events-none select-none"
+            className="h-auto w-56 sm:w-72 object-contain pointer-events-none select-none"
           />
         </div>
 
-        {/* 3. Thin Elegant Rounded Blue Progress Bar */}
-        <div className="mt-6 sm:mt-7 w-44 sm:w-56">
+        {/* 3. Rounded Blue Loading Progress Bar (exact width match & exact colors) */}
+        <div className="mt-7 sm:mt-9 w-56 sm:w-72">
           <div
-            className="h-1 sm:h-1.5 w-full overflow-hidden rounded-full bg-[#E5EAF2]"
+            className="h-2 sm:h-2.5 w-full overflow-hidden rounded-full bg-[#E1E8F0]"
             role="progressbar"
             aria-valuenow={progress}
             aria-valuemin={0}
@@ -159,13 +148,13 @@ export default function AuthLoadingScreen({
           >
             <div
               className={`h-full rounded-full transition-all duration-300 ease-out ${
-                error ? 'bg-rose-500' : 'bg-[#007AFF]'
+                error ? 'bg-rose-500' : 'bg-[#0278FC]'
               }`}
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          {/* Minimal Error Recovery (Shown ONLY when real auth fails) */}
+          {/* Minimal Error State (Shown only when authentication check fails) */}
           {error && (
             <div className="mt-4 flex flex-col items-center gap-2">
               <p className="text-xs font-semibold text-rose-600">{error}</p>
