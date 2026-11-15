@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { RouteStatsPill } from './RouteStatsPill';
 import { Coordinate } from '../../lib/navigation/types';
 
@@ -34,16 +35,24 @@ export function NavigationMap({
 
     const apiKey =
       olaApiKey ||
-      process.env.NEXT_PUBLIC_OLA_MAPS_API_KEY ||
+      (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_OLA_MAPS_API_KEY) ||
       '';
 
-    // Dynamically import MapLibre GL to prevent SSR window errors
-    Promise.all([
-      import('maplibre-gl'),
-      import('maplibre-gl/dist/maplibre-gl.css' as any),
-    ]).then(([maplibreModule]) => {
-      if (!isMounted || !mapContainerRef.current || mapInstanceRef.current) return;
+    // Style endpoints:
+    // If Ola Maps API key is configured, use Ola Maps vector style (monizb/ola-maps-demo).
+    // Otherwise, use open vector style so the map renders immediately without a blank screen.
+    const olaStyleUrl = 'https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json';
+    const fallbackVectorStyle = 'https://tiles.openfreemap.org/styles/liberty';
+    const activeStyle = apiKey ? olaStyleUrl : fallbackVectorStyle;
+
+    import('maplibre-gl').then((maplibreModule) => {
+      if (!isMounted || !mapContainerRef.current) return;
       const { Map, Marker, LngLatBounds } = maplibreModule;
+
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
 
       const custLngLat: [number, number] = [customerDestination[1], customerDestination[0]];
       const workLngLat: [number, number] = [workerPosition[1], workerPosition[0]];
@@ -52,40 +61,14 @@ export function NavigationMap({
         (custLngLat[1] + workLngLat[1]) / 2,
       ];
 
-      // Primary style: Ola Maps light standard (from monizb/ola-maps-demo)
-      // Fallback style: OpenStreetMap vector style if Ola API key is unconfigured or unreachable
-      const olaStyleUrl = 'https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json';
-      const fallbackStyleUrl = {
-        version: 8,
-        sources: {
-          'osm-tiles': {
-            type: 'raster',
-            tiles: [
-              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            ],
-            tileSize: 256,
-            attribution: '&copy; OpenStreetMap contributors',
-          },
-        },
-        layers: [
-          {
-            id: 'osm-tiles-layer',
-            type: 'raster',
-            source: 'osm-tiles',
-            minzoom: 0,
-            maxzoom: 19,
-          },
-        ],
-      };
-
       const map = new Map({
         container: mapContainerRef.current,
         center: centerLngLat,
         zoom: 13,
-        style: apiKey ? (olaStyleUrl as any) : (fallbackStyleUrl as any),
+        style: activeStyle,
         attributionControl: false,
         transformRequest: (url, resourceType) => {
-          // monizb/ola-maps-demo: Replace faulty app.olamaps.io domain with api.olamaps.io
+          // monizb/ola-maps-demo domain fix: replace app.olamaps.io with api.olamaps.io
           let modifiedUrl = url.replace('app.olamaps.io', 'api.olamaps.io');
 
           if (apiKey && modifiedUrl.includes('api.olamaps.io')) {
@@ -98,20 +81,29 @@ export function NavigationMap({
         },
       });
 
-      // Graceful fallback: If Ola Maps style errors out (e.g., unauthorized or missing quota), fall back to OSM tiles
+      // If Ola Maps API key fails or errors (e.g. 401 / unlinked subscription), fallback automatically
       map.on('error', (e) => {
-        if (e && e.error && (e.error as any).status === 401) {
-          console.warn('[OlaMaps] 401 on vector tiles, switching to fallback tiles:', e.error);
+        const status = (e?.error as any)?.status;
+        if (status === 401 || status === 403) {
+          console.warn('[OlaMaps] 401/403 authorization error. Falling back to free vector tiles:', e.error);
           try {
-            map.setStyle(fallbackStyleUrl as any);
+            map.setStyle(fallbackVectorStyle);
           } catch {}
         }
       });
 
+      // Ensure canvas adapts to container dimensions
+      setTimeout(() => {
+        if (map && isMounted) {
+          map.resize();
+        }
+      }, 150);
+
       map.on('load', () => {
         if (!isMounted) return;
+        map.resize();
 
-        // 1. Worker Marker (Orange Delivery Partner Icon with Pulsing Halo)
+        // 1. Worker Marker (Orange Delivery Partner Marker with Radar Pulse Halo)
         const workerEl = document.createElement('div');
         workerEl.className = 'ola-worker-marker';
         workerEl.innerHTML = `
@@ -129,7 +121,7 @@ export function NavigationMap({
           .addTo(map);
         workerMarkerRef.current = workerMarker;
 
-        // 2. Customer Destination Marker (Red teardrop with white house icon)
+        // 2. Customer Destination Marker (Red Teardrop with White House Icon)
         const destEl = document.createElement('div');
         destEl.className = 'ola-destination-marker';
         destEl.innerHTML = `
@@ -149,60 +141,64 @@ export function NavigationMap({
           .addTo(map);
         destMarkerRef.current = destMarker;
 
-        // 3. Draw Blue Road Path
+        // 3. Road Route Polyline (Delivery Path)
         const midPoint: [number, number] = [
           (workLngLat[0] + custLngLat[0]) / 2 + 0.003,
           (workLngLat[1] + custLngLat[1]) / 2 - 0.002,
         ];
         const routeCoords: [number, number][] = [workLngLat, midPoint, custLngLat];
 
-        map.addSource('delivery-route', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: routeCoords,
+        if (!map.getSource('delivery-route')) {
+          map.addSource('delivery-route', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: routeCoords,
+              },
             },
-          },
-        });
+          });
 
-        // Glow line underlay
-        map.addLayer({
-          id: 'route-glow',
-          type: 'line',
-          source: 'delivery-route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-          },
-          paint: {
-            'line-color': '#3B82F6',
-            'line-width': 8,
-            'line-opacity': 0.35,
-          },
-        });
+          // Route glow underlay
+          map.addLayer({
+            id: 'route-glow',
+            type: 'line',
+            source: 'delivery-route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#3B82F6',
+              'line-width': 8,
+              'line-opacity': 0.35,
+            },
+          });
 
-        // Sharp main blue line
-        map.addLayer({
-          id: 'route-line',
-          type: 'line',
-          source: 'delivery-route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-          },
-          paint: {
-            'line-color': '#007AFF',
-            'line-width': 5,
-            'line-opacity': 0.95,
-          },
-        });
+          // Sharp blue delivery line
+          map.addLayer({
+            id: 'route-line',
+            type: 'line',
+            source: 'delivery-route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#007AFF',
+              'line-width': 5,
+              'line-opacity': 0.95,
+            },
+          });
+        }
 
-        // Fit bounds to fit route
-        const bounds = new LngLatBounds(workLngLat, custLngLat);
-        map.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+        // Fit bounds around the worker and customer destination
+        try {
+          const bounds = new LngLatBounds(workLngLat, custLngLat);
+          map.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+        } catch {}
       });
 
       mapInstanceRef.current = map;
@@ -227,8 +223,8 @@ export function NavigationMap({
 
   return (
     <div className={`relative overflow-hidden bg-slate-100 ${className}`}>
-      {/* 1. Ola Maps / MapLibre Canvas Container */}
-      <div ref={mapContainerRef} className="w-full h-full absolute inset-0" />
+      {/* 1. MapLibre / Ola Maps Canvas */}
+      <div ref={mapContainerRef} className="w-full h-full absolute inset-0" style={{ minHeight: '380px' }} />
 
       {/* 2. Floating Top Route Stats Pill (e.g. 3.7 km • 8 min) */}
       <RouteStatsPill
