@@ -326,9 +326,9 @@ export default function Home() {
           <div className="relative w-full">
             
             {/* 1. Hero Graphic + Greeting Container */}
-            <div className="relative w-full min-h-[170px] min-[390px]:min-h-[185px] sm:min-h-[215px] flex items-end">
+            <div className="relative w-full min-h-[162px] min-[390px]:min-h-[175px] sm:min-h-[205px] flex items-end">
               
-              {/* Full Composite Graphic (Houses + Orange Arc + Branded Technician in Scaled Reference Proportions) */}
+              {/* Full Composite Graphic (Houses + Orange Arc + Branded Technician in Elevated Proportions) */}
               <img 
                 src="/hero-composite.png" 
                 alt="Go_Repireo Doorstep Service"
@@ -336,7 +336,7 @@ export default function Home() {
               />
 
               {/* Left Greeting & Typography (Positioned over clean white left area with ample breathing room) */}
-              <div className="relative z-10 flex flex-col justify-start self-start max-w-[46%] min-[390px]:max-w-[44%] pt-2 sm:pt-3 pl-1">
+              <div className="relative z-10 flex flex-col justify-start self-start max-w-[46%] min-[390px]:max-w-[44%] pt-1 sm:pt-2 pl-1">
                 <p className="text-xs sm:text-sm font-semibold text-slate-700">
                   {greetingTime},
                 </p>
@@ -351,8 +351,8 @@ export default function Home() {
 
             </div>
 
-            {/* 2. Book a Service Banner (Seamlessly connected to the bottom of the hero graphic) */}
-            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-4 min-[390px]:-mt-4.5 sm:-mt-5 z-20">
+            {/* 2. Book a Service Banner (Brought higher & seamlessly connected to the bottom of the hero graphic) */}
+            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-5 min-[390px]:-mt-5.5 sm:-mt-6 z-20">
               <img 
                 src="/banner-book-service.jpg" 
                 alt="Book a Service"
