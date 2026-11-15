@@ -322,51 +322,53 @@ export default function Home() {
           {/* Accessible SEO Heading */}
           <h1 className="sr-only">Go_Repireo: Doorstep Home &amp; Appliance Repair Services in Etawah</h1>
 
-          {/* 1. Hero Greeting + Technician Graphic (Seamless, No Card, No Boxes) */}
-          <section className="relative w-full overflow-hidden min-h-[170px] min-[390px]:min-h-[190px] sm:min-h-[220px] flex items-center">
-            {/* Technician Graphic pinned to right */}
-            <div className="absolute right-0 top-0 bottom-0 w-[58%] sm:w-[50%] pointer-events-none flex items-center justify-end overflow-hidden">
-              <img 
-                src="/hero-technician.jpg" 
-                alt="Professional Technician"
-                className="h-full w-full object-cover object-right"
-              />
-            </div>
-
-            {/* Greeting Text on Left */}
-            <div className="relative z-10 max-w-[55%] sm:max-w-[52%] py-2 space-y-1">
+          {/* 1. Hero Greeting + Technician (Two-Column Responsive Composition) */}
+          <section className="w-full grid grid-cols-[48%_52%] items-center min-h-[160px] min-[390px]:min-h-[175px] sm:min-h-[200px] overflow-hidden">
+            
+            {/* Left Column (48% width) - Greeting & Typography */}
+            <div className="flex flex-col justify-center pr-1 sm:pr-4 py-2 z-10">
               <p className="text-xs sm:text-sm font-semibold text-slate-700">
                 {greetingTime},
               </p>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight flex items-center gap-1.5">
+              <h2 className="text-2xl min-[390px]:text-[26px] sm:text-3xl font-black text-slate-900 tracking-tight leading-tight flex items-center gap-1.5 mt-0.5">
                 <span>{displayName}!</span>
                 <span>👋</span>
               </h2>
-              <p className="text-[11px] sm:text-xs text-slate-500 font-medium leading-relaxed pt-0.5 max-w-[190px] sm:max-w-[220px]">
+              <p className="text-[11px] min-[390px]:text-xs sm:text-sm text-slate-500 font-medium leading-relaxed mt-1">
                 Book trusted home services at your doorstep.
               </p>
             </div>
+
+            {/* Right Column (52% width) - Technician & Integrated Scene */}
+            <div className="relative w-full h-[160px] min-[390px]:h-[175px] sm:h-[200px] flex items-center justify-end overflow-hidden [mask-image:linear-gradient(to_right,transparent_0%,black_6%,black_100%)]">
+              <img 
+                src="/hero-technician.jpg" 
+                alt="Professional Technician"
+                className="w-full h-full object-cover object-[68%_center] select-none pointer-events-none"
+              />
+            </div>
+
           </section>
 
           {/* 2. Book a Service Banner (with 3D Calendar) */}
-          <section className="relative w-full aspect-[1024/341] rounded-[20px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center">
+          <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px]">
             <img 
               src="/banner-book-service.jpg" 
               alt="Book a Service"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover object-right"
             />
 
-            <div className="relative z-10 pl-4 sm:pl-6 max-w-[62%] sm:max-w-[58%] flex flex-col justify-center h-full text-white py-2">
+            <div className="relative z-10 pl-4 sm:pl-6 max-w-[62%] sm:max-w-[58%] flex flex-col justify-center py-4 text-white">
               <h3 className="text-base min-[375px]:text-lg sm:text-2xl font-black tracking-tight leading-tight">
                 Book a <span className="text-[#FF9900]">Service</span>
               </h3>
-              <p className="text-[9px] min-[375px]:text-[10px] sm:text-xs text-blue-100 font-medium leading-tight mt-0.5 line-clamp-2 max-w-[200px] sm:max-w-[260px]">
+              <p className="text-[9.5px] min-[375px]:text-[10.5px] sm:text-xs text-blue-100 font-medium leading-tight mt-1 line-clamp-2 max-w-[200px] sm:max-w-[260px]">
                 Get professional home services quickly and hassle-free.
               </p>
-              <div className="mt-2 min-[375px]:mt-2.5">
+              <div className="mt-2.5">
                 <Link 
                   href="/services/service"
-                  className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-[10px] sm:text-xs px-3.5 py-1.5 rounded-full shadow-md active:scale-95 transition-all"
+                  className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-[10px] min-[375px]:text-[11px] sm:text-xs px-3.5 py-1.5 rounded-full shadow-md active:scale-95 transition-all"
                 >
                   <span>Book Now</span>
                   <ArrowRight size={12} className="text-slate-900" />
@@ -460,48 +462,49 @@ export default function Home() {
             </Link>
           </section>
 
-          {/* 5. Special Offer Banner (with 3D Gift Box) */}
-          <section className="relative w-full aspect-[1024/341] rounded-[20px] sm:rounded-[26px] overflow-hidden shadow-md">
+          {/* 5. Special Offer Banner (Wide Horizontal Card, Flexbox Layout, No Clipping) */}
+          <section className="relative w-full rounded-[22px] sm:rounded-[28px] overflow-hidden shadow-md min-h-[165px] min-[390px]:min-h-[180px] sm:min-h-[195px] bg-[#FFEBD8] flex items-stretch">
+            {/* Right side illustration from asset - pinned to right, never cropped */}
             <img 
               src="/banner-promo-discount.jpg" 
               alt="Special Offer - 20% OFF"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover object-right pointer-events-none select-none"
             />
 
-            {/* Pre-baked orange pill label: EXACT coordinates { left: 3.8%, top: 14.6%, width: 22.8%, height: 15.8% } */}
-            <div 
-              className="absolute flex items-center justify-center font-black text-white text-[8px] min-[375px]:text-[9px] sm:text-[11px] uppercase tracking-wider pointer-events-none"
-              style={{
-                left: '3.8%',
-                top: '14.6%',
-                width: '22.8%',
-                height: '15.8%'
-              }}
-            >
-              SPECIAL OFFER
-            </div>
+            {/* Left side text container (58% width on small screens, 55% on larger) - Flex column */}
+            <div className="relative z-10 w-[58%] min-[390px]:w-[55%] p-3.5 min-[390px]:p-4 sm:p-5 flex flex-col justify-between min-h-[165px] min-[390px]:min-h-[180px] sm:min-h-[195px]">
+              
+              {/* 1. Special Offer badge */}
+              <div>
+                <span className="inline-flex items-center bg-gradient-to-r from-[#FF5500] to-[#FF8800] text-white text-[9px] min-[390px]:text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-xs">
+                  Special Offer
+                </span>
+              </div>
 
-            {/* Headline in middle */}
-            <div className="absolute" style={{ left: '3.8%', top: '36%' }}>
-              <h3 className="text-sm min-[375px]:text-base sm:text-2xl font-black text-slate-900 leading-tight">
-                Get <span className="text-[#FF6B00]">20% OFF</span>
-              </h3>
-              <p className="text-[9px] min-[375px]:text-[10px] sm:text-xs font-bold text-slate-700 mt-0.5">
-                on your first service
-              </p>
-            </div>
+              {/* 2. Large headline & 3. Supporting text */}
+              <div className="py-1">
+                <h3 className="text-base min-[390px]:text-lg sm:text-2xl font-black text-slate-900 leading-tight">
+                  Get <span className="text-[#FF6B00]">20% OFF</span>
+                </h3>
+                <p className="text-[11px] min-[390px]:text-xs sm:text-sm font-bold text-slate-700 mt-0.5 leading-snug">
+                  on your first service
+                </p>
+              </div>
 
-            {/* Use Code capsule at bottom left */}
-            <button 
-              type="button"
-              onClick={handleCopyPromo}
-              className="absolute bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-[9px] min-[375px]:text-[10.5px] sm:text-xs px-3 py-1 min-[375px]:py-1.5 rounded-full shadow-xs border border-orange-100 flex items-center gap-1.5 active:scale-95 transition-all"
-              style={{ left: '3.8%', bottom: '13%' }}
-            >
-              <span>Use Code:</span>
-              <span className="text-[#FF6B00] font-black">GET20</span>
-              <Copy size={11} className="text-slate-400" />
-            </button>
+              {/* 4. Coupon code pill with 5. Copy icon (sitting cleanly below supporting text) */}
+              <div>
+                <button 
+                  type="button"
+                  onClick={handleCopyPromo}
+                  className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-[10px] min-[390px]:text-xs px-3 py-1.5 rounded-full shadow-md border border-orange-100 active:scale-95 transition-all cursor-pointer"
+                >
+                  <span>Use Code:</span>
+                  <span className="font-black text-[#FF6B00]">GET20</span>
+                  <Copy size={11} className="text-slate-400" />
+                </button>
+              </div>
+
+            </div>
           </section>
 
         </div>
