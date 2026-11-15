@@ -205,7 +205,7 @@ export default function Header({
       <NotificationToastBanner />
 
       <header className={`sticky top-0 z-40 grid min-h-[58px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 ${
-        transparent ? 'bg-[#EEF2FD] border-b-0 shadow-none' : 'bg-white border-b border-slate-100 shadow-xs'
+        transparent ? 'bg-white border-b-0 shadow-none' : 'bg-white border-b border-slate-100 shadow-xs'
       } px-2.5 py-2.5 min-[375px]:gap-2 min-[375px]:px-4`}>
         
         {/* Left: Location Dropdown */}
@@ -215,7 +215,7 @@ export default function Header({
               onClick={handleLocationClick}
               disabled={isLocating}
               className={`inline-flex min-w-0 max-w-full items-center gap-1.5 ${
-                transparent ? 'bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] border border-slate-100' : 'bg-slate-50 border border-slate-200/60'
+                transparent ? 'bg-slate-50 border border-slate-200/80 shadow-2xs' : 'bg-slate-50 border border-slate-200/60'
               } px-3 py-1.5 text-xs font-bold text-slate-800 transition-colors hover:bg-slate-100 active:scale-95 disabled:opacity-80 rounded-full`}
             >
               {isLocating && currentLocation === 'Detecting location...' ? (

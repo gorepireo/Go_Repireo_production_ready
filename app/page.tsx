@@ -297,7 +297,7 @@ export default function Home() {
   const activeBooking = realBookings.length > 0 ? realBookings[0] : null;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#EEF2FD]">
+    <div className="flex flex-col min-h-screen bg-white">
       
       {/* 1. Universal Top Header (Floating Location Pill & Notification Bell) */}
       <Header showGreeting={false} transparent={true} />
@@ -344,7 +344,7 @@ export default function Home() {
               <img 
                 src="/hero-technician.png" 
                 alt="Professional Technician"
-                className="w-full h-full object-cover object-[55%_center] select-none pointer-events-none"
+                className="w-full h-full object-cover object-[68%_center] select-none pointer-events-none"
               />
             </div>
 
