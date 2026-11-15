@@ -48,7 +48,7 @@ export default function BottomNav() {
   return (
     <>
       {/* Floating WhatsApp button over bottom navigation bar */}
-      {pathname !== '/whatsapp' && !pathname?.startsWith('/chat') && !pathname?.startsWith('/track') && (
+      {pathname !== '/' && pathname !== '/whatsapp' && !pathname?.startsWith('/chat') && !pathname?.startsWith('/track') && (
         <div className="fixed bottom-[92px] left-0 right-0 z-[60] pointer-events-none">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-end">
             <Link 

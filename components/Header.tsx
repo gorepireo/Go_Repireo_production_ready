@@ -12,13 +12,15 @@ interface HeaderProps {
   showGreeting?: boolean;
   customTitle?: string;
   customSubtitle?: string;
+  transparent?: boolean;
 }
 
 export default function Header({
   showLocation = true,
   showGreeting = true,
   customTitle,
-  customSubtitle
+  customSubtitle,
+  transparent = false
 }: HeaderProps) {
   const { user, profile } = useAuth();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -202,7 +204,9 @@ export default function Header({
     <div className="relative z-40">
       <NotificationToastBanner />
 
-      <header className="sticky top-0 z-40 grid min-h-[58px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 border-b border-slate-100 bg-white px-2.5 py-2.5 shadow-xs min-[375px]:gap-2 min-[375px]:px-4">
+      <header className={`sticky top-0 z-40 grid min-h-[58px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 ${
+        transparent ? 'bg-[#EEF2FD] border-b-0 shadow-none' : 'bg-white border-b border-slate-100 shadow-xs'
+      } px-2.5 py-2.5 min-[375px]:gap-2 min-[375px]:px-4`}>
         
         {/* Left: Location Dropdown */}
         {showLocation ? (
@@ -210,14 +214,16 @@ export default function Header({
             <button
               onClick={handleLocationClick}
               disabled={isLocating}
-              className="inline-flex min-w-0 max-w-full items-center gap-1 bg-slate-50 px-2 py-1 text-[10px] font-bold text-slate-700 transition-colors hover:bg-slate-100 active:scale-95 disabled:opacity-80 min-[375px]:gap-1.5 min-[375px]:px-3 min-[375px]:text-xs border border-slate-200/60 rounded-full"
+              className={`inline-flex min-w-0 max-w-full items-center gap-1.5 ${
+                transparent ? 'bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] border border-slate-100' : 'bg-slate-50 border border-slate-200/60'
+              } px-3 py-1.5 text-xs font-bold text-slate-800 transition-colors hover:bg-slate-100 active:scale-95 disabled:opacity-80 rounded-full`}
             >
               {isLocating && currentLocation === 'Detecting location...' ? (
                 <Loader2 size={13} className="text-[#007AFF] animate-spin shrink-0" />
               ) : (
                 <MapPin size={13} className="text-[#007AFF] shrink-0" />
               )}
-              <span className="max-w-[72px] truncate min-[375px]:max-w-[100px] sm:max-w-[140px]">{currentLocation}</span>
+              <span className="max-w-[100px] truncate min-[375px]:max-w-[130px] sm:max-w-[160px]">{currentLocation}</span>
               <ChevronDown size={12} className="text-slate-400 shrink-0" />
             </button>
           </div>
@@ -246,16 +252,18 @@ export default function Header({
         <div className="flex items-center justify-end gap-1 min-[375px]:gap-2">
           <button
             onClick={() => setIsNotifOpen(true)}
-            className="relative p-2 text-slate-700 hover:bg-slate-50 rounded-full transition-all active:scale-95"
+            className={`relative p-2 ${
+              transparent ? 'bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] border border-slate-100' : 'hover:bg-slate-50'
+            } text-slate-800 rounded-full transition-all active:scale-95`}
             aria-label="Open notifications"
           >
-            <Bell size={20} />
+            <Bell size={18} />
             {unreadCount > 0 ? (
               <span className="absolute top-1 right-1 bg-[#FF6B00] text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white shadow-2xs">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             ) : (
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#FF6B00]"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#FF6B00]"></span>
             )}
           </button>
         </div>
