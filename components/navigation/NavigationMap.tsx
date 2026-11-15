@@ -17,32 +17,30 @@ export interface NavigationMapProps {
   olaApiKey?: string;
 }
 
-// In-memory CartoDB Voyager raster style spec:
-// Guaranteed 100% reliable zero-auth style with clear road networks,
-// town names (Debra, Balichak), greens, and smooth performance.
-const CARTO_VOYAGER_STYLE: any = {
+// Clean OpenStreetMap style spec:
+// 100% free, NO API key required, NO watermark ("API KEY REQUIRED" watermark completely eliminated)
+const CLEAN_BASEMAP_STYLE: any = {
   version: 8,
-  name: 'CartoDB Voyager',
+  name: 'OpenStreetMap Clean',
   sources: {
-    'carto-voyager': {
+    'clean-osm-tiles': {
       type: 'raster',
       tiles: [
-        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
       ],
       tileSize: 256,
-      attribution: '&copy; CartoDB &copy; OpenStreetMap contributors',
+      attribution: '&copy; OpenStreetMap contributors',
     },
   },
   layers: [
     {
-      id: 'carto-voyager-tiles',
+      id: 'clean-osm-layer',
       type: 'raster',
-      source: 'carto-voyager',
+      source: 'clean-osm-tiles',
       minzoom: 0,
-      maxzoom: 20,
+      maxzoom: 19,
     },
   ],
 };
@@ -95,9 +93,9 @@ export function NavigationMap({
       (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_OLA_MAPS_API_KEY) ||
       '';
 
-    // Style URL for Ola Maps (monizb/ola-maps-demo) vs zero-auth Voyager fallback
+    // Style URL for Ola Maps (monizb/ola-maps-demo) vs zero-auth clean fallback
     const olaStyleUrl = 'https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json';
-    const initialStyle = apiKey ? olaStyleUrl : CARTO_VOYAGER_STYLE;
+    const initialStyle = apiKey ? olaStyleUrl : CLEAN_BASEMAP_STYLE;
 
     import('maplibre-gl').then((maplibreModule) => {
       if (!isMounted || !mapContainerRef.current) return;
@@ -136,15 +134,15 @@ export function NavigationMap({
         },
       });
 
-      // Handle 401 / 403 authorization failures on Ola Maps by falling back to CartoDB Voyager
+      // Handle 401 / 403 authorization failures on Ola Maps by falling back to Clean OpenStreetMap basemap
       let hasFallenBack = false;
       map.on('error', (e) => {
         const status = (e?.error as any)?.status;
         if (!hasFallenBack && (status === 401 || status === 403)) {
           hasFallenBack = true;
-          console.warn('[OlaMaps] Authorization required. Falling back to CartoDB Voyager style.');
+          console.warn('[OlaMaps] Authorization required. Falling back to clean OpenStreetMap basemap.');
           try {
-            map.setStyle(CARTO_VOYAGER_STYLE);
+            map.setStyle(CLEAN_BASEMAP_STYLE);
           } catch {}
         }
       });
