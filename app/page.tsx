@@ -328,8 +328,8 @@ export default function Home() {
             {/* 1. Hero Greeting + Technician Graphic */}
             <div className="w-full grid grid-cols-[48%_52%] items-end min-h-[160px] min-[390px]:min-h-[175px] sm:min-h-[195px]">
               
-              {/* Left Column (48% width) - Greeting & Typography */}
-              <div className="flex flex-col justify-center pr-1 sm:pr-4 py-2 pb-6 z-10">
+              {/* Left Column (48% width) - Greeting & Typography Moved to Top */}
+              <div className="flex flex-col justify-start self-start pr-1 sm:pr-4 pt-1 sm:pt-2 z-10">
                 <p className="text-xs sm:text-sm font-semibold text-slate-700">
                   {greetingTime},
                 </p>

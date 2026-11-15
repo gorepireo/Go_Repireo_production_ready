@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   /* Powering up for live launch */
   // Prevent bundling of Node.js-only packages; use native runtime modules instead
   serverExternalPackages: ['web-push'],
