@@ -46,6 +46,25 @@ export default function ContactUs() {
             <p className="text-[10px] text-slate-500">Etawah, Uttar Pradesh, India</p>
           </div>
         </div>
+
+        {/* Official Google My Map Coverage & Headquarters Embed */}
+        <div className="space-y-2.5 pt-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Service Coverage &amp; Office Location</h3>
+            <span className="text-[10px] text-[#007AFF] font-bold bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">Etawah, UP</span>
+          </div>
+          <div className="w-full aspect-[4/3] sm:aspect-[16/9] rounded-2xl overflow-hidden border border-slate-200/90 shadow-xs bg-slate-100">
+            <iframe
+              src="https://www.google.com/maps/d/u/0/embed?mid=1h8jNUpcrqrUd_ndQ92GpFEICwL0PD74&ehbc=2E312F"
+              width="100%"
+              height="100%"
+              className="w-full h-full border-0"
+              allowFullScreen
+              loading="lazy"
+              title="Go_Repireo Official Service Area Map"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

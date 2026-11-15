@@ -13,18 +13,19 @@ interface LocationMapSelectorProps {
 }
 
 export default function LocationMapSelector({
-  initialLat = 22.5726,
-  initialLng = 88.3639,
+  initialLat = 26.7773,
+  initialLng = 79.0208,
   onConfirm,
   onClose,
 }: LocationMapSelectorProps) {
   const [mounted, setMounted] = useState(false);
   const [center, setCenter] = useState({ lat: initialLat, lng: initialLng });
-  const [address, setAddress] = useState('Detecting location...');
-  const [cityTag, setCityTag] = useState('Kolkata');
+  const [address, setAddress] = useState('Etawah, Uttar Pradesh 206001');
+  const [cityTag, setCityTag] = useState('Etawah');
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [mapMode, setMapMode] = useState<'custom' | 'pin'>('custom');
 
   // Search Autocomplete State
   const [searchQuery, setSearchQuery] = useState('');
@@ -396,49 +397,100 @@ export default function LocationMapSelector({
         )}
 
         {/* Rounded Framed Map Area */}
-        <div className="px-4 pt-2.5 pb-2 flex-1 min-h-[160px] relative z-10 isolate">
+        <div className="px-4 pt-2.5 pb-2 flex-1 min-h-[190px] relative z-10 isolate">
           <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200/90 relative shadow-xs bg-slate-100">
-            <div
-              ref={mapContainerRef}
-              className="w-full h-full z-0"
-              style={{ width: '100%', height: '100%', minHeight: '160px' }}
-            />
-
-            {/* FIXED CENTER PIN WITH FLOATING CITY LABEL */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-[400]">
-              <div className="relative -translate-y-1/2 flex flex-col items-center">
-                
-                {/* Floating City/Locality Tooltip Tag */}
-                <div className="absolute -top-11 z-[420] bg-white px-3.5 py-1 rounded-xl shadow-md border border-slate-200/80 flex flex-col items-center select-none whitespace-nowrap min-w-[70px]">
-                  <span className="text-xs font-black text-slate-800 leading-tight">
-                    {cityTag || 'Selected Area'}
-                  </span>
-                  <div className="w-2 h-2 bg-white rotate-45 border-r border-b border-slate-200/80 -mb-1 mt-0.5" />
-                </div>
-
-                {/* Classic Red Pin Marker with Blue Center Dot */}
-                <svg width="38" height="46" viewBox="0 0 38 46" fill="none" className="drop-shadow-md">
-                  <path
-                    d="M19 0C8.50659 0 0 8.50659 0 19C0 31.5 19 46 19 46C19 46 38 31.5 38 19C38 8.50659 29.4934 0 19 0Z"
-                    fill="#EA4335"
-                  />
-                  <circle cx="19" cy="18" r="6" fill="#007AFF" />
-                  <circle cx="19" cy="18" r="2.5" fill="white" />
-                </svg>
-
-                {/* Blue Accuracy Ring beneath pin tip */}
-                <div className="w-8 h-3 rounded-full bg-[#007AFF]/25 border border-[#007AFF]/40 -mt-1" />
-              </div>
+            {/* View Mode Toggle Switch */}
+            <div className="absolute top-2.5 left-2.5 z-[450] flex items-center bg-white/95 backdrop-blur-sm p-1 rounded-xl shadow-md border border-slate-200/80 text-[11px] font-bold">
+              <button
+                type="button"
+                onClick={() => setMapMode('custom')}
+                className={`px-3 py-1 rounded-lg transition-all ${
+                  mapMode === 'custom'
+                    ? 'bg-[#007AFF] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Official Area Map
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMapMode('pin');
+                  setTimeout(() => {
+                    if (leafletMapRef.current) leafletMapRef.current.invalidateSize();
+                  }, 100);
+                }}
+                className={`px-3 py-1 rounded-lg transition-all ${
+                  mapMode === 'pin'
+                    ? 'bg-[#007AFF] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Doorstep Pin
+              </button>
             </div>
 
-            {/* Recenter GPS Floating Button */}
-            <button
-              onClick={handleRecenterGPS}
-              className="absolute bottom-3 right-3 z-[450] bg-white text-[#007AFF] w-11 h-11 rounded-full shadow-lg border border-slate-200/90 flex items-center justify-center hover:bg-blue-50 active:scale-95 transition-all"
-              title="Recenter to my location"
-            >
-              {isLocating ? <Loader2 size={18} className="animate-spin" /> : <Crosshair size={20} />}
-            </button>
+            {/* Mode 1: Google My Maps Embed iframe */}
+            {mapMode === 'custom' ? (
+              <div className="w-full h-full relative">
+                <iframe
+                  src="https://www.google.com/maps/d/u/0/embed?mid=1h8jNUpcrqrUd_ndQ92GpFEICwL0PD74&ehbc=2E312F"
+                  width="100%"
+                  height="100%"
+                  className="w-full h-full border-0"
+                  allowFullScreen
+                  loading="lazy"
+                  title="Go_Repireo Official Service Area Map"
+                />
+              </div>
+            ) : null}
+
+            {/* Mode 2: Interactive Leaflet Pin Dragging Layer */}
+            <div
+              ref={mapContainerRef}
+              className={`w-full h-full z-0 ${mapMode === 'pin' ? 'block' : 'hidden'}`}
+              style={{ width: '100%', height: '100%', minHeight: '190px' }}
+            />
+
+            {/* FIXED CENTER PIN WITH FLOATING CITY LABEL (Visible in Pin mode) */}
+            {mapMode === 'pin' && (
+              <>
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-[400]">
+                  <div className="relative -translate-y-1/2 flex flex-col items-center">
+                    
+                    {/* Floating City/Locality Tooltip Tag */}
+                    <div className="absolute -top-11 z-[420] bg-white px-3.5 py-1 rounded-xl shadow-md border border-slate-200/80 flex flex-col items-center select-none whitespace-nowrap min-w-[70px]">
+                      <span className="text-xs font-black text-slate-800 leading-tight">
+                        {cityTag || 'Selected Area'}
+                      </span>
+                      <div className="w-2 h-2 bg-white rotate-45 border-r border-b border-slate-200/80 -mb-1 mt-0.5" />
+                    </div>
+
+                    {/* Classic Red Pin Marker with Blue Center Dot */}
+                    <svg width="38" height="46" viewBox="0 0 38 46" fill="none" className="drop-shadow-md">
+                      <path
+                        d="M19 0C8.50659 0 0 8.50659 0 19C0 31.5 19 46 19 46C19 46 38 31.5 38 19C38 8.50659 29.4934 0 19 0Z"
+                        fill="#EA4335"
+                      />
+                      <circle cx="19" cy="18" r="6" fill="#007AFF" />
+                      <circle cx="19" cy="18" r="2.5" fill="white" />
+                    </svg>
+
+                    {/* Blue Accuracy Ring beneath pin tip */}
+                    <div className="w-8 h-3 rounded-full bg-[#007AFF]/25 border border-[#007AFF]/40 -mt-1" />
+                  </div>
+                </div>
+
+                {/* Recenter GPS Floating Button */}
+                <button
+                  onClick={handleRecenterGPS}
+                  className="absolute bottom-3 right-3 z-[450] bg-white text-[#007AFF] w-11 h-11 rounded-full shadow-lg border border-slate-200/90 flex items-center justify-center hover:bg-blue-50 active:scale-95 transition-all"
+                  title="Recenter to my location"
+                >
+                  {isLocating ? <Loader2 size={18} className="animate-spin" /> : <Crosshair size={20} />}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
