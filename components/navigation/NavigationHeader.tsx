@@ -17,18 +17,18 @@ export function NavigationHeader({
       {/* Location Dropdown */}
       <button
         type="button"
-        className="flex items-center gap-1.5 text-slate-800 hover:text-slate-900 transition-colors group cursor-pointer"
+        className="flex items-center gap-1.5 text-slate-800 hover:text-slate-900 transition-colors group cursor-pointer min-w-0"
         aria-label="Change location"
       >
-        <MapPin className="w-4 h-4 text-orange-500 fill-orange-500/20 group-hover:scale-110 transition-transform" />
-        <span className="text-sm font-semibold tracking-tight truncate max-w-[210px] sm:max-w-none">
+        <MapPin className="w-4 h-4 text-orange-500 fill-orange-500/20 group-hover:scale-110 transition-transform flex-shrink-0" />
+        <span className="text-sm font-semibold tracking-tight truncate">
           {locationName}
         </span>
-        <ChevronDown className="w-4 h-4 text-slate-500 group-hover:translate-y-0.5 transition-transform" />
+        <ChevronDown className="w-4 h-4 text-slate-500 group-hover:translate-y-0.5 transition-transform flex-shrink-0" />
       </button>
 
       {/* Greeting */}
-      <div className="flex items-center gap-1 text-slate-800 text-sm font-semibold">
+      <div className="flex items-center gap-1 text-slate-800 text-sm font-semibold whitespace-nowrap flex-shrink-0 pl-2">
         <span>Hi, {userName}</span>
         <span className="text-base" role="img" aria-label="waving hand">
           👋

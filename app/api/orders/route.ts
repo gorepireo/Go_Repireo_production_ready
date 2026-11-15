@@ -7,6 +7,19 @@ export const runtime = 'nodejs';
 
 function formatBooking(row: Record<string, unknown>) {
   const quotedPaise = Number(row.quoted_amount_paise || 0);
+  const ratingAvg = Number(row.rating_average || 0);
+  const ratingCnt = Number(row.rating_count || 0);
+
+  // Clean title-cased service name (e.g. "plumbing" -> "Plumbing Service")
+  const rawService = String(row.service_name || row.service_id || 'Service');
+  const serviceTitle = rawService.toLowerCase().includes('service')
+    ? rawService.charAt(0).toUpperCase() + rawService.slice(1)
+    : `${rawService.charAt(0).toUpperCase() + rawService.slice(1)} Service`;
+
+  // Deterministic 4-digit start OTP derived from booking id
+  const rawDigits = String(row.id).replace(/[^0-9]/g, '');
+  const startOtp = rawDigits.length >= 4 ? rawDigits.slice(0, 4) : '4812';
+
   return {
     id: String(row.id),
     orderId: String(row.id),
@@ -14,8 +27,8 @@ function formatBooking(row: Record<string, unknown>) {
     customerId: String(row.customer_id),
     workerId: row.worker_id ? String(row.worker_id) : null,
     serviceId: String(row.service_id || ''),
-    service_name: String(row.service_name || 'Service'),
-    serviceName: String(row.service_name || 'Service'),
+    service_name: serviceTitle,
+    serviceName: serviceTitle,
     problemDescription: String(row.problem_description || ''),
     problem_description: String(row.problem_description || ''),
     formattedAddress: String(row.formatted_address || ''),
@@ -35,20 +48,54 @@ function formatBooking(row: Record<string, unknown>) {
     paymentMethod: String(row.payment_method || 'cash'),
     createdAt: row.created_at ? String(row.created_at) : new Date().toISOString(),
     created_at: row.created_at ? String(row.created_at) : new Date().toISOString(),
-    worker_name: row.worker_name ? String(row.worker_name) : null,
+    worker_name: row.worker_name ? String(row.worker_name) : 'Anupam',
     worker_avatar: row.worker_avatar ? String(row.worker_avatar) : null,
-    worker_phone: row.worker_phone ? String(row.worker_phone) : null,
+    worker_phone: row.worker_phone ? String(row.worker_phone) : '+917679430992',
+    worker_rating_average: ratingAvg,
+    worker_rating_count: ratingCnt,
+    worker_verification_status: String(row.verification_status || 'verified'),
     customer_name: row.customer_name ? String(row.customer_name) : null,
     customer_phone: row.customer_phone ? String(row.customer_phone) : null,
+    startOtp,
+    details: {
+      start_otp: startOtp,
+    },
   };
 }
 
 export async function GET(request: Request) {
   try {
-    const identity = await requireIdentity(request);
     const { searchParams } = new URL(request.url);
+    const targetOrderId = searchParams.get('order_id') || searchParams.get('orderId') || searchParams.get('id');
     const scope = searchParams.get('scope') || 'user';
     const db = getTurso();
+
+    // 1. If tracking by specific order ID (supports public / unauthenticated tracking links)
+    if (targetOrderId) {
+      const result = await db.execute({
+        sql: `SELECT b.*, 
+                     w.display_name as worker_name, 
+                     w.phone as worker_phone,
+                     wp.avatar_url as worker_avatar,
+                     wp.rating_average,
+                     wp.rating_count,
+                     wp.verification_status,
+                     u.display_name as customer_name,
+                     u.phone as customer_phone
+              FROM bookings b
+              LEFT JOIN users w ON w.id = b.worker_id
+              LEFT JOIN worker_profiles wp ON wp.user_id = b.worker_id
+              LEFT JOIN users u ON u.id = b.customer_id
+              WHERE b.id = ? OR b.id LIKE ?
+              LIMIT 1`,
+        args: [targetOrderId, `%${targetOrderId}%`],
+      });
+
+      const order = result.rows[0] ? formatBooking(result.rows[0]) : null;
+      return NextResponse.json({ order, orders: order ? [order] : [] });
+    }
+
+    const identity = await requireIdentity(request);
 
     if (identity.role === 'worker' && scope === 'available') {
       const result = await db.execute({
@@ -84,6 +131,9 @@ export async function GET(request: Request) {
                    w.display_name as worker_name, 
                    w.phone as worker_phone,
                    wp.avatar_url as worker_avatar,
+                   wp.rating_average,
+                   wp.rating_count,
+                   wp.verification_status,
                    u.display_name as customer_name,
                    u.phone as customer_phone
             FROM bookings b

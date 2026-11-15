@@ -124,10 +124,18 @@ export function NavigationControlCard({
               Your Expert
             </div>
             <div className="text-sm font-bold text-slate-900">{technicianName}</div>
-            <div className="flex items-center gap-1 text-xs text-slate-600 font-medium">
-              <span className="text-amber-500">★</span>
-              <span className="font-bold text-slate-900">{technicianRating}</span>
-              <span className="text-slate-400">({technicianReviews} reviews)</span>
+            <div className="flex items-center gap-1 text-xs text-slate-600 font-medium pt-0.5">
+              {technicianReviews > 0 ? (
+                <>
+                  <span className="text-amber-500">★</span>
+                  <span className="font-bold text-slate-900">{technicianRating}</span>
+                  <span className="text-slate-400">({technicianReviews} reviews)</span>
+                </>
+              ) : (
+                <span className="text-emerald-700 font-semibold text-[11px] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                  Verified Partner
+                </span>
+              )}
             </div>
           </div>
         </div>

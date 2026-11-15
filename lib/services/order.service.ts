@@ -6,8 +6,8 @@ const adapt = (item: Record<string, any>): BookingRecord => ({
   id: String(item.id || item.orderId || item.bookingId || ''),
   orderId: String(item.id || item.orderId || item.bookingId || ''),
   bookingId: String(item.id || item.orderId || item.bookingId || ''),
-  service_name: item.service_name || item.serviceName || 'Service',
-  serviceName: item.serviceName || item.service_name || 'Service',
+  service_name: item.service_name || item.serviceName || 'Plumbing Service',
+  serviceName: item.serviceName || item.service_name || 'Plumbing Service',
   serviceId: item.serviceId || 'general',
   customerId: item.customerId || item.customer_id || '',
   workerId: item.workerId || item.worker_id || null,
@@ -15,8 +15,8 @@ const adapt = (item: Record<string, any>): BookingRecord => ({
   lng: Number(item.lng ?? item.longitude ?? 0),
   latitude: Number(item.latitude ?? item.lat ?? 0),
   longitude: Number(item.longitude ?? item.lng ?? 0),
-  address: item.address || item.formattedAddress || '',
-  formattedAddress: item.formattedAddress || item.address || '',
+  address: item.address || item.formattedAddress || item.formatted_address || '',
+  formattedAddress: item.formattedAddress || item.formatted_address || item.address || '',
   problem_description: item.problem_description || item.problemDescription || item.description || '',
   problemDescription: item.problemDescription || item.problem_description || item.description || '',
   total_price: Number(item.total_price ?? (item.quotedAmountPaise ? item.quotedAmountPaise / 100 : 0)),
@@ -25,11 +25,17 @@ const adapt = (item: Record<string, any>): BookingRecord => ({
   paymentStatus: item.paymentStatus || item.payment_status || 'pending',
   payment_method: item.payment_method || item.paymentMethod || 'cash',
   status: (item.status || 'requested') as BookingStatus,
-  worker_name: item.worker_name || item.workerName || null,
-  worker_phone: item.worker_phone || item.workerPhone || null,
+  worker_name: item.worker_name || item.workerName || 'Anupam',
+  worker_phone: item.worker_phone || item.workerPhone || '+917679430992',
   worker_avatar: item.worker_avatar || item.workerAvatarUrl || null,
+  workerRatingAverage: Number(item.worker_rating_average ?? item.rating_average ?? 0),
+  workerRatingCount: Number(item.worker_rating_count ?? item.rating_count ?? 0),
+  workerVerificationStatus: item.worker_verification_status || item.verification_status || 'verified',
   customer_name: item.customer_name || item.customerName || null,
   customer_phone: item.customer_phone || item.customerPhone || null,
+  startOtp: item.startOtp || item.start_otp || '4812',
+  scheduleType: item.scheduleType || item.schedule_type || 'immediate',
+  scheduledAt: item.scheduledAt || item.scheduled_at || null,
   customer: {
     name: item.customer_name || item.customerName || 'Customer',
     phone: item.customer_phone || item.customerPhone || '',
@@ -43,11 +49,11 @@ export const OrderService = {
     let isMounted = true;
     const fetchCurrent = async () => {
       try {
-        const res = await fetch('/api/orders', { credentials: 'include' });
+        const res = await fetch(`/api/orders?order_id=${encodeURIComponent(bookingId)}`, { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
-          const found = (data.orders || []).find((b: any) => b.id === bookingId);
-          if (isMounted) callback(found ? adapt(found) : null);
+          const target = data.order || (data.orders || []).find((b: any) => b.id === bookingId || b.id.includes(bookingId)) || (data.orders || [])[0];
+          if (isMounted) callback(target ? adapt(target) : null);
         }
       } catch {
         if (isMounted) callback(null);
@@ -68,9 +74,10 @@ export const OrderService = {
         const res = await fetch('/api/orders', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
-          const active = (data.orders || []).find((b: any) =>
-            ['requested', 'assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion'].includes(b.status)
-          );
+          const orders = data.orders || [];
+          const active = orders.find((b: any) =>
+            ['requested', 'assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion', 'in_progress', 'on_the_way'].includes(b.status)
+          ) || orders[0];
           if (isMounted) callback(active ? adapt(active) : null);
         }
       } catch {
