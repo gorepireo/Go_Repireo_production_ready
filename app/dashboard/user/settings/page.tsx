@@ -19,23 +19,11 @@ import {
   Pencil, 
   Lock,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   ShieldCheck,
   Headphones,
-  Wrench,
-  Zap,
-  Snowflake,
-  Tv,
-  Sparkles,
-  Hammer,
-  Droplets,
   Info,
   FileText,
-  RefreshCw,
-  Compass,
-  Layers,
-  ArrowRight
+  RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
@@ -46,26 +34,6 @@ import { getCroppedImg } from '@/lib/cropImage';
 import dynamic from 'next/dynamic';
 
 const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelector'), { ssr: false });
-
-const servicesList = [
-  { title: 'Plumbing Services', href: '/services/plumbing', icon: Wrench, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { title: 'Electrician & Wiring', href: '/services/electrical', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50' },
-  { title: 'AC Repair & Servicing', href: '/services/ac-repair', icon: Snowflake, color: 'text-sky-500', bg: 'bg-sky-50' },
-  { title: 'Appliance Repair', href: '/services/appliance', icon: Tv, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-  { title: 'Home & Bathroom Cleaning', href: '/services/cleaning', icon: Sparkles, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-  { title: 'Carpentry & Furniture', href: '/services/carpentry', icon: Hammer, color: 'text-orange-500', bg: 'bg-orange-50' },
-  { title: 'RO Water Purifier', href: '/services/ro-service', icon: Droplets, color: 'text-cyan-500', bg: 'bg-cyan-50' },
-];
-
-const localHubs = [
-  { title: 'Plumber in Etawah', href: '/services/plumbing/etawah' },
-  { title: 'Electrician in Etawah', href: '/services/electrical/etawah' },
-  { title: 'AC Repair in Etawah', href: '/services/ac-repair/etawah' },
-  { title: 'Plumber Near Me', href: '/near-me/plumber-near-me' },
-  { title: 'Electrician Near Me', href: '/near-me/electrician-near-me' },
-  { title: 'AC Service Near Me', href: '/near-me/ac-repair-near-me' },
-  { title: 'Washing Machine Repair Near Me', href: '/near-me/washing-machine-repair-near-me' },
-];
 
 export default function UserSettings() {
   const { user, profile, role, refresh, signOut } = useAuth();
@@ -88,10 +56,6 @@ export default function UserSettings() {
   });
   const [newAddress, setNewAddress] = useState({ name: '', address_text: '', lat: 0, lng: 0 });
   const [isAddingAddress, setIsAddingAddress] = useState(false);
-
-  // Mobile App style Accordion Toggles
-  const [showServices, setShowServices] = useState(false);
-  const [showLocalHubs, setShowLocalHubs] = useState(false);
 
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -576,101 +540,6 @@ export default function UserSettings() {
               <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
             </Link>
 
-          </div>
-
-          {/* 30-Day Guarantee Banner */}
-          <div className="mt-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 rounded-3xl p-4 flex items-center gap-3.5 shadow-xs">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20">
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <h4 className="text-xs font-black text-emerald-950">30-Day Service Guarantee</h4>
-              <p className="text-[10px] text-emerald-800 font-medium mt-0.5 leading-relaxed">
-                Every repair comes with free 30-day revisit coverage and 100% verified technicians.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Services Directory Group (Expandable) */}
-        <div className="pt-1">
-          <div className="flex items-center justify-between mb-3 pl-1">
-            <div className="flex items-center gap-2">
-              <Layers className="text-[#007AFF] w-4 h-4" />
-              <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest">Services Directory</h2>
-            </div>
-            <button 
-              onClick={() => setShowServices(!showServices)}
-              className="text-[10px] font-bold text-[#007AFF] flex items-center gap-1 hover:underline"
-            >
-              {showServices ? 'Show Less' : 'View All (7)'}
-              {showServices ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            </button>
-          </div>
-
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-xs divide-y divide-slate-100 overflow-hidden">
-            {(showServices ? servicesList : servicesList.slice(0, 3)).map((srv) => {
-              const IconComp = srv.icon;
-              return (
-                <Link 
-                  key={srv.href}
-                  href={srv.href}
-                  className="flex items-center justify-between p-3.5 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-xl ${srv.bg} ${srv.color} flex items-center justify-center shrink-0`}>
-                      <IconComp size={16} />
-                    </div>
-                    <span className="text-xs font-bold text-slate-800 group-hover:text-[#007AFF] transition-colors">{srv.title}</span>
-                  </div>
-                  <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              );
-            })}
-
-            {/* Book A Service CTA inside Services list */}
-            <Link 
-              href="/services/service"
-              className="flex items-center justify-between p-3.5 bg-blue-50/50 hover:bg-blue-50 transition-colors text-[#007AFF] group"
-            >
-              <div className="flex items-center gap-2 font-bold text-xs">
-                <span>Book a Doorstep Service Now</span>
-              </div>
-              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Local Service Hubs (Etawah & Near Me) */}
-        <div className="pt-1">
-          <div className="flex items-center justify-between mb-3 pl-1">
-            <div className="flex items-center gap-2">
-              <Compass className="text-[#007AFF] w-4 h-4" />
-              <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest">Local Service Hubs</h2>
-            </div>
-            <button 
-              onClick={() => setShowLocalHubs(!showLocalHubs)}
-              className="text-[10px] font-bold text-[#007AFF] flex items-center gap-1 hover:underline"
-            >
-              {showLocalHubs ? 'Show Less' : 'View All (7)'}
-              {showLocalHubs ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            </button>
-          </div>
-
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-xs divide-y divide-slate-100 overflow-hidden">
-            {(showLocalHubs ? localHubs : localHubs.slice(0, 3)).map((hub) => (
-              <Link 
-                key={hub.href}
-                href={hub.href}
-                className="flex items-center justify-between p-3.5 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <MapPin size={14} className="text-slate-400 group-hover:text-[#007AFF] transition-colors shrink-0" />
-                  <span className="text-xs font-semibold text-slate-700 group-hover:text-[#007AFF] transition-colors">{hub.title}</span>
-                </div>
-                <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            ))}
           </div>
         </div>
 

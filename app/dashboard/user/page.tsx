@@ -379,8 +379,8 @@ function UserDashboardContent() {
                 <ShieldCheck size={18} />
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-900">Services Catalog &amp; Legal Policies</span>
-                <p className="text-[10px] text-slate-400 font-medium mt-0.5">30-day guarantee, terms, privacy &amp; local hubs</p>
+                <span className="text-xs font-bold text-slate-900">About &amp; Legal Policies</span>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">About Repireo, terms, privacy &amp; refund policies</p>
               </div>
             </div>
             <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
