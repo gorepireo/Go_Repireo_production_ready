@@ -351,8 +351,8 @@ export default function Home() {
 
             </div>
 
-            {/* 2. Book a Service Banner (Seamlessly connected to the bottom of the hero graphic) */}
-            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-3.5 min-[390px]:-mt-4 sm:-mt-4.5 z-20">
+            {/* 2. Book a Service Banner (Seamlessly connected to the bottom of the hero graphic, brought slightly lower) */}
+            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-2 min-[390px]:-mt-2.5 sm:-mt-3 z-20">
               <img 
                 src="/banner-book-service.jpg" 
                 alt="Book a Service"
