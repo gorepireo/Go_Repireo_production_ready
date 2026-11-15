@@ -326,13 +326,13 @@ export default function Home() {
           <div className="relative w-full">
             
             {/* 1. Hero Graphic + Greeting Container (Extends to the right edge) */}
-            <div className="relative w-[calc(100%+1rem)] sm:w-[calc(100%+1.5rem)] -mr-4 sm:-mr-6 min-h-[170px] min-[390px]:min-h-[185px] sm:min-h-[215px] flex items-end overflow-hidden">
+            <div className="relative w-[calc(100%+1rem)] sm:w-[calc(100%+1.5rem)] -mr-4 sm:-mr-6 min-h-[160px] min-[390px]:min-h-[175px] sm:min-h-[200px] flex items-end overflow-hidden">
               
-              {/* Full Composite Graphic (Houses + Orange Arc + Branded Technician brought flush to the right edge) */}
+              {/* Full Composite Graphic (Houses + Orange Arc + Branded Technician brought flush to the right edge and compact from top/left) */}
               <img 
                 src="/hero-composite.png" 
                 alt="Go_Repireo Doorstep Service"
-                className="absolute inset-0 w-full h-full object-cover object-right select-none pointer-events-none -translate-y-3 min-[390px]:-translate-y-3.5 sm:-translate-y-4"
+                className="absolute inset-0 w-full h-full object-cover object-right select-none pointer-events-none"
               />
 
               {/* Left Greeting & Typography (Positioned over clean white left area with ample breathing room) */}
@@ -352,7 +352,7 @@ export default function Home() {
             </div>
 
             {/* 2. Book a Service Banner (Seamlessly connected to the bottom of the hero graphic) */}
-            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-4 min-[390px]:-mt-4.5 sm:-mt-5 z-20">
+            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-3.5 min-[390px]:-mt-4 sm:-mt-4.5 z-20">
               <img 
                 src="/banner-book-service.jpg" 
                 alt="Book a Service"
