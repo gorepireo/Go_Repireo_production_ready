@@ -322,60 +322,65 @@ export default function Home() {
           {/* Accessible SEO Heading */}
           <h1 className="sr-only">Go_Repireo: Doorstep Home &amp; Appliance Repair Services in Etawah</h1>
 
-          {/* 1. Hero Greeting + Technician (Two-Column Responsive Composition) */}
-          <section className="w-full grid grid-cols-[48%_52%] items-end min-h-[190px] min-[390px]:min-h-[210px] sm:min-h-[240px] overflow-hidden">
+          {/* Unified Hero Area: Greeting + Untrapped Technician + Directly Connected Service Banner */}
+          <div className="relative w-full">
             
-            {/* Left Column (48% width) - Greeting & Typography */}
-            <div className="flex flex-col justify-center pr-1 sm:pr-4 py-2 pb-8 sm:pb-10 z-10">
-              <p className="text-xs sm:text-sm font-semibold text-slate-700">
-                {greetingTime},
-              </p>
-              <h2 className="text-2xl min-[390px]:text-[26px] sm:text-3xl font-black text-slate-900 tracking-tight leading-tight flex items-center gap-1.5 mt-0.5">
-                <span>{displayName}!</span>
-                <span>👋</span>
-              </h2>
-              <p className="text-[11px] min-[390px]:text-xs sm:text-sm text-slate-500 font-medium leading-relaxed mt-1">
-                Book trusted home services at your doorstep.
-              </p>
-            </div>
-
-            {/* Right Column (52% width) - Technician Anchored Directly to Bottom */}
-            <div className="relative w-full h-[190px] min-[390px]:h-[210px] sm:h-[240px] flex items-end justify-end overflow-hidden">
-              <img 
-                src="/hero-technician.png" 
-                alt="Professional Technician"
-                className="w-full h-full object-cover object-[68%_bottom] select-none pointer-events-none"
-              />
-            </div>
-
-          </section>
-
-          {/* 2. Book a Service Banner (with 3D Calendar, Connected Directly Overlapping Technician Torso) */}
-          <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-8 min-[390px]:-mt-10 sm:-mt-12 z-20">
-            <img 
-              src="/banner-book-service.jpg" 
-              alt="Book a Service"
-              className="absolute inset-0 w-full h-full object-cover object-right"
-            />
-
-            <div className="relative z-10 pl-4 sm:pl-6 max-w-[62%] sm:max-w-[58%] flex flex-col justify-center py-4 text-white">
-              <h3 className="text-base min-[375px]:text-lg sm:text-2xl font-black tracking-tight leading-tight">
-                Book a <span className="text-[#FF9900]">Service</span>
-              </h3>
-              <p className="text-[9.5px] min-[375px]:text-[10.5px] sm:text-xs text-blue-100 font-medium leading-tight mt-1 line-clamp-2 max-w-[200px] sm:max-w-[260px]">
-                Get professional home services quickly and hassle-free.
-              </p>
-              <div className="mt-2.5">
-                <Link 
-                  href="/services/service"
-                  className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-[10px] min-[375px]:text-[11px] sm:text-xs px-3.5 py-1.5 rounded-full shadow-md active:scale-95 transition-all"
-                >
-                  <span>Book Now</span>
-                  <ArrowRight size={12} className="text-slate-900" />
-                </Link>
+            {/* 1. Hero Greeting + Technician Graphic */}
+            <div className="w-full grid grid-cols-[48%_52%] items-end min-h-[160px] min-[390px]:min-h-[175px] sm:min-h-[195px]">
+              
+              {/* Left Column (48% width) - Greeting & Typography */}
+              <div className="flex flex-col justify-center pr-1 sm:pr-4 py-2 pb-6 z-10">
+                <p className="text-xs sm:text-sm font-semibold text-slate-700">
+                  {greetingTime},
+                </p>
+                <h2 className="text-2xl min-[390px]:text-[26px] sm:text-3xl font-black text-slate-900 tracking-tight leading-tight flex items-center gap-1.5 mt-0.5">
+                  <span>{displayName}!</span>
+                  <span>👋</span>
+                </h2>
+                <p className="text-[11px] min-[390px]:text-xs sm:text-sm text-slate-500 font-medium leading-relaxed mt-1">
+                  Book trusted home services at your doorstep.
+                </p>
               </div>
+
+              {/* Right Column (52% width) - Technician (Flows naturally down into banner) */}
+              <div className="relative w-full h-[160px] min-[390px]:h-[175px] sm:h-[195px] flex items-end justify-end pointer-events-none">
+                <img 
+                  src="/hero-technician.png" 
+                  alt="Professional Technician"
+                  className="w-full h-full object-cover object-[68%_bottom] select-none"
+                />
+              </div>
+
             </div>
-          </section>
+
+            {/* 2. Book a Service Banner (Tucked directly in front of technician's lower body) */}
+            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-4 min-[390px]:-mt-5 sm:-mt-6 z-20">
+              <img 
+                src="/banner-book-service.jpg" 
+                alt="Book a Service"
+                className="absolute inset-0 w-full h-full object-cover object-right"
+              />
+
+              <div className="relative z-10 pl-4 sm:pl-6 max-w-[62%] sm:max-w-[58%] flex flex-col justify-center py-4 text-white">
+                <h3 className="text-base min-[375px]:text-lg sm:text-2xl font-black tracking-tight leading-tight">
+                  Book a <span className="text-[#FF9900]">Service</span>
+                </h3>
+                <p className="text-[9.5px] min-[375px]:text-[10.5px] sm:text-xs text-blue-100 font-medium leading-tight mt-1 line-clamp-2 max-w-[200px] sm:max-w-[260px]">
+                  Get professional home services quickly and hassle-free.
+                </p>
+                <div className="mt-2.5">
+                  <Link 
+                    href="/services/service"
+                    className="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-[10px] min-[375px]:text-[11px] sm:text-xs px-3.5 py-1.5 rounded-full shadow-md active:scale-95 transition-all"
+                  >
+                    <span>Book Now</span>
+                    <ArrowRight size={12} className="text-slate-900" />
+                  </Link>
+                </div>
+              </div>
+            </section>
+
+          </div>
 
           {/* 3. Our Services Section */}
           <section className="space-y-2.5 pt-1">
