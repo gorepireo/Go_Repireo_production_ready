@@ -32,7 +32,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
 import Avatar from '@/components/Avatar';
 import { OrderService } from '@/lib/services/order.service';
@@ -308,22 +307,8 @@ export default function Home() {
       ) : (
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4 pb-8">
         
-        {/* SEO Main Heading & Local Service Context */}
-        <section className="w-full pt-1 pb-1">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-                Go_Repireo: Doorstep Home &amp; Appliance Repair Services in Etawah
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                Verified electricians, plumbers, carpenters &amp; technicians delivered in 30–60 minutes with 30-day warranty.
-              </p>
-            </div>
-            <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 shrink-0">
-              <ShieldCheck size={16} /> 100% Verified Local Professionals
-            </div>
-          </div>
-        </section>
+        {/* Accessible SEO Heading */}
+        <h1 className="sr-only">Go_Repireo: Doorstep Home &amp; Appliance Repair Services in Etawah</h1>
 
         {/* 2. Hero Banner Carousel (4:2 Aspect Ratio, 2-sec Rotation) */}
         <section className="w-full">
@@ -586,37 +571,8 @@ export default function Home() {
           </section>
 
         </div>
-
-        {/* 8. About Go_Repireo (Branded Entity & Local Relevance Section) */}
-        <section className="w-full bg-white rounded-3xl p-5 sm:p-7 border border-slate-100 shadow-xs space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#007AFF]"></span>
-            <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900">
-              About Go_Repireo (GoRepireo) — Etawah Home Services
-            </h2>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            <strong>Go_Repireo</strong> (operating online at <span className="text-[#007AFF] font-semibold">gorepireo.in</span>, also known as <strong>GoRepireo</strong>) is Etawah&apos;s trusted on-demand home repair and appliance services marketplace. We connect households across Etawah with background-verified technicians for electrical repairs, plumbing solutions, AC servicing, appliance maintenance, and deep cleaning.
-          </p>
-          <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-500">
-            <span className="flex items-center gap-1 font-semibold text-slate-700">
-              <MapPin size={13} className="text-[#007AFF]" /> Etawah, Uttar Pradesh (PIN 206001)
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1 font-semibold text-slate-700">
-              <ShieldCheck size={13} className="text-emerald-600" /> 30-Day Service Guarantee
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1 font-semibold text-slate-700">
-              <Clock size={13} className="text-[#007AFF]" /> 30–45 Min Rapid Dispatch
-            </span>
-          </div>
-        </section>
-
       </div>
       )}
-
-      <Footer />
     </div>
   );
 }

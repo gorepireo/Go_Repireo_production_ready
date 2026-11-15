@@ -3,7 +3,40 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { ArrowLeft, Save, Plus, MapPin, Trash2, Camera, Loader2, X, User, Phone, Mail, LogOut, Pencil, Lock } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  Save, 
+  Plus, 
+  MapPin, 
+  Trash2, 
+  Camera, 
+  Loader2, 
+  X, 
+  User, 
+  Phone, 
+  Mail, 
+  LogOut, 
+  Pencil, 
+  Lock,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Headphones,
+  Wrench,
+  Zap,
+  Snowflake,
+  Tv,
+  Sparkles,
+  Hammer,
+  Droplets,
+  Info,
+  FileText,
+  RefreshCw,
+  Compass,
+  Layers,
+  ArrowRight
+} from 'lucide-react';
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
 import { useRouter } from 'next/navigation';
@@ -13,6 +46,26 @@ import { getCroppedImg } from '@/lib/cropImage';
 import dynamic from 'next/dynamic';
 
 const LocationMapSelector = dynamic(() => import('@/components/LocationMapSelector'), { ssr: false });
+
+const servicesList = [
+  { title: 'Plumbing Services', href: '/services/plumbing', icon: Wrench, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { title: 'Electrician & Wiring', href: '/services/electrical', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50' },
+  { title: 'AC Repair & Servicing', href: '/services/ac-repair', icon: Snowflake, color: 'text-sky-500', bg: 'bg-sky-50' },
+  { title: 'Appliance Repair', href: '/services/appliance', icon: Tv, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+  { title: 'Home & Bathroom Cleaning', href: '/services/cleaning', icon: Sparkles, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+  { title: 'Carpentry & Furniture', href: '/services/carpentry', icon: Hammer, color: 'text-orange-500', bg: 'bg-orange-50' },
+  { title: 'RO Water Purifier', href: '/services/ro-service', icon: Droplets, color: 'text-cyan-500', bg: 'bg-cyan-50' },
+];
+
+const localHubs = [
+  { title: 'Plumber in Etawah', href: '/services/plumbing/etawah' },
+  { title: 'Electrician in Etawah', href: '/services/electrical/etawah' },
+  { title: 'AC Repair in Etawah', href: '/services/ac-repair/etawah' },
+  { title: 'Plumber Near Me', href: '/near-me/plumber-near-me' },
+  { title: 'Electrician Near Me', href: '/near-me/electrician-near-me' },
+  { title: 'AC Service Near Me', href: '/near-me/ac-repair-near-me' },
+  { title: 'Washing Machine Repair Near Me', href: '/near-me/washing-machine-repair-near-me' },
+];
 
 export default function UserSettings() {
   const { user, profile, role, refresh, signOut } = useAuth();
@@ -35,6 +88,10 @@ export default function UserSettings() {
   });
   const [newAddress, setNewAddress] = useState({ name: '', address_text: '', lat: 0, lng: 0 });
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+
+  // Mobile App style Accordion Toggles
+  const [showServices, setShowServices] = useState(false);
+  const [showLocalHubs, setShowLocalHubs] = useState(false);
 
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -186,32 +243,6 @@ export default function UserSettings() {
     }
   };
 
-  const detectLocationForNewAddress = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`);
-          const data = await res.json();
-          setNewAddress({ 
-            ...newAddress, 
-            address_text: data.display_name || `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`,
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        } catch (err) {
-           setNewAddress({ 
-             ...newAddress, 
-             address_text: `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`,
-             lat: position.coords.latitude,
-             lng: position.coords.longitude
-           });
-        }
-      });
-    }
-  };
-
-  if (!user) return null;
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-32">
       {/* Cropper Modal */}
@@ -241,184 +272,215 @@ export default function UserSettings() {
         </div>
       )}
 
+      {/* Top Header Bar */}
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/user"
+            className="w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all flex items-center justify-center text-slate-700"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <h1 className="text-sm font-black text-slate-900 tracking-tight leading-none">Settings &amp; Info</h1>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Account, Support, Services &amp; Legal</p>
+          </div>
+        </div>
+      </div>
 
-
-      <div className="max-w-xl mx-auto px-4 pt-6 space-y-6">
+      <div className="max-w-xl mx-auto px-4 pt-5 space-y-6">
         
         {/* Profile Information Section */}
-        <div>
-          <div className="flex items-center gap-2 mb-4 pl-2">
-            <User className="text-[#007AFF] w-4 h-4" />
-            <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest">Profile Information</h2>
-          </div>
-          
-          <div className="flex flex-col items-center mb-8 relative">
-            <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-              <Avatar src={profile?.avatar_url} name={profile?.display_name || profile?.email || 'User'} size={100} className="shadow-lg border-4 border-white bg-[#EAB308]" />
-              <div className="absolute bottom-0 right-0 bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm border border-slate-100">
-                <Camera className="w-4 h-4 text-[#007AFF]" />
-              </div>
-              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="text-white w-8 h-8" />
-              </div>
-              {loading && <div className="absolute inset-0 bg-white/60 rounded-full flex items-center justify-center"><Loader2 className="animate-spin text-[#007AFF]" /></div>}
+        {user ? (
+          <div>
+            <div className="flex items-center gap-2 mb-3 pl-1">
+              <User className="text-[#007AFF] w-4 h-4" />
+              <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest">Profile Information</h2>
             </div>
-            <p className="text-[10px] font-bold text-slate-400 mt-4 tracking-wide">Tap to change avatar</p>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
-          </div>
-
-          <form onSubmit={handleUpdateProfile} className="space-y-4">
             
-            {/* Full Name */}
-            <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
-              <div className="bg-[#F0F5FF] text-[#007AFF] p-3 rounded-xl shrink-0">
-                <User className="w-5 h-5" />
+            <div className="flex flex-col items-center mb-6 relative">
+              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                <Avatar src={profile?.avatar_url} name={profile?.display_name || profile?.email || 'User'} size={96} className="shadow-lg border-4 border-white bg-[#EAB308]" />
+                <div className="absolute bottom-0 right-0 bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm border border-slate-100">
+                  <Camera className="w-4 h-4 text-[#007AFF]" />
+                </div>
+                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="text-white w-8 h-8" />
+                </div>
+                {loading && <div className="absolute inset-0 bg-white/60 rounded-full flex items-center justify-center"><Loader2 className="animate-spin text-[#007AFF]" /></div>}
               </div>
-              <div className="flex-1 flex flex-col justify-center">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Full Name</label>
-                <input 
-                  required
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
-                />
-              </div>
-              <div className="text-[#007AFF] pr-2">
-                <Pencil className="w-4 h-4" />
-              </div>
+              <p className="text-[10px] font-bold text-slate-400 mt-3 tracking-wide">Tap to change avatar</p>
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
             </div>
 
-            {/* Phone Number */}
-            <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
-              <div className="bg-[#F0F5FF] text-[#007AFF] p-3 rounded-xl shrink-0">
-                <Phone className="w-5 h-5" />
-              </div>
-              <div className="flex-1 flex flex-col justify-center">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Phone Number</label>
-                <input 
-                  required
-                  readOnly
-                  value={formData.phone}
-                  className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
-                />
-              </div>
-              <div className="text-slate-400 pr-2">
-                <Lock className="w-4 h-4" />
-              </div>
-            </div>
-
-            {/* Email */}
-            <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
-              <div className="bg-[#F0F5FF] text-[#007AFF] p-3 rounded-xl shrink-0">
-                <Mail className="w-5 h-5" />
-              </div>
-              <div className="flex-1 flex flex-col justify-center">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Email (Read Only)</label>
-                <input 
-                  readOnly
-                  value={user.email || ''}
-                  className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
-                />
-              </div>
-              <div className="text-slate-400 pr-2">
-                <Lock className="w-4 h-4" />
-              </div>
-            </div>
-
-            <button disabled={loading} type="submit" className="w-full h-14 mt-4 bg-[#007AFF] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 transition-all active:scale-95 shadow-[0_4px_14px_-4px_rgba(0,122,255,0.4)]">
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
-              Save Profile
-            </button>
-          </form>
-        </div>
-
-        {/* Saved Addresses */}
-        <div className="pt-4">
-          <div className="flex items-center gap-2 mb-4 pl-2">
-            <MapPin className="text-[#007AFF] w-4 h-4" />
-            <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest flex-1">Saved Addresses</h2>
-            <button onClick={() => setIsAddingAddress(!isAddingAddress)} className="text-[#007AFF] bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition-colors shrink-0">
-              <Plus size={16} />
-            </button>
-          </div>
-
-          {isAddingAddress && (
-            <form onSubmit={handleAddAddress} className="bg-slate-50 p-4 rounded-2xl mb-6 border border-slate-100 space-y-4">
-              <div>
-                <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest pl-2 block mb-1">Location Name</label>
-                <input 
-                  required
-                  placeholder="e.g. Home, Office, Mom's House"
-                  value={newAddress.name}
-                  onChange={e => setNewAddress({...newAddress, name: e.target.value})}
-                  className="w-full h-12 bg-white rounded-xl px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-[#007AFF]/20 border border-slate-100"
-                />
-              </div>
-              <div>
-                <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest pl-2 block mb-1">Full Address</label>
-                <div className="flex gap-2">
+            <form onSubmit={handleUpdateProfile} className="space-y-3">
+              
+              {/* Full Name */}
+              <div className="flex items-center gap-3.5 bg-white p-3 rounded-2xl border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
+                <div className="bg-[#F0F5FF] text-[#007AFF] p-2.5 rounded-xl shrink-0">
+                  <User className="w-4 h-4" />
+                </div>
+                <div className="flex-1 flex flex-col justify-center min-w-0">
+                  <label className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Full Name</label>
                   <input 
                     required
-                    placeholder="Enter full address"
-                    value={newAddress.address_text}
-                    onChange={e => setNewAddress({...newAddress, address_text: e.target.value})}
-                    className="flex-1 h-12 bg-white rounded-xl px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-[#007AFF]/20 border border-slate-100"
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
                   />
-                  <button type="button" onClick={() => setShowMapModal(true)} className="w-12 h-12 bg-[#007AFF] text-white rounded-xl flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all shadow-md">
-                    <MapPin size={16} />
-                  </button>
+                </div>
+                <div className="text-[#007AFF] pr-2">
+                  <Pencil className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button disabled={loading} type="submit" className="flex-1 h-10 bg-black text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all">Save Address</button>
-                <button type="button" onClick={() => setIsAddingAddress(false)} className="flex-1 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all">Cancel</button>
+
+              {/* Phone Number */}
+              <div className="flex items-center gap-3.5 bg-white p-3 rounded-2xl border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
+                <div className="bg-[#F0F5FF] text-[#007AFF] p-2.5 rounded-xl shrink-0">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <div className="flex-1 flex flex-col justify-center min-w-0">
+                  <label className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Phone Number</label>
+                  <input 
+                    required
+                    readOnly
+                    value={formData.phone}
+                    className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
+                  />
+                </div>
+                <div className="text-slate-400 pr-2">
+                  <Lock className="w-3.5 h-3.5" />
+                </div>
               </div>
+
+              {/* Email */}
+              <div className="flex items-center gap-3.5 bg-white p-3 rounded-2xl border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
+                <div className="bg-[#F0F5FF] text-[#007AFF] p-2.5 rounded-xl shrink-0">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div className="flex-1 flex flex-col justify-center min-w-0">
+                  <label className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Email (Read Only)</label>
+                  <input 
+                    readOnly
+                    value={user.email || ''}
+                    className="text-[13px] font-bold text-slate-900 outline-none bg-transparent w-full"
+                  />
+                </div>
+                <div className="text-slate-400 pr-2">
+                  <Lock className="w-3.5 h-3.5" />
+                </div>
+              </div>
+
+              <button disabled={loading} type="submit" className="w-full h-12 mt-2 bg-[#007AFF] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 transition-all active:scale-95 shadow-[0_4px_14px_-4px_rgba(0,122,255,0.4)]">
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
+                Save Profile
+              </button>
             </form>
-          )}
-
-          {/* Location Map Selector Modal */}
-          {showMapModal && (
-            <LocationMapSelector 
-              initialLat={newAddress.lat || 22.5726}
-              initialLng={newAddress.lng || 88.3639}
-              onConfirm={(loc) => {
-                setNewAddress(prev => ({
-                  ...prev,
-                  address_text: loc.address,
-                  lat: loc.lat,
-                  lng: loc.lng
-                }));
-                setShowMapModal(false);
-              }}
-              onClose={() => setShowMapModal(false)}
-            />
-          )}
-
-          <div className="space-y-3">
-            {addresses.length === 0 && !isAddingAddress ? (
-              <div className="text-center py-6 text-slate-400 text-xs font-medium border border-dashed border-slate-200 rounded-2xl bg-white">
-                No saved addresses yet.
-              </div>
-            ) : (
-              addresses.map(addr => (
-                <div key={addr.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-50 bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#F0F5FF] text-[#007AFF] rounded-xl flex items-center justify-center shrink-0">
-                      <MapPin size={18} />
-                    </div>
-                    <div>
-                      <h4 className="text-[13px] font-bold text-slate-900">{addr.label}</h4>
-                      <p className="text-[10px] font-medium text-slate-500 line-clamp-1 pr-4 mt-0.5">{addr.formattedAddress}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => setDeletingAddressId(addr.id)} className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))
-            )}
           </div>
-        </div>
+        ) : (
+          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-black text-slate-900">Sign in to your account</h3>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Manage your profile, saved addresses &amp; bookings</p>
+            </div>
+            <Link 
+              href="/login"
+              className="bg-[#007AFF] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-blue-600 active:scale-95 transition-all shadow-sm"
+            >
+              Sign In
+            </Link>
+          </div>
+        )}
+
+        {/* Saved Addresses */}
+        {user && (
+          <div className="pt-1">
+            <div className="flex items-center gap-2 mb-3 pl-1">
+              <MapPin className="text-[#007AFF] w-4 h-4" />
+              <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest flex-1">Saved Addresses</h2>
+              <button onClick={() => setIsAddingAddress(!isAddingAddress)} className="text-[#007AFF] bg-blue-50 w-7 h-7 rounded-full flex items-center justify-center hover:bg-blue-100 transition-colors shrink-0">
+                <Plus size={15} />
+              </button>
+            </div>
+
+            {isAddingAddress && (
+              <form onSubmit={handleAddAddress} className="bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-100 space-y-3">
+                <div>
+                  <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest pl-1 block mb-1">Location Name</label>
+                  <input 
+                    required
+                    placeholder="e.g. Home, Office, Mom's House"
+                    value={newAddress.name}
+                    onChange={e => setNewAddress({...newAddress, name: e.target.value})}
+                    className="w-full h-11 bg-white rounded-xl px-3.5 text-xs font-medium outline-none focus:ring-2 focus:ring-[#007AFF]/20 border border-slate-100"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest pl-1 block mb-1">Full Address</label>
+                  <div className="flex gap-2">
+                    <input 
+                      required
+                      placeholder="Enter full address"
+                      value={newAddress.address_text}
+                      onChange={e => setNewAddress({...newAddress, address_text: e.target.value})}
+                      className="flex-1 h-11 bg-white rounded-xl px-3.5 text-xs font-medium outline-none focus:ring-2 focus:ring-[#007AFF]/20 border border-slate-100"
+                    />
+                    <button type="button" onClick={() => setShowMapModal(true)} className="w-11 h-11 bg-[#007AFF] text-white rounded-xl flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all shadow-md shrink-0">
+                      <MapPin size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button disabled={loading} type="submit" className="flex-1 h-10 bg-black text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all">Save Address</button>
+                  <button type="button" onClick={() => setIsAddingAddress(false)} className="flex-1 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all">Cancel</button>
+                </div>
+              </form>
+            )}
+
+            {/* Location Map Selector Modal */}
+            {showMapModal && (
+              <LocationMapSelector 
+                initialLat={newAddress.lat || 22.5726}
+                initialLng={newAddress.lng || 88.3639}
+                onConfirm={(loc) => {
+                  setNewAddress(prev => ({
+                    ...prev,
+                    address_text: loc.address,
+                    lat: loc.lat,
+                    lng: loc.lng
+                  }));
+                  setShowMapModal(false);
+                }}
+                onClose={() => setShowMapModal(false)}
+              />
+            )}
+
+            <div className="space-y-2.5">
+              {addresses.length === 0 && !isAddingAddress ? (
+                <div className="text-center py-5 text-slate-400 text-xs font-medium border border-dashed border-slate-200 rounded-2xl bg-white">
+                  No saved addresses yet.
+                </div>
+              ) : (
+                addresses.map(addr => (
+                  <div key={addr.id} className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 bg-[#F0F5FF] text-[#007AFF] rounded-xl flex items-center justify-center shrink-0">
+                        <MapPin size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-[12.5px] font-bold text-slate-900 truncate">{addr.label}</h4>
+                        <p className="text-[10px] font-medium text-slate-500 line-clamp-1 pr-2 mt-0.5">{addr.formattedAddress}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setDeletingAddressId(addr.id)} className="w-7 h-7 rounded-full flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Delete Address In-App Confirmation Modal */}
         {deletingAddressId && (
@@ -451,16 +513,278 @@ export default function UserSettings() {
           </div>
         )}
 
-        {/* Logout Button */}
-        <div className="pt-2">
-          <button 
-            onClick={() => signOut()} 
-            className="w-full h-14 bg-[#FEF2F2] text-[#EF4444] rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-100 transition-all active:scale-95 border border-red-50"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
+        {/* Help & Support Group (Mobile App Style) */}
+        <div className="pt-1">
+          <div className="flex items-center gap-2 mb-3 pl-1">
+            <Headphones className="text-[#007AFF] w-4 h-4" />
+            <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest">Help &amp; Customer Support</h2>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-xs divide-y divide-slate-100 overflow-hidden">
+            
+            {/* Call Direct Support */}
+            <a 
+              href="tel:+918679245568"
+              className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Phone size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900">+91 8679245568</span>
+                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-100/60 px-2 py-0.5 rounded-full">Available</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">Call our 24/7 technician support hotline</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+            </a>
+
+            {/* Email Support */}
+            <a 
+              href="mailto:support@gorepireo.com"
+              className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#007AFF] flex items-center justify-center shrink-0">
+                  <Mail size={18} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-900">support@gorepireo.com</span>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">Drop an email for booking inquiries or queries</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+            </a>
+
+            {/* Contact Page */}
+            <Link 
+              href="/contact"
+              className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <Headphones size={18} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-900">Contact Support Team</span>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">Submit feedback, request calls or complaints</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+          </div>
+
+          {/* 30-Day Guarantee Banner */}
+          <div className="mt-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 rounded-3xl p-4 flex items-center gap-3.5 shadow-xs">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20">
+              <ShieldCheck size={22} />
+            </div>
+            <div>
+              <h4 className="text-xs font-black text-emerald-950">30-Day Service Guarantee</h4>
+              <p className="text-[10px] text-emerald-800 font-medium mt-0.5 leading-relaxed">
+                Every repair comes with free 30-day revisit coverage and 100% verified technicians.
+              </p>
+            </div>
+          </div>
         </div>
+
+        {/* Services Directory Group (Expandable) */}
+        <div className="pt-1">
+          <div className="flex items-center justify-between mb-3 pl-1">
+            <div className="flex items-center gap-2">
+              <Layers className="text-[#007AFF] w-4 h-4" />
+              <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest">Services Directory</h2>
+            </div>
+            <button 
+              onClick={() => setShowServices(!showServices)}
+              className="text-[10px] font-bold text-[#007AFF] flex items-center gap-1 hover:underline"
+            >
+              {showServices ? 'Show Less' : 'View All (7)'}
+              {showServices ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-xs divide-y divide-slate-100 overflow-hidden">
+            {(showServices ? servicesList : servicesList.slice(0, 3)).map((srv) => {
+              const IconComp = srv.icon;
+              return (
+                <Link 
+                  key={srv.href}
+                  href={srv.href}
+                  className="flex items-center justify-between p-3.5 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-xl ${srv.bg} ${srv.color} flex items-center justify-center shrink-0`}>
+                      <IconComp size={16} />
+                    </div>
+                    <span className="text-xs font-bold text-slate-800 group-hover:text-[#007AFF] transition-colors">{srv.title}</span>
+                  </div>
+                  <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              );
+            })}
+
+            {/* Book A Service CTA inside Services list */}
+            <Link 
+              href="/services/service"
+              className="flex items-center justify-between p-3.5 bg-blue-50/50 hover:bg-blue-50 transition-colors text-[#007AFF] group"
+            >
+              <div className="flex items-center gap-2 font-bold text-xs">
+                <span>Book a Doorstep Service Now</span>
+              </div>
+              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Local Service Hubs (Etawah & Near Me) */}
+        <div className="pt-1">
+          <div className="flex items-center justify-between mb-3 pl-1">
+            <div className="flex items-center gap-2">
+              <Compass className="text-[#007AFF] w-4 h-4" />
+              <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest">Local Service Hubs</h2>
+            </div>
+            <button 
+              onClick={() => setShowLocalHubs(!showLocalHubs)}
+              className="text-[10px] font-bold text-[#007AFF] flex items-center gap-1 hover:underline"
+            >
+              {showLocalHubs ? 'Show Less' : 'View All (7)'}
+              {showLocalHubs ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-xs divide-y divide-slate-100 overflow-hidden">
+            {(showLocalHubs ? localHubs : localHubs.slice(0, 3)).map((hub) => (
+              <Link 
+                key={hub.href}
+                href={hub.href}
+                className="flex items-center justify-between p-3.5 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <MapPin size={14} className="text-slate-400 group-hover:text-[#007AFF] transition-colors shrink-0" />
+                  <span className="text-xs font-semibold text-slate-700 group-hover:text-[#007AFF] transition-colors">{hub.title}</span>
+                </div>
+                <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Company & Legal Policies (Mobile App Style) */}
+        <div className="pt-1">
+          <div className="flex items-center gap-2 mb-3 pl-1">
+            <FileText className="text-[#007AFF] w-4 h-4" />
+            <h2 className="text-[#007AFF] text-[10px] font-black uppercase tracking-widest">Company &amp; Legal</h2>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-xs divide-y divide-slate-100 overflow-hidden">
+            
+            {/* About Go_Repireo */}
+            <Link 
+              href="/about"
+              className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                  <Info size={18} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-900">About Go_Repireo</span>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">Etawah&apos;s trusted home repair &amp; appliance marketplace</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            {/* Privacy Policy */}
+            <Link 
+              href="/privacy"
+              className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-900">Privacy Policy</span>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">How your data and privacy are safeguarded</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            {/* Terms of Service */}
+            <Link 
+              href="/terms"
+              className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                  <FileText size={18} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-900">Terms of Service</span>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">Service agreements, rights and usage conditions</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            {/* Refund & Cancellation */}
+            <Link 
+              href="/refund-policy"
+              className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                  <RefreshCw size={18} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-900">Refund &amp; Cancellation Policy</span>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">Transparent refunds, cancellations and returns</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+          </div>
+        </div>
+
+        {/* App & Operations Info Banner (Bottom of Mobile App Settings) */}
+        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-3 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-black text-slate-900">Go_Repireo Technologies</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">gorepireo.in • Etawah, UP 206001, India</p>
+            </div>
+            <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-100 rounded-full self-center sm:self-auto">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[9.5px] font-bold text-emerald-700">Live Service Operations: Etawah</span>
+            </div>
+          </div>
+          <div className="border-t border-slate-100 pt-3 flex flex-col sm:flex-row items-center justify-between gap-1 text-[10px] text-slate-400 font-medium">
+            <span>© 2026 Go_Repireo Technologies. All rights reserved.</span>
+            <span>App Version 1.0.4 (Production)</span>
+          </div>
+        </div>
+
+        {/* Logout Button */}
+        {user && (
+          <div className="pt-1">
+            <button 
+              onClick={() => signOut()} 
+              className="w-full h-12 bg-[#FEF2F2] text-[#EF4444] rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-100 transition-all active:scale-95 border border-red-50 shadow-xs"
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );

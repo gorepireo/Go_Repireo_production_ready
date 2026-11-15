@@ -12,7 +12,8 @@ import {
   Clock,
   Wrench,
   Snowflake,
-  ShieldCheck
+  ShieldCheck,
+  Phone
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -327,6 +328,65 @@ function UserDashboardContent() {
             })}
           </div>
         )}
+      </section>
+
+      {/* 5. Account, Support & Legal Navigation (Mobile App Pattern) */}
+      <section className="px-4 mb-8">
+        <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight mb-3">MORE &amp; SUPPORT</h3>
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-xs divide-y divide-slate-100 overflow-hidden">
+          
+          <Link 
+            href="/dashboard/user/settings" 
+            className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#007AFF] flex items-center justify-center shrink-0">
+                <Settings size={18} />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900">Profile &amp; Saved Addresses</span>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Edit personal info, manage home &amp; office locations</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+
+          <a 
+            href="tel:+918679245568" 
+            className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <Phone size={18} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-900">Help &amp; Customer Support</span>
+                  <span className="text-[9px] font-black text-emerald-600 bg-emerald-100/60 px-2 py-0.5 rounded-full">Live</span>
+                </div>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">+91 8679245568 • 24/7 Hotline</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+          </a>
+
+          <Link 
+            href="/dashboard/user/settings" 
+            className="flex items-center justify-between p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <ShieldCheck size={18} />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900">Services Catalog &amp; Legal Policies</span>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">30-day guarantee, terms, privacy &amp; local hubs</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+
+        </div>
       </section>
 
     </div>
