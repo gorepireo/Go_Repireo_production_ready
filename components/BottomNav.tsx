@@ -6,14 +6,31 @@ import {
   Calendar,
   ShoppingBag,
   MapPin, 
-  User,
   MessageCircle,
   LayoutGrid
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import Avatar from '@/components/Avatar';
+
+function ProfileNavIcon({ size = 19, strokeWidth = 2, className = '' }: { size?: number | string; strokeWidth?: number | string; className?: string }) {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth={strokeWidth} 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <circle cx="12" cy="7" r="4.2" />
+      <path d="M5.5 19.5c0-3.3 2.9-6 6.5-6s6.5 2.7 6.5 6c0 .8-.6 1.5-1.5 1.5h-10c-.9 0-1.5-.7-1.5-1.5z" />
+    </svg>
+  );
+}
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -36,13 +53,13 @@ export default function BottomNav() {
     { name: 'Dashboard', path: '/dashboard/worker', icon: LayoutGrid },
     { name: 'Scheduled Jobs', path: '/dashboard/worker/scheduled', icon: Calendar },
     { name: 'Chats', path: '/chat', icon: MessageCircle },
-    { name: 'Profile', path: '/dashboard/worker/settings', icon: User },
+    { name: 'Profile', path: '/dashboard/worker/settings', icon: ProfileNavIcon },
   ] : [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Bookings', path: '/services', icon: Calendar },
     { name: 'Shop', path: '/shop', icon: ShoppingBag },
     { name: 'Track', path: '/track', icon: MapPin },
-    { name: 'Profile', path: '/dashboard/user', icon: User },
+    { name: 'Profile', path: '/dashboard/user', icon: ProfileNavIcon },
   ];
 
   return (
@@ -75,20 +92,11 @@ export default function BottomNav() {
               >
                 <div className={`mx-0.5 flex w-full max-w-[120px] flex-col items-center justify-center gap-1 rounded-xl py-1.5 transition-all duration-300 min-[375px]:mx-1 min-[375px]:rounded-2xl ${isActive ? 'bg-[#F0F5FF]' : 'hover:bg-slate-50'}`}>
                   <div className="relative z-10 flex items-center justify-center min-h-[22px]">
-                    {item.name === 'Profile' ? (
-                      <Avatar 
-                        src={profile?.avatar_url} 
-                        name={profile?.display_name || profile?.email || 'User'} 
-                        size={22} 
-                        className={isActive ? 'ring-2 ring-offset-1 ring-[#007AFF]' : 'opacity-80 grayscale-[20%] hover:grayscale-0 transition-all duration-300'}
-                      />
-                    ) : (
-                      <item.icon 
-                        size={19} 
-                        strokeWidth={isActive ? 2.5 : 2}
-                        className={`transition-colors duration-300 ${isActive ? 'text-[#007AFF]' : 'text-slate-400 group-hover:text-slate-600'}`}
-                      />
-                    )}
+                    <item.icon 
+                      size={19} 
+                      strokeWidth={isActive ? 2.5 : 2}
+                      className={`transition-colors duration-300 ${isActive ? 'text-[#007AFF]' : 'text-slate-400 group-hover:text-slate-600'}`}
+                    />
                   </div>
                   
                   <span className={`z-10 max-w-full truncate text-[8px] font-bold transition-colors duration-300 min-[360px]:text-[9px] min-[390px]:text-[10px] ${isActive ? 'text-[#007AFF]' : 'text-slate-400'}`}>
