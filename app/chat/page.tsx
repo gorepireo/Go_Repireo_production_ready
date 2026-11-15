@@ -40,7 +40,7 @@ function formatOrderId(rawId?: string): string {
 }
 
 function ChatContent() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -50,74 +50,126 @@ function ChatContent() {
     searchParams.get('id') ||
     'c65c8ca2-66b8-4954-a709-586f70d1ada2';
 
-  const [order, setOrder] = useState<any>(null);
+  const [orderData, setOrderData] = useState<any>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [liveTracking, setLiveTracking] = useState<any>({
+    statusText: 'Expert is on the way',
+    distance: '4.0 km away • 6 min',
+  });
   const [inputText, setInputText] = useState('');
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Initial messages populated to match the design reference exactly
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'msg-1',
-      senderRole: 'worker',
-      senderName: 'Anupam',
-      text: "Hi Prithibi! I'm on the way to your location.",
-      time: '2:47 PM',
-      type: 'text',
-    },
-    {
-      id: 'msg-2',
-      senderRole: 'customer',
-      senderName: 'Prithibi',
-      text: 'Great! How much time will it take?',
-      time: '2:49 PM',
-      type: 'text',
-    },
-    {
-      id: 'msg-3',
-      senderRole: 'worker',
-      senderName: 'Anupam',
-      text: "Around 6 minutes. I'll reach soon.",
-      time: '2:50 PM',
-      type: 'text',
-    },
-    {
-      id: 'system-tracking-card',
-      type: 'tracking-card',
-      title: 'Expert is on the way',
-      distance: '4.0 km away • 6 min',
-    },
-    {
-      id: 'msg-4',
-      senderRole: 'customer',
-      senderName: 'Prithibi',
-      text: 'Okay, see you!',
-      time: '2:51 PM',
-      type: 'text',
-    },
-  ]);
-
-  // Load real order details from API if available
+  // 1. Fetch live order and messages from database API
   useEffect(() => {
     let isMounted = true;
-    const fetchOrder = async () => {
+
+    const loadChatData = async () => {
       try {
-        const res = await fetch(`/api/orders?order_id=${encodeURIComponent(paramOrderId)}`, {
+        const res = await fetch(`/api/chat?order_id=${encodeURIComponent(paramOrderId)}`, {
           credentials: 'include',
         });
         if (res.ok) {
           const data = await res.json();
-          const target = data.order || (data.orders || [])[0];
-          if (target && isMounted) {
-            setOrder(target);
+          if (isMounted) {
+            if (data.order) setOrderData(data.order);
+            if (data.liveTracking) setLiveTracking(data.liveTracking);
+
+            // If database returned messages, build stream with tracking card
+            const dbMessages: ChatMessage[] = (data.messages || []).map((m: any) => ({
+              id: m.id,
+              senderRole: m.senderRole,
+              senderName: m.senderName,
+              text: m.text,
+              time: m.time,
+              type: 'text',
+            }));
+
+            // Insert Live Tracking Card right after the second message (or at suitable spot)
+            if (dbMessages.length >= 3) {
+              const withTracking = [
+                dbMessages[0],
+                dbMessages[1],
+                dbMessages[2],
+                {
+                  id: 'system-tracking-card',
+                  type: 'tracking-card' as const,
+                  title: data.liveTracking?.statusText || 'Expert is on the way',
+                  distance: data.liveTracking?.distance || '4.0 km away • 6 min',
+                },
+                ...dbMessages.slice(3),
+              ];
+              setMessages(withTracking);
+            } else if (dbMessages.length > 0) {
+              setMessages([
+                ...dbMessages,
+                {
+                  id: 'system-tracking-card',
+                  type: 'tracking-card' as const,
+                  title: data.liveTracking?.statusText || 'Expert is on the way',
+                  distance: data.liveTracking?.distance || '4.0 km away • 6 min',
+                },
+              ]);
+            } else {
+              // Fallback if database had 0 rows
+              setMessages([
+                {
+                  id: 'msg-1',
+                  senderRole: 'worker',
+                  senderName: 'Anupam',
+                  text: "Hi Prithibi! I'm on the way to your location.",
+                  time: '2:47 PM',
+                  type: 'text',
+                },
+                {
+                  id: 'msg-2',
+                  senderRole: 'customer',
+                  senderName: 'Prithibi',
+                  text: 'Great! How much time will it take?',
+                  time: '2:49 PM',
+                  type: 'text',
+                },
+                {
+                  id: 'msg-3',
+                  senderRole: 'worker',
+                  senderName: 'Anupam',
+                  text: "Around 6 minutes. I'll reach soon.",
+                  time: '2:50 PM',
+                  type: 'text',
+                },
+                {
+                  id: 'system-tracking-card',
+                  type: 'tracking-card',
+                  title: 'Expert is on the way',
+                  distance: '4.0 km away • 6 min',
+                },
+                {
+                  id: 'msg-4',
+                  senderRole: 'customer',
+                  senderName: 'Prithibi',
+                  text: 'Okay, see you!',
+                  time: '2:51 PM',
+                  type: 'text',
+                },
+              ]);
+            }
           }
         }
       } catch (err) {
-        console.warn('[Chat] Failed to fetch order:', err);
+        console.warn('[Chat] Failed to load data:', err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
-    fetchOrder();
+
+    loadChatData();
+
+    // Periodic sync every 6 seconds for new incoming messages
+    const interval = setInterval(loadChatData, 6000);
+
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, [paramOrderId]);
 
@@ -126,11 +178,11 @@ function ChatContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const technicianName = order?.worker_name || order?.workerName || 'Anupam';
-  const technicianPhone = order?.worker_phone || order?.workerPhone || '+917679430992';
-  const serviceName = order?.service_name || order?.serviceName || 'Plumbing Service';
-  const scheduleTime = 'Today, 3:00 PM – 5:00 PM';
-  const orderDisplayId = formatOrderId(order?.id || paramOrderId);
+  const technicianName = orderData?.workerName || 'Anupam';
+  const technicianPhone = orderData?.workerPhone || '+917679430992';
+  const serviceName = orderData?.serviceName || 'Plumbing Service';
+  const scheduleTime = orderData?.scheduleTime || 'Today, 3:00 PM – 5:00 PM';
+  const orderDisplayId = formatOrderId(orderData?.id || paramOrderId);
 
   // Phone Call Handler
   const handleCall = () => {
@@ -149,9 +201,12 @@ function ChatContent() {
   };
 
   // Send Message Handler
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
+
+    const messageText = inputText.trim();
+    setInputText('');
 
     const now = new Date();
     const timeString = now.toLocaleTimeString('en-US', {
@@ -160,18 +215,43 @@ function ChatContent() {
       hour12: true,
     });
 
-    const newMsg: ChatMessage = {
-      id: `user-msg-${Date.now()}`,
+    const optimisticMsg: ChatMessage = {
+      id: `client-${Date.now()}`,
       senderRole: 'customer',
-      senderName: 'Prithibi',
-      text: inputText.trim(),
+      senderName: orderData?.customerName || 'Prithibi',
+      text: messageText,
       time: timeString,
       type: 'text',
     };
 
-    setMessages((prev) => [...prev, newMsg]);
-    setInputText('');
+    // Optimistically update UI
+    setMessages((prev) => [...prev, optimisticMsg]);
+
+    // Persist to database via API
+    try {
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: paramOrderId,
+          text: messageText,
+          senderRole: 'customer',
+          senderId: user?.uid,
+        }),
+      });
+    } catch (err) {
+      console.error('[Chat] Save message error:', err);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-[100dvh] bg-[#F0F4F9] max-w-md mx-auto items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#0062FF] animate-spin" />
+        <p className="text-xs text-slate-500 font-semibold mt-3">Loading Mission Chat...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[100dvh] bg-[#F0F4F9] max-w-md mx-auto relative select-none font-sans overflow-hidden shadow-2xl">
@@ -267,30 +347,30 @@ function ChatContent() {
         </div>
 
         {messages.map((msg) => {
-          // Live Tracking System Card
+          // Live Tracking System Card (Fixed: No truncation on title)
           if (msg.type === 'tracking-card') {
             return (
               <div
                 key={msg.id}
-                className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center justify-between gap-3 w-full my-2"
+                className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center justify-between gap-2.5 w-full my-2"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-[#EBF3FF] flex items-center justify-center text-[#0062FF] shrink-0">
                     <MapPin className="w-5 h-5 text-[#0062FF] fill-[#0062FF]/20" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-bold text-[14px] text-slate-900 leading-tight truncate">
-                      {msg.title || 'Expert is on the way'}
+                    <h4 className="font-bold text-[13.5px] text-slate-900 leading-tight whitespace-nowrap">
+                      {msg.title || liveTracking.statusText || 'Expert is on the way'}
                     </h4>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      {msg.distance || '4.0 km away • 6 min'}
+                    <p className="text-xs text-slate-500 font-medium mt-0.5 whitespace-nowrap">
+                      {msg.distance || liveTracking.distance || '4.0 km away • 6 min'}
                     </p>
                   </div>
                 </div>
 
                 <Link
                   href={`/track?orderId=${encodeURIComponent(paramOrderId)}`}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 hover:border-blue-300 text-[#0062FF] hover:bg-blue-50/50 bg-slate-50/60 text-xs font-semibold shrink-0 transition active:scale-95 shadow-2xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-blue-300 text-[#0062FF] hover:bg-blue-50/50 bg-slate-50/60 text-xs font-semibold shrink-0 transition active:scale-95 shadow-2xs whitespace-nowrap"
                 >
                   <Map className="w-3.5 h-3.5" />
                   <span>View on Map</span>
