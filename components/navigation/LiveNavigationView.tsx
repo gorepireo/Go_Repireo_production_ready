@@ -22,6 +22,8 @@ export interface LiveNavigationViewProps {
 }
 
 export function LiveNavigationView({
+  customerDestination = [22.3955519, 87.5615995],
+  initialWorkerPosition = [22.3680, 87.5450],
   orderDetails,
   locationName = 'Debra, Paschim Medinipur',
   userName = 'Prithibi',
@@ -38,9 +40,11 @@ export function LiveNavigationView({
       {/* 1. Header (Debra, Paschim Medinipur / Hi, Prithibi) */}
       <NavigationHeader locationName={locationName} userName={userName} />
 
-      {/* 2. Official Google My Maps Embed with Floating Top Metric Pill */}
+      {/* 2. Ola Maps / MapLibre View with Floating Top Metric Pill */}
       <main className="relative flex-1 w-full flex flex-col">
         <NavigationMap
+          customerDestination={customerDestination}
+          workerPosition={initialWorkerPosition}
           distanceRemainingMeters={distanceRemainingMeters}
           durationRemainingSeconds={durationRemainingSeconds}
           className="flex-1 w-full min-h-[380px] sm:min-h-[440px]"
