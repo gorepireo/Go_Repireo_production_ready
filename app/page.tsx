@@ -325,10 +325,10 @@ export default function Home() {
           {/* Unified Hero Area: Greeting + Untrapped Technician + Directly Connected Service Banner */}
           <div className="relative w-full">
             
-            {/* 1. Hero Graphic + Greeting Container */}
-            <div className="relative w-full min-h-[170px] min-[390px]:min-h-[185px] sm:min-h-[215px] flex items-end">
+            {/* 1. Hero Graphic + Greeting Container (Extends to the right edge) */}
+            <div className="relative w-[calc(100%+1rem)] sm:w-[calc(100%+1.5rem)] -mr-4 sm:-mr-6 min-h-[170px] min-[390px]:min-h-[185px] sm:min-h-[215px] flex items-end overflow-hidden">
               
-              {/* Full Composite Graphic (Houses + Orange Arc + Branded Technician in Scaled Reference Proportions, elevated higher) */}
+              {/* Full Composite Graphic (Houses + Orange Arc + Branded Technician brought flush to the right edge) */}
               <img 
                 src="/hero-composite.png" 
                 alt="Go_Repireo Doorstep Service"
