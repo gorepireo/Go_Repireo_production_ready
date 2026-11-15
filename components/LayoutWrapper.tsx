@@ -21,7 +21,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const needsBottomNavSpace = !isAuthRoute && !isMaintenanceRoute;
   return (
     <GlobalAuthGuard>
-      <div id="root-container" className={`min-h-screen bg-[#F8FAFC] w-full flex flex-col overscroll-none selection:bg-[#007AFF] selection:text-white ${needsBottomNavSpace ? 'pb-[84px]' : ''}`}>
+      <div id="root-container" className={`min-h-screen bg-[#F8FAFC] w-full flex flex-col selection:bg-[#007AFF] selection:text-white ${needsBottomNavSpace ? 'pb-[84px]' : ''}`}>
         <main className="flex-1 w-full">
           {children}
         </main>

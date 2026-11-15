@@ -18,16 +18,16 @@
   --bottom-bar-height: 100px;
 }
 
-html,
+html {
+  overscroll-behavior-y: none;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  overscroll-behavior: none;
-  overscroll-behavior-y: none;
-  overscroll-behavior-x: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
@@ -68,19 +68,19 @@ h6 {
 main {
   width: 100%;
   overflow-x: hidden;
-  overscroll-behavior: none;
-  overscroll-behavior-y: none;
 }
 
 @layer base {
 
+  html {
+    overscroll-behavior-y: none;
+  }
+
   html,
   body {
-    @apply antialiased overscroll-none;
+    @apply antialiased;
     min-height: 100vh;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    overscroll-behavior: none;
-    overscroll-behavior-y: none;
   }
 }
 
