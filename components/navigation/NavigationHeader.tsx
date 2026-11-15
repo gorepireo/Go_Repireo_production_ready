@@ -13,11 +13,11 @@ export function NavigationHeader({
   userName = 'Prithibi',
 }: NavigationHeaderProps) {
   return (
-    <header className="w-full flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-slate-100 z-30">
+    <header className="w-full flex items-center justify-between px-3.5 py-3 bg-white/95 backdrop-blur-md border-b border-slate-100 z-30">
       {/* Location Dropdown */}
       <button
         type="button"
-        className="flex items-center gap-1.5 text-slate-800 hover:text-slate-900 transition-colors group cursor-pointer min-w-0"
+        className="flex items-center gap-1.5 text-slate-800 hover:text-slate-900 transition-colors group cursor-pointer max-w-[68%]"
         aria-label="Change location"
       >
         <MapPin className="w-4 h-4 text-orange-500 fill-orange-500/20 group-hover:scale-110 transition-transform flex-shrink-0" />
@@ -28,7 +28,7 @@ export function NavigationHeader({
       </button>
 
       {/* Greeting */}
-      <div className="flex items-center gap-1 text-slate-800 text-sm font-semibold whitespace-nowrap flex-shrink-0 pl-2">
+      <div className="flex items-center gap-1 text-slate-800 text-sm font-semibold whitespace-nowrap flex-shrink-0 pl-1.5">
         <span>Hi, {userName}</span>
         <span className="text-base" role="img" aria-label="waving hand">
           👋

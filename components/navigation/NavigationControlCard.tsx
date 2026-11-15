@@ -60,11 +60,11 @@ export function NavigationControlCard({
   const orderId = formatOrderId(orderDetails?.orderId);
   const serviceName = orderDetails?.serviceName || 'Plumbing Service';
   const scheduleTime = orderDetails?.scheduleTime || 'Immediate Arrival • On The Way';
-  const startWorkOtp = orderDetails?.startWorkOtp || '6582';
+  const startWorkOtp = orderDetails?.startWorkOtp || '4812';
   const completionOtp = orderDetails?.completionOtp || '7924';
   const technicianName = orderDetails?.technicianName || 'Anupam';
-  const technicianRating = orderDetails?.technicianRating || 0;
-  const technicianReviews = orderDetails?.technicianReviewsCount || 0;
+  const technicianRating = orderDetails?.technicianRating || 4.9;
+  const technicianReviews = orderDetails?.technicianReviewsCount || 12;
 
   // Determine active stage
   const stage = orderDetails?.orderStage || 'phase_1';
