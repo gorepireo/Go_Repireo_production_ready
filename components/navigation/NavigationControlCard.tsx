@@ -8,54 +8,34 @@ import {
   Phone,
   MessageSquare,
   Headphones,
-  Play,
-  Pause,
-  Square,
-  RefreshCw,
-  Signal,
-  CheckCircle2,
-  AlertTriangle,
 } from 'lucide-react';
-import {
-  NavigationStatus,
-  NavigationOrderDetails,
-  GPSStatus,
-} from '../../lib/navigation/types';
+import { NavigationOrderDetails } from '../../lib/navigation/types';
 
 export interface NavigationControlCardProps {
   orderDetails?: Partial<NavigationOrderDetails>;
-  navigationStatus: NavigationStatus;
-  gpsStatus: GPSStatus;
-  gpsAccuracy?: number;
-  accuracyWarning?: boolean;
-  isRecalculating?: boolean;
-  onStartNavigation: () => void;
-  onPauseNavigation: () => void;
-  onResumeNavigation: () => void;
-  onStopNavigation: () => void;
-  onRecalculate: () => void;
   onCall?: (phoneNumber?: string) => void;
   onChat?: () => void;
 }
 
+// Formats long UUIDs cleanly into the short brand format e.g. #GR-C65C
+function formatOrderId(rawId?: string): string {
+  if (!rawId) return '#GR-C65C';
+  const clean = rawId.replace(/^#/, '').trim();
+  if (clean.length > 8) {
+    const shortCode = clean.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase();
+    return `#GR-${shortCode}`;
+  }
+  return `#${clean.toUpperCase()}`;
+}
+
 export function NavigationControlCard({
   orderDetails,
-  navigationStatus,
-  gpsStatus,
-  gpsAccuracy,
-  accuracyWarning = false,
-  isRecalculating = false,
-  onStartNavigation,
-  onPauseNavigation,
-  onResumeNavigation,
-  onStopNavigation,
-  onRecalculate,
   onCall,
   onChat,
 }: NavigationControlCardProps) {
   const [copiedOtp, setCopiedOtp] = useState<boolean>(false);
 
-  const orderId = orderDetails?.orderId || '#GR-C65C';
+  const orderId = formatOrderId(orderDetails?.orderId);
   const serviceName = orderDetails?.serviceName || 'Plumbing Service';
   const scheduleTime = orderDetails?.scheduleTime || 'Today, 3:00 PM – 5:00 PM';
   const phaseText = orderDetails?.phaseText || 'Phase 1';
@@ -101,7 +81,7 @@ export function NavigationControlCard({
         </span>
       </div>
 
-      {/* 4. Start Work OTP Box (Exact match from reference image) */}
+      {/* 4. Start Work OTP Box */}
       <div className="bg-[#FFF7ED] border border-orange-100 rounded-2xl p-3.5 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-orange-500 fill-orange-500/20" />
@@ -131,7 +111,6 @@ export function NavigationControlCard({
               alt={technicianName}
               className="w-full h-full object-cover object-top"
               onError={(e) => {
-                // Fallback to stylized vector
                 (e.currentTarget as HTMLElement).style.display = 'none';
               }}
             />
@@ -174,90 +153,7 @@ export function NavigationControlCard({
         </div>
       </div>
 
-      {/* 6. Live Navigation Actions Toolbar */}
-      <div className="pt-1 space-y-2.5">
-        {/* GPS Status Indicator */}
-        <div className="flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-          <div className="flex items-center gap-1.5 font-medium">
-            <Signal
-              className={`w-3.5 h-3.5 ${
-                gpsStatus === 'locked' && !accuracyWarning
-                  ? 'text-emerald-500'
-                  : gpsStatus === 'searching'
-                  ? 'text-amber-500 animate-pulse'
-                  : 'text-slate-400'
-              }`}
-            />
-            <span>
-              GPS:{' '}
-              {gpsStatus === 'locked'
-                ? accuracyWarning
-                  ? `Low Accuracy (±${Math.round(gpsAccuracy || 0)}m)`
-                  : `Locked (±${Math.round(gpsAccuracy || 0)}m)`
-                : gpsStatus === 'searching'
-                ? 'Searching satellites...'
-                : gpsStatus === 'denied'
-                ? 'Permission Denied'
-                : 'Standby'}
-            </span>
-          </div>
-
-          {isRecalculating ? (
-            <span className="text-blue-600 font-bold flex items-center gap-1 animate-pulse">
-              <RefreshCw className="w-3 h-3 animate-spin" /> Recalculating
-            </span>
-          ) : (
-            <span className="capitalize font-semibold text-slate-700">{navigationStatus}</span>
-          )}
-        </div>
-
-        {/* Primary Navigation Buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          {navigationStatus === 'idle' || navigationStatus === 'arrived' ? (
-            <button
-              type="button"
-              onClick={onStartNavigation}
-              className="col-span-2 flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-sm rounded-xl shadow-md transition-all"
-            >
-              <Play className="w-4 h-4 fill-white" />
-              <span>Start Live Navigation</span>
-            </button>
-          ) : (
-            <>
-              {navigationStatus === 'navigating' ? (
-                <button
-                  type="button"
-                  onClick={onPauseNavigation}
-                  className="flex items-center justify-center gap-2 py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-                >
-                  <Pause className="w-4 h-4" />
-                  <span>Pause</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onResumeNavigation}
-                  className="flex items-center justify-center gap-2 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-                >
-                  <Play className="w-4 h-4 fill-white" />
-                  <span>Resume</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={onStopNavigation}
-                className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
-              >
-                <Square className="w-3.5 h-3.5 fill-slate-700" />
-                <span>End</span>
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* 7. Need Help? Banner */}
+      {/* 6. Need Help? Banner */}
       <div className="bg-[#FFFDF7] border border-orange-100 rounded-2xl p-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-orange-50 border border-orange-200/60 flex items-center justify-center text-orange-500 flex-shrink-0">
@@ -280,3 +176,5 @@ export function NavigationControlCard({
     </div>
   );
 }
+
+export default NavigationControlCard;
