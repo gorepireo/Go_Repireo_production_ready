@@ -317,7 +317,7 @@ export default function Home() {
           />
         </div>
       ) : (
-        <div className="w-full max-w-xl mx-auto px-4 sm:px-6 space-y-4 pt-1 pb-24">
+        <div className="w-full max-w-xl mx-auto px-4 sm:px-6 space-y-4 pt-1 pb-3">
         
           {/* Accessible SEO Heading */}
           <h1 className="sr-only">Go_Repireo: Doorstep Home &amp; Appliance Repair Services in Etawah</h1>
