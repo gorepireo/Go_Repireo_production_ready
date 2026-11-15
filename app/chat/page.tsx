@@ -254,91 +254,93 @@ function ChatContent() {
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F0F4F9] max-w-md mx-auto relative select-none font-sans overflow-hidden shadow-2xl">
-      {/* 1. Dark Navy Header */}
-      <header className="bg-[#0B1528] text-white px-4 pt-4 pb-12 shrink-0 z-10 relative">
-        <div className="flex items-center justify-between">
-          {/* Left: Back button + Service Badge + Title */}
-          <div className="flex items-center gap-3 min-w-0">
-            <button
-              type="button"
-              onClick={handleBack}
-              aria-label="Go back"
-              className="text-white/90 hover:text-white p-1 -ml-1 rounded-full transition cursor-pointer active:scale-95"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+    <div className="fixed inset-0 max-w-md mx-auto flex flex-col h-[100dvh] bg-[#F0F4F9] shadow-2xl overflow-hidden font-sans select-none z-50">
+      {/* 1. FIXED TOP: Dark Navy Header + Floating Order Card */}
+      <div className="shrink-0 z-30 select-none">
+        <header className="bg-[#0B1528] text-white px-4 pt-4 pb-11 relative">
+          <div className="flex items-center justify-between">
+            {/* Left: Back button + Service Badge + Title */}
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={handleBack}
+                aria-label="Go back"
+                className="text-white/90 hover:text-white p-1 -ml-1 rounded-full transition cursor-pointer active:scale-95"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
 
-            {/* Blue & White Icon Badge */}
-            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md shrink-0">
-              <Wrench className="w-5 h-5 text-[#0062FF]" />
-            </div>
-
-            {/* Mission Chat Title & ID */}
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="font-bold text-base text-white tracking-tight leading-tight">
-                  Mission Chat
-                </h1>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+              {/* Blue & White Icon Badge */}
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md shrink-0">
+                <Wrench className="w-5 h-5 text-[#0062FF]" />
               </div>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">
-                ID: {orderDisplayId}
-              </p>
-            </div>
-          </div>
 
-          {/* Right: Phone button + More options */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleCall}
-              aria-label="Call Expert"
-              className="w-10 h-10 rounded-full bg-[#182338] hover:bg-[#202e47] text-white flex items-center justify-center transition active:scale-95 cursor-pointer shadow-sm"
-            >
-              <Phone className="w-4 h-4 fill-white text-white" />
-            </button>
-            <button
-              type="button"
-              aria-label="More options"
-              className="p-1.5 text-white/80 hover:text-white rounded-full transition cursor-pointer"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* 2. Floating Order Info Card (Overlapping header) */}
-      <div className="-mt-8 px-4 z-20 shrink-0">
-        <div className="bg-white rounded-2xl shadow-[0_6px_20px_rgba(0,0,0,0.06)] border border-slate-100/90 p-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Water tap / Faucet / Wrench Icon */}
-            <div className="w-11 h-11 rounded-2xl bg-[#EBF3FF] flex items-center justify-center text-[#0062FF] shrink-0">
-              <Wrench className="w-5 h-5 text-[#0062FF]" />
-            </div>
-
-            <div className="min-w-0">
-              <h2 className="font-bold text-[15px] text-slate-900 leading-tight truncate">
-                {serviceName}
-              </h2>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mt-1">
-                <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="truncate">{scheduleTime}</span>
+              {/* Mission Chat Title & ID */}
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h1 className="font-bold text-base text-white tracking-tight leading-tight">
+                    Mission Chat
+                  </h1>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                </div>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  ID: {orderDisplayId}
+                </p>
               </div>
             </div>
-          </div>
 
-          {/* Status Badge: Active */}
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-[#EAFBF3] text-[#10B981] border border-[#D1F7E4] rounded-full text-xs font-semibold shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-            <span>Active</span>
+            {/* Right: Phone button + More options */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleCall}
+                aria-label="Call Expert"
+                className="w-10 h-10 rounded-full bg-[#182338] hover:bg-[#202e47] text-white flex items-center justify-center transition active:scale-95 cursor-pointer shadow-sm"
+              >
+                <Phone className="w-4 h-4 fill-white text-white" />
+              </button>
+              <button
+                type="button"
+                aria-label="More options"
+                className="p-1.5 text-white/80 hover:text-white rounded-full transition cursor-pointer"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Floating Order Info Card (Fixed right below Header) */}
+        <div className="-mt-7 px-4 relative z-20">
+          <div className="bg-white rounded-2xl shadow-[0_6px_20px_rgba(0,0,0,0.06)] border border-slate-100/90 p-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Water tap / Faucet / Wrench Icon */}
+              <div className="w-11 h-11 rounded-2xl bg-[#EBF3FF] flex items-center justify-center text-[#0062FF] shrink-0">
+                <Wrench className="w-5 h-5 text-[#0062FF]" />
+              </div>
+
+              <div className="min-w-0">
+                <h2 className="font-bold text-[15px] text-slate-900 leading-tight truncate">
+                  {serviceName}
+                </h2>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mt-1">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{scheduleTime}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Badge: Active */}
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#EAFBF3] text-[#10B981] border border-[#D1F7E4] rounded-full text-xs font-semibold shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+              <span>Active</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Messages Stream */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5 relative">
+      {/* 2. SCROLLABLE MIDDLE: Only Messages Stream Scrolls */}
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 space-y-3.5 relative">
         {/* Date Divider: Today */}
         <div className="flex justify-center my-2">
           <span className="px-4 py-1 bg-[#E2EAF4] text-slate-500 text-[11px] font-semibold rounded-full shadow-2xs">
@@ -438,8 +440,8 @@ function ChatContent() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 4. Bottom Input Bar with Subtle Wave Overlay */}
-      <footer className="relative pt-2 pb-5 px-4 bg-gradient-to-t from-[#E2EDF8] via-[#EDF3FA] to-transparent shrink-0">
+      {/* 3. FIXED BOTTOM: Input Bar with Subtle Wave Overlay */}
+      <footer className="shrink-0 z-30 pt-2 pb-5 px-4 bg-gradient-to-t from-[#E2EDF8] via-[#EDF3FA] to-transparent">
         <div className="max-w-md mx-auto">
           <form
             onSubmit={handleSendMessage}
