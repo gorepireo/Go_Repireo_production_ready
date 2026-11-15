@@ -326,7 +326,7 @@ export default function Home() {
           <div className="relative w-full">
             
             {/* 1. Hero Greeting + Technician Graphic */}
-            <div className="w-full grid grid-cols-[46%_54%] items-end min-h-[175px] min-[390px]:min-h-[195px] sm:min-h-[225px]">
+            <div className="w-full grid grid-cols-[46%_54%] items-end min-h-[185px] min-[390px]:min-h-[205px] sm:min-h-[235px]">
               
               {/* Left Column (46% width) - Greeting & Typography Moved to Top */}
               <div className="flex flex-col justify-start self-start pr-1 sm:pr-4 pt-1 sm:pt-2 z-10">
@@ -343,26 +343,26 @@ export default function Home() {
               </div>
 
               {/* Right Column (54% width) - Layered Scene Background & Cutout Technician */}
-              <div className="relative w-full h-[175px] min-[390px]:h-[195px] sm:h-[225px] flex items-end justify-center pointer-events-none">
+              <div className="relative w-full h-[185px] min-[390px]:h-[205px] sm:h-[235px] flex items-end justify-center pointer-events-none">
                 {/* Layer 1: Background Scene (Houses + Orange Arc, scaled proportionally to match reference) */}
                 <img 
                   src="/hero-scene.png" 
                   alt="Service Area Scene"
-                  className="absolute inset-0 w-full h-full object-cover object-right select-none scale-[0.78] sm:scale-[0.82] origin-bottom-right"
+                  className="absolute inset-0 w-full h-full object-cover object-right select-none scale-[0.80] sm:scale-[0.84] origin-bottom-right"
                 />
 
-                {/* Layer 2: Technician Standing in Foreground (Dominant & Crisp) */}
+                {/* Layer 2: Technician Standing in Foreground (Elevated, Dominant & Crisp) */}
                 <img 
                   src="/hero-technician.png" 
                   alt="Professional Technician"
-                  className="relative z-10 h-[108%] min-[390px]:h-[112%] w-auto max-w-[92%] object-contain object-bottom select-none translate-x-1"
+                  className="relative z-10 h-[116%] min-[390px]:h-[120%] sm:h-[124%] w-auto max-w-[94%] object-contain object-bottom select-none translate-x-1"
                 />
               </div>
 
             </div>
 
-            {/* 2. Book a Service Banner (Tucked directly in front of technician's lower body) */}
-            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-5 min-[390px]:-mt-6 sm:-mt-8 z-20">
+            {/* 2. Book a Service Banner (Seamlessly connected to the bottom of the hero technician & scene) */}
+            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-6 min-[390px]:-mt-7 sm:-mt-8 z-20">
               <img 
                 src="/banner-book-service.jpg" 
                 alt="Book a Service"
