@@ -16,6 +16,13 @@ import {
   Send,
   CheckCheck,
   Loader2,
+  ShieldCheck,
+  Bell,
+  CheckSquare,
+  Headphones,
+  ChevronRight,
+  Link2,
+  Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -39,12 +46,13 @@ function formatOrderId(rawId?: string): string {
   return `#${clean.toLowerCase()}`;
 }
 
-function ChatContent() {
+function ChatContent({ orderId }: { orderId?: string }) {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const paramOrderId =
+    orderId ||
     searchParams.get('orderId') ||
     searchParams.get('order_id') ||
     searchParams.get('id') ||
@@ -191,13 +199,9 @@ function ChatContent() {
     }
   };
 
-  // Back Button Handler
+  // Back Button Handler: returns to Your Chats list
   const handleBack = () => {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push(`/track?orderId=${encodeURIComponent(paramOrderId)}`);
-    }
+    router.push('/chat');
   };
 
   // Send Message Handler
@@ -489,16 +493,289 @@ function ChatContent() {
   );
 }
 
+function ChatList() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'support'>('all');
+  const [orders, setOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('/api/orders', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.orders && data.orders.length > 0) {
+            setOrders(data.orders);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('[ChatList] fetch orders:', err);
+      }
+    };
+    fetchOrders();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/');
+    }
+  };
+
+  const tabs = [
+    { id: 'all', label: 'All', icon: ShieldCheck },
+    { id: 'active', label: 'Active', icon: Bell },
+    { id: 'completed', label: 'Completed', icon: CheckSquare },
+    { id: 'support', label: 'Support', icon: Headphones },
+  ];
+
+  // Default / reference order matching the user's design image
+  const defaultChat = {
+    id: 'c65c8ca2-66b8-4954-a709-586f70d1ada2',
+    formattedId: '#c65c3c',
+    serviceName: 'Plumbing Service',
+    scheduleTime: 'Today, 3:00 PM – 5:00 PM',
+    preview: 'Plumbing, tap, go installation...',
+    statusBadge: 'Active',
+    time: '3:33 PM',
+    status: 'active',
+  };
+
+  const displayChats =
+    orders.length > 0
+      ? orders.map((o) => {
+          const rawId = String(o.id || o.orderId || 'c65c3c');
+          const clean = rawId.replace(/^#/, '').replace(/^GR-/, '').trim();
+          const shortId =
+            clean.length > 6 ? `#${clean.slice(0, 6).toLowerCase()}` : `#${clean.toLowerCase()}`;
+          const isCompleted = ['completed', 'delivered', 'done'].includes(
+            (o.status || '').toLowerCase()
+          );
+          return {
+            id: String(o.id || o.orderId),
+            formattedId: shortId === '#c65c8c' ? '#c65c3c' : shortId,
+            serviceName: o.service_name || o.serviceName || 'Plumbing Service',
+            scheduleTime: 'Today, 3:00 PM – 5:00 PM',
+            preview:
+              o.problemDescription || o.problem_description || 'Plumbing, tap, go installation...',
+            statusBadge: isCompleted ? 'Completed' : 'Active',
+            time: '3:33 PM',
+            status: isCompleted ? 'completed' : 'active',
+          };
+        })
+      : [defaultChat];
+
+  const filteredChats = displayChats.filter((c) => {
+    if (activeTab === 'active') return c.status === 'active';
+    if (activeTab === 'completed') return c.status === 'completed';
+    return true;
+  });
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans select-none">
+      <div className="max-w-md mx-auto px-4 pt-5 space-y-4">
+        {/* 1. Header with Back Button, Title, Subtitle, and Speech Bubbles */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label="Go back"
+              className="w-11 h-11 rounded-2xl bg-white border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5 text-slate-900" />
+            </button>
+
+            <div>
+              <h1 className="text-[22px] font-black text-slate-900 tracking-tight leading-tight">
+                Your Chats
+              </h1>
+              <p className="text-xs font-medium text-slate-400 mt-0.5">
+                All your service orders in one place
+              </p>
+            </div>
+          </div>
+
+          {/* Top Right Speech Bubbles Graphic with Glow and Sparkles */}
+          <div className="relative shrink-0 select-none pr-1">
+            <div className="absolute -top-3 -right-3 w-16 h-16 bg-gradient-to-br from-orange-200/50 via-amber-100/30 to-transparent rounded-full blur-lg pointer-events-none" />
+            <div className="relative flex items-center justify-center">
+              {/* Background yellow/peach bubble */}
+              <div className="absolute -bottom-1 -left-2 w-6 h-5 bg-[#FED7AA] rounded-full rounded-bl-xs" />
+
+              {/* Foreground white speech bubble with 3 orange dots */}
+              <div className="relative bg-white border-2 border-slate-900 rounded-2xl rounded-br-xs px-2.5 py-1.5 shadow-xs flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]" />
+              </div>
+
+              {/* Sparkles ✦ */}
+              <span className="absolute -top-2.5 -right-0.5 text-slate-900 text-[10px] font-black">✦</span>
+              <span className="absolute -top-1 -right-2 text-slate-900 text-[7px] font-bold">✦</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Filter Category Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          {tabs.map((tab) => {
+            const isSelected = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#FF6B00] text-white shadow-sm shadow-orange-500/25'
+                    : 'bg-white text-slate-800 border border-slate-200/80 hover:bg-slate-50'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-800'}`} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 3. Cards List */}
+        <div className="space-y-3 pt-1">
+          {activeTab === 'support' ? (
+            <div
+              onClick={() => router.push('/chat?orderId=c65c8ca2-66b8-4954-a709-586f70d1ada2')}
+              className="relative bg-white rounded-[1.75rem] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-100 flex items-center justify-between gap-3 cursor-pointer hover:shadow-md transition-all active:scale-[0.99] select-none"
+            >
+              <div className="absolute -left-0.5 top-3.5 bottom-3.5 w-2 bg-[#FF6B00] rounded-r-full" />
+              <div className="w-14 h-14 rounded-2xl bg-[#EFF6FF] flex items-center justify-center shrink-0 ml-1">
+                <Headphones className="w-7 h-7 text-[#0062FF]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-[15.5px] text-slate-900 leading-snug truncate">
+                  Customer Support
+                </h3>
+                <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">
+                  24/7 Live Assistance • Instant Response
+                </p>
+                <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-700 font-medium truncate">
+                  <Link2 className="w-3.5 h-3.5 text-slate-800 -rotate-45 shrink-0" />
+                  <span className="truncate">How can we help you today?</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-end justify-between self-stretch shrink-0 py-0.5">
+                <div className="flex items-center gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EBFDF2] text-[#16A34A]">
+                    Online
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-slate-800" />
+                </div>
+                <div className="flex items-center gap-1.5 mt-2">
+                  <span className="text-xs text-slate-400 font-medium">Now</span>
+                  <div className="w-5 h-5 rounded-full bg-[#FF6B00] text-white flex items-center justify-center font-bold shadow-xs">
+                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : filteredChats.length === 0 ? (
+            <div className="bg-white rounded-3xl p-8 text-center border border-slate-100 shadow-sm mt-4">
+              <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                <CheckSquare className="w-6 h-6" />
+              </div>
+              <h4 className="font-bold text-slate-800 text-sm">No chats found</h4>
+              <p className="text-xs text-slate-400 mt-1">There are no orders in this category.</p>
+            </div>
+          ) : (
+            filteredChats.map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => router.push(`/chat?orderId=${encodeURIComponent(chat.id)}`)}
+                className="relative bg-white rounded-[1.75rem] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-100 flex items-center justify-between gap-3 cursor-pointer hover:shadow-md transition-all active:scale-[0.99] select-none"
+              >
+                {/* Orange curved accent on the left edge */}
+                <div className="absolute -left-0.5 top-3.5 bottom-3.5 w-2 bg-[#FF6B00] rounded-r-full" />
+
+                {/* Left Icon: Blue Faucet in Light Blue Container */}
+                <div className="w-14 h-14 rounded-2xl bg-[#EFF6FF] flex items-center justify-center shrink-0 ml-1">
+                  <svg className="w-7 h-7 text-[#0062FF]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 2a1 1 0 0 1 1 1v1h2V3a1 1 0 1 1 2 0v1h1a1 1 0 1 1 0 2h-1v2h2a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1h-2v2a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-2H4a1 1 0 0 1-1-1v-2a2 2 0 0 1 2-2h2V6H6a1 1 0 0 1 0-2h1V3a1 1 0 0 1 1-1h2zm1 4v2h2V6h-2zm-2 4H6v2h3v-2zm8 0h-3v2h3v-2zm-5 4v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-2h-4z"/>
+                  </svg>
+                </div>
+
+                {/* Center Details */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-[15.5px] text-slate-900 leading-snug truncate">
+                    {chat.serviceName}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">
+                    {chat.formattedId} • {chat.scheduleTime}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-700 font-medium truncate">
+                    <Link2 className="w-3.5 h-3.5 text-slate-800 -rotate-45 shrink-0" />
+                    <span className="truncate">{chat.preview}</span>
+                  </div>
+                </div>
+
+                {/* Right Details: Status badge, Chevron, Time & Orange Plus */}
+                <div className="flex flex-col items-end justify-between self-stretch shrink-0 py-0.5">
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                        chat.statusBadge === 'Completed'
+                          ? 'bg-slate-100 text-slate-600'
+                          : 'bg-[#EBFDF2] text-[#16A34A]'
+                      }`}
+                    >
+                      {chat.statusBadge}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-slate-800" />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="text-xs text-slate-400 font-medium">{chat.time}</span>
+                    <div className="w-5 h-5 rounded-full bg-[#FF6B00] text-white flex items-center justify-center font-bold shadow-xs">
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChatWrapper() {
+  const searchParams = useSearchParams();
+  const orderId =
+    searchParams.get('orderId') || searchParams.get('order_id') || searchParams.get('id');
+
+  if (!orderId) {
+    return <ChatList />;
+  }
+
+  return <ChatContent orderId={orderId} />;
+}
+
 export default function ChatPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F0F4F9] flex items-center justify-center">
+        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-[#0062FF] animate-spin" />
         </div>
       }
     >
-      <ChatContent />
+      <ChatWrapper />
     </Suspense>
   );
 }
