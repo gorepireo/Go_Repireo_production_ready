@@ -250,10 +250,12 @@ export default function Header({
             aria-label="Open notifications"
           >
             <Bell size={20} />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white shadow-2xs">
+            {unreadCount > 0 ? (
+              <span className="absolute top-1 right-1 bg-[#FF6B00] text-white text-[9px] font-black min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center border-2 border-white shadow-2xs">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
+            ) : (
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#FF6B00]"></span>
             )}
           </button>
         </div>
