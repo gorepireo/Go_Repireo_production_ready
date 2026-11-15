@@ -253,7 +253,7 @@ export default function Header({
           <button
             onClick={() => setIsNotifOpen(true)}
             className={`relative p-2 ${
-              transparent ? 'bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] border border-slate-100' : 'hover:bg-slate-50'
+              transparent ? 'bg-slate-50 border border-slate-200/80 shadow-2xs' : 'hover:bg-slate-50'
             } text-slate-800 rounded-full transition-all active:scale-95`}
             aria-label="Open notifications"
           >
