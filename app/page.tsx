@@ -323,10 +323,10 @@ export default function Home() {
           <h1 className="sr-only">Go_Repireo: Doorstep Home &amp; Appliance Repair Services in Etawah</h1>
 
           {/* 1. Hero Greeting + Technician (Two-Column Responsive Composition) */}
-          <section className="w-full grid grid-cols-[48%_52%] items-end min-h-[160px] min-[390px]:min-h-[180px] sm:min-h-[210px] overflow-hidden">
+          <section className="w-full grid grid-cols-[48%_52%] items-end min-h-[190px] min-[390px]:min-h-[210px] sm:min-h-[240px] overflow-hidden">
             
             {/* Left Column (48% width) - Greeting & Typography */}
-            <div className="flex flex-col justify-center pr-1 sm:pr-4 py-2 pb-4 z-10">
+            <div className="flex flex-col justify-center pr-1 sm:pr-4 py-2 pb-8 sm:pb-10 z-10">
               <p className="text-xs sm:text-sm font-semibold text-slate-700">
                 {greetingTime},
               </p>
@@ -340,7 +340,7 @@ export default function Home() {
             </div>
 
             {/* Right Column (52% width) - Technician Anchored Directly to Bottom */}
-            <div className="relative w-full h-[160px] min-[390px]:h-[180px] sm:h-[210px] flex items-end justify-end overflow-hidden">
+            <div className="relative w-full h-[190px] min-[390px]:h-[210px] sm:h-[240px] flex items-end justify-end overflow-hidden">
               <img 
                 src="/hero-technician.png" 
                 alt="Professional Technician"
@@ -350,8 +350,8 @@ export default function Home() {
 
           </section>
 
-          {/* 2. Book a Service Banner (with 3D Calendar, Anchored Directly Below Technician) */}
-          <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-3 sm:-mt-4 z-10">
+          {/* 2. Book a Service Banner (with 3D Calendar, Connected Directly Overlapping Technician Torso) */}
+          <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-8 min-[390px]:-mt-10 sm:-mt-12 z-20">
             <img 
               src="/banner-book-service.jpg" 
               alt="Book a Service"
