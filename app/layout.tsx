@@ -82,7 +82,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="light" style={{ colorScheme: 'light' }} suppressHydrationWarning>
+    <html lang="en" data-theme="light" className="overscroll-none" style={{ colorScheme: 'light' }} suppressHydrationWarning>
       <head>
         <link rel="icon" type="image/png" href="/logo.png?v=2" />
         <link rel="shortcut icon" href="/logo.png?v=2" />
@@ -319,7 +319,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} bg-white text-slate-950`} data-deploy-v="REPIREO-ALPHA-1.2" suppressHydrationWarning>
+      <body className={`${inter.className} bg-white text-slate-950 overscroll-none`} data-deploy-v="REPIREO-ALPHA-1.2" suppressHydrationWarning>
         <ToastProvider>
           <AuthProvider>
             <CartProvider>
