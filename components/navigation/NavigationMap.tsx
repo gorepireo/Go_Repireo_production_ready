@@ -17,31 +17,30 @@ export interface NavigationMapProps {
   olaApiKey?: string;
 }
 
-// Clean basemap style specs:
-// 1. OpenFreeMap Vector Bright Style: 100% free, NO API key required, zero watermark, full vector styling for MapLibre
-const CLEAN_VECTOR_STYLE = 'https://tiles.openfreemap.org/styles/bright';
-
-// 2. Reliable Esri World Street Map raster fallback: zero watermark, free, CORS open
-const CLEAN_RASTER_FALLBACK: any = {
+// Clean Google Maps raster basemap style:
+// 100% free, NO API key required, zero watermark, instant load, identical to LocationMapSelector.tsx
+const GOOGLE_BASEMAP_STYLE: any = {
   version: 8,
-  name: 'World Street Map',
   sources: {
-    'esri-world-street': {
+    'google-raster-tiles': {
       type: 'raster',
       tiles: [
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        'https://mt0.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        'https://mt2.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        'https://mt3.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
       ],
       tileSize: 256,
-      attribution: 'Esri, HERE, Garmin, USGS, NGA',
+      attribution: '&copy; Google Maps',
     },
   },
   layers: [
     {
-      id: 'esri-world-street-layer',
+      id: 'google-raster-layer',
       type: 'raster',
-      source: 'esri-world-street',
+      source: 'google-raster-tiles',
       minzoom: 0,
-      maxzoom: 19,
+      maxzoom: 21,
     },
   ],
 };
@@ -94,9 +93,9 @@ export function NavigationMap({
       (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_OLA_MAPS_API_KEY) ||
       '';
 
-    // Style URL for Ola Maps (monizb/ola-maps-demo) vs zero-auth clean vector basemap
+    // Style URL for Ola Maps (monizb/ola-maps-demo) vs zero-auth clean Google Maps basemap
     const olaStyleUrl = 'https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json';
-    const initialStyle = apiKey ? olaStyleUrl : CLEAN_VECTOR_STYLE;
+    const initialStyle = apiKey ? olaStyleUrl : GOOGLE_BASEMAP_STYLE;
 
     import('maplibre-gl').then((maplibreModule) => {
       if (!isMounted || !mapContainerRef.current) return;
@@ -135,15 +134,15 @@ export function NavigationMap({
         },
       });
 
-      // Handle 401 / 403 authorization failures on Ola Maps by falling back to clean reliable basemap
+      // Handle 401 / 403 authorization failures on Ola Maps by falling back to clean Google Maps basemap
       let hasFallenBack = false;
       map.on('error', (e) => {
         const status = (e?.error as any)?.status;
-        if (!hasFallenBack && (status === 401 || status === 403 || e?.error?.message?.includes('style'))) {
+        if (!hasFallenBack && (status === 401 || status === 403)) {
           hasFallenBack = true;
-          console.warn('[NavigationMap] Authorization or style failure. Falling back to clean basemap.');
+          console.warn('[NavigationMap] Authorization failure on Ola Maps. Falling back to Google Maps basemap.');
           try {
-            map.setStyle(CLEAN_RASTER_FALLBACK);
+            map.setStyle(GOOGLE_BASEMAP_STYLE);
           } catch {}
         }
       });
@@ -365,7 +364,7 @@ export function NavigationMap({
       <div
         ref={mapContainerRef}
         className="w-full h-full absolute inset-0 z-0"
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', minHeight: '280px' }}
       />
 
       {/* 2. Floating Top Route Stats Pill (e.g. 4.0 km • 6 min) */}

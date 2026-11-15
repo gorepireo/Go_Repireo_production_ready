@@ -47,7 +47,7 @@ export function LiveNavigationView({
           workerPosition={initialWorkerPosition}
           distanceRemainingMeters={distanceRemainingMeters}
           durationRemainingSeconds={durationRemainingSeconds}
-          className="flex-1 w-full min-h-[220px] sm:min-h-[280px]"
+          className="w-full h-[320px] min-h-[280px] sm:h-[400px]"
         />
 
         {/* 3. Bottom Delivery & Order Control Card (Clean & Minimal) */}
