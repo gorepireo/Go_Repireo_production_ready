@@ -325,18 +325,18 @@ export default function Home() {
           {/* Unified Hero Area: Greeting + Untrapped Technician + Directly Connected Service Banner */}
           <div className="relative w-full">
             
-            {/* Layer 1: Background Scene (Houses + Orange Arc spanning across behind text & technician) */}
-            <img 
-              src="/hero-scene.png" 
-              alt="Service Area Scene"
-              className="absolute right-0 bottom-0 h-full w-[68%] sm:w-[65%] object-cover object-right select-none pointer-events-none"
-            />
-
-            {/* 1. Hero Greeting + Technician Graphic */}
-            <div className="relative w-full grid grid-cols-[48%_52%] items-end min-h-[162px] min-[390px]:min-h-[170px] sm:min-h-[200px]">
+            {/* 1. Hero Graphic + Greeting Container */}
+            <div className="relative w-full min-h-[175px] min-[390px]:min-h-[190px] sm:min-h-[220px] flex items-end">
               
-              {/* Left Column (48% width) - Greeting & Typography Moved to Top */}
-              <div className="flex flex-col justify-start self-start pr-1 sm:pr-4 pt-1 sm:pt-2 z-10">
+              {/* Full Composite Graphic (Houses + Orange Arc + Branded Technician in Dit-to Reference Proportions) */}
+              <img 
+                src="/hero-composite.png" 
+                alt="Go_Repireo Doorstep Service"
+                className="absolute inset-0 w-full h-full object-cover object-right select-none pointer-events-none"
+              />
+
+              {/* Left Greeting & Typography (Positioned over clean white left area) */}
+              <div className="relative z-10 flex flex-col justify-start self-start max-w-[50%] min-[390px]:max-w-[48%] pt-2 sm:pt-3 pl-1 pr-1">
                 <p className="text-xs sm:text-sm font-semibold text-slate-700">
                   {greetingTime},
                 </p>
@@ -349,20 +349,10 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Right Column (52% width) - Cutout Technician */}
-              <div className="relative w-full h-[162px] min-[390px]:h-[170px] sm:h-[200px] flex items-end justify-end pointer-events-none pr-1 sm:pr-2">
-                {/* Layer 2: Technician Standing in Foreground (Dominant, Crisp & Balanced) */}
-                <img 
-                  src="/hero-technician.png" 
-                  alt="Professional Technician"
-                  className="relative z-10 h-[106%] min-[390px]:h-[108%] sm:h-[110%] w-auto max-w-[78%] sm:max-w-[75%] object-contain object-bottom select-none translate-x-2"
-                />
-              </div>
-
             </div>
 
-            {/* 2. Book a Service Banner (Seamlessly connected to the bottom of the hero technician & scene) */}
-            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-4 min-[390px]:-mt-4.5 sm:-mt-5 z-20">
+            {/* 2. Book a Service Banner (Seamlessly connected to the bottom of the hero graphic) */}
+            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-4 min-[390px]:-mt-5 sm:-mt-6 z-20">
               <img 
                 src="/banner-book-service.jpg" 
                 alt="Book a Service"
