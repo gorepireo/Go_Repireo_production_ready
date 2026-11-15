@@ -344,18 +344,18 @@ export default function Home() {
 
               {/* Right Column (54% width) - Layered Scene Background & Cutout Technician */}
               <div className="relative w-full h-[175px] min-[390px]:h-[195px] sm:h-[225px] flex items-end justify-center pointer-events-none">
-                {/* Layer 1: Background Scene (Houses + Orange Arc) */}
+                {/* Layer 1: Background Scene (Houses + Orange Arc, scaled proportionally to match reference) */}
                 <img 
                   src="/hero-scene.png" 
                   alt="Service Area Scene"
-                  className="absolute inset-0 w-full h-full object-cover object-right select-none"
+                  className="absolute inset-0 w-full h-full object-cover object-right select-none scale-[0.78] sm:scale-[0.82] origin-bottom-right"
                 />
 
-                {/* Layer 2: Technician Standing in Foreground */}
+                {/* Layer 2: Technician Standing in Foreground (Dominant & Crisp) */}
                 <img 
                   src="/hero-technician.png" 
                   alt="Professional Technician"
-                  className="relative z-10 h-[106%] w-auto max-w-[88%] object-contain object-bottom select-none translate-x-1"
+                  className="relative z-10 h-[108%] min-[390px]:h-[112%] w-auto max-w-[92%] object-contain object-bottom select-none translate-x-1"
                 />
               </div>
 
