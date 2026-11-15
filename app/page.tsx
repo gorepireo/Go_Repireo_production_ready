@@ -340,11 +340,11 @@ export default function Home() {
             </div>
 
             {/* Right Column (52% width) - Technician & Integrated Scene */}
-            <div className="relative w-full h-[160px] min-[390px]:h-[175px] sm:h-[200px] flex items-center justify-end overflow-hidden [mask-image:linear-gradient(to_right,transparent_0%,black_6%,black_100%)]">
+            <div className="relative w-full h-[160px] min-[390px]:h-[175px] sm:h-[200px] flex items-center justify-end overflow-hidden">
               <img 
-                src="/hero-technician.jpg" 
+                src="/hero-technician.png" 
                 alt="Professional Technician"
-                className="w-full h-full object-cover object-[68%_center] select-none pointer-events-none"
+                className="w-full h-full object-cover object-[55%_center] select-none pointer-events-none"
               />
             </div>
 
