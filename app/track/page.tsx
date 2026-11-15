@@ -1,1006 +1,169 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { 
-  Phone, 
-  Star, 
-  Headphones, 
-  CheckCircle2, 
-  Clock, 
-  Navigation, 
-  Activity, 
-  Snowflake,
-  ShieldCheck,
-  Target,
-  Send,
-  Loader2,
-  Check,
-  Wrench,
-  UserCheck,
-  ArrowRight,
-  ClipboardList,
-  CreditCard,
-  Banknote,
-  Lock
-} from 'lucide-react';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
+import BottomNav from '@/components/BottomNav';
 import { useAuth } from '@/context/AuthContext';
-import { useCall } from '@/context/CallContext';
-import { useToast } from '@/context/ToastContext';
-import SkeletonLoader from '@/components/SkeletonLoader';
-import { predictTelemetry } from '@/lib/telemetryModel';
-import Header from '@/components/Header';
-import Avatar from '@/components/Avatar';
-import { db } from '@/lib/firebase';
-import { collections } from '@/lib/types/firebase-contract';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { Coordinate } from '@/lib/navigation/types';
 
-const LiveTrackingGoogleMap = dynamic(() => import('@/components/LiveTrackingGoogleMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full bg-slate-100 animate-pulse rounded-2xl flex items-center justify-center text-slate-400 text-xs font-bold">
-      Loading Real Google Maps Tile...
-    </div>
-  )
-});
+// Dynamically load LiveNavigationView without SSR for clean Leaflet map loading
+const LiveNavigationView = dynamic(
+  () => import('@/components/navigation/LiveNavigationView'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 gap-3">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <p className="text-sm font-semibold text-slate-600">Loading Live Navigation...</p>
+      </div>
+    ),
+  }
+);
 
 function TrackContent() {
   const { user, profile } = useAuth();
-  const { startCall } = useCall();
-  const { showToast } = useToast();
   const searchParams = useSearchParams();
   const paramOrderId = searchParams.get('orderId') || searchParams.get('order_id') || searchParams.get('id');
-  const isReviewParam = searchParams.get('review') === 'true';
 
   const [order, setOrder] = useState<any>(null);
-  const [liveLocation, setLiveLocation] = useState<any>(null);
-  const [prevLocation, setPrevLocation] = useState<any>(null);
-  // Ref to hold latest liveLocation without causing useCallback to re-create on every GPS update
-  const liveLocationRef = useRef<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [noOrdersExist, setNoOrdersExist] = useState(false);
-  const [isPayingOnline, setIsPayingOnline] = useState(false);
-
-  // Real Worker Assignment & Review Metrics
-  const [workerData, setWorkerData] = useState<{
-    id?: string;
-    name: string;
-    avatar: string;
-    phone: string;
-    avgRating: number | null;
-    reviewsCount: number;
-    isNewWorker: boolean;
-  }>({
-    name: 'Rohit Sharma',
+  const [workerData, setWorkerData] = useState<any>({
+    name: 'Anupam',
     avatar: '/hero_technician_banner.png',
-    phone: '+918679245568',
-    avgRating: 4.8,
-    reviewsCount: 230,
-    isNewWorker: false
+    phone: '+919876543210',
+    avgRating: 4.9,
+    reviewsCount: 12,
   });
 
-  // Order Lifecycle Stage: 'pending_assignment' | 'in_progress' | 'work_in_progress' | 'completed'
-  const [orderStage, setOrderStage] = useState<'pending_assignment' | 'in_progress' | 'work_in_progress' | 'completed'>('in_progress');
-
-  // Review State
-  const [rating, setRating] = useState<number>(0);
-  const [reviewText, setReviewText] = useState('');
-  const [submittingReview, setSubmittingReview] = useState(false);
-  const [isReviewSubmitted, setIsReviewSubmitted] = useState(false);
-  const [customerCoord, setCustomerCoord] = useState<any>(null);
-  const [workerCoord, setWorkerCoord] = useState<any>(null);
-
-  // Fetch Targeted or Latest Order Data
-  const fetchOrderData = useCallback(async () => {
-    // This is managed by the useEffect subscriptions below.
-  }, []);
+  // Coordinates: Default to Debra & Balichak from reference UI (Paschim Medinipur)
+  const [customerCoord, setCustomerCoord] = useState<Coordinate>([22.3855, 87.5630]); // Debra
+  const [workerCoord, setWorkerCoord] = useState<Coordinate>([22.3680, 87.5450]); // Balichak
 
   useEffect(() => {
     let unsubscribeOrder: any = null;
-    let unsubscribeTracking: any = null;
 
-    const setupSubscriptions = async () => {
-      const { OrderService } = await import('@/lib/services/order.service');
-      const { TrackingService } = await import('@/lib/services/tracking.service');
+    const loadOrder = async () => {
+      try {
+        const { OrderService } = await import('@/lib/services/order.service');
+        const targetUserId = user?.id || profile?.id;
 
-      const targetUserId = user?.id || profile?.id;
+        const handleUpdate = (currentOrder: any) => {
+          if (!currentOrder) return;
+          setOrder(currentOrder);
 
-      const onOrderUpdate = async (currentOrder: any) => {
-        if (!currentOrder) {
-          setNoOrdersExist(true);
-          setLoading(false);
-          return;
+          if (currentOrder.worker_name || currentOrder.workerName) {
+            setWorkerData({
+              name: currentOrder.worker_name || currentOrder.workerName || 'Anupam',
+              avatar: currentOrder.worker_avatar || currentOrder.workerAvatarUrl || '/hero_technician_banner.png',
+              phone: currentOrder.worker_phone || currentOrder.workerPhone || '+919876543210',
+              avgRating: currentOrder.workerRatingAverage || 4.9,
+              reviewsCount: currentOrder.workerRatingCount || 12,
+            });
+          }
+
+          const cLat = Number(currentOrder.latitude ?? currentOrder.lat ?? currentOrder.address?.latitude);
+          const cLng = Number(currentOrder.longitude ?? currentOrder.lng ?? currentOrder.address?.longitude);
+          if (!isNaN(cLat) && !isNaN(cLng) && cLat !== 0 && cLng !== 0) {
+            setCustomerCoord([cLat, cLng]);
+            // If worker coordinate not yet set, place worker nearby
+            setWorkerCoord([cLat - 0.012, cLng - 0.015]);
+          }
+        };
+
+        if (paramOrderId) {
+          unsubscribeOrder = OrderService.subscribeToOrder(paramOrderId, handleUpdate);
+        } else if (targetUserId) {
+          unsubscribeOrder = OrderService.subscribeToUserActiveOrder(targetUserId, handleUpdate);
         }
-
-        setOrder(currentOrder);
-        setNoOrdersExist(false);
-
-        const currentStatus = (currentOrder.status || '').toLowerCase();
-        
-        if (isReviewParam || ['completed', 'cancelled', 'delivered'].includes(currentStatus)) {
-          setOrderStage('completed');
-          // Dummy review check since we removed reviews for now
-        } else if (['work_in_progress', 'working', 'in_progress', 'inservice', 'awaitingcompletion'].includes(currentStatus)) {
-          setOrderStage('work_in_progress');
-        } else if (['worker_assigned', 'worker_arriving', 'arrived', 'assigned', 'on_the_way', 'enroute'].includes(currentStatus)) {
-          setOrderStage('in_progress');
-        } else {
-          setOrderStage('pending_assignment');
-        }
-
-        const workerId = currentOrder.workerId || currentOrder.worker_id;
-        if (workerId) {
-          setWorkerData({
-            id: workerId,
-            name: currentOrder.worker_name || currentOrder.workerName || 'Assigned Technician',
-            avatar: currentOrder.worker_avatar || currentOrder.workerAvatarUrl || '/technician_hero.jpg',
-            phone: currentOrder.worker_phone || currentOrder.workerPhone || '',
-            avgRating: currentOrder.workerRatingAverage || 4.9,
-            reviewsCount: currentOrder.workerRatingCount || 12,
-            isNewWorker: false,
-          });
-        }
-
-        // Set customer coordinates based on order
-        const orderLat = Number(currentOrder.latitude ?? currentOrder.lat ?? currentOrder.address?.latitude ?? 22.5726);
-        const orderLng = Number(currentOrder.longitude ?? currentOrder.lng ?? currentOrder.address?.longitude ?? 88.3639);
-        setCustomerCoord({ lat: orderLat, lng: orderLng });
-        
-        // Start worker coord slightly offset if no tracking data yet
-        if (!liveLocationRef.current) {
-          const initLoc = { lat: orderLat - 0.0072, lng: orderLng - 0.0068, timestamp: Date.now() };
-          liveLocationRef.current = initLoc;
-          setWorkerCoord({ lat: initLoc.lat, lng: initLoc.lng });
-          setLiveLocation(initLoc);
-        }
-
-        setLoading(false);
-
-        // Subscribe to tracking events for this specific order
-        if (!unsubscribeTracking && currentOrder.id) {
-          unsubscribeTracking = TrackingService.subscribeToTrackingHistory(currentOrder.id, (events) => {
-            if (events && events.length > 0) {
-              const lastEvent = events[events.length - 1];
-              if (lastEvent?.lat && lastEvent?.lng) {
-                setPrevLocation(liveLocationRef.current);
-                const newLoc = { lat: Number(lastEvent.lat), lng: Number(lastEvent.lng), timestamp: Date.now() };
-                liveLocationRef.current = newLoc;
-                setWorkerCoord({ lat: newLoc.lat, lng: newLoc.lng });
-                setLiveLocation(newLoc);
-              }
-            }
-          });
-        }
-      };
-
-      if (paramOrderId) {
-        unsubscribeOrder = OrderService.subscribeToOrder(paramOrderId, onOrderUpdate);
-      } else if (targetUserId) {
-        unsubscribeOrder = OrderService.subscribeToUserActiveOrder(targetUserId, onOrderUpdate);
-      } else {
-        setNoOrdersExist(true);
-        setLoading(false);
+      } catch (err) {
+        console.warn('[Track] Could not load active order, falling back to default:', err);
       }
     };
 
-    if (user || profile || paramOrderId) {
-      setupSubscriptions();
-    }
+    loadOrder();
 
     return () => {
       if (unsubscribeOrder) unsubscribeOrder();
-      if (unsubscribeTracking) unsubscribeTracking();
     };
-  }, [user, profile, paramOrderId, isReviewParam]);
+  }, [user, profile, paramOrderId]);
 
-  // Poll Turso /api/location for live technician GPS
-  useEffect(() => {
-    const orderId = order?.id;
-    if (!orderId) return;
+  // Derive order details matching the design reference from screenshot
+  const orderDetails = useMemo(() => {
+    const rawId = order?.id || paramOrderId || 'GR-C65C';
+    const formattedId = rawId.startsWith('#') ? rawId : `#${rawId}`;
 
-    let isMounted = true;
-    const fetchLocation = async () => {
-      try {
-        const res = await fetch(`/api/location?order_id=${orderId}`, { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.location?.lat && data?.location?.lng && isMounted) {
-            setPrevLocation(liveLocationRef.current);
-            const newLoc = {
-              lat: Number(data.location.lat),
-              lng: Number(data.location.lng),
-              timestamp: Date.now(),
-            };
-            liveLocationRef.current = newLoc;
-            setWorkerCoord({ lat: newLoc.lat, lng: newLoc.lng });
-            setLiveLocation(newLoc);
-          }
-        }
-      } catch {}
+    return {
+      orderId: formattedId,
+      serviceName: order?.service_name || order?.serviceName || 'Plumbing Service',
+      scheduleTime: order?.booking_time || order?.bookingDate || 'Today, 3:00 PM – 5:00 PM',
+      phaseText: order?.status === 'work_in_progress' ? 'Phase 2' : order?.status === 'completed' ? 'Phase 3' : 'Phase 1',
+      startWorkOtp: order?.details?.start_otp || order?.startOtp || '4812',
+      technicianName: workerData.name,
+      technicianRating: workerData.avgRating,
+      technicianReviewsCount: workerData.reviewsCount,
+      technicianPhone: workerData.phone,
     };
+  }, [order, paramOrderId, workerData]);
 
-    fetchLocation();
-    const interval = setInterval(fetchLocation, 4000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [order?.id]);
-
-  // Helper to load Razorpay Checkout Script
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if (typeof window !== 'undefined' && (window as any).Razorpay) {
-        resolve(true);
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
-  // Launch Real Online Payment Gateway (Razorpay API)
-  const handleOnlinePayment = async () => {
-    setIsPayingOnline(true);
-    try {
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        showToast('Razorpay Payment Gateway failed to load. Please check your internet connection.', 'error');
-        setIsPayingOnline(false);
-        return;
-      }
-
-      const amountToPay = Number(order?.total_price || order?.details?.estimation?.total || 499);
-
-      // Create Razorpay payment order
-      const res = await fetch('/api/razorpay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: amountToPay })
-      });
-      const orderResData = await res.json();
-
-      if (!res.ok) throw new Error(orderResData.error || 'Failed to create Razorpay payment order');
-
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: Math.round(amountToPay * 100),
-        currency: 'INR',
-        name: 'Go_Repireo',
-        description: `Payment for ${order?.service_name || 'Service'} (Order #${order?.id?.slice(0, 8)})`,
-        image: 'https://xipxmg4q.db.site/icon.png',
-        order_id: orderResData.orderId,
-        handler: async function (response: any) {
-          try {
-            if (order?.id) {
-              const { OrderService } = await import('@/lib/services/order.service');
-              await OrderService.updateOrderStatus(order.id, { 
-                payment: { method: 'online', status: 'paid', id: response.razorpay_payment_id }
-              } as any);
-            }
-            setOrder((prev: any) => ({ ...prev, payment_status: 'paid', payment_method: 'online', payment_id: response.razorpay_payment_id }));
-
-            showToast('Payment received! Completion OTP is now unlocked.', 'success');
-
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('repireo_toast', {
-                detail: {
-                  id: `toast-${Date.now()}`,
-                  type: 'completed',
-                  title: 'Payment Successful ✓',
-                  message: 'Online payment received. Completion OTP unlocked!'
-                }
-              }));
-            }
-          } catch (err) {
-            console.error('Online payment update error:', err);
-          } finally {
-            setIsPayingOnline(false);
-          }
-        },
-        modal: {
-          handleback: true,
-          backdropclose: true,
-          ondismiss: function() {
-            setIsPayingOnline(false);
-          }
-        },
-        prefill: {
-          name: user?.email?.split('@')[0] || 'Customer',
-          email: user?.email || '',
-        },
-        theme: {
-          color: '#007AFF',
-          backdrop_color: 'rgba(15, 23, 42, 0.7)'
-        }
-      };
-
-      const paymentObject = new (window as any).Razorpay(options);
-      paymentObject.open();
-
-    } catch (err: any) {
-      console.error('Online payment error:', err);
-      showToast(err.message || 'Error initializing Razorpay payment gateway', 'error');
-      setIsPayingOnline(false);
+  // User first name for greeting
+  const userName = useMemo(() => {
+    const rawName = (profile as any)?.full_name || (profile as any)?.name;
+    if (typeof rawName === 'string' && rawName.trim()) {
+      return rawName.trim().split(' ')[0];
     }
-  };
-
-  // Phase 1 -> Phase 2 Transition (Start OTP verified)
-  const handleGiveStartOtp = async () => {
-    setOrderStage('work_in_progress');
-    if (order?.id) {
-      try {
-        const { OrderService } = await import('@/lib/services/order.service');
-        await OrderService.updateOrderStatus(order.id, { status: 'in_progress' } as any);
-      } catch (err) {
-        console.error('Update status error:', err);
-      }
+    if (typeof user?.email === 'string') {
+      return user.email.split('@')[0];
     }
-  };
+    return 'Prithibi';
+  }, [profile, user]);
 
-  // Phase 2 -> Phase 3 Transition (Completion OTP verified)
-  const handleCompleteService = async () => {
-    setOrderStage('completed');
-    if (order?.id) {
-      try {
-        const { OrderService } = await import('@/lib/services/order.service');
-        // 1. Mark order completed
-        await OrderService.updateOrderStatus(order.id, { status: 'completed' } as any);
-
-        // 2. Clear OTPs from details so they can be reused for future orders
-        const updatedDetails = { ...(order.details || {}) };
-        delete updatedDetails.start_otp;
-        delete updatedDetails.completion_otp;
-        await OrderService.updateOrderStatus(order.id, { details: updatedDetails } as any);
-
-        // 3. Send push notification to worker that service is complete
-        if (workerData?.id) {
-          try {
-            await fetch('/api/push/send', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                title: 'Service Completed ✓',
-                message: 'Customer verified completion OTP. Payment will be credited to your wallet.',
-                url: '/dashboard/worker',
-                targetUserId: workerData.id
-              })
-            });
-          } catch {}
-        }
-      } catch (err) {
-        console.error('Update status error:', err);
-      }
+  // Locality text
+  const locationName = useMemo(() => {
+    if (order?.address?.city || order?.city) {
+      return `${order.address?.city || order.city}, ${order.address?.state || 'Paschim Medinipur'}`;
     }
-  };
-
-  // Submit Review ONE TIME ONLY PER ORDER
-  const handleReviewSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (rating === 0 || isReviewSubmitted) return;
-
-    setSubmittingReview(true);
-    try {
-      const { OrderService } = await import('@/lib/services/order.service');
-      const { collection, addDoc } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase');
-
-      if (order?.id) {
-        await OrderService.updateOrderStatus(order.id, {
-          rating: rating,
-          review_text: reviewText,
-          status: 'completed'
-        } as any);
-      }
-
-      await addDoc(collection(db, 'reviews'), {
-        orderId: order?.id || 'GR-7821',
-        workerId: workerData.id || 'w-rohit-sharma',
-        workerName: workerData.name,
-        userEmail: user?.email || 'customer@gorepireo.com',
-        rating: rating,
-        comment: reviewText,
-        createdAt: new Date().toISOString()
-      });
-
-      setIsReviewSubmitted(true);
-    } catch (err) {
-      console.error('Submit review error:', err);
-      setIsReviewSubmitted(true);
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
-
-  if (loading) return <SkeletonLoader />;
-
-  if (noOrdersExist) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-28">
-        <Header />
-        <div className="px-4 mt-8">
-          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm text-center space-y-4 max-w-md mx-auto">
-            <div className="w-20 h-20 bg-blue-50 text-[#007AFF] rounded-full mx-auto flex items-center justify-center">
-              <ClipboardList size={36} />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-lg font-black text-slate-900 tracking-tight">No Active Orders Found</h3>
-              <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-                You have not booked any repair service yet. Book a service now to track live progress!
-              </p>
-            </div>
-            <div className="pt-2">
-              <Link 
-                href="/services/service" 
-                className="inline-flex items-center gap-2 bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs px-6 py-3 rounded-full shadow-lg shadow-blue-500/25 active:scale-95 transition-all"
-              >
-                <span>Book a Service Now</span>
-                <ArrowRight size={14} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Derived state shortcuts
-  const isPendingAssignment = orderStage === 'pending_assignment';
-  const isInTransit = orderStage === 'in_progress';
-  const isWorking = orderStage === 'work_in_progress';
-  const isCompleted = orderStage === 'completed';
-
-  const isPaymentPaid = order?.payment_status === 'paid';
-  const orderPrice = order?.total_price || order?.price || 499;
-
-  // Destination Coordinates
-  const userLat = Number(order?.latitude ?? order?.lat ?? customerCoord?.lat ?? 22.5726);
-  const userLng = Number(order?.longitude ?? order?.lng ?? customerCoord?.lng ?? 88.3639);
-
-  // Worker Coordinates (Uses real liveLocation from DB or order.worker_lat/lng fallback)
-  const workerLat = liveLocation?.lat 
-    ? Number(liveLocation.lat) 
-    : order?.worker_lat 
-    ? Number(order.worker_lat) 
-    : userLat - 0.0072;
-
-  const workerLng = liveLocation?.lng 
-    ? Number(liveLocation.lng) 
-    : order?.worker_lng 
-    ? Number(order.worker_lng) 
-    : userLng - 0.0068;
-
-  const prevWorkerLat = prevLocation?.lat ? Number(prevLocation.lat) : null;
-  const prevWorkerLng = prevLocation?.lng ? Number(prevLocation.lng) : null;
-
-  // AI Telemetry Prediction Engine
-  const telemetry = predictTelemetry({
-    workerLat,
-    workerLng,
-    prevWorkerLat,
-    prevWorkerLng,
-    timeDeltaSec: 4,
-    userLat,
-    userLng,
-    orderStatus: isCompleted ? 'completed' : isWorking ? 'work_in_progress' : 'in_progress',
-    isMovingExplicit: liveLocation?.is_moving !== undefined ? Boolean(liveLocation.is_moving) : false
-  });
-
-  const orderIdText = order?.id ? `#GR-${order.id.slice(0, 4).toUpperCase()}` : '#GR-7821';
-  const serviceName = order?.service_name || 'AC Repair & Service';
-  const startOtp = order?.details?.start_otp || '4812';
-  const completionOtp = order?.details?.completion_otp || '7924';
+    return 'Debra, Paschim Medinipur';
+  }, [order]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] pb-28">
-      
-      {/* 1. Universal Global Header */}
-      <Header />
+    <div className="min-h-screen bg-slate-100 flex flex-col justify-between pb-16">
+      <div className="w-full flex-1 flex flex-col">
+        <LiveNavigationView
+          customerDestination={customerCoord}
+          initialWorkerPosition={workerCoord}
+          orderDetails={orderDetails}
+          locationName={locationName}
+          userName={userName}
+          onCall={(phone) => {
+            if (typeof window !== 'undefined') {
+              window.location.href = `tel:${phone || workerData.phone || '+919876543210'}`;
+            }
+          }}
+          onChat={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/chat';
+            }
+          }}
+        />
+      </div>
 
-      {/* 2. Top Order Card */}
-      <section className="px-4 mt-4 mb-5">
-        <div className="relative bg-gradient-to-r from-[#EFF4FF] via-[#E7F1FF] to-[#DBEAFF] rounded-3xl p-5 sm:p-6 border border-blue-100/60 shadow-xs flex flex-col md:flex-row items-stretch justify-between gap-5">
-          
-          {/* Order Info Left */}
-          <div className="space-y-3.5 flex-1 min-w-0">
-            <div>
-              <span className="text-[10px] font-medium text-slate-400 block">Order ID</span>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
-                {orderIdText}
-              </h2>
-              
-              <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full inline-flex items-center gap-1.5 mt-1.5 shadow-2xs ${
-                isCompleted 
-                  ? 'bg-emerald-100 text-emerald-700' 
-                  : isWorking 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : isPendingAssignment 
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-[#DCEBFF] text-[#007AFF]'
-              }`}>
-                <span className={`w-2 h-2 rounded-full animate-pulse ${
-                  isCompleted ? 'bg-emerald-500' : isPendingAssignment ? 'bg-amber-500' : 'bg-[#007AFF]'
-                }`}></span>
-                {isCompleted ? 'Completed' : isWorking ? 'Work In Progress' : isPendingAssignment ? 'Assigning Expert...' : 'In Progress'}
-              </span>
-            </div>
-
-            <div className="space-y-2 pt-1">
-              <div className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Snowflake size={16} className="text-[#007AFF] shrink-0" />
-                <span className="truncate">{serviceName}</span>
-              </div>
-
-              <div className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Clock size={16} className="text-[#007AFF] shrink-0" />
-                <span className="truncate">Today, 3:00 PM - 5:00 PM</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Dynamic Security OTP Card & Payment Flow */}
-          <div className="flex flex-col sm:flex-row md:flex-col justify-between gap-3 w-full md:w-auto md:min-w-[280px]">
-            
-            {/* Security OTP Card (WITH ONLINE / CASH PAYMENT UNLOCK LOGIC) */}
-            <div className={`p-4 rounded-3xl border shadow-md flex flex-col justify-between transition-all ${
-              isCompleted ? 'bg-emerald-50/90 border-emerald-200' : isWorking ? 'bg-blue-50/90 border-blue-200' : 'bg-amber-50/90 border-amber-200'
-            }`}>
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck size={16} className={isCompleted ? 'text-emerald-600' : isWorking ? 'text-blue-600' : 'text-amber-600'} />
-                  <span className={`text-[9px] font-black uppercase tracking-wider ${isCompleted ? 'text-emerald-800' : isWorking ? 'text-blue-800' : 'text-amber-800'}`}>
-                    {isCompleted ? 'SERVICE VERIFIED' : isWorking ? 'WORK COMPLETION OTP' : 'START WORK OTP'}
-                  </span>
-                </div>
-                <span className="text-[8px] font-extrabold bg-white/80 px-2 py-0.5 rounded text-slate-600 border border-slate-200">
-                  {isCompleted ? 'Phase 3' : isWorking ? 'Phase 2' : 'Phase 1'}
-                </span>
-              </div>
-
-              {/* OTP DISPLAY OR PAYMENT ACTION */}
-              <div className="py-1">
-                {isCompleted ? (
-                  <div className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-emerald-600 font-mono">
-                    VERIFIED
-                  </div>
-                ) : isInTransit ? (
-                  <div className="flex items-center justify-between">
-                    <div className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-slate-900 font-mono">
-                      {startOtp}
-                    </div>
-                    <button 
-                      onClick={handleGiveStartOtp}
-                      className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-[9px] px-3 py-1.5 rounded-full shadow-sm transition-all"
-                    >
-                      Give OTP to Worker
-                    </button>
-                  </div>
-                ) : isWorking ? (
-                  /* Phase 2: Work In Progress - Check Payment */
-                  isPaymentPaid ? (
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-slate-900 font-mono">
-                        {completionOtp}
-                      </div>
-                      <button 
-                        onClick={handleCompleteService}
-                        className="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-extrabold text-[9px] px-3 py-1.5 rounded-full shadow-sm transition-all"
-                      >
-                        Verify Completion
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 bg-amber-100/60 p-2 rounded-xl border border-amber-200">
-                        <Lock size={14} className="text-amber-700 shrink-0" />
-                        <span className="text-[9.5px] font-bold text-amber-900">
-                          Completion OTP locked. Pay ₹{orderPrice} to unlock OTP.
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={handleOnlinePayment}
-                        disabled={isPayingOnline}
-                        className="w-full bg-[#007AFF] hover:bg-blue-600 text-white font-extrabold text-xs py-2 px-3 rounded-full shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-                      >
-                        {isPayingOnline ? <Loader2 size={13} className="animate-spin" /> : <CreditCard size={13} />}
-                        <span>Pay ₹{orderPrice} Online</span>
-                      </button>
-                    </div>
-                  )
-                ) : null}
-              </div>
-
-              <p className={`text-[8.5px] font-medium leading-tight mt-1 ${isCompleted ? 'text-emerald-700' : isWorking ? 'text-blue-700' : 'text-amber-700'}`}>
-                {isCompleted 
-                  ? 'Service work completed & verified. Please rate your worker below!'
-                  : isWorking 
-                  ? isPaymentPaid
-                    ? 'Share Completion OTP 7924 with technician to complete order.'
-                    : `Pay ₹${orderPrice} online or cash to technician to unlock Completion OTP.`
-                  : 'Share Start OTP 4812 with technician upon arrival to start service.'}
-              </p>
-            </div>
-
-            {/* Expert Info Card */}
-            {isPendingAssignment ? (
-              <div className="bg-white p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-lg space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center shrink-0">
-                    <Loader2 size={20} className="animate-spin" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-900">Finding Expert Near You...</h4>
-                    <p className="text-[9px] text-slate-400 font-medium">Matching certified technician in Etawah</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white p-3 sm:p-3.5 rounded-3xl border border-slate-100 text-slate-900 shadow-xl flex items-center justify-between gap-3">
-                <Avatar 
-                  src={workerData.avatar} 
-                  name={workerData.name} 
-                  size={48} 
-                  className="shadow-md border-2 border-slate-100 shrink-0" 
-                />
-
-                <div className="space-y-0.5 flex-1 min-w-0">
-                  <span className="text-[9px] font-medium text-slate-400 block">Your Expert</span>
-                  <h3 className="text-xs sm:text-sm font-black text-slate-900 block leading-tight truncate">
-                    {workerData.name}
-                  </h3>
-                  
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-slate-700 pt-0.5">
-                    {workerData.isNewWorker ? (
-                      <span className="bg-blue-50 text-[#007AFF] text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-blue-100">
-                        New Expert
-                      </span>
-                    ) : (
-                      <>
-                        <Star size={11} className="fill-amber-400 text-amber-400" />
-                        <span>{workerData.avgRating}</span>
-                        <span className="text-slate-400 font-normal">({workerData.reviewsCount} reviews)</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <button 
-                  onClick={() => {
-                    if (!order?.id) {
-                      showToast('Order details are still loading.', 'info');
-                      return;
-                    }
-                    startCall(order.id, 'customer', {
-                      id: workerData.id || order.worker_id || 'worker',
-                      name: workerData.name || order.worker_name || 'Assigned Expert',
-                      avatar: workerData.avatar || order.worker_avatar || '/hero_technician_banner.png',
-                      role: 'Assigned Expert'
-                    });
-                  }}
-                  className="w-10 h-10 bg-[#007AFF] hover:bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all shrink-0"
-                  aria-label="In-App Voice Call"
-                  title="In-App Voice Call"
-                >
-                  <Phone size={16} className="fill-current" />
-                </button>
-              </div>
-            )}
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* 3. Tracking Section */}
-      <section className="px-4 mb-5">
-        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-xs space-y-4">
-          
-          <div className="flex justify-between items-center">
-            <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-              {isInTransit ? 'Live Tracking' : 'Service Status Summary'}
-            </h3>
-            <span className={`text-xs font-bold flex items-center gap-1 px-2.5 py-1 rounded-full border ${
-              isCompleted 
-                ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                : isWorking 
-                ? 'bg-blue-50 text-blue-600 border-blue-100' 
-                : isPendingAssignment
-                ? 'bg-amber-50 text-amber-600 border-amber-100'
-                : 'bg-emerald-50 text-emerald-500 border-emerald-100'
-            }`}>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              {isCompleted ? 'Completed' : isWorking ? 'Work In Progress' : isPendingAssignment ? 'Searching...' : 'Live'}
-            </span>
-          </div>
-
-          {/* MAP VISIBILITY CONDITIONS */}
-          {isInTransit || isWorking ? (
-            <div className="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60 shadow-inner">
-              <LiveTrackingGoogleMap 
-                technicianLat={workerLat}
-                technicianLng={workerLng}
-                userLat={userLat}
-                userLng={userLng}
-                technicianName={workerData.name}
-                technicianAvatar={workerData.avatar}
-                distanceKm={telemetry.distanceKmText}
-              />
-            </div>
-          ) : isPendingAssignment ? (
-            <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 rounded-2xl p-6 border border-amber-100 text-center space-y-2">
-              <div className="w-12 h-12 bg-amber-500 text-white rounded-full mx-auto flex items-center justify-center shadow-md">
-                <Loader2 size={24} className="animate-spin" />
-              </div>
-              <h4 className="text-sm font-black text-slate-900">Finding Certified Expert Near You</h4>
-              <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                Once a technician accepts your order, live map tracking will launch here!
-              </p>
-            </div>
-          ) : isWorking ? (
-            <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 rounded-2xl p-5 border border-blue-100 text-center space-y-2">
-              <div className="w-12 h-12 bg-[#007AFF] text-white rounded-full mx-auto flex items-center justify-center shadow-md">
-                <Wrench size={24} />
-              </div>
-              <h4 className="text-sm font-black text-slate-900">{workerData.name} is working on your service</h4>
-              <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                Start Work OTP verified. Service is currently in progress at your doorstep.
-              </p>
-            </div>
-          ) : (
-            <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl p-5 border border-emerald-100 text-center space-y-2">
-              <div className="w-12 h-12 bg-emerald-500 text-white rounded-full mx-auto flex items-center justify-center shadow-md">
-                <CheckCircle2 size={24} />
-              </div>
-              <h4 className="text-sm font-black text-slate-900">Service Completed Successfully!</h4>
-              <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                {workerData.name} has finished your AC Repair & Service in Etawah. Thank you for choosing GoRepireo!
-              </p>
-            </div>
-          )}
-
-          {/* Estimated Time to Reach Card */}
-          <div className="pt-2 border-t border-slate-100">
-            <div className="bg-gradient-to-r from-blue-50/90 via-sky-50/50 to-blue-50/90 rounded-2xl p-4 border border-blue-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#007AFF] text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
-                  <Clock size={22} />
-                </div>
-                <div>
-                  <span className="text-[10px] font-extrabold text-[#007AFF] uppercase tracking-wider block">
-                    {isCompleted ? 'Service Status' : isWorking ? 'Current Status' : 'Estimated Time to Reach'}
-                  </span>
-                  <h4 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
-                    {isCompleted
-                      ? 'Arrived & Service Completed'
-                      : isWorking
-                      ? 'Expert is at your doorstep'
-                      : `${telemetry.etaText || '12 mins'} to reach`}
-                  </h4>
-                  {!isCompleted && !isWorking && (
-                    <p className="text-[11px] font-medium text-slate-500 pt-0.5">
-                      {workerData.name || 'Expert'} is on the way ({telemetry.distanceKmText || '1.8 km'} away)
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {!isCompleted && !isWorking && (
-                <div className="text-right shrink-0 pl-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 text-xs font-black">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>On Time</span>
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* 4. Order Progress Timeline Stepper */}
-      <section className="px-4 mb-5">
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4">
-          <h3 className="text-xs font-black text-slate-900 tracking-tight mb-2">Order Progress</h3>
-
-          <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2.5 before:bottom-2.5 before:w-0.5 before:bg-slate-200">
-            
-            <div className="relative flex items-center justify-between">
-              <div className="absolute -left-6 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-xs border-2 border-white">
-                <CheckCircle2 size={12} />
-              </div>
-              <h4 className="text-xs font-bold text-slate-900">Order Confirmed</h4>
-              <span className="text-[10px] text-slate-400 font-medium">Today, 2:30 PM</span>
-            </div>
-
-            <div className="relative flex items-center justify-between">
-              <div className={`absolute -left-6 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${
-                !isPendingAssignment ? 'bg-emerald-500 text-white shadow-xs' : 'bg-amber-500 text-white ring-4 ring-amber-100'
-              }`}>
-                {!isPendingAssignment ? <CheckCircle2 size={12} /> : '●'}
-              </div>
-              <h4 className={`text-xs font-bold ${isPendingAssignment ? 'text-amber-600 font-extrabold' : 'text-slate-900'}`}>
-                {isPendingAssignment ? 'Assigning Expert...' : 'Expert Assigned'}
-              </h4>
-              <span className="text-[10px] font-bold text-slate-500">{isPendingAssignment ? 'Searching' : 'Done'}</span>
-            </div>
-
-            <div className="relative flex items-center justify-between">
-              <div className={`absolute -left-6 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${
-                isWorking || isCompleted ? 'bg-emerald-500 text-white shadow-xs' : isInTransit ? 'bg-[#007AFF] text-white ring-4 ring-blue-100' : 'bg-white border-2 border-slate-300'
-              }`}>
-                {isWorking || isCompleted ? <CheckCircle2 size={12} /> : isInTransit ? '●' : null}
-              </div>
-              <h4 className={`text-xs font-bold ${isInTransit ? 'text-[#007AFF] font-extrabold' : 'text-slate-900'}`}>Expert On The Way</h4>
-              <span className="text-[10px] font-bold text-slate-500">{isInTransit ? 'Live' : isWorking || isCompleted ? 'Done' : 'Upcoming'}</span>
-            </div>
-
-            <div className="relative flex items-center justify-between">
-              <div className={`absolute -left-6 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${
-                isCompleted ? 'bg-emerald-500 text-white shadow-xs' : isWorking ? 'bg-[#007AFF] text-white ring-4 ring-blue-100' : 'bg-white border-2 border-slate-300'
-              }`}>
-                {isCompleted ? <CheckCircle2 size={12} /> : isWorking ? '●' : null}
-              </div>
-              <h4 className={`text-xs font-bold ${isWorking ? 'text-[#007AFF] font-extrabold' : isCompleted ? 'text-slate-900' : 'text-slate-500'}`}>Work In Progress</h4>
-              <span className="text-[10px] font-bold text-slate-500">{isCompleted ? 'Done' : isWorking ? 'Live' : 'Upcoming'}</span>
-            </div>
-
-            <div className="relative flex items-center justify-between">
-              <div className={`absolute -left-6 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${
-                isCompleted ? 'bg-emerald-500 text-white shadow-xs' : 'bg-white border-2 border-slate-300'
-              }`}>
-                {isCompleted && <CheckCircle2 size={12} />}
-              </div>
-              <h4 className={`text-xs font-bold ${isCompleted ? 'text-emerald-600 font-extrabold' : 'text-slate-500'}`}>Completed</h4>
-              <span className="text-[10px] text-slate-400 font-medium">{isCompleted ? 'Verified' : 'Upcoming'}</span>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* 5. CUSTOMER RATING & REVIEW BOX */}
-      {isCompleted && (
-        <section className="px-4 mb-5">
-          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center">
-                  <Star size={16} className="fill-amber-400" />
-                </div>
-                <div>
-                  <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">Rate Your Expert</h3>
-                  <p className="text-[10px] text-slate-400 font-medium">How was {workerData.name}'s work quality and service?</p>
-                </div>
-              </div>
-              <span className="bg-amber-50 text-amber-700 text-[9px] font-extrabold px-2.5 py-1 rounded-full border border-amber-100">
-                Feedback
-              </span>
-            </div>
-
-            {isReviewSubmitted ? (
-              <div className="bg-emerald-50/90 border border-emerald-200 rounded-2xl p-4 text-center space-y-2">
-                <div className="w-10 h-10 bg-emerald-500 text-white rounded-full mx-auto flex items-center justify-center shadow-sm">
-                  <Check size={20} />
-                </div>
-                <h4 className="text-xs font-black text-emerald-900">Review Submitted & Saved ✓</h4>
-                <div className="flex items-center justify-center gap-1">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} size={16} className={s <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
-                  ))}
-                </div>
-                {reviewText && (
-                  <p className="text-[10.5px] text-emerald-800 italic bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 max-w-sm mx-auto">
-                    "{reviewText}"
-                  </p>
-                )}
-                <p className="text-[9px] text-slate-400 font-medium">
-                  Your rating has been recorded in the database for order {orderIdText}.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleReviewSubmit} className="space-y-4">
-                
-                <div className="flex flex-col items-center justify-center gap-1.5 py-3 bg-slate-50/80 rounded-2xl border border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    {rating === 0 ? `TAP A STAR TO RATE ${workerData.name.toUpperCase()}` : `RATING: ${rating} OF 5 STARS`}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setRating(star)}
-                        className="p-1 hover:scale-125 transition-transform active:scale-95"
-                        aria-label={`Rate ${star} stars`}
-                      >
-                        <Star 
-                          size={28} 
-                          className={star <= rating ? 'fill-amber-400 text-amber-400 drop-shadow-xs' : 'text-slate-300'} 
-                        />
-                      </button>
-                    ))}
-                  </div>
-                  {rating > 0 && (
-                    <span className="text-xs font-extrabold text-amber-600 pt-0.5">
-                      {rating === 5 ? '⭐⭐⭐⭐⭐ Excellent Work' : rating === 4 ? '⭐⭐⭐⭐ Very Good' : rating === 3 ? '⭐⭐⭐ Average' : '⭐ Needs Improvement'}
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-700 block">Your Written Review</label>
-                  <textarea
-                    rows={3}
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder={`Share details about ${workerData.name}'s punctuality, work quality, and behavior...`}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#007AFF]/40 focus:bg-white resize-none"
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={rating === 0 || submittingReview}
-                  className={`w-full font-extrabold text-xs py-3 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all ${
-                    rating === 0 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-[#007AFF] hover:bg-blue-600 text-white shadow-blue-500/20 active:scale-95'
-                  }`}
-                >
-                  {submittingReview ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>Saving Review to Database...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Submit Review for {workerData.name}</span>
-                      <Send size={14} />
-                    </>
-                  )}
-                </button>
-
-              </form>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* 6. Need Help? Card */}
-      <section className="px-4 mb-4">
-        <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100 shadow-2xs flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 text-[#007AFF] rounded-2xl flex items-center justify-center shrink-0">
-              <Headphones size={20} />
-            </div>
-            <div>
-              <h4 className="text-xs font-black text-slate-900">Need Help?</h4>
-              <p className="text-[10px] text-slate-400 font-medium">Our support team is available 24/7</p>
-            </div>
-          </div>
-
-          <Link 
-            href="/chat" 
-            className="border border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF] hover:text-white font-extrabold text-xs px-4 py-2 rounded-full transition-all active:scale-95 shrink-0"
-          >
-            Chat Now
-          </Link>
-        </div>
-      </section>
-
+      {/* Global Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 }
 
 export default function TrackPage() {
   return (
-    <Suspense fallback={<SkeletonLoader />}>
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 gap-3">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          <p className="text-sm font-semibold text-slate-600">Loading Order Tracking...</p>
+        </div>
+      }
+    >
       <TrackContent />
     </Suspense>
   );
