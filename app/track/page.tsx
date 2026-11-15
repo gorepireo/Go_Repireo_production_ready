@@ -4,7 +4,6 @@ import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
-import BottomNav from '@/components/BottomNav';
 import { useAuth } from '@/context/AuthContext';
 import { Coordinate } from '@/lib/navigation/types';
 
@@ -79,7 +78,15 @@ function TrackContent() {
   const paramOrderId = searchParams.get('orderId') || searchParams.get('order_id') || searchParams.get('id');
 
   const [order, setOrder] = useState<any>(null);
-  const [localStage, setLocalStage] = useState<'phase_1' | 'phase_2' | 'phase_3' | null>(null);
+  const [localStage, setLocalStage] = useState<'phase_1' | 'phase_2' | 'phase_3' | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gorepireo_track_stage');
+      if (saved === 'phase_1' || saved === 'phase_2' || saved === 'phase_3') {
+        return saved;
+      }
+    }
+    return null;
+  });
   const [workerData, setWorkerData] = useState<any>({
     name: 'Anupam',
     avatar: '/hero_technician_banner.png',
@@ -175,6 +182,9 @@ function TrackContent() {
   // Stage transition handlers
   const handleGiveStartOtp = async () => {
     setLocalStage('phase_2');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gorepireo_track_stage', 'phase_2');
+    }
     const orderIdToUpdate = order?.id || paramOrderId;
     if (orderIdToUpdate) {
       try {
@@ -188,6 +198,9 @@ function TrackContent() {
 
   const handleFinishWork = async () => {
     setLocalStage('phase_3');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gorepireo_track_stage', 'phase_3');
+    }
     const orderIdToUpdate = order?.id || paramOrderId;
     if (orderIdToUpdate) {
       try {
@@ -230,7 +243,7 @@ function TrackContent() {
       scheduleTime: formatScheduleTime(order),
       orderStage: activeStage,
       phaseText: activeStage === 'phase_3' ? 'Phase 3' : activeStage === 'phase_2' ? 'Phase 2' : 'Phase 1',
-      startWorkOtp: order?.startOtp || order?.details?.start_otp || '4812',
+      startWorkOtp: order?.startOtp || order?.details?.start_otp || '6582',
       completionOtp: order?.completionOtp || order?.details?.completion_otp || '7924',
       technicianName: workerData.name,
       technicianRating: workerData.avgRating || 4.9,
@@ -272,32 +285,27 @@ function TrackContent() {
   }, [order]);
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col justify-between pb-16">
-      <div className="w-full flex-1 flex flex-col">
-        <LiveNavigationView
-          customerDestination={customerCoord}
-          initialWorkerPosition={workerCoord}
-          orderDetails={orderDetails}
-          locationName={locationName}
-          userName={userName}
-          onGiveStartOtp={handleGiveStartOtp}
-          onFinishWork={handleFinishWork}
-          onSubmitReview={handleSubmitReview}
-          onCall={(phone) => {
-            if (typeof window !== 'undefined') {
-              window.location.href = `tel:${phone || workerData.phone || '+917679430992'}`;
-            }
-          }}
-          onChat={() => {
-            if (typeof window !== 'undefined') {
-              window.location.href = '/chat';
-            }
-          }}
-        />
-      </div>
-
-      {/* Global Bottom Navigation */}
-      <BottomNav />
+    <div className="w-full flex flex-col">
+      <LiveNavigationView
+        customerDestination={customerCoord}
+        initialWorkerPosition={workerCoord}
+        orderDetails={orderDetails}
+        locationName={locationName}
+        userName={userName}
+        onGiveStartOtp={handleGiveStartOtp}
+        onFinishWork={handleFinishWork}
+        onSubmitReview={handleSubmitReview}
+        onCall={(phone) => {
+          if (typeof window !== 'undefined') {
+            window.location.href = `tel:${phone || workerData.phone || '+917679430992'}`;
+          }
+        }}
+        onChat={() => {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/chat';
+          }
+        }}
+      />
     </div>
   );
 }

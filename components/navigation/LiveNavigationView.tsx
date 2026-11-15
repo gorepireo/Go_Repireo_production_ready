@@ -36,7 +36,7 @@ export function LiveNavigationView({
   onChat,
 }: LiveNavigationViewProps) {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 select-none">
+    <div className="flex flex-col min-h-[calc(100dvh-84px)] bg-slate-50 text-slate-900 select-none">
       {/* 1. Header (Debra, Paschim Medinipur / Hi, Prithibi) */}
       <NavigationHeader locationName={locationName} userName={userName} />
 
@@ -47,7 +47,7 @@ export function LiveNavigationView({
           workerPosition={initialWorkerPosition}
           distanceRemainingMeters={distanceRemainingMeters}
           durationRemainingSeconds={durationRemainingSeconds}
-          className="flex-1 w-full min-h-[380px] sm:min-h-[440px]"
+          className="flex-1 w-full min-h-[220px] sm:min-h-[280px]"
         />
 
         {/* 3. Bottom Delivery & Order Control Card (Clean & Minimal) */}
