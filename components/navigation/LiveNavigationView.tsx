@@ -4,16 +4,19 @@ import React from 'react';
 import { Coordinate, NavigationOrderDetails } from '../../lib/navigation/types';
 import { NavigationHeader } from './NavigationHeader';
 import { NavigationMap } from './NavigationMap';
-import { NavigationControlCard } from './NavigationControlCard';
+import { NavigationControlCard, ExtendedNavigationOrderDetails } from './NavigationControlCard';
 
 export interface LiveNavigationViewProps {
   customerDestination?: Coordinate;
   initialWorkerPosition?: Coordinate;
-  orderDetails?: Partial<NavigationOrderDetails>;
+  orderDetails?: Partial<ExtendedNavigationOrderDetails>;
   locationName?: string;
   userName?: string;
   distanceRemainingMeters?: number;
   durationRemainingSeconds?: number;
+  onGiveStartOtp?: () => Promise<void> | void;
+  onFinishWork?: () => Promise<void> | void;
+  onSubmitReview?: (rating: number, text: string) => Promise<void> | void;
   onCall?: (phone?: string) => void;
   onChat?: () => void;
 }
@@ -24,6 +27,9 @@ export function LiveNavigationView({
   userName = 'Prithibi',
   distanceRemainingMeters = 3700,
   durationRemainingSeconds = 480,
+  onGiveStartOtp,
+  onFinishWork,
+  onSubmitReview,
   onCall,
   onChat,
 }: LiveNavigationViewProps) {
@@ -44,6 +50,9 @@ export function LiveNavigationView({
         <div className="w-full relative z-20">
           <NavigationControlCard
             orderDetails={orderDetails}
+            onGiveStartOtp={onGiveStartOtp}
+            onFinishWork={onFinishWork}
+            onSubmitReview={onSubmitReview}
             onCall={onCall}
             onChat={onChat}
           />

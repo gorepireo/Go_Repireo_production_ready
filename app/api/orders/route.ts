@@ -247,7 +247,13 @@ export async function PATCH(request: Request) {
 
     // Action 2: Update status
     if (action === 'update_status' || status) {
-      const targetStatus = status || body.targetStatus;
+      let targetStatus = status || body.targetStatus;
+      if (targetStatus === 'in_progress' || targetStatus === 'work_in_progress') {
+        targetStatus = 'inService';
+      } else if (targetStatus === 'finish' || targetStatus === 'done') {
+        targetStatus = 'completed';
+      }
+
       const allowed = ['requested', 'assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion', 'completed', 'cancelled'];
       if (!allowed.includes(targetStatus)) {
         return NextResponse.json({ error: 'Invalid status.' }, { status: 400 });

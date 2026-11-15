@@ -78,6 +78,7 @@ function TrackContent() {
   const paramOrderId = searchParams.get('orderId') || searchParams.get('order_id') || searchParams.get('id');
 
   const [order, setOrder] = useState<any>(null);
+  const [localStage, setLocalStage] = useState<'phase_1' | 'phase_2' | 'phase_3' | null>(null);
   const [workerData, setWorkerData] = useState<any>({
     name: 'Anupam',
     avatar: '/hero_technician_banner.png',
@@ -161,6 +162,58 @@ function TrackContent() {
     };
   }, [user, profile, paramOrderId]);
 
+  // Active lifecycle stage
+  const activeStage: 'phase_1' | 'phase_2' | 'phase_3' = useMemo(() => {
+    if (localStage) return localStage;
+    const status = (order?.status || '').toLowerCase();
+    if (['completed', 'delivered', 'done'].includes(status)) return 'phase_3';
+    if (['inservice', 'in_progress', 'work_in_progress'].includes(status)) return 'phase_2';
+    return 'phase_1';
+  }, [localStage, order]);
+
+  // Stage transition handlers
+  const handleGiveStartOtp = async () => {
+    setLocalStage('phase_2');
+    const orderIdToUpdate = order?.id || paramOrderId;
+    if (orderIdToUpdate) {
+      try {
+        const { OrderService } = await import('@/lib/services/order.service');
+        await OrderService.updateOrderStatus(orderIdToUpdate, { status: 'inService' });
+      } catch (err) {
+        console.error('Update status to inService error:', err);
+      }
+    }
+  };
+
+  const handleFinishWork = async () => {
+    setLocalStage('phase_3');
+    const orderIdToUpdate = order?.id || paramOrderId;
+    if (orderIdToUpdate) {
+      try {
+        const { OrderService } = await import('@/lib/services/order.service');
+        await OrderService.updateOrderStatus(orderIdToUpdate, { status: 'completed' });
+      } catch (err) {
+        console.error('Update status to completed error:', err);
+      }
+    }
+  };
+
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    const orderIdToUpdate = order?.id || paramOrderId;
+    if (orderIdToUpdate) {
+      try {
+        const { OrderService } = await import('@/lib/services/order.service');
+        await OrderService.updateOrderStatus(orderIdToUpdate, {
+          rating,
+          review_text: comment,
+          status: 'completed',
+        });
+      } catch (err) {
+        console.error('Submit review error:', err);
+      }
+    }
+  };
+
   // Derive order details matching the design reference from screenshot
   const orderDetails = useMemo(() => {
     const rawId = order?.id || paramOrderId || 'c65c8ca2';
@@ -170,14 +223,16 @@ function TrackContent() {
       orderId: formattedId,
       serviceName: formatServiceName(order?.service_name || order?.serviceName),
       scheduleTime: formatScheduleTime(order),
-      phaseText: order?.status === 'inService' || order?.status === 'work_in_progress' ? 'Phase 2' : order?.status === 'completed' ? 'Phase 3' : 'Phase 1',
-      startWorkOtp: order?.startOtp || order?.details?.start_otp || '4812',
+      orderStage: activeStage,
+      phaseText: activeStage === 'phase_3' ? 'Phase 3' : activeStage === 'phase_2' ? 'Phase 2' : 'Phase 1',
+      startWorkOtp: order?.startOtp || order?.details?.start_otp || '6582',
+      completionOtp: order?.completionOtp || order?.details?.completion_otp || '7924',
       technicianName: workerData.name,
       technicianRating: workerData.avgRating,
       technicianReviewsCount: workerData.reviewsCount,
       technicianPhone: workerData.phone,
     };
-  }, [order, paramOrderId, workerData]);
+  }, [order, paramOrderId, workerData, activeStage]);
 
   // Clean customer display name for greeting
   const userName = useMemo(() => {
@@ -218,6 +273,9 @@ function TrackContent() {
           orderDetails={orderDetails}
           locationName={locationName}
           userName={userName}
+          onGiveStartOtp={handleGiveStartOtp}
+          onFinishWork={handleFinishWork}
+          onSubmitReview={handleSubmitReview}
           onCall={(phone) => {
             if (typeof window !== 'undefined') {
               window.location.href = `tel:${phone || workerData.phone || '+917679430992'}`;

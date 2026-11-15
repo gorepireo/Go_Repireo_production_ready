@@ -8,11 +8,23 @@ import {
   Phone,
   MessageSquare,
   Headphones,
+  CheckCircle2,
+  Star,
+  Loader2,
+  Send,
 } from 'lucide-react';
 import { NavigationOrderDetails } from '../../lib/navigation/types';
 
+export interface ExtendedNavigationOrderDetails extends NavigationOrderDetails {
+  completionOtp?: string;
+  orderStage?: 'phase_1' | 'phase_2' | 'phase_3';
+}
+
 export interface NavigationControlCardProps {
-  orderDetails?: Partial<NavigationOrderDetails>;
+  orderDetails?: Partial<ExtendedNavigationOrderDetails>;
+  onGiveStartOtp?: () => Promise<void> | void;
+  onFinishWork?: () => Promise<void> | void;
+  onSubmitReview?: (rating: number, text: string) => Promise<void> | void;
   onCall?: (phoneNumber?: string) => void;
   onChat?: () => void;
 }
@@ -30,25 +42,76 @@ function formatOrderId(rawId?: string): string {
 
 export function NavigationControlCard({
   orderDetails,
+  onGiveStartOtp,
+  onFinishWork,
+  onSubmitReview,
   onCall,
   onChat,
 }: NavigationControlCardProps) {
   const [copiedOtp, setCopiedOtp] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  // Review State
+  const [selectedRating, setSelectedRating] = useState<number>(5);
+  const [reviewComment, setReviewComment] = useState<string>('');
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState<boolean>(false);
+  const [isReviewDone, setIsReviewDone] = useState<boolean>(false);
 
   const orderId = formatOrderId(orderDetails?.orderId);
   const serviceName = orderDetails?.serviceName || 'Plumbing Service';
-  const scheduleTime = orderDetails?.scheduleTime || 'Today, 3:00 PM – 5:00 PM';
-  const phaseText = orderDetails?.phaseText || 'Phase 1';
-  const startWorkOtp = orderDetails?.startWorkOtp || '4812';
+  const scheduleTime = orderDetails?.scheduleTime || 'Immediate Arrival • On The Way';
+  const startWorkOtp = orderDetails?.startWorkOtp || '6582';
+  const completionOtp = orderDetails?.completionOtp || '7924';
   const technicianName = orderDetails?.technicianName || 'Anupam';
-  const technicianRating = orderDetails?.technicianRating || 4.9;
-  const technicianReviews = orderDetails?.technicianReviewsCount || 12;
+  const technicianRating = orderDetails?.technicianRating || 0;
+  const technicianReviews = orderDetails?.technicianReviewsCount || 0;
 
-  const handleCopyOtp = () => {
+  // Determine active stage
+  const stage = orderDetails?.orderStage || 'phase_1';
+  const isPhase1 = stage === 'phase_1';
+  const isPhase2 = stage === 'phase_2';
+  const isPhase3 = stage === 'phase_3';
+
+  const handleGiveOtpClick = async () => {
+    // Copy OTP to clipboard
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(startWorkOtp);
       setCopiedOtp(true);
       setTimeout(() => setCopiedOtp(false), 2000);
+    }
+
+    // Advance order to Phase 2 (Work In Progress)
+    if (onGiveStartOtp) {
+      try {
+        setIsProcessing(true);
+        await onGiveStartOtp();
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  const handleFinishWorkClick = async () => {
+    // Advance order to Phase 3 (Completed)
+    if (onFinishWork) {
+      try {
+        setIsProcessing(true);
+        await onFinishWork();
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  const handleReviewSubmitClick = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onSubmitReview || isReviewDone) return;
+    try {
+      setIsReviewSubmitting(true);
+      await onSubmitReview(selectedRating, reviewComment);
+      setIsReviewDone(true);
+    } finally {
+      setIsReviewSubmitting(false);
     }
   };
 
@@ -58,9 +121,25 @@ export function NavigationControlCard({
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-black text-slate-900 tracking-tight">{orderId}</h1>
 
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full font-bold text-xs shadow-sm border border-blue-100">
-          <span className="text-sm">🚚</span>
-          <span>Worker On The Way</span>
+        <div
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs shadow-sm border ${
+            isPhase3
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+              : isPhase2
+              ? 'bg-blue-50 text-blue-700 border-blue-100'
+              : 'bg-blue-50 text-blue-600 border-blue-100'
+          }`}
+        >
+          <span className="text-sm">
+            {isPhase3 ? '✅' : isPhase2 ? '🛠️' : '🚚'}
+          </span>
+          <span>
+            {isPhase3
+              ? 'Service Completed'
+              : isPhase2
+              ? 'Work In Progress'
+              : 'Worker On The Way'}
+          </span>
         </div>
       </div>
 
@@ -76,30 +155,93 @@ export function NavigationControlCard({
           <Calendar className="w-4 h-4 text-slate-500" />
           <span>{scheduleTime}</span>
         </div>
-        <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 font-bold rounded-md">
-          {phaseText}
+        <span
+          className={`px-2.5 py-0.5 font-bold rounded-md ${
+            isPhase3
+              ? 'bg-emerald-100 text-emerald-800'
+              : isPhase2
+              ? 'bg-blue-100 text-blue-800'
+              : 'bg-slate-100 text-slate-600'
+          }`}
+        >
+          {isPhase3 ? 'Phase 3' : isPhase2 ? 'Phase 2' : 'Phase 1'}
         </span>
       </div>
 
-      {/* 4. Start Work OTP Box */}
-      <div className="bg-[#FFF7ED] border border-orange-100 rounded-2xl p-3.5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-orange-500 fill-orange-500/20" />
-          <span className="text-xs font-bold text-orange-900">Start Work OTP</span>
-        </div>
+      {/* 4. Dynamic OTP Verification Box (Phase 1 -> Phase 2 -> Phase 3) */}
+      {isPhase1 && (
+        <div className="bg-[#FFF7ED] border border-orange-100 rounded-2xl p-3.5 flex items-center justify-between shadow-sm transition-all">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-orange-500 fill-orange-500/20" />
+            <span className="text-xs font-bold text-orange-900">Start Work OTP</span>
+          </div>
 
-        <div className="text-2xl font-black tracking-widest text-slate-900 px-3">
-          {startWorkOtp}
-        </div>
+          <div className="text-2xl font-black tracking-widest text-slate-900 px-3">
+            {startWorkOtp}
+          </div>
 
-        <button
-          type="button"
-          onClick={handleCopyOtp}
-          className="px-4 py-2 bg-[#F97316] hover:bg-orange-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-        >
-          {copiedOtp ? 'Copied!' : 'Give OTP'}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={handleGiveOtpClick}
+            disabled={isProcessing}
+            className="px-4 py-2 bg-[#F97316] hover:bg-orange-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+          >
+            {isProcessing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : copiedOtp ? (
+              'Copied!'
+            ) : (
+              'Give OTP'
+            )}
+          </button>
+        </div>
+      )}
+
+      {isPhase2 && (
+        <div className="bg-blue-50/80 border border-blue-200 rounded-2xl p-3.5 flex items-center justify-between shadow-sm transition-all">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-blue-600 fill-blue-500/20" />
+            <div>
+              <span className="text-xs font-bold text-blue-950 block">Work Completion OTP</span>
+              <span className="text-[10px] text-blue-700">Share when job is done</span>
+            </div>
+          </div>
+
+          <div className="text-2xl font-black tracking-widest text-slate-900 px-3">
+            {completionOtp}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleFinishWorkClick}
+            disabled={isProcessing}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+          >
+            {isProcessing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              'Finish Work'
+            )}
+          </button>
+        </div>
+      )}
+
+      {isPhase3 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-center justify-between shadow-sm transition-all">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <span className="text-xs font-bold text-emerald-900">Service Completed</span>
+          </div>
+
+          <div className="text-sm font-black tracking-widest text-emerald-700 font-mono">
+            VERIFIED ✓
+          </div>
+
+          <span className="px-3 py-1.5 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl">
+            Done
+          </span>
+        </div>
+      )}
 
       {/* 5. Expert Profile Row */}
       <div className="flex items-center justify-between py-1 border-b border-slate-100 pb-4">
@@ -161,7 +303,60 @@ export function NavigationControlCard({
         </div>
       </div>
 
-      {/* 6. Need Help? Banner */}
+      {/* 6. Rating & Review Form (Unlocks in Phase 3 after completion) */}
+      {isPhase3 && (
+        <form onSubmit={handleReviewSubmitClick} className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-900">Rate your service experience</span>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  type="button"
+                  key={star}
+                  onClick={() => setSelectedRating(star)}
+                  className="p-0.5 hover:scale-125 transition-transform"
+                >
+                  <Star
+                    className={`w-5 h-5 ${
+                      star <= selectedRating
+                        ? 'text-amber-400 fill-amber-400'
+                        : 'text-slate-300'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              placeholder="Leave a short review for Anupam..."
+              className="flex-1 text-xs px-3 py-2 bg-white rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              disabled={isReviewSubmitting || isReviewDone}
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1 disabled:opacity-50"
+            >
+              {isReviewSubmitting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : isReviewDone ? (
+                'Saved ✓'
+              ) : (
+                <>
+                  <span>Submit</span>
+                  <Send className="w-3 h-3" />
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* 7. Need Help? Banner */}
       <div className="bg-[#FFFDF7] border border-orange-100 rounded-2xl p-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-orange-50 border border-orange-200/60 flex items-center justify-center text-orange-500 flex-shrink-0">
