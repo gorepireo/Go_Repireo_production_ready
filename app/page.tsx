@@ -326,9 +326,9 @@ export default function Home() {
           <div className="relative w-full">
             
             {/* 1. Hero Greeting + Technician Graphic */}
-            <div className="w-full grid grid-cols-[48%_52%] items-end min-h-[160px] min-[390px]:min-h-[175px] sm:min-h-[195px]">
+            <div className="w-full grid grid-cols-[46%_54%] items-end min-h-[175px] min-[390px]:min-h-[195px] sm:min-h-[225px]">
               
-              {/* Left Column (48% width) - Greeting & Typography Moved to Top */}
+              {/* Left Column (46% width) - Greeting & Typography Moved to Top */}
               <div className="flex flex-col justify-start self-start pr-1 sm:pr-4 pt-1 sm:pt-2 z-10">
                 <p className="text-xs sm:text-sm font-semibold text-slate-700">
                   {greetingTime},
@@ -342,19 +342,27 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Right Column (52% width) - Technician (Flows naturally down into banner) */}
-              <div className="relative w-full h-[160px] min-[390px]:h-[175px] sm:h-[195px] flex items-end justify-end pointer-events-none">
+              {/* Right Column (54% width) - Layered Scene Background & Cutout Technician */}
+              <div className="relative w-full h-[175px] min-[390px]:h-[195px] sm:h-[225px] flex items-end justify-center pointer-events-none">
+                {/* Layer 1: Background Scene (Houses + Orange Arc) */}
+                <img 
+                  src="/hero-scene.png" 
+                  alt="Service Area Scene"
+                  className="absolute inset-0 w-full h-full object-cover object-right select-none"
+                />
+
+                {/* Layer 2: Technician Standing in Foreground */}
                 <img 
                   src="/hero-technician.png" 
                   alt="Professional Technician"
-                  className="w-full h-full object-cover object-[68%_bottom] select-none"
+                  className="relative z-10 h-[106%] w-auto max-w-[88%] object-contain object-bottom select-none translate-x-1"
                 />
               </div>
 
             </div>
 
             {/* 2. Book a Service Banner (Tucked directly in front of technician's lower body) */}
-            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-4 min-[390px]:-mt-5 sm:-mt-6 z-20">
+            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-5 min-[390px]:-mt-6 sm:-mt-8 z-20">
               <img 
                 src="/banner-book-service.jpg" 
                 alt="Book a Service"
