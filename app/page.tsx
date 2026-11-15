@@ -317,26 +317,26 @@ export default function Home() {
           />
         </div>
       ) : (
-        <div className="w-full max-w-xl mx-auto px-4 sm:px-6 space-y-4 pt-0 pb-24">
+        <div className="w-full max-w-xl mx-auto px-4 sm:px-6 space-y-4 pt-1 pb-24">
         
           {/* Accessible SEO Heading */}
           <h1 className="sr-only">Go_Repireo: Doorstep Home &amp; Appliance Repair Services in Etawah</h1>
 
           {/* Unified Hero Area: Greeting + Untrapped Technician + Directly Connected Service Banner */}
-          <div className="relative w-full -mt-2 min-[390px]:-mt-2.5 sm:-mt-3">
+          <div className="relative w-full">
             
             {/* 1. Hero Graphic + Greeting Container */}
-            <div className="relative w-full min-h-[155px] min-[390px]:min-h-[168px] sm:min-h-[195px] flex items-end">
+            <div className="relative w-full min-h-[170px] min-[390px]:min-h-[185px] sm:min-h-[215px] flex items-end">
               
-              {/* Full Composite Graphic (Houses + Orange Arc + Branded Technician in Elevated Proportions) */}
+              {/* Full Composite Graphic (Houses + Orange Arc + Branded Technician in Scaled Reference Proportions, elevated higher) */}
               <img 
                 src="/hero-composite.png" 
                 alt="Go_Repireo Doorstep Service"
-                className="absolute inset-0 w-full h-full object-cover object-right select-none pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover object-right select-none pointer-events-none -translate-y-3 min-[390px]:-translate-y-3.5 sm:-translate-y-4"
               />
 
               {/* Left Greeting & Typography (Positioned over clean white left area with ample breathing room) */}
-              <div className="relative z-10 flex flex-col justify-start self-start max-w-[46%] min-[390px]:max-w-[44%] pt-0.5 sm:pt-1 pl-1">
+              <div className="relative z-10 flex flex-col justify-start self-start max-w-[46%] min-[390px]:max-w-[44%] pt-2 sm:pt-3 pl-1">
                 <p className="text-xs sm:text-sm font-semibold text-slate-700">
                   {greetingTime},
                 </p>
@@ -351,8 +351,8 @@ export default function Home() {
 
             </div>
 
-            {/* 2. Book a Service Banner (Brought higher & seamlessly connected to the bottom of the hero graphic) */}
-            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-5.5 min-[390px]:-mt-6 sm:-mt-7 z-20">
+            {/* 2. Book a Service Banner (Seamlessly connected to the bottom of the hero graphic) */}
+            <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-4 min-[390px]:-mt-4.5 sm:-mt-5 z-20">
               <img 
                 src="/banner-book-service.jpg" 
                 alt="Book a Service"
