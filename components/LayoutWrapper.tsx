@@ -7,13 +7,10 @@ import GlobalAuthGuard from './GlobalAuthGuard';
 
 function ConditionalBottomNav() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const isChatRoute = pathname?.startsWith('/chat');
-  const hasOrderId = searchParams?.has('orderId');
   const isAuthRoute = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
   const isMaintenanceRoute = pathname === '/maintenance' || pathname?.startsWith('/verify/certificate');
   
-  if (isAuthRoute || isMaintenanceRoute || (isChatRoute && hasOrderId)) return null;
+  if (isAuthRoute || isMaintenanceRoute) return null;
   return <BottomNav />;
 }
 

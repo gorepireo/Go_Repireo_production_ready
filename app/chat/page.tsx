@@ -254,7 +254,7 @@ function ChatContent() {
   }
 
   return (
-    <div className="fixed inset-0 max-w-md mx-auto flex flex-col h-[100dvh] bg-[#F0F4F9] shadow-2xl overflow-hidden font-sans select-none z-50">
+    <div className="fixed top-0 bottom-[68px] sm:bottom-[72px] left-0 right-0 max-w-md mx-auto flex flex-col bg-[#F0F4F9] shadow-2xl overflow-hidden font-sans select-none z-40">
       {/* 1. FIXED TOP: Dark Navy Header + Floating Order Card */}
       <div className="shrink-0 z-30 select-none">
         <header className="bg-[#0B1528] text-white px-4 pt-4 pb-11 relative">
@@ -440,8 +440,8 @@ function ChatContent() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 3. FIXED BOTTOM: Input Bar with Subtle Wave Overlay */}
-      <footer className="shrink-0 z-30 pt-2 pb-5 px-4 bg-gradient-to-t from-[#E2EDF8] via-[#EDF3FA] to-transparent">
+      {/* 3. FIXED BOTTOM: Input Bar Sitting Directly Above Nav Bar */}
+      <footer className="shrink-0 z-30 pt-1.5 pb-2.5 px-3.5 bg-gradient-to-t from-[#E2EDF8] via-[#EDF3FA] to-transparent border-t border-slate-100/60">
         <div className="max-w-md mx-auto">
           <form
             onSubmit={handleSendMessage}
