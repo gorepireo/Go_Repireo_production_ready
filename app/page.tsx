@@ -323,10 +323,10 @@ export default function Home() {
           <h1 className="sr-only">Go_Repireo: Doorstep Home &amp; Appliance Repair Services in Etawah</h1>
 
           {/* 1. Hero Greeting + Technician (Two-Column Responsive Composition) */}
-          <section className="w-full grid grid-cols-[48%_52%] items-center min-h-[160px] min-[390px]:min-h-[175px] sm:min-h-[200px] overflow-hidden">
+          <section className="w-full grid grid-cols-[48%_52%] items-end min-h-[160px] min-[390px]:min-h-[180px] sm:min-h-[210px] overflow-hidden">
             
             {/* Left Column (48% width) - Greeting & Typography */}
-            <div className="flex flex-col justify-center pr-1 sm:pr-4 py-2 z-10">
+            <div className="flex flex-col justify-center pr-1 sm:pr-4 py-2 pb-4 z-10">
               <p className="text-xs sm:text-sm font-semibold text-slate-700">
                 {greetingTime},
               </p>
@@ -339,19 +339,19 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Right Column (52% width) - Technician & Integrated Scene */}
-            <div className="relative w-full h-[160px] min-[390px]:h-[175px] sm:h-[200px] flex items-center justify-end overflow-hidden">
+            {/* Right Column (52% width) - Technician Anchored Directly to Bottom */}
+            <div className="relative w-full h-[160px] min-[390px]:h-[180px] sm:h-[210px] flex items-end justify-end overflow-hidden">
               <img 
                 src="/hero-technician.png" 
                 alt="Professional Technician"
-                className="w-full h-full object-cover object-[68%_center] select-none pointer-events-none"
+                className="w-full h-full object-cover object-[68%_bottom] select-none pointer-events-none"
               />
             </div>
 
           </section>
 
-          {/* 2. Book a Service Banner (with 3D Calendar) */}
-          <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px]">
+          {/* 2. Book a Service Banner (with 3D Calendar, Anchored Directly Below Technician) */}
+          <section className="relative w-full rounded-[22px] sm:rounded-[26px] overflow-hidden shadow-md flex items-center min-h-[145px] sm:min-h-[170px] -mt-3 sm:-mt-4 z-10">
             <img 
               src="/banner-book-service.jpg" 
               alt="Book a Service"
