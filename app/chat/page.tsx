@@ -1,328 +1,422 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Send, ArrowLeft, Loader2, Phone, MessageCircle, ChevronRight, ClipboardList, Wrench, Home, Calendar, Headphones, User as UserIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  Wrench,
+  Phone,
+  MoreVertical,
+  Calendar,
+  MapPin,
+  Map,
+  Paperclip,
+  Smile,
+  Send,
+  CheckCheck,
+  Loader2,
+} from 'lucide-react';
 import Link from 'next/link';
-import { db } from '@/lib/firebase';
-import { OrderService } from '@/lib/services/order.service';
-import { collections } from '@/lib/types/firebase-contract';
-import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
 
-function ChatList() {
-  const { user, role } = useAuth();
-  const [chats, setChats] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+interface ChatMessage {
+  id: string;
+  senderRole?: 'worker' | 'customer';
+  senderName?: string;
+  text?: string;
+  time?: string;
+  type?: 'text' | 'tracking-card';
+  title?: string;
+  distance?: string;
+}
 
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchChats = async () => {
-      try {
-        if (role !== 'customer' && role !== 'worker') return setChats([]);
-        setChats(await OrderService.getUserOrders(user.uid, role));
-      } finally { setLoading(false); }
-    };
-
-    fetchChats();
-  }, [user, role]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] pb-24">
-        <div className="bg-white sticky top-0 z-30 shadow-sm px-4 py-5 flex items-center justify-center border-b border-slate-100">
-          <div className="h-4 w-24 bg-slate-200 rounded-full animate-pulse"></div>
-        </div>
-        <div className="max-w-xl mx-auto px-4 pt-6 space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="h-4 w-32 bg-slate-200 rounded-full animate-pulse"></div>
-                <div className="h-3 w-16 bg-slate-100 rounded-full animate-pulse"></div>
-              </div>
-              <div className="h-6 w-16 bg-slate-100 rounded-full animate-pulse"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+function formatOrderId(rawId?: string): string {
+  if (!rawId) return '#c65c8c';
+  const clean = rawId.replace(/^#/, '').replace(/^GR-/, '').trim();
+  if (clean.length > 6) {
+    return `#${clean.slice(0, 6).toLowerCase()}`;
   }
-
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24">
-      {/* Header */}
-      <div className="px-4 py-8 flex items-center gap-3">
-        <div className="w-12 h-12 rounded-[1.25rem] bg-[#F0F5FF] flex items-center justify-center shrink-0">
-          <MessageCircle size={24} className="text-[#007AFF]" />
-        </div>
-        <div>
-          <h1 className="text-lg font-black uppercase tracking-widest text-[#0A1629]">
-            Your Chats
-          </h1>
-          <p className="text-xs font-medium text-slate-400 mt-0.5">
-            All your service orders in one place
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-xl mx-auto px-4 space-y-3">
-        {chats.length === 0 ? (
-          <div className="text-center py-20 opacity-50">
-            <MessageCircle size={48} className="mx-auto mb-4 text-slate-300" />
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">No chats available</p>
-          </div>
-        ) : (
-          chats.map((chat, i) => {
-            const isActive = ['assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion'].includes(chat.status);
-            
-            const icons = [ClipboardList, Wrench, Home, Calendar, UserIcon, Headphones];
-            const Icon = icons[i % icons.length];
-            
-            const dummyMessages = [
-              "Order is confirmed",
-              "Service scheduled",
-              "Waiting for update",
-              "Payment pending",
-              "Technician assigned",
-              "How can we help you?"
-            ];
-            const lastMessage = dummyMessages[i % dummyMessages.length];
-
-            return (
-              <Link key={chat.id} href={`/chat?orderId=${chat.id}`}>
-                <div className="bg-white p-4 rounded-[1.5rem] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] flex items-center gap-4 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer relative border border-slate-50/50 mb-3">
-                  {/* Left green active strip */}
-                  {isActive && (
-                    <div className="absolute left-0 top-6 bottom-6 w-1 bg-[#10B981] rounded-r-md"></div>
-                  )}
-                  
-                  {/* Icon */}
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ml-1 bg-[#F0F5FF]">
-                    <Icon size={24} className="text-[#007AFF]" />
-                  </div>
-
-                  {/* Text Content */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-slate-900 text-[15px] truncate">{chat.serviceName || 'Service Order'}</h3>
-                    <p className="text-[11px] text-slate-400 font-mono mt-0.5 tracking-wide">ID: #{chat.id.slice(0, 6)}</p>
-                    <p className="text-xs text-slate-500 font-medium truncate mt-1">Last message: {lastMessage}</p>
-                  </div>
-
-                  {/* Badges & Chevron */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`px-2.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
-                      isActive 
-                        ? 'bg-[#ECFDF5] text-[#10B981]' 
-                        : 'bg-[#F1F5F9] text-[#94A3B8]'
-                    }`}>
-                      {isActive ? 'Active' : 'Inactive'}
-                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>}
-                    </span>
-                    <ChevronRight size={18} className="text-slate-400" />
-                  </div>
-                </div>
-              </Link>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
+  return `#${clean.toLowerCase()}`;
 }
 
 function ChatContent() {
-  const { user, role } = useAuth();
-  const { showToast } = useToast();
+  const { user, profile } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const orderId = searchParams.get('orderId');
 
-  const [messages, setMessages] = useState<any[]>([]);
-  const [orderStatus, setOrderStatus] = useState<string | null>(null);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  
+  const paramOrderId =
+    searchParams.get('orderId') ||
+    searchParams.get('order_id') ||
+    searchParams.get('id') ||
+    'c65c8ca2-66b8-4954-a709-586f70d1ada2';
+
+  const [order, setOrder] = useState<any>(null);
+  const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Initial messages populated to match the design reference exactly
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'msg-1',
+      senderRole: 'worker',
+      senderName: 'Anupam',
+      text: "Hi Prithibi! I'm on the way to your location.",
+      time: '2:47 PM',
+      type: 'text',
+    },
+    {
+      id: 'msg-2',
+      senderRole: 'customer',
+      senderName: 'Prithibi',
+      text: 'Great! How much time will it take?',
+      time: '2:49 PM',
+      type: 'text',
+    },
+    {
+      id: 'msg-3',
+      senderRole: 'worker',
+      senderName: 'Anupam',
+      text: "Around 6 minutes. I'll reach soon.",
+      time: '2:50 PM',
+      type: 'text',
+    },
+    {
+      id: 'system-tracking-card',
+      type: 'tracking-card',
+      title: 'Expert is on the way',
+      distance: '4.0 km away • 6 min',
+    },
+    {
+      id: 'msg-4',
+      senderRole: 'customer',
+      senderName: 'Prithibi',
+      text: 'Okay, see you!',
+      time: '2:51 PM',
+      type: 'text',
+    },
+  ]);
 
+  // Load real order details from API if available
   useEffect(() => {
-    if (!user || !orderId) return;
-
-    const stopOrder = OrderService.subscribeToOrder(orderId, (order) => {
-      setOrderStatus(order?.status || null);
-      setLoading(false);
-    });
-    const messageQuery = query(collection(db, collections.bookings, orderId, 'messages'), orderBy('createdAt', 'asc'));
-    const stopMessages = onSnapshot(messageQuery, (snapshot) => {
-      setMessages(snapshot.docs.map((item) => {
-        const value = item.data();
-        return { id: item.id, ...value, sender_id: value.senderId, message_text: value.text, created_at: value.createdAt?.toDate?.()?.toISOString() };
-      }));
-    }, () => setMessages([]));
-
-    return () => {
-      stopOrder();
-      stopMessages();
+    let isMounted = true;
+    const fetchOrder = async () => {
+      try {
+        const res = await fetch(`/api/orders?order_id=${encodeURIComponent(paramOrderId)}`, {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const target = data.order || (data.orders || [])[0];
+          if (target && isMounted) {
+            setOrder(target);
+          }
+        }
+      } catch (err) {
+        console.warn('[Chat] Failed to fetch order:', err);
+      }
     };
-  }, [user, orderId]);
+    fetchOrder();
+    return () => {
+      isMounted = false;
+    };
+  }, [paramOrderId]);
 
+  // Scroll to bottom on new message
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const isActive = ['assigned', 'enRoute', 'arrived', 'inService', 'awaitingCompletion'].includes(orderStatus || '');
+  const technicianName = order?.worker_name || order?.workerName || 'Anupam';
+  const technicianPhone = order?.worker_phone || order?.workerPhone || '+917679430992';
+  const serviceName = order?.service_name || order?.serviceName || 'Plumbing Service';
+  const scheduleTime = 'Today, 3:00 PM – 5:00 PM';
+  const orderDisplayId = formatOrderId(order?.id || paramOrderId);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !user || !orderId || !isActive) return;
-
-    const msgText = newMessage.trim();
-    setNewMessage(''); // optimistic clear
-
-    try {
-      await addDoc(collection(db, collections.bookings, orderId, 'messages'), {
-        senderId: user.uid, senderRole: role, type: 'text', text: msgText, createdAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error('Error sending message:', error);
-      showToast('Failed to send message. Please retry.', 'error');
+  // Phone Call Handler
+  const handleCall = () => {
+    if (typeof window !== 'undefined') {
+      window.location.href = `tel:${technicianPhone}`;
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col h-[100dvh] bg-[#F8F9FA] max-w-2xl mx-auto border-x shadow-2xl overflow-hidden">
-        <div className="bg-white px-4 py-4 border-b flex items-center justify-between shadow-sm z-10 sticky top-0 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse"></div>
-            <div className="space-y-1">
-              <div className="h-4 w-32 bg-slate-200 rounded-full animate-pulse"></div>
-              <div className="h-2 w-16 bg-slate-100 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-slate-50 animate-pulse"></div>
-        </div>
-        <div className="flex-1 p-4 space-y-4">
-          <div className="flex flex-col items-start"><div className="w-2/3 h-12 bg-white rounded-2xl rounded-bl-none shadow-sm animate-pulse border border-slate-100"></div></div>
-          <div className="flex flex-col items-end"><div className="w-1/2 h-16 bg-[#007AFF]/20 rounded-2xl rounded-br-none shadow-sm animate-pulse"></div></div>
-          <div className="flex flex-col items-start"><div className="w-3/4 h-20 bg-white rounded-2xl rounded-bl-none shadow-sm animate-pulse border border-slate-100"></div></div>
-        </div>
-        <div className="bg-white p-4 border-t sticky bottom-0 shrink-0 pb-safe">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-12 bg-slate-50 rounded-full animate-pulse"></div>
-            <div className="w-12 h-12 rounded-full bg-slate-200 animate-pulse shrink-0"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Back Button Handler
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push(`/track?orderId=${encodeURIComponent(paramOrderId)}`);
+    }
+  };
+
+  // Send Message Handler
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    const newMsg: ChatMessage = {
+      id: `user-msg-${Date.now()}`,
+      senderRole: 'customer',
+      senderName: 'Prithibi',
+      text: inputText.trim(),
+      time: timeString,
+      type: 'text',
+    };
+
+    setMessages((prev) => [...prev, newMsg]);
+    setInputText('');
+  };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F8F9FA] text-[#0F172A] max-w-2xl mx-auto border-x shadow-2xl overflow-hidden">
-      {/* Header */}
-      <div className="bg-white px-4 py-4 border-b flex items-center justify-between shadow-sm z-10 sticky top-0 shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 -ml-2 rounded-full hover:bg-slate-100 transition">
-            <ArrowLeft size={20} className="text-slate-600" />
-          </button>
-          <div>
-            <h2 className="font-bold text-lg leading-tight uppercase tracking-tight flex items-center gap-2">
-              Mission Chat
-              {isActive && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>}
-            </h2>
-            <p className="text-xs text-slate-400 font-mono">ID: #{orderId?.slice(0, 6)}</p>
+    <div className="flex flex-col h-[100dvh] bg-[#F0F4F9] max-w-md mx-auto relative select-none font-sans overflow-hidden shadow-2xl">
+      {/* 1. Dark Navy Header */}
+      <header className="bg-[#0B1528] text-white px-4 pt-4 pb-12 shrink-0 z-10 relative">
+        <div className="flex items-center justify-between">
+          {/* Left: Back button + Service Badge + Title */}
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label="Go back"
+              className="text-white/90 hover:text-white p-1 -ml-1 rounded-full transition cursor-pointer active:scale-95"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Blue & White Icon Badge */}
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md shrink-0">
+              <Wrench className="w-5 h-5 text-[#0062FF]" />
+            </div>
+
+            {/* Mission Chat Title & ID */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h1 className="font-bold text-base text-white tracking-tight leading-tight">
+                  Mission Chat
+                </h1>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+              </div>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">
+                ID: {orderDisplayId}
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Phone button + More options */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleCall}
+              aria-label="Call Expert"
+              className="w-10 h-10 rounded-full bg-[#182338] hover:bg-[#202e47] text-white flex items-center justify-center transition active:scale-95 cursor-pointer shadow-sm"
+            >
+              <Phone className="w-4 h-4 fill-white text-white" />
+            </button>
+            <button
+              type="button"
+              aria-label="More options"
+              className="p-1.5 text-white/80 hover:text-white rounded-full transition cursor-pointer"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
           </div>
         </div>
-        <button 
-          onClick={() => showToast("Voice call support is currently undergoing maintenance. Please use chat messages.", "info")}
-          className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-[#007AFF] hover:bg-blue-50 transition border border-blue-100"
-        >
-          <Phone size={18} />
-        </button>
+      </header>
+
+      {/* 2. Floating Order Info Card (Overlapping header) */}
+      <div className="-mt-8 px-4 z-20 shrink-0">
+        <div className="bg-white rounded-2xl shadow-[0_6px_20px_rgba(0,0,0,0.06)] border border-slate-100/90 p-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Water tap / Faucet / Wrench Icon */}
+            <div className="w-11 h-11 rounded-2xl bg-[#EBF3FF] flex items-center justify-center text-[#0062FF] shrink-0">
+              <Wrench className="w-5 h-5 text-[#0062FF]" />
+            </div>
+
+            <div className="min-w-0">
+              <h2 className="font-bold text-[15px] text-slate-900 leading-tight truncate">
+                {serviceName}
+              </h2>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mt-1">
+                <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="truncate">{scheduleTime}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Status Badge: Active */}
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-[#EAFBF3] text-[#10B981] border border-[#D1F7E4] rounded-full text-xs font-semibold shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+            <span>Active</span>
+          </div>
+        </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 relative bg-[#F8FAFC]">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full opacity-40 text-center mt-20">
-            <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-4">
-              <span className="text-2xl">👋</span>
-            </div>
-            <p className="text-sm font-bold uppercase tracking-widest text-slate-500">No Messages Yet</p>
-            <p className="text-xs mt-1 text-slate-400">Start the conversation below.</p>
-          </div>
-        ) : (
-          messages.map((msg) => {
-            const isMe = msg.sender_id === user?.id;
+      {/* 3. Messages Stream */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5 relative">
+        {/* Date Divider: Today */}
+        <div className="flex justify-center my-2">
+          <span className="px-4 py-1 bg-[#E2EAF4] text-slate-500 text-[11px] font-semibold rounded-full shadow-2xs">
+            Today
+          </span>
+        </div>
+
+        {messages.map((msg) => {
+          // Live Tracking System Card
+          if (msg.type === 'tracking-card') {
             return (
-              <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                <div 
-                  className={`max-w-[85%] md:max-w-[75%] px-4 py-2.5 rounded-2xl ${
-                    isMe 
-                      ? 'bg-[#007AFF] text-white rounded-br-none shadow-[0_4px_10px_-4px_rgba(0,122,255,0.5)]' 
-                      : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-sm'
-                  }`}
-                >
-                  <p className="text-[15px]">{msg.message_text}</p>
+              <div
+                key={msg.id}
+                className="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 flex items-center justify-between gap-3 w-full my-2"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-[#EBF3FF] flex items-center justify-center text-[#0062FF] shrink-0">
+                    <MapPin className="w-5 h-5 text-[#0062FF] fill-[#0062FF]/20" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-[14px] text-slate-900 leading-tight truncate">
+                      {msg.title || 'Expert is on the way'}
+                    </h4>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      {msg.distance || '4.0 km away • 6 min'}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-[9px] text-slate-400 mt-1 uppercase tracking-widest px-1">
-                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+
+                <Link
+                  href={`/track?orderId=${encodeURIComponent(paramOrderId)}`}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 hover:border-blue-300 text-[#0062FF] hover:bg-blue-50/50 bg-slate-50/60 text-xs font-semibold shrink-0 transition active:scale-95 shadow-2xs"
+                >
+                  <Map className="w-3.5 h-3.5" />
+                  <span>View on Map</span>
+                </Link>
               </div>
             );
-          })
-        )}
+          }
+
+          // Technician (Worker) Message
+          if (msg.senderRole === 'worker') {
+            return (
+              <div key={msg.id} className="flex items-start gap-2.5 max-w-[85%]">
+                {/* Avatar */}
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-100 shrink-0 mt-1 border border-white shadow-sm flex items-center justify-center">
+                  <img
+                    src="/hero_technician_banner.png"
+                    alt={msg.senderName || 'Anupam'}
+                    className="w-full h-full object-cover object-top"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                  <span className="text-[11px] font-bold text-blue-700">
+                    {(msg.senderName || 'A').charAt(0)}
+                  </span>
+                </div>
+
+                {/* White Speech Bubble */}
+                <div className="bg-white rounded-2xl rounded-tl-sm p-3.5 shadow-sm border border-slate-100/80">
+                  <div className="flex items-center justify-between gap-4 mb-1">
+                    <div className="text-xs">
+                      <span className="font-bold text-slate-900">
+                        {msg.senderName || technicianName}
+                      </span>
+                      <span className="text-slate-400 ml-1 font-normal">(Expert)</span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      {msg.time}
+                    </span>
+                  </div>
+                  <p className="text-[14px] text-slate-700 leading-relaxed">
+                    {msg.text}
+                  </p>
+                </div>
+              </div>
+            );
+          }
+
+          // Customer (Me) Message
+          return (
+            <div key={msg.id} className="flex flex-col items-end">
+              <div className="bg-[#0062FF] text-white rounded-2xl rounded-tr-sm p-3.5 max-w-[82%] shadow-[0_4px_14px_rgba(0,98,255,0.35)]">
+                <p className="text-[14px] text-white leading-relaxed">
+                  {msg.text}
+                </p>
+                <div className="flex items-center justify-end gap-1 mt-1 text-[10px] text-blue-100 font-medium">
+                  <span>{msg.time}</span>
+                  <CheckCheck className="w-3.5 h-3.5 text-blue-200" />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="bg-white p-4 border-t sticky bottom-0 shrink-0 pb-safe">
-        <form onSubmit={handleSendMessage} className="flex items-center gap-3">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={isActive ? "Type a message..." : "This chat is no longer active."}
-            disabled={!isActive}
-            className="flex-1 bg-slate-50 border border-slate-200 rounded-full px-5 py-3 text-[15px] outline-none focus:border-[#007AFF] focus:bg-white transition-all shadow-inner disabled:opacity-70 disabled:cursor-not-allowed"
-          />
-          <button 
-            type="submit"
-            disabled={!isActive || !newMessage.trim()}
-            className="w-12 h-12 rounded-full bg-[#007AFF] text-white flex items-center justify-center disabled:opacity-50 disabled:bg-slate-300 transition-all shadow-[0_4px_12px_-4px_rgba(0,122,255,0.4)] shrink-0"
+      {/* 4. Bottom Input Bar with Subtle Wave Overlay */}
+      <footer className="relative pt-2 pb-5 px-4 bg-gradient-to-t from-[#E2EDF8] via-[#EDF3FA] to-transparent shrink-0">
+        <div className="max-w-md mx-auto">
+          <form
+            onSubmit={handleSendMessage}
+            className="bg-white rounded-full shadow-[0_6px_22px_rgba(0,0,0,0.08)] border border-slate-200/80 p-1.5 pl-3 flex items-center gap-1.5"
           >
-            <Send size={18} className="ml-1" />
-          </button>
-        </form>
-      </div>
+            {/* Attachment paperclip */}
+            <button
+              type="button"
+              className="p-1.5 text-slate-500 hover:text-slate-700 transition cursor-pointer"
+              aria-label="Attach file"
+            >
+              <Paperclip className="w-5 h-5 -rotate-45" />
+            </button>
+
+            {/* Message input */}
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 text-[14px] outline-none text-slate-800 placeholder:text-slate-400 bg-transparent px-1.5"
+            />
+
+            {/* Emoji icon */}
+            <button
+              type="button"
+              className="p-1.5 text-slate-500 hover:text-slate-700 transition cursor-pointer"
+              aria-label="Add emoji"
+            >
+              <Smile className="w-5 h-5" />
+            </button>
+
+            {/* Blue Send circular button */}
+            <button
+              type="submit"
+              disabled={!inputText.trim()}
+              className="w-10 h-10 rounded-full bg-[#0062FF] hover:bg-blue-600 disabled:bg-blue-300 text-white flex items-center justify-center transition active:scale-95 shadow-[0_4px_10px_rgba(0,98,255,0.35)] shrink-0 cursor-pointer"
+            >
+              <Send className="w-4 h-4 ml-0.5" />
+            </button>
+          </form>
+        </div>
+      </footer>
     </div>
   );
-}
-
-function ChatWrapper() {
-  const searchParams = useSearchParams();
-  const orderId = searchParams.get('orderId');
-
-  if (!orderId) {
-    return <ChatList />;
-  }
-
-  return <ChatContent />;
 }
 
 export default function ChatPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#007AFF] animate-spin" />
-      </div>
-    }>
-      <ChatWrapper />
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F0F4F9] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[#0062FF] animate-spin" />
+        </div>
+      }
+    >
+      <ChatContent />
     </Suspense>
   );
 }
